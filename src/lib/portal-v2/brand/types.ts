@@ -26,6 +26,11 @@ export type BrandPersona = {
   id: string;
   n: string;
   tier: string;
+  /**
+   * BẮT BUỘC bên BE (`ProfilePersona.Behaves`). Thiếu là PUT trả 400 cho CẢ
+   * lượt lưu — nên phải mang theo dù giao diện hiện chưa cho sửa.
+   */
+  behaves: string;
   stage: string;
   awareness: string;
   motivations: string[];

@@ -11,7 +11,7 @@ import {
 } from '@/components/molecules/portal-v2/campaigns-form';
 import { SelectBox } from '@/components/molecules/portal-v2/product-form';
 import { cn } from '@/lib/cn';
-import { CAMPAIGN_TYPES } from '@/lib/portal-v2/campaigns/constants';
+import { campaignTypeStyle } from '@/lib/portal-v2/campaigns/constants';
 import {
   campExpCount,
   campProgress,
@@ -141,7 +141,7 @@ export const CampaignTable = ({
                 </td>
 
                 <td className={cn(cellClass, 'whitespace-nowrap')}>
-                  {t(CAMPAIGN_TYPES[campaign.type].labelKey)}
+                  {t(campaignTypeStyle(campaign.type).labelKey)}
                 </td>
 
                 <td

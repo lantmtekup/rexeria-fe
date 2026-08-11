@@ -5,6 +5,17 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import {
+  attachExperienceToItem,
+  detachExperienceFromItem,
+} from '@/services/portal-v2/campaignExperiences';
+import {
+  addCampaignItem,
+  removeCampaignItem,
+  setCampaignItemStatus,
+  updateCampaignItem,
+} from '@/services/portal-v2/campaignBoardV2';
+
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { cn } from '@/lib/cn';
 import {
@@ -19,15 +30,13 @@ import { LearnPhase } from '@/components/organisms/portal-v2/campaigns/detail/Le
 import { PhaseStrip } from '@/components/organisms/portal-v2/campaigns/detail/PhaseStrip';
 import { PlanPhase } from '@/components/organisms/portal-v2/campaigns/detail/PlanPhase';
 import { RunPhase } from '@/components/organisms/portal-v2/campaigns/detail/RunPhase';
-import { CAMPAIGN_TYPES } from '@/lib/portal-v2/campaigns/constants';
+import { campaignTypeStyle } from '@/lib/portal-v2/campaigns/constants';
 import {
   applyDraft,
-  blankItem,
   deriveStage,
   fmtRange,
   journeyOriginOf,
   subjectName,
-  subjectRef,
   syncItemStage,
   toDraft,
 } from '@/lib/portal-v2/campaigns/helpers';
@@ -41,10 +50,7 @@ import {
   blueprintJourneys,
   journeyForCampaign,
 } from '@/lib/portal-v2/campaigns/journeyLink';
-import {
-  experienceCopyId,
-  forkExperience,
-} from '@/lib/portal-v2/campaigns/mock';
+import {} from '@/lib/portal-v2/campaigns/mock';
 import { campPhase } from '@/lib/portal-v2/campaigns/phases';
 import { campReadiness } from '@/lib/portal-v2/campaigns/readiness';
 import type {
@@ -71,7 +77,6 @@ type CampaignDetailProps = {
   onRouteJourney: (blueprintId: string) => void;
   onCarryRoute: () => void;
   onEnsureExperiences: (copies: CampaignExperience[]) => void;
-  onPatchExperience: (id: string, patch: Partial<CampaignExperience>) => void;
   onPromoteJourney: () => void;
   onJourneyChange: (next: Journey) => void;
 };
@@ -97,7 +102,6 @@ export const CampaignDetail = ({
   onRouteJourney,
   onCarryRoute,
   onEnsureExperiences,
-  onPatchExperience,
   onPromoteJourney,
   onJourneyChange,
 }: CampaignDetailProps) => {
@@ -170,70 +174,142 @@ export const CampaignDetail = ({
     setEditing(false);
   };
 
-  const handleSaveItem = (item: CampaignItem) => {
-    const items = campaign.items.map((current, i) =>
-      i === itemIndex ? item : current
-    );
-    commit({ ...toDraft(campaign), items }, t('toastItemSaved'));
+  /**
+   * Lưu hạng mục — hai lời gọi RIÊNG.
+   *
+   * BE tách chúng có chủ ý: `PUT .../items/{id}` chỉ nhận owner/due/note, còn
+   * trạng thái đi qua `PATCH .../status` vì nó là bước trong quy trình chứ
+   * không phải một trường tự do. Gộp lại là gửi một trường server không nhận.
+   */
+  const handleSaveItem = async (item: CampaignItem) => {
+    const before = itemIndex !== null ? campaign.items[itemIndex] : undefined;
     setItemIndex(null);
+
+    const saved = await updateCampaignItem(campaign.id, item.id, {
+      due: item.due,
+      note: item.note,
+    }).catch(() => null);
+    if (!saved) {
+      toast.error(t('toastItemSaveFailed'));
+      return;
+    }
+
+    let next = { ...saved, expIds: item.expIds };
+    if (before && before.status !== item.status) {
+      const moved = await setCampaignItemStatus(
+        campaign.id,
+        item.id,
+        item.status
+      ).catch(() => null);
+      if (!moved) {
+        toast.error(t('toastItemStatusFailed'));
+      } else {
+        next = { ...moved, expIds: item.expIds };
+      }
+    }
+
+    onChange({
+      ...campaign,
+      items: campaign.items.map(c => (c.id === item.id ? next : c)),
+    });
+    toast.success(t('toastItemSaved'));
   };
 
-  const handleDeleteItem = (index: number) => {
-    const items = campaign.items.filter((_, i) => i !== index);
-    commit({ ...toDraft(campaign), items }, t('toastItemRemoved'));
+  const handleDeleteItem = async (index: number) => {
+    const item = campaign.items[index];
+    if (!item) return;
     setItemIndex(null);
+    const ok = await removeCampaignItem(campaign.id, item.id)
+      .then(() => true)
+      .catch(() => false);
+    if (!ok) {
+      toast.error(t('toastItemRemoveFailed'));
+      return;
+    }
+    onChange({
+      ...campaign,
+      items: campaign.items.filter(c => c.id !== item.id),
+    });
+    toast.success(t('toastItemRemoved'));
   };
 
-  const handleAddItem = (kind: 'product' | 'topic', value: string): void => {
-    const base = blankItem(campaign.items, kind, campaign.endDate);
-    const item: CampaignItem =
-      kind === 'product'
-        ? { ...base, productId: value, owner: campaign.owner }
-        : { ...base, name: value, owner: campaign.owner };
-
-    commit(
-      { ...toDraft(campaign), items: [...campaign.items, item] },
-      t('toastItemAdded')
-    );
+  /**
+   * Thêm hạng mục — gọi `POST /campaigns/{id}/items`.
+   *
+   * KHÔNG đi qua `commit`: `PUT /campaigns` không có trường `items`, nên gộp
+   * vào đó là im lặng đánh rơi hạng mục vừa thêm. Id cũng do server cấp.
+   */
+  const handleAddItem = async (
+    kind: 'product' | 'topic',
+    value: string
+  ): Promise<void> => {
     setAddOpen(false);
+    const item = await addCampaignItem(campaign.id, kind, value, {
+      due: campaign.endDate,
+    }).catch(() => null);
+    if (!item) {
+      toast.error(t('toastItemAddFailed'));
+      return;
+    }
+    onChange({ ...campaign, items: [...campaign.items, item] });
+    toast.success(t('toastItemAdded'));
   };
 
   /**
    * Forking a master onto a subject. The copy id is derived, so the modal can
    * attach it immediately and the workspace only has to make the record exist.
    */
-  const handleAttachMaster = (item: CampaignItem) => (masterId: string) => {
-    const ref = subjectRef(item);
-    const copyId = experienceCopyId(masterId, campaign.id, ref);
-    const master = experiences.find(e => e.id === masterId);
+  const handleAttachMaster =
+    (item: CampaignItem) =>
+    async (masterId: string): Promise<string | null> => {
+      const copy = await attachExperienceToItem(
+        campaign.id,
+        item.id,
+        masterId
+      ).catch(() => null);
+      if (!copy) {
+        toast.error(t('toastAttachFailed'));
+        return null;
+      }
+      // Bản copy do server dựng — đưa nó vào danh sách để thẻ vẽ được tên.
+      onEnsureExperiences([copy]);
+      return copy.id;
+    };
 
-    if (master && !experiences.some(e => e.id === copyId)) {
-      onEnsureExperiences([
-        forkExperience(
-          master,
-          campaign.id,
-          campaign.name,
-          ref,
-          subjectName(item, productNames) || ref
-        ),
-      ]);
-    }
-    return copyId;
-  };
-
-  const attachMasterToItem = (
+  const attachMasterToItem = async (
     item: CampaignItem,
     masterId: string
-  ): CampaignItem => {
-    const copyId = handleAttachMaster(item)(masterId);
+  ): Promise<CampaignItem | null> => {
+    const copyId = await handleAttachMaster(item)(masterId);
+    if (!copyId) return null;
     if (item.expIds.includes(copyId)) return item;
     return syncItemStage({ ...item, expIds: [...item.expIds, copyId] });
   };
 
-  const handleAdaptExperience = (experienceId: string) => {
-    onPatchExperience(experienceId, { adapted: true });
-    toast.success(t('journeyLensAdapted'));
-  };
+  const handleDetachExperience =
+    (item: CampaignItem) =>
+    async (experienceId: string): Promise<boolean> => {
+      const ok = await detachExperienceFromItem(
+        campaign.id,
+        item.id,
+        experienceId
+      )
+        .then(() => true)
+        .catch(() => false);
+      if (!ok) {
+        toast.error(t('toastDetachFailed'));
+        return false;
+      }
+      onChange({
+        ...campaign,
+        items: campaign.items.map(c =>
+          c.id === item.id
+            ? { ...c, expIds: c.expIds.filter(x => x !== experienceId) }
+            : c
+        ),
+      });
+      return true;
+    };
 
   const handleOpenSubjectJourney = (index: number, nodeId?: string) => {
     if (!journey) {
@@ -257,7 +333,7 @@ export const CampaignDetail = ({
     setEditingRoute(false);
   };
 
-  const handleLensNodeActivate = (nodeId: string) => {
+  const handleLensNodeActivate = async (nodeId: string) => {
     if (!journeyLens) return;
     const item = campaign.items[journeyLens.itemIndex];
     if (!item) return;
@@ -266,29 +342,25 @@ export const CampaignDetail = ({
     const card = lane.cards.find(c => c.node.id === nodeId);
     if (!card || card.node.kind !== 'experience' || !card.node.x) return;
 
-    if (card.fit === 'open') {
-      const next = attachMasterToItem(item, card.node.x);
-      const items = campaign.items.map((current, i) =>
-        i === journeyLens.itemIndex ? next : current
+    if (card.fit === 'open' || card.fit === 'shared') {
+      const next = await attachMasterToItem(item, card.node.x);
+      if (!next) return;
+      // `expIds` là quan hệ do server giữ, KHÔNG đi qua `PUT /campaigns` —
+      // cập nhật tại chỗ thay vì gộp vào `commit`.
+      onChange({
+        ...campaign,
+        items: campaign.items.map(c => (c.id === item.id ? next : c)),
+      });
+      toast.success(
+        card.fit === 'open' ? t('journeyLensBuilt') : t('journeyLensForked')
       );
-      commit({ ...toDraft(campaign), items }, t('journeyLensBuilt'));
       return;
     }
 
-    if (card.fit === 'shared') {
-      const next = attachMasterToItem(item, card.node.x);
-      const items = campaign.items.map((current, i) =>
-        i === journeyLens.itemIndex ? next : current
-      );
-      commit({ ...toDraft(campaign), items }, t('journeyLensForked'));
-      return;
-    }
-
-    if (card.fit === 'edit' && card.mine) {
-      handleAdaptExperience(card.mine.id);
-      return;
-    }
-
+    // `edit` nghĩa là bản copy đã có nhưng lời văn chưa hợp chủ thể. Không có
+    // đường BE nào viết lại nó, nên mở đúng hạng mục để người dùng tự sửa —
+    // trước đây chỗ này chỉ đặt cờ `adapted` trong state rồi báo "đã adapt",
+    // một lời khẳng định không có gì đỡ ở server và mất ngay khi tải lại.
     if (card.mine) {
       setItemIndex(journeyLens.itemIndex);
     }
@@ -364,7 +436,7 @@ export const CampaignDetail = ({
                 {campaign.name}
               </h1>
               <p className='mt-1 text-[13.5px] leading-relaxed text-[var(--pv2-mut)]'>
-                {t(CAMPAIGN_TYPES[campaign.type].labelKey)} ·{' '}
+                {t(campaignTypeStyle(campaign.type).labelKey)} ·{' '}
                 {fmtRange(campaign, t('ongoing'))} ·{' '}
                 {campaign.owner || t('unassigned')}
               </p>
@@ -500,7 +572,7 @@ export const CampaignDetail = ({
           onSave={handleSaveItem}
           onDelete={() => handleDeleteItem(itemIndex ?? 0)}
           onAttachMaster={handleAttachMaster(activeItem)}
-          onAdaptExperience={handleAdaptExperience}
+          onDetachExperience={handleDetachExperience(activeItem)}
         />
       ) : null}
 

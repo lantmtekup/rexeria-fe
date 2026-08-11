@@ -85,11 +85,6 @@ export const CAMPAIGN_STATUS: Record<
     dot: 'var(--pv2-success)',
     bg: 'color-mix(in srgb, var(--pv2-success) 12%, transparent)',
   },
-  paused: {
-    name: 'Paused',
-    dot: 'var(--pv2-error)',
-    bg: 'color-mix(in srgb, var(--pv2-error) 10%, transparent)',
-  },
   done: {
     name: 'Complete',
     dot: 'var(--pv2-violet)',

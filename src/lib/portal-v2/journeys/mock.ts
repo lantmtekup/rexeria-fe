@@ -31,7 +31,7 @@ export const MOCK_JOURNEYS: Journey[] = [
     campaignName: null,
     origin: null,
     obj: 'insight',
-    seg: 'all',
+    personaId: null,
     updated: '2 hours ago',
     tagline: 'The whole launch, not one page of it.',
     summary:
@@ -104,7 +104,7 @@ export const MOCK_JOURNEYS: Journey[] = [
     campaignName: null,
     origin: null,
     obj: 'convert',
-    seg: 'all',
+    personaId: null,
     updated: '3 days ago',
     tagline: 'For the shopper buying for someone who is not them.',
     summary:
@@ -182,7 +182,7 @@ export const MOCK_JOURNEYS: Journey[] = [
     campaignName: 'Super Serum Launch',
     origin: 'j1',
     obj: 'insight',
-    seg: 's1',
+    personaId: null,
     updated: '2 hours ago',
     tagline: 'The whole launch, not one page of it.',
     summary:
@@ -261,7 +261,7 @@ export const MOCK_JOURNEYS: Journey[] = [
     campaignName: 'Christmas 2026',
     origin: 'j2',
     obj: 'convert',
-    seg: 's2',
+    personaId: null,
     updated: 'yesterday',
     tagline: 'For the shopper buying for someone who is not them.',
     summary:

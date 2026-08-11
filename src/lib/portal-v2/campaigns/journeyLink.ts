@@ -169,35 +169,6 @@ export const bindRouteToItems = (
 };
 
 /**
- * Route a blueprint onto a campaign: fork the journey, point the campaign at
- * the fork, then carry the route's experiences down onto the work.
- */
-export const routeJourneyOntoCampaign = (
-  campaign: CampaignView,
-  journeys: Journey[],
-  experiences: CampaignExperience[],
-  blueprintId: string,
-  productNames: Record<string, string>
-): ForkOutcome => {
-  const forked = forkJourney(journeys, blueprintId, campaign.id, campaign.name);
-  if (!forked) return { campaign, journeys, experiences };
-
-  const routed: CampaignView = { ...campaign, journeyId: forked.journey.id };
-  const bound = bindRouteToItems(
-    routed,
-    experiences,
-    productNames,
-    forked.list
-  );
-
-  return {
-    campaign: bound.campaign,
-    journeys: forked.list,
-    experiences: bound.experiences,
-  };
-};
-
-/**
  * Bring a campaign's declared fork into existence.
  *
  * A campaign owns the statement "I run this route", and the fork is derived from
@@ -205,6 +176,31 @@ export const routeJourneyOntoCampaign = (
  * copy's fork id is minted from its own campaign id before anything exists to
  * back it, and this is what makes it real.
  */
+/**
+ * Nối chiến dịch với bản fork hành trình của nó.
+ *
+ * Liên kết nằm ở PHÍA journey (`journeys.campaign_id`) — `CampaignV2` không có
+ * trường `journey_id` nào cả. Nhưng màn chiến dịch lại tra bằng
+ * `campaign.journeyId`, nên không có bước ghép này thì fork chạy đúng ở server
+ * mà dải "The journey" vẫn trống.
+ *
+ * Phải chạy lại sau MỌI lần nạp lại một chiến dịch: `GET /campaigns/{id}` cũng
+ * không trả trường đó, nên gán thẳng kết quả vào state sẽ xoá mất liên kết.
+ */
+export const withJourneyLinks = (
+  campaigns: CampaignView[],
+  journeys: Journey[]
+): CampaignView[] => {
+  const byCampaign = new Map<string, string>();
+  journeys.forEach(j => {
+    if (j.campaign && !j.template) byCampaign.set(j.campaign, j.id);
+  });
+  return campaigns.map(c => {
+    const journeyId = byCampaign.get(c.id) ?? null;
+    return journeyId === c.journeyId ? c : { ...c, journeyId };
+  });
+};
+
 export const ensureCampaignJourneys = (
   journeys: Journey[],
   campaigns: CampaignView[]

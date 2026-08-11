@@ -3,11 +3,7 @@ export type MediaKindId = 'IMG' | 'VID' | 'D3' | 'P360' | 'DOC' | 'AUD';
 export type MediaStatusId = 'approved' | 'review' | 'expiring' | 'archived';
 
 export type MediaUseId =
-  | 'product'
-  | 'campaign'
-  | 'experience'
-  | 'brand'
-  | 'unlinked';
+  'product' | 'campaign' | 'experience' | 'brand' | 'unlinked';
 
 export type FunnelRoleId = 'ATT' | 'EDU' | 'EXP' | 'TRU' | 'CON';
 

@@ -12,7 +12,7 @@ import {
 } from '@/components/molecules/portal-v2/campaigns-form';
 import { SelectBox } from '@/components/molecules/portal-v2/product-form';
 import { cn } from '@/lib/cn';
-import { CAMPAIGN_TYPES } from '@/lib/portal-v2/campaigns/constants';
+import { campaignTypeStyle } from '@/lib/portal-v2/campaigns/constants';
 import {
   campExpCount,
   campProgress,
@@ -141,7 +141,7 @@ export const CampaignCard = ({
             {campaign.name}
           </p>
           <p className='mt-0.5 truncate text-[11px] text-[var(--pv2-faint)]'>
-            {t(CAMPAIGN_TYPES[campaign.type].labelKey)} ·{' '}
+            {t(campaignTypeStyle(campaign.type).labelKey)} ·{' '}
             {fmtRange(campaign, t('ongoing'))}
           </p>
         </div>

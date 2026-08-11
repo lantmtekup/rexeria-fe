@@ -168,15 +168,33 @@ export const addNodeToStage = (
     py: slotY(stageCount(journey, stage)),
   });
 
-  const linkFromAnchor =
-    anchor && anchor.kind !== 'outcome' && !anchor.to.includes(id);
+  /*
+   * KHÔNG BAO GIỜ sinh node mồ côi.
+   *
+   * Bản trước chỉ nối khi đang có node được chọn; thêm một node lúc không chọn
+   * gì sẽ tạo ra thứ không ai trỏ tới. BE gọi đó là `unreachable` và từ chối cả
+   * lần lưu — nhưng người dùng không sửa được, vì node đó không nằm trên đường
+   * đi nào để mà thấy.
+   *
+   * Không có neo thì lấy node cuối của chặng gần nhất phía trước: đó là chỗ
+   * người ta vừa đứng, và nối tới đó là điều họ định làm.
+   */
+  const fallbackAnchor =
+    anchor && anchor.kind !== 'outcome'
+      ? anchor
+      : ([...journey.nodes]
+          .filter(n => (n.stage ?? 0) < stage && n.kind !== 'outcome')
+          .sort((a, b) => (b.stage ?? 0) - (a.stage ?? 0))[0] ?? null);
+
+  const linkFrom =
+    fallbackAnchor && !fallbackAnchor.to.includes(id) ? fallbackAnchor : null;
 
   return {
     journey: {
       ...journey,
       nodes: [
         ...journey.nodes.map(n =>
-          linkFromAnchor && n.id === anchor.id ? { ...n, to: [...n.to, id] } : n
+          linkFrom && n.id === linkFrom.id ? { ...n, to: [...n.to, id] } : n
         ),
         node,
       ],

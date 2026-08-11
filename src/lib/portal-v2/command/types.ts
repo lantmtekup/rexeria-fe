@@ -25,10 +25,7 @@ export type InsightSeverity = 'high' | 'medium' | 'info';
  * kênh…)" — which the first pass of this module never modelled.
  */
 export type BlockerReason =
-  | 'media-expired'
-  | 'missing-channel'
-  | 'brand-approval'
-  | 'no-owner';
+  'media-expired' | 'missing-channel' | 'brand-approval' | 'no-owner';
 
 export type CommandUser = {
   name: string;

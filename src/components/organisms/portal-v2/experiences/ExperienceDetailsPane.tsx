@@ -2,19 +2,30 @@
 
 import { useTranslations } from 'next-intl';
 
-import { FunnelStack } from '@/components/organisms/portal-v2/experiences/FunnelStack';
-import { EXPERIENCE_INTERACTIONS } from '@/lib/portal-v2/experiences/constants';
+import { LayerStack } from '@/components/organisms/portal-v2/experiences/LayerStack';
+import {
+  BLOCK_SIGNAL_LABEL_KEY,
+  EXPERIENCE_INTERACTIONS,
+} from '@/lib/portal-v2/experiences/constants';
 import {
   COVERAGE_TONE_STYLE,
   ROLE_STYLE,
   coverageTone,
   objectivePillStyle,
 } from '@/lib/portal-v2/experiences/roleStyles';
-import type { ExperienceView } from '@/lib/portal-v2/experiences/types';
+import type {
+  ExperienceLayer,
+  ExperienceView,
+  SignalCoverage,
+} from '@/lib/portal-v2/experiences/types';
 import { cn } from '@/lib/cn';
 
 type ExperienceDetailsPaneProps = {
   experience: ExperienceView;
+  /** Nạp từ `GET /experiences/{id}/coverage`; null = chưa đo được. */
+  coverage?: SignalCoverage | null;
+  /** Block thật từ `GET /experiences/{id}`; null = chưa nạp xong hoặc hỏng. */
+  layers: ExperienceLayer[] | null;
 };
 
 const OBJECTIVE_LABEL_KEY = {
@@ -31,37 +42,10 @@ const VEHICLE_LABEL_KEY = {
   microsite: 'vehicleMicrosite',
 } as const;
 
-/** `Block.scope` — who the block belongs to. BLOCK rows only. */
-const SCOPE_LABEL_KEY = {
-  system: 'scopeSystem',
-  brand_private: 'scopeBrandPrivate',
-  brand_team: 'scopeBrandTeam',
-  brand_public: 'scopeBrandPublic',
+const CATEGORY_LABEL_KEY = {
+  blocks: 'catBlocks',
+  collection: 'catCollection',
 } as const;
-
-/** `Block.supported_surfaces` — where the block is allowed to land. */
-const SURFACE_LABEL_KEY = {
-  landing: 'surfaceLanding',
-  ad: 'surfaceAd',
-  curate: 'surfaceCurate',
-} as const;
-
-const ReadRow = ({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) => (
-  <div className='flex items-baseline justify-between gap-3 py-1.5'>
-    <span className='shrink-0 text-[11px] font-semibold tracking-[0.03em] text-[var(--pv2-faint)] uppercase'>
-      {label}
-    </span>
-    <span className='min-w-0 text-right text-[12.5px] text-[var(--pv2-ink)]'>
-      {children}
-    </span>
-  </div>
-);
 
 const STATUS_LABEL_KEY = {
   draft: 'statusDraft',
@@ -69,236 +53,327 @@ const STATUS_LABEL_KEY = {
   archived: 'statusArchived',
 } as const;
 
+/** Khối viền hairline — prototype `.box` (~L5092). */
+const Box = ({
+  title,
+  aside,
+  children,
+  className,
+}: {
+  title: string;
+  aside?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) => (
+  <section
+    className={cn(
+      'rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] px-4 py-3.5',
+      className
+    )}
+  >
+    <div className='mb-2.5 flex items-baseline gap-3'>
+      <h3 className='font-[family-name:var(--pv2-disp)] text-[14px] font-bold tracking-[-0.02em] text-[var(--pv2-ink)]'>
+        {title}
+      </h3>
+      {aside ? (
+        <span className='ml-auto shrink-0 text-[11px] text-[var(--pv2-faint)]'>
+          {aside}
+        </span>
+      ) : null}
+    </div>
+    {children}
+  </section>
+);
+
+/**
+ * Nhãn TRÊN, giá trị DƯỚI — prototype `.rofield` (~L7504).
+ *
+ * Bản trước xếp nhãn trái / giá trị phải trên cùng một dòng, nên tóm tắt dài
+ * hai câu bị ép vào nửa khung bên phải và xuống dòng lởm chởm.
+ */
+const ReadField = ({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) => (
+  <div className='py-2'>
+    <span className='block text-[10.5px] font-bold tracking-[0.06em] text-[var(--pv2-faint)] uppercase'>
+      {label}
+    </span>
+    <span className='mt-1 block text-[13.5px] leading-relaxed font-medium text-[var(--pv2-ink)]'>
+      {children}
+    </span>
+  </div>
+);
+
+/** Trường trống phải NÓI là trống — không để lại một khoảng trắng câm. */
+const NotSet = () => {
+  const t = useTranslations('portalV2.experiences');
+  return <i className='font-normal text-[var(--pv2-faint)]'>{t('notSet')}</i>;
+};
+
 export const ExperienceDetailsPane = ({
   experience,
+  coverage = null,
+  layers,
 }: ExperienceDetailsPaneProps) => {
   const t = useTranslations('portalV2.experiences');
-  const { coverage, layers } = experience;
-  const tone = coverageTone(coverage.pct);
+  const tone = coverageTone(coverage?.pct ?? 0);
   const toneStyle = COVERAGE_TONE_STYLE[tone];
   const pill = objectivePillStyle(experience.objective);
-  const isBlock = experience.kind === 'block';
+
+  // Layer không báo gì — prototype liệt kê chúng ngay dưới con số, vì đó mới
+  // là phần hành động được. Chỉ tính khi ĐÃ nạp xong.
+  const silent = (layers ?? []).filter(l => !l.components.some(c => c.tracked));
 
   return (
-    <div className='grid gap-6 md:grid-cols-[minmax(0,1fr)_270px]'>
-      <div className='min-w-0'>
-        <section className='mb-5 border-b border-[var(--pv2-hair)] pb-5'>
-          <FunnelStack layers={layers} />
-          <p className='mt-2.5 text-[12px] text-[var(--pv2-mut)]'>
-            {t('stackCaption', { count: layers.length })}
-          </p>
-        </section>
+    <div className='grid gap-5 md:grid-cols-[minmax(0,1fr)_268px]'>
+      <div className='flex min-w-0 flex-col gap-3.5'>
+        <Box
+          title={t('sectionProfile')}
+          aside={t(VEHICLE_LABEL_KEY[experience.vehicle])}
+        >
+          {layers === null ? (
+            <p className='py-6 text-center text-[12.5px] text-[var(--pv2-faint)]'>
+              {t('layersLoading')}
+            </p>
+          ) : layers.length ? (
+            <>
+              <LayerStack layers={layers} />
+              <p className='mt-2.5 text-center text-[11.5px] leading-relaxed text-[var(--pv2-mut)]'>
+                {t('stackCaption', { count: layers.length })}
+              </p>
+            </>
+          ) : (
+            <p className='py-6 text-center text-[12.5px] text-[var(--pv2-faint)]'>
+              {t('layersEmpty')}
+            </p>
+          )}
+        </Box>
 
-        <section className='mb-5 border-b border-[var(--pv2-hair)] pb-5'>
-          <h3 className='font-[family-name:var(--pv2-disp)] text-[15px] font-bold tracking-[-0.02em] text-[var(--pv2-ink)]'>
-            {t('sectionProfile')}
-          </h3>
-          <p className='mt-2 text-[13px] leading-relaxed text-[var(--pv2-ink)]'>
-            {experience.tagline}
-          </p>
-          <p className='mt-2 text-[12.5px] leading-relaxed text-[var(--pv2-mut)]'>
-            {experience.summary}
-          </p>
-        </section>
+        <Box title={t('sectionExperience')}>
+          <div className='divide-y divide-[var(--pv2-hair)]'>
+            <ReadField label={t('fieldName')}>{experience.name}</ReadField>
+            <ReadField label={t('fieldTagline')}>
+              {experience.tagline || <NotSet />}
+            </ReadField>
+            <ReadField label={t('fieldSummary')}>
+              {experience.summary || <NotSet />}
+            </ReadField>
+          </div>
+        </Box>
 
-        <section>
-          <h3 className='font-[family-name:var(--pv2-disp)] text-[15px] font-bold tracking-[-0.02em] text-[var(--pv2-ink)]'>
-            {t('sectionLayers')}
-          </h3>
-          <ol className='mt-3 flex flex-col gap-2.5'>
-            {layers.map((layer, i) => {
-              const role = ROLE_STYLE[layer.role];
-              return (
-                <li
-                  key={`${layer.role}-${i}`}
-                  className='flex gap-3 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] px-3 py-2.5'
-                >
-                  <span className='mt-0.5 grid size-5 shrink-0 place-items-center rounded-md bg-[var(--pv2-canvas)] text-[10px] font-bold text-[var(--pv2-mut)] tabular-nums'>
-                    {i + 1}
-                  </span>
-                  <div className='min-w-0 flex-1'>
-                    <div className='flex flex-wrap items-center gap-2'>
-                      <span className='text-[13px] font-semibold text-[var(--pv2-ink)]'>
-                        {layer.name}
-                      </span>
-                      <span
-                        className='inline-flex rounded-full px-1.5 py-px text-[9px] font-bold tracking-[0.05em] uppercase'
-                        style={{ background: role.bg, color: role.fg }}
-                      >
-                        {t(role.labelKey)}
-                      </span>
-                      <span
-                        className={cn(
-                          'ml-auto text-[10.5px] font-semibold',
-                          layer.trackedComponents.length
-                            ? 'text-[var(--pv2-mut)]'
-                            : 'text-[var(--pv2-faint)]'
-                        )}
-                      >
-                        {layer.trackedComponents.length
-                          ? t('layerSignals', {
-                              count: layer.trackedComponents.length,
-                            })
-                          : t('layerNotTracked')}
-                      </span>
+        <Box
+          title={t('sectionLayers')}
+          aside={
+            layers?.length ? t('layersHint', { count: layers.length }) : null
+          }
+        >
+          {layers === null ? (
+            <p className='text-[12.5px] text-[var(--pv2-faint)]'>
+              {t('layersLoading')}
+            </p>
+          ) : layers.length ? (
+            <ol className='flex flex-col gap-2'>
+              {layers.map((layer, i) => {
+                const role = layer.role ? ROLE_STYLE[layer.role] : null;
+                const tracked = layer.components.filter(c => c.tracked).length;
+                return (
+                  <li
+                    key={`${layer.blockType ?? layer.name}-${i}`}
+                    className='flex gap-3 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] px-3 py-2.5'
+                  >
+                    <span className='mt-0.5 grid size-5 shrink-0 place-items-center rounded-md bg-[var(--pv2-canvas)] text-[10px] font-bold text-[var(--pv2-mut)] tabular-nums'>
+                      {i + 1}
+                    </span>
+                    <div className='min-w-0 flex-1'>
+                      <div className='flex flex-wrap items-center gap-2'>
+                        <span className='text-[13px] font-semibold text-[var(--pv2-ink)]'>
+                          {layer.name}
+                        </span>
+                        {role ? (
+                          <span
+                            className='inline-flex rounded-full px-1.5 py-px text-[9px] font-bold tracking-[0.05em] uppercase'
+                            style={{ background: role.bg, color: role.fg }}
+                          >
+                            {t(role.labelKey)}
+                          </span>
+                        ) : null}
+                        {!layer.visible ? (
+                          <span className='inline-flex rounded-full border border-dashed border-[var(--pv2-hair)] px-1.5 py-px text-[9px] font-bold tracking-[0.05em] text-[var(--pv2-faint)] uppercase'>
+                            {t('layerHidden')}
+                          </span>
+                        ) : null}
+                        <span
+                          className={cn(
+                            'ml-auto shrink-0 text-[10.5px] font-semibold',
+                            tracked
+                              ? 'text-[var(--pv2-mut)]'
+                              : 'text-[var(--pv2-faint)]'
+                          )}
+                        >
+                          {tracked
+                            ? t('layerSignals', { count: tracked })
+                            : t('layerNotTracked')}
+                        </span>
+                      </div>
+                      <div className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1'>
+                        {layer.blockType ? (
+                          <code className='font-mono text-[11px] text-[var(--pv2-faint)]'>
+                            {layer.blockType}
+                          </code>
+                        ) : null}
+                        {layer.blockSignals.map(sig => (
+                          <span
+                            key={sig}
+                            className='rounded-full bg-[var(--pv2-canvas)] px-1.5 py-px text-[10px] text-[var(--pv2-mut)]'
+                          >
+                            {BLOCK_SIGNAL_LABEL_KEY[sig]
+                              ? t(BLOCK_SIGNAL_LABEL_KEY[sig])
+                              : sig}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                    <p className='mt-1 text-[12px] leading-relaxed text-[var(--pv2-mut)]'>
-                      {layer.description}
-                    </p>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-        </section>
+                  </li>
+                );
+              })}
+            </ol>
+          ) : (
+            <p className='text-[12.5px] text-[var(--pv2-faint)]'>
+              {t('layersEmpty')}
+            </p>
+          )}
+        </Box>
       </div>
 
-      <aside className='min-w-0'>
-        <section className='rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] px-3.5 py-3'>
-          <h3 className='mb-1 font-[family-name:var(--pv2-disp)] text-[13px] font-bold tracking-[-0.02em] text-[var(--pv2-ink)]'>
-            {t('sectionOrganization')}
-          </h3>
-          {/* Same section, different facts. A block knows what it is (type,
-              scope, surfaces, how often it has been used); a page knows where
-              it lives (slug, external URL, vehicle). Neither is shown the
-              other's empty rows. */}
+      <aside className='flex min-w-0 flex-col gap-3'>
+        <Box title={t('sectionOrganization')}>
           <div className='divide-y divide-[var(--pv2-hair)]'>
-            <ReadRow label={t('fieldKind')}>
-              {t(isBlock ? 'kindBlock' : 'kindPage')}
-            </ReadRow>
-
-            {isBlock ? (
-              <ReadRow label={t('fieldTypeCode')}>
-                <span className='font-mono text-[11.5px]'>
-                  {experience.typeCode ?? '—'}
-                </span>
-              </ReadRow>
-            ) : (
-              <ReadRow label={t('fieldVehicle')}>
-                {t(VEHICLE_LABEL_KEY[experience.vehicle])}
-              </ReadRow>
-            )}
-
-            <ReadRow label={t('fieldObjective')}>
+            <ReadField label={t('fieldCategory')}>
+              {t(CATEGORY_LABEL_KEY[experience.category])}
+            </ReadField>
+            <ReadField label={t('fieldVehicle')}>
+              {t(VEHICLE_LABEL_KEY[experience.vehicle])}
+            </ReadField>
+            <ReadField label={t('fieldObjective')}>
               <span
                 className='inline-flex items-center rounded-full px-2 py-[3px] text-[9.5px] font-bold tracking-[0.05em] uppercase'
                 style={{ background: pill.bg, color: pill.fg }}
               >
                 {t(OBJECTIVE_LABEL_KEY[experience.objective])}
               </span>
-            </ReadRow>
-
-            {isBlock ? (
-              <>
-                {experience.scope ? (
-                  <ReadRow label={t('fieldScope')}>
-                    {t(SCOPE_LABEL_KEY[experience.scope])}
-                  </ReadRow>
-                ) : null}
-                <ReadRow label={t('fieldSurfaces')}>
-                  {experience.supportedSurfaces?.length ? (
-                    experience.supportedSurfaces
-                      .map(s => t(SURFACE_LABEL_KEY[s]))
-                      .join(' · ')
-                  ) : (
-                    <span className='text-[var(--pv2-faint)]'>
-                      {t('surfacesNone')}
+            </ReadField>
+            <ReadField label={t('fieldInteractions')}>
+              {experience.interactions.length ? (
+                <span className='flex flex-wrap gap-1.5'>
+                  {EXPERIENCE_INTERACTIONS.filter(i =>
+                    experience.interactions.includes(i.id)
+                  ).map(i => (
+                    <span
+                      key={i.id}
+                      title={t(i.descKey)}
+                      className='cursor-help rounded-full border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-2 py-0.5 text-[11px] text-[var(--pv2-mut)]'
+                    >
+                      {t(i.labelKey)}
                     </span>
-                  )}
-                </ReadRow>
-                <ReadRow label={t('fieldUsage')}>
-                  {t('blockUsageCount', { count: experience.usageCount ?? 0 })}
-                </ReadRow>
-                {experience.tags?.length ? (
-                  <ReadRow label={t('fieldTags')}>
-                    {experience.tags.join(' · ')}
-                  </ReadRow>
-                ) : null}
-              </>
-            ) : (
-              <>
-                <ReadRow label={t('fieldSlug')}>
-                  {experience.slug ? (
-                    <span className='font-mono text-[11.5px]'>
-                      /{experience.slug}
-                    </span>
-                  ) : (
-                    <span className='text-[var(--pv2-faint)]'>
-                      {t('noSlug')}
-                    </span>
-                  )}
-                </ReadRow>
-                <ReadRow label={t('fieldStatus')}>
-                  {t(STATUS_LABEL_KEY[experience.status])}
-                </ReadRow>
-                {experience.externalUrl ? (
-                  <ReadRow label={t('fieldExternal')}>
-                    <span className='font-mono text-[11.5px] break-all'>
-                      {experience.externalUrl}
-                    </span>
-                  </ReadRow>
-                ) : null}
-              </>
-            )}
-
-            <ReadRow label={t('fieldUpdated')}>
+                  ))}
+                </span>
+              ) : (
+                <span className='text-[12.5px] font-normal text-[var(--pv2-faint)]'>
+                  {t('interactionNone')}
+                </span>
+              )}
+            </ReadField>
+            {/* Ba dòng dưới KHÔNG có trong prototype. Giữ vì chúng là thứ duy
+                nhất trên màn này nối bản ghi với trang thật ngoài kia. */}
+            <ReadField label={t('fieldSlug')}>
+              {experience.slug ? (
+                <span className='font-mono text-[11.5px]'>
+                  /{experience.slug}
+                </span>
+              ) : (
+                <span className='text-[12.5px] font-normal text-[var(--pv2-faint)]'>
+                  {t('noSlug')}
+                </span>
+              )}
+            </ReadField>
+            <ReadField label={t('fieldStatus')}>
+              {t(STATUS_LABEL_KEY[experience.status])}
+            </ReadField>
+            <ReadField label={t('fieldUpdated')}>
               {experience.updatedLabel}
-            </ReadRow>
+            </ReadField>
           </div>
+        </Box>
 
-          <div className='mt-3 border-t border-[var(--pv2-hair)] pt-3'>
-            <span className='text-[11px] font-semibold tracking-[0.03em] text-[var(--pv2-faint)] uppercase'>
-              {t('fieldInteractions')}
-            </span>
-            {experience.interactions.length ? (
-              <div className='mt-1.5 flex flex-wrap gap-1.5'>
-                {EXPERIENCE_INTERACTIONS.filter(i =>
-                  experience.interactions.includes(i.id)
-                ).map(i => (
-                  <span
-                    key={i.id}
-                    title={t(i.descKey)}
-                    className='cursor-help rounded-full border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-2 py-0.5 text-[11px] text-[var(--pv2-mut)]'
-                  >
-                    {t(i.labelKey)}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className='mt-1.5 text-[12px] text-[var(--pv2-faint)]'>
-                {t('interactionNone')}
-              </p>
-            )}
-          </div>
-        </section>
-
-        <section className='mt-3 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] px-3.5 py-3'>
-          <h3 className='font-[family-name:var(--pv2-disp)] text-[13px] font-bold tracking-[-0.02em] text-[var(--pv2-ink)]'>
+        <section
+          className='rounded-[var(--pv2-r)] border px-4 py-3.5'
+          /* Viền theo tông — prototype `border-color:${cc}`. Con số một mình
+             không nói được 29% là tệ; cái viền nói. */
+          style={{
+            borderColor: coverage ? toneStyle.bg : 'var(--pv2-hair)',
+          }}
+        >
+          <h3 className='font-[family-name:var(--pv2-disp)] text-[14px] font-bold tracking-[-0.02em] text-[var(--pv2-ink)]'>
             {t('sectionCoverage')}
           </h3>
-          <p
-            className='mt-1 font-[family-name:var(--pv2-disp)] text-[1.75rem] leading-none font-bold tabular-nums'
-            style={{ color: toneStyle.fg }}
-          >
-            {coverage.pct}%
-          </p>
-          <div className='mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--pv2-canvas)]'>
-            <span
-              className='block h-full rounded-full'
-              style={{
-                width: `${coverage.pct}%`,
-                background: toneStyle.bg,
-              }}
-            />
-          </div>
-          <p className='mt-2.5 text-[12px] leading-relaxed text-[var(--pv2-mut)]'>
-            {t('coverageBody', {
-              tracked: coverage.trackedComponents,
-              total: coverage.components,
-              trackedBlocks: coverage.trackedBlocks,
-              blocks: coverage.blocks,
-            })}
-          </p>
+          {coverage ? (
+            <>
+              <p
+                className='mt-1 font-[family-name:var(--pv2-disp)] text-[1.75rem] leading-none font-bold tabular-nums'
+                style={{ color: toneStyle.fg }}
+              >
+                {coverage.pct}%
+              </p>
+              <div className='mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--pv2-canvas)]'>
+                <span
+                  className='block h-full rounded-full'
+                  style={{
+                    width: `${coverage.pct}%`,
+                    background: toneStyle.bg,
+                  }}
+                />
+              </div>
+              <p className='mt-2.5 text-[12px] leading-relaxed text-[var(--pv2-mut)]'>
+                {t('coverageBody', {
+                  tracked: coverage.trackedComponents,
+                  total: coverage.components,
+                  trackedBlocks: coverage.trackedBlocks,
+                  blocks: coverage.blocks,
+                })}
+              </p>
+              {silent.length ? (
+                <ul className='mt-2.5 flex flex-col gap-1 border-t border-[var(--pv2-hair)] pt-2.5'>
+                  {silent.map((l, i) => (
+                    <li
+                      key={`${l.blockType ?? l.name}-${i}`}
+                      className='flex items-center gap-2 text-[11.5px] text-[var(--pv2-mut)]'
+                    >
+                      <span
+                        className='grid size-4 shrink-0 place-items-center rounded-full text-[9px] font-bold text-white'
+                        style={{ background: toneStyle.bg }}
+                        aria-hidden
+                      >
+                        !
+                      </span>
+                      <span className='min-w-0 truncate'>
+                        {t('coverageBlind', { name: l.name })}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </>
+          ) : (
+            /* Chưa nạp xong, hoặc BE nói loại này không đo được. Vẽ 0% ở đây
+               là dựng lại đúng con số bịa vừa gỡ khỏi module. */
+            <p className='mt-1.5 text-[12px] text-[var(--pv2-faint)]'>
+              {t('coverageUnmeasured')}
+            </p>
+          )}
         </section>
       </aside>
     </div>

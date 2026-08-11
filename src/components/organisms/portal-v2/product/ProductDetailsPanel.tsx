@@ -7,6 +7,7 @@ import {
   Film,
   FolderOpen,
   Image as ImageIcon,
+  Loader2,
   Plus,
   RotateCw,
   Trash2,
@@ -59,6 +60,20 @@ type ProductDetailsPanelProps = {
   isNew: boolean;
   onChange: (next: Product) => void;
   onRequestEdit: () => void;
+  /**
+   * Tải file lên và gắn vào sản phẩm. Không truyền = ẩn nút thêm — sản phẩm
+   * CHƯA LƯU thì chưa có id để gắn media vào.
+   */
+  onUploadMedia?: (files: File[]) => void;
+  /** Mở bảng chọn ảnh có sẵn trong thư viện. */
+  onPickFromLibrary?: () => void;
+  /**
+   * Mở bộ chọn ẢNH ĐẠI DIỆN. Tách khỏi `onRequestEdit`: bấm "Edit to change
+   * it" mà mở chế độ sửa cả sản phẩm thì người dùng thấy nguyên form kèm nút
+   * Xoá — trong khi việc họ muốn chỉ là chọn một ảnh làm mặt sản phẩm.
+   */
+  onPickCover?: () => void;
+  uploading?: boolean;
 };
 
 const KIND_ICON: Record<ProductAssetKind, typeof ImageIcon> = {
@@ -98,6 +113,10 @@ export const ProductDetailsPanel = ({
   isNew,
   onChange,
   onRequestEdit,
+  onUploadMedia,
+  onPickFromLibrary,
+  onPickCover,
+  uploading = false,
 }: ProductDetailsPanelProps) => {
   const t = useTranslations('portalV2.products');
 
@@ -264,7 +283,7 @@ export const ProductDetailsPanel = ({
                 {cover ? null : ` ${t('profileNoCover')}`}
                 <button
                   type='button'
-                  onClick={onRequestEdit}
+                  onClick={onPickCover ?? onRequestEdit}
                   className='mt-2 block cursor-pointer text-[11.5px] font-bold text-[var(--pv2-electric)] hover:underline'
                 >
                   {t('editToChange')}
@@ -340,14 +359,57 @@ export const ProductDetailsPanel = ({
                 </span>
               </button>
             ))}
-            <button
-              type='button'
-              onClick={() => toast.message(t('toastUploadFiled'))}
-              aria-label={t('addMedia')}
-              className='grid size-16 cursor-pointer place-items-center rounded-[9px] border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] text-[var(--pv2-faint)] hover:border-[var(--pv2-electric)] hover:text-[var(--pv2-electric)]'
-            >
-              <Plus className='size-4' strokeWidth={2.4} aria-hidden />
-            </button>
+            {onUploadMedia && onPickFromLibrary ? (
+              <button
+                type='button'
+                onClick={onPickFromLibrary}
+                aria-label={t('pickFromLibrary')}
+                title={t('pickFromLibrary')}
+                className='grid size-16 cursor-pointer place-items-center rounded-[9px] border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] text-[var(--pv2-faint)] hover:border-[var(--pv2-electric)] hover:text-[var(--pv2-electric)]'
+              >
+                <FolderOpen className='size-4' strokeWidth={2.2} aria-hidden />
+              </button>
+            ) : null}
+            {onUploadMedia ? (
+              <label
+                aria-label={t('addMedia')}
+                title={t('addMedia')}
+                className={cn(
+                  'grid size-16 place-items-center rounded-[9px] border border-dashed',
+                  'border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] text-[var(--pv2-faint)]',
+                  uploading
+                    ? 'cursor-wait opacity-60'
+                    : 'cursor-pointer hover:border-[var(--pv2-electric)] hover:text-[var(--pv2-electric)]'
+                )}
+              >
+                {uploading ? (
+                  <Loader2 className='size-4 animate-spin' aria-hidden />
+                ) : (
+                  <Plus className='size-4' strokeWidth={2.4} aria-hidden />
+                )}
+                <input
+                  type='file'
+                  multiple
+                  accept='image/*,video/mp4,video/webm'
+                  className='sr-only'
+                  disabled={uploading}
+                  onChange={e => {
+                    const files = Array.from(e.target.files ?? []);
+                    // Xoá value để chọn lại ĐÚNG file vừa chọn vẫn kích hoạt
+                    // onChange — trình duyệt bỏ qua nếu value không đổi.
+                    e.target.value = '';
+                    if (files.length) onUploadMedia(files);
+                  }}
+                />
+              </label>
+            ) : (
+              <span
+                title={t('addMediaNeedsSave')}
+                className='grid size-16 place-items-center rounded-[9px] border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] text-[var(--pv2-faint)] opacity-50'
+              >
+                <Plus className='size-4' strokeWidth={2.4} aria-hidden />
+              </span>
+            )}
           </div>
           <p className='mt-3 flex items-start gap-2 text-[11.5px] leading-relaxed text-[var(--pv2-mut)]'>
             <FolderOpen

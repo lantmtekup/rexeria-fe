@@ -8,6 +8,11 @@ import { rexerApi } from '@/services/rexer/endpoints';
 export type ProductCatalogQuery = {
   /** Free-text search — forwarded to the products API as `q`. */
   q?: string;
+  /**
+   * Giới hạn theo thương hiệu. Bỏ trống = mọi brand đọc được — đúng cho admin
+   * đang xem chéo, KHÔNG đúng cho người dùng thường; nơi gọi quyết định.
+   */
+  brandId?: string | null;
 };
 
 export type ProductCatalogResult = {
@@ -57,6 +62,7 @@ export const fetchProductCatalog = async (
         limit: PAGE_LIMIT,
         sort: '-created_at',
         ...(q ? { q } : {}),
+        ...(query.brandId ? { brand_id: query.brandId } : {}),
       }),
       rexerApi.brands.list({ limit: LOOKUP_LIMIT }),
       rexerApi.productCategories.list({ limit: LOOKUP_LIMIT }),

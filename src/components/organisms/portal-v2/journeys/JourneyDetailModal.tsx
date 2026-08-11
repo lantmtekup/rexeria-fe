@@ -2,7 +2,15 @@
 
 import { Copy, GitFork, PenLine } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+
+import {
+  fetchJourneyReadiness,
+  fetchJourneyStats,
+} from '@/services/portal-v2/journeyMeasured';
+
+import type { JourneySegment } from '@/lib/portal-v2/journeys/constants';
+import type { PersonaOption } from '@/services/portal-v2/journeyAudience';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { Modal } from '@/components/molecules/portal-v2/Modal';
@@ -20,10 +28,17 @@ import {
   journeyReadiness,
   journeyStats,
 } from '@/lib/portal-v2/journeys/helpers';
-import type { Journey, JourneyDetailTab } from '@/lib/portal-v2/journeys/types';
+import type {
+  Journey,
+  JourneyDetailTab,
+  JourneyReadiness,
+  JourneyStats,
+} from '@/lib/portal-v2/journeys/types';
 import { cn } from '@/lib/cn';
 
 type JourneyDetailModalProps = {
+  personas?: PersonaOption[];
+  segments?: JourneySegment[];
   journey: Journey;
   journeys: Journey[];
   onClose: () => void;
@@ -34,6 +49,8 @@ type JourneyDetailModalProps = {
 };
 
 export const JourneyDetailModal = ({
+  personas = [],
+  segments = [],
   journey,
   journeys,
   onClose,
@@ -46,11 +63,57 @@ export const JourneyDetailModal = ({
   /* A fresh journey gets a fresh window — `key` on the modal resets this. */
   const [tab, setTab] = useState<JourneyDetailTab>('over');
 
-  const readiness = useMemo(() => journeyReadiness(journey), [journey]);
-  const stats = useMemo(
+  const local = useMemo(() => journeyReadiness(journey), [journey]);
+
+  /**
+   * Điểm sẵn sàng do SERVER chấm — `GET /journeys/{id}/readiness`.
+   *
+   * Bản tính ở FE vẫn giữ làm dự phòng cho lúc chưa nạp xong, nhưng nó chấm ở
+   * tầng khác nên hai bên từng lệch hẳn: màn hình 62% trong khi server nói 33%.
+   * Cái quyết định `Use` có chạy hay không là bản của server.
+   */
+  const [remote, setRemote] = useState<JourneyReadiness | null>(null);
+  const [measured, setMeasured] = useState<{
+    sessions: number;
+    completed: number;
+    rate: number;
+  } | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    setRemote(null);
+    setMeasured(null);
+    void Promise.allSettled([
+      fetchJourneyReadiness(journey.id),
+      fetchJourneyStats(journey.id),
+    ]).then(([r, s]) => {
+      if (!alive) return;
+      if (r.status === 'fulfilled') setRemote(r.value);
+      if (s.status === 'fulfilled') setMeasured(s.value);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [journey.id]);
+
+  const readiness = remote ?? local;
+  /**
+   * Dải số ở đầu modal.
+   *
+   * `journeyStats` gộp từ `node.stats`, thứ mapper v2 KHÔNG điền — nên nó luôn
+   * null và dải số luôn nói "chưa chạy". Đúng khi brand chưa có traffic, nhưng
+   * sẽ vẫn nói thế khi đã có. `GET /journeys/{id}/stats` mới là nguồn thật;
+   * bản gộp cục bộ chỉ còn là dự phòng.
+   */
+  const localStats = useMemo(
     () => journeyStats(journeys, journey),
     [journeys, journey]
   );
+  const stats: JourneyStats | null = measured
+    ? { sessions: measured.sessions, lift: localStats?.lift ?? 0 }
+    : localStats;
+  /** Server đo được phiên nhưng KHÔNG trả lift — đừng vẽ một số 0 thay nó. */
+  const hasLift = localStats !== null;
   const copies = useMemo(
     () => copiesOfJourney(journeys, journey),
     [journeys, journey]
@@ -83,10 +146,26 @@ export const JourneyDetailModal = ({
       footer={
         journey.template ? (
           <>
-            <span className='text-[11.5px] text-[var(--pv2-faint)]'>
-              {copies.length
-                ? t('footBlueprintCopies', { count: copies.length })
-                : t('footBlueprintNoCopies')}
+            {/*
+              Lý do phải HIỆN THÀNH CHỮ. Một nút xám không kèm giải thích đọc
+              như hỏng hóc — người dùng còn tưởng hành trình đã bị gắn vào
+              chiến dịch nào đó rồi. `title` chỉ hiện khi rê chuột, và trên
+              cảm ứng thì không bao giờ.
+            */}
+            <span
+              className={
+                readiness.missing.length > 0
+                  ? 'max-w-[46ch] text-[11.5px] leading-relaxed text-[var(--pv2-warning)]'
+                  : 'text-[11.5px] text-[var(--pv2-faint)]'
+              }
+            >
+              {readiness.missing.length > 0
+                ? t('useBlockedNote', {
+                    count: readiness.missing.length,
+                  })
+                : copies.length
+                  ? t('footBlueprintCopies', { count: copies.length })
+                  : t('footBlueprintNoCopies')}
             </span>
             <span className='flex-1' />
             <Button
@@ -101,6 +180,11 @@ export const JourneyDetailModal = ({
               <PenLine className='size-3.5' strokeWidth={2.2} aria-hidden />
               {t('editCanvas')}
             </Button>
+            {/*
+              KHÔNG chặn: gắn một lộ trình đang dựng dở vào chiến dịch để làm
+              tiếp ở đó là việc hợp lệ. Dòng chữ bên trái vẫn nêu thứ còn
+              thiếu, nên trạng thái đọc được mà không cản đường.
+            */}
             <Button size='sm' onClick={() => onFork(journey)}>
               <GitFork className='size-3.5' strokeWidth={2.2} aria-hidden />
               {t('useInCampaign')}
@@ -142,14 +226,16 @@ export const JourneyDetailModal = ({
               {t('stripMeasured')}
             </span>
             <span className='mt-0.5 flex items-baseline gap-2'>
-              <span
-                className={cn(
-                  'font-[family-name:var(--pv2-disp)] text-[17px] font-bold tabular-nums',
-                  stats.lift >= 0 ? 'text-[#0e9d6e]' : 'text-[#9a2436]'
-                )}
-              >
-                {formatLift(stats.lift)}
-              </span>
+              {hasLift ? (
+                <span
+                  className={cn(
+                    'font-[family-name:var(--pv2-disp)] text-[17px] font-bold tabular-nums',
+                    stats.lift >= 0 ? 'text-[#0e9d6e]' : 'text-[#9a2436]'
+                  )}
+                >
+                  {formatLift(stats.lift)}
+                </span>
+              ) : null}
               <span className='text-[11.5px] text-[var(--pv2-mut)] tabular-nums'>
                 {t('sessionsAssisted', { count: formatCount(stats.sessions) })}
               </span>
@@ -182,10 +268,16 @@ export const JourneyDetailModal = ({
       />
 
       <div className='pt-4' role='tabpanel'>
-        {tab === 'over' ? <JourneyOverviewPane journey={journey} /> : null}
+        {tab === 'over' ? (
+          <JourneyOverviewPane journey={journey} personas={personas} />
+        ) : null}
         {tab === 'canvas' ? <JourneyCanvasPane journey={journey} /> : null}
         {tab === 'walk' ? (
-          <JourneySimulatePane journey={journey} journeys={journeys} />
+          <JourneySimulatePane
+            journey={journey}
+            journeys={journeys}
+            segments={segments}
+          />
         ) : null}
         {tab === 'ready' ? <JourneyReadinessPane journey={journey} /> : null}
       </div>

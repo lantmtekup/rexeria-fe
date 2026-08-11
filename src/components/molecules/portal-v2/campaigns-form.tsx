@@ -8,9 +8,9 @@ import { cn } from '@/lib/cn';
 import {
   CAMPAIGN_HEALTH,
   CAMPAIGN_STAGES,
-  CAMPAIGN_TYPES,
   ITEM_FLOW,
   ITEM_STATUS,
+  campaignTypeStyle,
 } from '@/lib/portal-v2/campaigns/constants';
 import type {
   CampaignHealth,
@@ -99,7 +99,7 @@ export const TypeSwatch = ({
   size = 34,
   radius = 10,
 }: {
-  type: CampaignType;
+  type: CampaignType | null;
   size?: number;
   radius?: number;
 }) => (
@@ -110,7 +110,7 @@ export const TypeSwatch = ({
       width: size,
       height: size,
       borderRadius: radius,
-      background: CAMPAIGN_TYPES[type].color,
+      background: campaignTypeStyle(type).color,
     }}
   >
     <Megaphone

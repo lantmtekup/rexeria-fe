@@ -1030,12 +1030,7 @@ export interface CoolHunterFooterContent {
 
 /** Named scrim presets for PnjHero storefront wash. */
 export type PnjHeroScrimPresetId =
-  | 'pnj'
-  | 'none'
-  | 'softLight'
-  | 'softDark'
-  | 'mint'
-  | 'navyFade';
+  'pnj' | 'none' | 'softLight' | 'softDark' | 'mint' | 'navyFade';
 
 /** One absolute overlay layer on the storefront image. */
 export interface PnjHeroScrimLayer {
@@ -1180,12 +1175,7 @@ export interface TheGrandFooterPolicy {
  * xem `blocks/theGrandFooterSocialIcons.tsx`.
  */
 export type TheGrandFooterSocialPlatform =
-  | 'facebook'
-  | 'instagram'
-  | 'linkedin'
-  | 'tripadvisor'
-  | 'youtube'
-  | 'tiktok';
+  'facebook' | 'instagram' | 'linkedin' | 'tripadvisor' | 'youtube' | 'tiktok';
 
 /** 1 icon social ở cột 4 của The Grand · Footer. */
 export interface TheGrandFooterSocial {
@@ -3173,11 +3163,7 @@ export interface GambitProductDetailsAccordion {
 }
 /** Icon dựng sẵn của dòng hành động (SVG inline trong block). */
 export type GambitProductDetailsActionIcon =
-  | 'plane'
-  | 'chat'
-  | 'pin'
-  | 'search'
-  | 'arrow';
+  'plane' | 'chat' | 'pin' | 'search' | 'arrow';
 export interface GambitProductDetailsAction {
   label: string;
   /** URL / token link (`#page:`, `#block:`) — rỗng = nút không điều hướng. */
@@ -4367,10 +4353,7 @@ export interface ExtraElementStyle {
  * animation > plain.
  */
 export type TextAnimationMode =
-  | 'none'
-  | 'fade-up'
-  | 'typewriter'
-  | 'split-slide-up';
+  'none' | 'fade-up' | 'typewriter' | 'split-slide-up';
 
 export interface TextCounterConfig {
   /** Starting value of the count-up. Defaults to 0. */

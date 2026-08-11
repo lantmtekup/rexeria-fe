@@ -3,6 +3,8 @@
 import { Copy, Eye, Link2, Loader2, Trash2, TriangleAlert } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+import type { PersonaOption } from '@/services/portal-v2/journeyAudience';
+
 import { Button } from '@/components/molecules/portal-v2/Button';
 import {
   Field,
@@ -18,9 +20,7 @@ import {
   JOURNEY_KIND_ORDER,
   JOURNEY_KIND_STYLE,
   JOURNEY_OBJECTIVES,
-  JOURNEY_SEGMENTS,
   entrySourceById,
-  segmentById,
 } from '@/lib/portal-v2/journeys/constants';
 import type {
   Journey,
@@ -46,6 +46,8 @@ import type { ExperienceObjective } from '@/lib/portal-v2/experiences/types';
 
 type EditorInspectorProps = {
   draft: Journey;
+  /** Chân dung của brand — `brand_profiles.audience`. */
+  personas?: PersonaOption[];
   node: JourneyNode | null;
   /** Live per keystroke. */
   onPatch: (patch: JourneyNodePatch) => void;
@@ -65,9 +67,12 @@ type EditorInspectorProps = {
     tagline?: string;
     summary?: string;
     obj?: ExperienceObjective;
-    seg?: string;
+    personaId?: string | null;
   }) => void;
-  onMetaSelect: (patch: { obj?: ExperienceObjective; seg?: string }) => void;
+  onMetaSelect: (patch: {
+    obj?: ExperienceObjective;
+    personaId?: string | null;
+  }) => void;
   /** Subject lens — stage action (build / fork / edit), not tied to selection. */
   lensFit?: StageFit | null;
   onLensStageAction?: () => void;
@@ -96,6 +101,7 @@ const Note = ({
 
 export const EditorInspector = ({
   draft,
+  personas = [],
   node,
   onPatch,
   onCommit,
@@ -117,7 +123,7 @@ export const EditorInspector = ({
 
   /* ── nothing selected: the journey's own fields ─────────────────────── */
   if (!node) {
-    const segment = segmentById(draft.seg);
+    const persona = personas.find(p => p.id === draft.personaId) ?? null;
 
     if (lensReadOnly) {
       return (
@@ -136,7 +142,9 @@ export const EditorInspector = ({
               {draft.tagline}
             </p>
           ) : null}
-          {segment ? <Note>{segment.want}</Note> : null}
+          {persona ? (
+            <Note>{t('personaBehaves', { seg: persona.behaves || '—' })}</Note>
+          ) : null}
         </div>
       );
     }
@@ -185,20 +193,26 @@ export const EditorInspector = ({
         </Field>
 
         <Field label={t('overAudience')}>
+          {/*
+            Chân dung của brand, không phải phân khúc hành vi. Lưu vào
+            `journeys.persona_id` và BE kiểm nó có thật trong hồ sơ brand.
+          */}
           <TextSelect
-            value={draft.seg}
-            onChange={e => onMetaSelect({ seg: e.target.value })}
+            value={draft.personaId ?? ''}
+            onChange={e => onMetaSelect({ personaId: e.target.value || null })}
           >
-            <option value='all'>{t('segmentAll')}</option>
-            {JOURNEY_SEGMENTS.map(s => (
-              <option key={s.id} value={s.id}>
-                {s.n}
+            <option value=''>{t('segmentAll')}</option>
+            {personas.map(p => (
+              <option key={p.id} value={p.id}>
+                {p.name}
               </option>
             ))}
           </TextSelect>
         </Field>
 
-        {segment ? <Note>{segment.want}</Note> : null}
+        {persona ? (
+          <Note>{t('personaBehaves', { seg: persona.behaves || '—' })}</Note>
+        ) : null}
       </div>
     );
   }

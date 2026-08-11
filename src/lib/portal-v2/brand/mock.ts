@@ -48,6 +48,7 @@ export const MOCK_BRAND: BrandData = {
       id: 'a1',
       n: 'Skin-first buyer',
       tier: 'Primary',
+      behaves: '',
       stage: 'consideration',
       awareness: 'problem',
       motivations: [
@@ -68,6 +69,7 @@ export const MOCK_BRAND: BrandData = {
       id: 'a2',
       n: 'Switcher',
       tier: 'Secondary',
+      behaves: '',
       stage: 'decision',
       awareness: 'solution',
       motivations: [
@@ -87,6 +89,7 @@ export const MOCK_BRAND: BrandData = {
       id: 'a3',
       n: 'Repeat buyer',
       tier: 'Retention',
+      behaves: '',
       stage: 'loyalty',
       awareness: 'most',
       motivations: [

@@ -196,7 +196,10 @@ export const ExperiencePickerModal = ({
               onPick({
                 id: experience.id,
                 name: experience.name,
-                coverage: experience.coverage.pct,
+                // `coverage` nay có thể null (BE bỏ qua khi loại không đo
+                // được). Payload của journey cần một số, nên quy về 0 — nhưng
+                // chỗ HIỂN THỊ bên dưới thì nói "—" chứ không nói 0%.
+                coverage: experience.coveragePct ?? 0,
                 slug: experience.slug ?? undefined,
               });
 
@@ -265,12 +268,15 @@ export const ExperiencePickerModal = ({
                     <span
                       className={cn(
                         'text-[10.5px] tabular-nums',
-                        experience.coverage.pct > 0
+                        experience.coveragePct !== null &&
+                          experience.coveragePct > 0
                           ? 'text-[var(--pv2-faint)]'
                           : 'font-semibold text-[#9a2436]'
                       )}
                     >
-                      {t('pickerTracked', { pct: experience.coverage.pct })}
+                      {experience.coveragePct !== null
+                        ? t('pickerTracked', { pct: experience.coveragePct })
+                        : t('coverageUnmeasured')}
                     </span>
                   </span>
                 </span>

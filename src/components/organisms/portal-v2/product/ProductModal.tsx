@@ -34,6 +34,10 @@ type ProductModalProps = {
   onChange: (next: Product) => void;
   onClose: () => void;
   onRequestEdit: () => void;
+  onUploadMedia?: (files: File[]) => void;
+  onPickFromLibrary?: () => void;
+  onPickCover?: () => void;
+  uploading?: boolean;
   onSave: () => void;
   onCreate: (status: 'draft' | 'active') => void;
   onDelete: () => void;
@@ -51,6 +55,10 @@ export const ProductModal = ({
   onChange,
   onClose,
   onRequestEdit,
+  onUploadMedia,
+  onPickFromLibrary,
+  onPickCover,
+  uploading,
   onSave,
   onCreate,
   onDelete,
@@ -197,6 +205,10 @@ export const ProductModal = ({
       <div role='tabpanel'>
         {activeTab === 'details' ? (
           <ProductDetailsPanel
+            onUploadMedia={onUploadMedia}
+            onPickFromLibrary={onPickFromLibrary}
+            onPickCover={onPickCover}
+            uploading={uploading}
             product={p}
             assets={assets}
             editing={editing}

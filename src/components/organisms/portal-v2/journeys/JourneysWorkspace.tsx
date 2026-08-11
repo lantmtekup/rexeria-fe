@@ -5,6 +5,19 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import type { JourneySegment } from '@/lib/portal-v2/journeys/constants';
+import type { PersonaOption } from '@/services/portal-v2/journeyAudience';
+
+import { fetchExperienceRefs } from '@/services/portal-v2/journeyMeasured';
+import {
+  saveFailureReasons,
+  createJourney as createJourneyApi,
+  deleteJourneys as deleteJourneysApi,
+  duplicateJourney as duplicateJourneyApi,
+  saveJourney as saveJourneyApi,
+  useJourney as forkJourneyOntoCampaign,
+} from '@/services/portal-v2/journeyBoard';
+
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
 import { DeleteJourneyModal } from '@/components/organisms/portal-v2/journeys/DeleteJourneyModal';
@@ -24,14 +37,12 @@ import {
   countByState,
   createJourney,
   deleteJourney,
-  duplicateJourney,
   filterJourneys,
   findJourney,
-  forkJourney,
   journeyHome,
   journeyStats,
+  nodeNamesOf,
 } from '@/lib/portal-v2/journeys/helpers';
-import { MOCK_JOURNEYS, cloneJourneys } from '@/lib/portal-v2/journeys/mock';
 import type {
   Journey,
   JourneyDraftInput,
@@ -49,18 +60,101 @@ type Overlay =
   | null;
 
 type JourneysWorkspaceProps = {
+  /** Hành trình THẬT — `GET /v1/journeys`, đã lọc theo brand. */
+  initialJourneys: Journey[];
+  /** `version` theo id, cho lần `PUT` kế tiếp. */
+  initialVersions: Record<string, number>;
+  /** Brand đang xem — cần khi TẠO, vì admin không thuộc brand nào. */
+  brandId: string | null;
+  /** Chân dung khách của brand — `brand_profiles.audience`. */
+  personas: PersonaOption[];
+  /** Chiến dịch THẬT — `GET /v1/campaigns`, cho hộp "Use in campaign". */
+  campaigns: { id: string; name: string; stage?: string }[];
+  /** Phân khúc hành vi ĐO ĐƯỢC — `GET /v1/intel/segments`. */
+  segments: JourneySegment[];
+  initialError?: string | null;
   /** Journey id from `?edit=` — reopens the canvas editor on a pasted / reloaded link. */
   initialEditId?: string | null;
 };
 
 export const JourneysWorkspace = ({
   initialEditId = null,
+  initialJourneys,
+  initialVersions,
+  brandId,
+  personas,
+  campaigns,
+  segments,
+  initialError = null,
 }: JourneysWorkspaceProps) => {
   const t = useTranslations('portalV2.journeys');
 
-  const [journeys, setJourneys] = useState<Journey[]>(() =>
-    cloneJourneys(MOCK_JOURNEYS)
+  // Dữ liệu THẬT — `GET /v1/journeys`.
+  const [journeys, setJourneys] = useState<Journey[]>(() => initialJourneys);
+  /**
+   * `version` theo id — khoá lạc quan mà `PUT` bắt buộc gửi kèm. Giữ riêng vì
+   * shape UI không mang trường đó; lệch số là BE từ chối ghi.
+   */
+  const versionsRef = useRef<Record<string, number>>(initialVersions);
+  const [loadError] = useState<string | null>(initialError);
+
+  /**
+   * Tập id trải nghiệm đang được trỏ tới, ĐÃ dựng thành chuỗi.
+   *
+   * Phụ thuộc theo chuỗi này chứ không theo `journeys`: hiệu ứng bên dưới ghi
+   * nhãn NGƯỢC vào `journeys`, nên lấy cả mảng làm phụ thuộc sẽ tự kích hoạt
+   * lại chính nó mãi.
+   */
+  const linkedExperienceIds = useMemo(
+    () =>
+      [
+        ...new Set(
+          journeys.flatMap(j => j.nodes.flatMap(n => (n.x ? [n.x] : [])))
+        ),
+      ]
+        .sort()
+        .join('|'),
+    [journeys]
   );
+
+  /**
+   * Nhãn + độ phủ của trải nghiệm mà các node đang trỏ tới.
+   *
+   * Node chỉ giữ `experience_id`; `xName`/`xCoverage` thuộc về THƯ VIỆN. Không
+   * nạp chúng thì luật "Every linked experience has tracking points" đọc một
+   * trường không ai điền, nên VĨNH VIỄN trượt — dấu ✗ đó không thao tác nào
+   * chuyển xanh được.
+   */
+  useEffect(() => {
+    const ids = journeys.flatMap(j => j.nodes.flatMap(n => (n.x ? [n.x] : [])));
+    if (ids.length === 0) return;
+    let alive = true;
+    void fetchExperienceRefs(ids, brandId).then(refs => {
+      if (!alive || Object.keys(refs).length === 0) return;
+      setJourneys(prev =>
+        prev.map(j => ({
+          ...j,
+          nodes: j.nodes.map(n => {
+            const ref = n.x ? refs[n.x] : undefined;
+            return ref
+              ? {
+                  ...n,
+                  xName: ref.name,
+                  ...(ref.coverage !== null ? { xCoverage: ref.coverage } : {}),
+                }
+              : n;
+          }),
+        }))
+      );
+    });
+    return () => {
+      alive = false;
+    };
+    // `journeys` CỐ Ý không nằm trong phụ thuộc: hiệu ứng này ghi nhãn ngược
+    // vào chính nó, nên thêm vào là một vòng lặp vô tận. Tập id đã đại diện đủ
+    // cho thứ cần nạp lại.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brandId, linkedExperienceIds]);
   const [filters, setFilters] = useState<JourneyFilters>(
     JOURNEY_DEFAULT_FILTERS
   );
@@ -71,14 +165,14 @@ export const JourneysWorkspace = ({
    */
   const [overlay, setOverlay] = useState<Overlay>(() => {
     if (!initialEditId) return null;
-    return findJourney(MOCK_JOURNEYS, initialEditId)
+    return findJourney(initialJourneys, initialEditId)
       ? { kind: 'edit', id: initialEditId }
       : null;
   });
 
-  /** `?edit=` pointed at a journey that is gone from the seed. */
+  /** `?edit=` trỏ vào một hành trình không còn. */
   const deadEditLinkRef = useRef(
-    Boolean(initialEditId) && !findJourney(MOCK_JOURNEYS, initialEditId)
+    Boolean(initialEditId) && !findJourney(initialJourneys, initialEditId)
   );
 
   const visible = useMemo(
@@ -120,74 +214,124 @@ export const JourneysWorkspace = ({
 
   const handleClose = useCallback(() => setOverlay(null), []);
 
-  const handleDuplicate = useCallback((journey: Journey) => {
-    setJourneys(prev => {
-      const result = duplicateJourney(prev, journey.id);
-      if (!result) return prev;
-      toast.success(`Duplicated — ${result.journey.name}`);
-      return result.list;
-    });
-  }, []);
-
-  const handleCreate = useCallback((input: JourneyDraftInput) => {
-    const journey = createJourney(input);
-    setJourneys(prev => [journey, ...prev]);
-    /* Rule 10 — never create into a filter that would hide the result. */
-    setFilters(prev => ({ ...prev, state: 'all', q: '' }));
-    setOverlay({ kind: 'detail', id: journey.id });
-    toast.success(`Created — ${journey.name}`);
-  }, []);
-
-  const handleFork = useCallback(
-    (campaignId: string, campaignName: string) => {
-      if (!activeId) return;
-      const result = forkJourney(journeys, activeId, campaignId, campaignName);
-      if (!result) return;
-
-      if (result.existed) {
-        toast(`${campaignName} already has this journey`);
-      } else {
-        setJourneys(result.list);
-        toast.success(
-          `Forked into ${campaignName} — the blueprint is untouched`
-        );
+  const handleDuplicate = useCallback(
+    async (journey: Journey) => {
+      const res = await duplicateJourneyApi(journey.id).catch(() => null);
+      if (!res) {
+        toast.error(t('toastDuplicateFailed'));
+        return;
       }
-      setFilters(prev => ({ ...prev, state: 'copy', q: '' }));
-      setOverlay({ kind: 'detail', id: result.journey.id });
+      versionsRef.current[res.journey.id] = res.version;
+      setJourneys(prev => [res.journey, ...prev]);
+      toast.success(`Duplicated — ${res.journey.name}`);
     },
-    [activeId, journeys]
+    [t]
   );
 
-  /** Quiet write-back used by autosave and discard-restore. No API yet. */
+  const handleCreate = useCallback(
+    async (input: JourneyDraftInput) => {
+      const draft = createJourney(input);
+      const res = await createJourneyApi(draft, brandId).catch(() => null);
+      if (!res) {
+        toast.error(t('toastCreateFailed'));
+        return;
+      }
+      // Id do SERVER cấp — id dựng ở FE sẽ trỏ vào hư không sau lần tải lại đầu.
+      versionsRef.current[res.journey.id] = res.version;
+      setJourneys(prev => [res.journey, ...prev]);
+      /* Rule 10 — never create into a filter that would hide the result. */
+      setFilters(prev => ({ ...prev, state: 'all', q: '' }));
+      setOverlay({ kind: 'detail', id: res.journey.id });
+      toast.success(`Created — ${res.journey.name}`);
+    },
+    [brandId, t]
+  );
+
+  const handleFork = useCallback(
+    async (campaignId: string, campaignName: string) => {
+      if (!activeId) return;
+      // BE tự chặn "một chiến dịch, một hành trình"; không đoán trước ở FE.
+      const res = await forkJourneyOntoCampaign(activeId, campaignId).catch(
+        (err: unknown) => {
+          // `use` áp hợp đồng ĐẦY ĐỦ — một bản nháp dở dang bị từ chối kèm
+          // danh sách kiểm. Nói ra từng mục, giống nút Save.
+          const reasons = saveFailureReasons(err, nodeNamesOf(active));
+          toast.error(
+            reasons.length
+              ? t('toastForkInvalid', { reasons: reasons.join(' · ') })
+              : t('toastForkFailed')
+          );
+          return null;
+        }
+      );
+      if (!res) return;
+      versionsRef.current[res.journey.id] = res.version;
+      setJourneys(prev => [
+        { ...res.journey, campaignName },
+        ...prev.filter(j => j.id !== res.journey.id),
+      ]);
+      toast.success(`Forked into ${campaignName} — the blueprint is untouched`);
+      setFilters(prev => ({ ...prev, state: 'copy', q: '' }));
+      setOverlay({ kind: 'detail', id: res.journey.id });
+    },
+    [activeId, active, t]
+  );
+
+  /** Ghi lại cục bộ cho autosave và khôi-phục-khi-huỷ. Không gọi server. */
   const handlePersistEdit = useCallback((next: Journey) => {
     setJourneys(prev => prev.map(j => (j.id === next.id ? next : j)));
   }, []);
 
   /**
-   * Explicit Save — still no write API, so P0 dumps JSON (Brand/Product),
-   * then persists and closes. Copy never touches blueprint, vice versa.
+   * Save — `PUT` thay TOÀN BỘ và bắt buộc gửi `version` vừa đọc.
+   *
+   * Lệch version nghĩa là người khác đã lưu trước; BE từ chối và ta nói ra thay
+   * vì nuốt lỗi rồi đóng cửa sổ như thể đã lưu xong.
    */
   const handleSaveEdit = useCallback(
-    (next: Journey) => {
-      window.alert(JSON.stringify(next, null, 2));
-      handlePersistEdit(next);
-      setOverlay({ kind: 'detail', id: next.id });
+    async (next: Journey) => {
+      const version = versionsRef.current[next.id];
+      if (version === undefined) {
+        toast.error(t('toastSaveFailed'));
+        return;
+      }
+      const res = await saveJourneyApi(next, version).catch((err: unknown) => {
+        // BE trả danh sách kiểm cụ thể (thiếu mô tả, thiếu via, node trải
+        // nghiệm chưa gắn…). Nói ra từng cái — "không lưu được" thì người dùng
+        // không biết phải sửa gì, dù chính panel Requirements đã liệt kê sẵn.
+        const reasons = saveFailureReasons(err, nodeNamesOf(next));
+        toast.error(
+          reasons.length
+            ? t('toastSaveInvalid', { reasons: reasons.join(' · ') })
+            : t('toastSaveStale')
+        );
+        return null;
+      });
+      if (!res) return;
+      versionsRef.current[res.journey.id] = res.version;
+      handlePersistEdit(res.journey);
+      setOverlay({ kind: 'detail', id: res.journey.id });
       toast.success(
-        next.template
+        res.journey.template
           ? 'Blueprint saved — existing campaign copies are untouched'
-          : `Saved to ${journeyHome(next)}'s copy — the blueprint is untouched`
+          : `Saved to ${journeyHome(res.journey)}'s copy — the blueprint is untouched`
       );
     },
-    [handlePersistEdit]
+    [handlePersistEdit, t]
   );
 
-  const handleConfirmDelete = useCallback(() => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!activeId) return;
     const target = findJourney(journeys, activeId);
+    const failed = await deleteJourneysApi([activeId]);
+    if (failed.length) {
+      toast.error(t('toastDeleteFailed'));
+      return;
+    }
     setJourneys(prev => deleteJourney(prev, activeId));
     setOverlay(null);
     if (target) toast.success(`Deleted — ${target.name}`);
-  }, [activeId, journeys]);
+  }, [activeId, journeys, t]);
 
   return (
     <div className='flex min-h-0 flex-col'>
@@ -268,12 +412,23 @@ export const JourneysWorkspace = ({
               'px-10 py-12 text-center'
             )}
           >
-            <p className='text-[14px] font-semibold text-[var(--pv2-ink)]'>
-              {t('empty')}
+            {/*
+              Nạp hỏng ⇒ nói ra. Để rơi vào trạng thái rỗng sẽ đọc như "chưa có
+              hành trình nào", trong khi sự thật là chưa hỏi được server.
+            */}
+            <p
+              className={cn(
+                'text-[14px] font-semibold',
+                loadError ? 'text-[var(--pv2-error)]' : 'text-[var(--pv2-ink)]'
+              )}
+            >
+              {loadError ?? t('empty')}
             </p>
-            <p className='mt-1.5 text-[13px] text-[var(--pv2-faint)]'>
-              {t('emptyHint')}
-            </p>
+            {loadError ? null : (
+              <p className='mt-1.5 text-[13px] text-[var(--pv2-faint)]'>
+                {t('emptyHint')}
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -283,6 +438,8 @@ export const JourneysWorkspace = ({
           key={active.id}
           journey={active}
           journeys={journeys}
+          personas={personas}
+          segments={segments}
           onClose={handleClose}
           onEdit={j => setOverlay({ kind: 'edit', id: j.id })}
           onFork={j => setOverlay({ kind: 'fork', id: j.id })}
@@ -296,6 +453,7 @@ export const JourneysWorkspace = ({
           key={active.id}
           journey={active}
           journeys={journeys}
+          personas={personas}
           onCancel={() => setOverlay({ kind: 'detail', id: active.id })}
           onPersist={handlePersistEdit}
           onSave={handleSaveEdit}
@@ -305,6 +463,7 @@ export const JourneysWorkspace = ({
       {overlay?.kind === 'fork' && active ? (
         <ForkJourneyModal
           journey={active}
+          campaigns={campaigns}
           forkedInto={copiesOfJourney(journeys, active).flatMap(c =>
             c.campaign ? [c.campaign] : []
           )}
@@ -323,7 +482,11 @@ export const JourneysWorkspace = ({
       ) : null}
 
       {overlay?.kind === 'new' ? (
-        <NewJourneyModal onClose={handleClose} onCreate={handleCreate} />
+        <NewJourneyModal
+          personas={personas}
+          onClose={handleClose}
+          onCreate={handleCreate}
+        />
       ) : null}
     </div>
   );

@@ -6,10 +6,15 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { Modal } from '@/components/molecules/portal-v2/Modal';
 import { cn } from '@/lib/cn';
-import { FORK_CAMPAIGNS } from '@/lib/portal-v2/journeys/constants';
 import type { Journey } from '@/lib/portal-v2/journeys/types';
 
 type ForkJourneyModalProps = {
+  /**
+   * Chiến dịch THẬT — `GET /v1/campaigns`. Bản trước dùng `FORK_CAMPAIGNS`,
+   * một hằng số suy từ mock: chọn xong sẽ fork vào một id không tồn tại và BE
+   * trả 404.
+   */
+  campaigns: { id: string; name: string; stage?: string }[];
   journey: Journey;
   /** Campaign ids that already carry a copy of this blueprint. */
   forkedInto: string[];
@@ -18,6 +23,7 @@ type ForkJourneyModalProps = {
 };
 
 export const ForkJourneyModal = ({
+  campaigns,
   journey,
   forkedInto,
   onClose,
@@ -44,7 +50,7 @@ export const ForkJourneyModal = ({
       }
     >
       <div className='flex flex-col gap-2'>
-        {FORK_CAMPAIGNS.map(campaign => {
+        {campaigns.map(campaign => {
           const already = forkedInto.includes(campaign.id);
           return (
             <button
@@ -62,9 +68,15 @@ export const ForkJourneyModal = ({
                 <span className='block truncate text-[13.5px] font-semibold text-[var(--pv2-ink)]'>
                   {campaign.name}
                 </span>
-                <span className='mt-0.5 block truncate text-[11.5px] text-[var(--pv2-faint)]'>
-                  {campaign.status} · {campaign.owner}
-                </span>
+                {/*
+                  Chỉ hiện chặng — `owner` là uuid ở API, và một chuỗi uuid đặt
+                  cạnh tên chiến dịch thì đọc như dữ liệu hỏng.
+                */}
+                {campaign.stage ? (
+                  <span className='mt-0.5 block truncate text-[11.5px] text-[var(--pv2-faint)]'>
+                    {campaign.stage}
+                  </span>
+                ) : null}
               </span>
               {already ? (
                 <span className='inline-flex shrink-0 items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--pv2-success)_14%,transparent)] px-2.5 py-1 text-[10px] font-bold text-[#0e9d6e] uppercase'>

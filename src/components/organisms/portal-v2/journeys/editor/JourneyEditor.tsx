@@ -10,6 +10,8 @@ import {
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+
+import type { PersonaOption } from '@/services/portal-v2/journeyAudience';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -87,6 +89,7 @@ import type {
  */
 
 type JourneyEditorProps = {
+  personas?: PersonaOption[];
   journey: Journey;
   /**
    * The whole library. A blueprint has never run, so the figures on its bands
@@ -114,6 +117,14 @@ type JourneyEditorProps = {
 
 const AUTOSAVE_MS = 1500;
 
+/**
+ * Trạng thái autosave — CỤC BỘ, không phải trạng thái trên server.
+ *
+ * `onPersist` chỉ ghi vào state của workspace; thứ đi lên server là nút Save
+ * (`PUT /journeys/{id}`). Nhãn cũ ghi "Saved" nên màn hình báo đã lưu trong
+ * khi server vừa từ chối 422 — đúng loại nói dối tệ nhất, vì người dùng đóng
+ * tab và tin là xong.
+ */
 type AutosaveStatus = 'idle' | 'dirty' | 'saving' | 'saved';
 
 const isTypingTarget = (target: EventTarget | null): boolean => {
@@ -133,6 +144,7 @@ const toolBtnClass = cn(
 );
 
 export const JourneyEditor = ({
+  personas = [],
   journey,
   journeys,
   onCancel,
@@ -583,7 +595,7 @@ export const JourneyEditor = ({
   );
 
   const handleMetaSelect = useCallback(
-    (patch: { obj?: ExperienceObjective; seg?: string }) => {
+    (patch: { obj?: ExperienceObjective; personaId?: string | null }) => {
       apply(updateMeta(draft, patch));
     },
     [apply, draft]
@@ -847,9 +859,25 @@ export const JourneyEditor = ({
                       : t('editorAutosaveSaved')}
                 </span>
               ) : null}
+              {/*
+                Lưu được bản nháp dở dang: `PUT` chỉ còn kiểm phần CẤU TRÚC
+                (`core.StructuralCheckIDs`), phần đủ-điều-kiện dời sang lúc
+                Use/Promote. Chặn nút ở đây sẽ dựng lại đúng cái rào vừa gỡ —
+                thêm một node là không lưu được nữa.
+
+                Panel Requirements vẫn liệt kê thứ còn thiếu; `title` nhắc rằng
+                chúng chặn lúc ĐEM DÙNG, không chặn lúc lưu.
+              */}
               <Button
                 size='sm'
                 disabled={autosaveStatus === 'idle' && !isDirty}
+                title={
+                  readiness.missing.length > 0
+                    ? t('editorSaveDraftNote', {
+                        reasons: readiness.missing.join(' · '),
+                      })
+                    : undefined
+                }
                 onClick={handleSave}
               >
                 {t('editorSave')}
@@ -895,6 +923,7 @@ export const JourneyEditor = ({
 
         <aside className='flex h-full min-h-0 w-[276px] shrink-0 flex-col border-l border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
           <EditorInspector
+            personas={personas}
             draft={draft}
             node={selectedNode}
             onPatch={handlePatch}

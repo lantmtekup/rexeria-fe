@@ -1,7 +1,6 @@
-import { CANVAS_KIND_PARAM } from '@/lib/portal-v2/experiences/tabParam';
 import type {
   ExperienceFilters,
-  ExperienceTab,
+  ExperienceState,
   ExperienceView,
 } from '@/lib/portal-v2/experiences/types';
 
@@ -49,49 +48,18 @@ export const formatUpdated = (iso: string | undefined): string => {
 };
 
 /**
- * Does this record belong under `tab`?
- *
- * `all` is the whole library, pages and blocks together. `block` is the block
- * half. The three ownership values are page lineage, so they exclude blocks by
- * construction — a block carries `state: null` and can never match one.
- */
-export const matchesTab = (e: ExperienceView, tab: ExperienceTab): boolean => {
-  if (tab === 'all') return true;
-  if (tab === 'block') return e.kind === 'block';
-  return e.kind === 'page' && e.state === tab;
-};
-
-/**
- * The filtered set. The query is applied server-side (`?q=`); the tab row and
- * every chip axis narrow client-side. Each axis follows the prototype's "unset
- * means ANY" rule.
- *
- * The chip axes are read per tab, matching `refineFacetsFor`: the Blocks tab
- * narrows on real block fields, every other tab on the shared seeded axes.
- * Applying a facet the drawer is not currently showing would silently hide rows
- * the user has no visible control to release.
+ * The filtered set. The query is applied server-side (`?q=`); the chip axes
+ * and the ownership tab are seeded values, so they narrow client-side. Every
+ * axis follows the prototype's "unset means ANY" rule.
  */
 export const filterExperiences = (
   list: ExperienceView[],
   filters: ExperienceFilters
 ): ExperienceView[] =>
   list.filter(e => {
-    if (!matchesTab(e, filters.tab)) return false;
-
-    if (filters.tab === 'block') {
-      if (filters.blockCat !== 'all' && e.blockCategory !== filters.blockCat)
-        return false;
-      // No declared surface means the block was saved before surfaces existed;
-      // treat it as unrestricted rather than hiding it from every surface.
-      if (
-        filters.surface !== 'all' &&
-        (e.supportedSurfaces?.length ?? 0) > 0 &&
-        !e.supportedSurfaces!.includes(filters.surface)
-      )
-        return false;
-      return true;
-    }
-
+    if (filters.state !== 'all' && e.state !== filters.state) return false;
+    if (filters.category !== 'all' && e.category !== filters.category)
+      return false;
     if (filters.vehicle !== 'all' && e.vehicle !== filters.vehicle)
       return false;
     if (filters.objective !== 'all' && e.objective !== filters.objective)
@@ -100,11 +68,14 @@ export const filterExperiences = (
     return true;
   });
 
-/** Badge counts for the tab row — prototype `tabs[].n` (~L16076). */
-export const countByTab = (
+/** Tab badge counts — prototype `tabs[].n` (~L16076). */
+export const countByState = (
   list: ExperienceView[],
-  tab: ExperienceTab
-): number => list.filter(e => matchesTab(e, tab)).length;
+  state: ExperienceState | 'all'
+): number => {
+  if (state === 'all') return list.length;
+  return list.filter(e => e.state === state).length;
+};
 
 export const findById = (
   list: ExperienceView[],
@@ -112,31 +83,29 @@ export const findById = (
 ): ExperienceView | null => (id ? (list.find(e => e.id === id) ?? null) : null);
 
 /**
- * Where the canvas editor lives for this record.
+ * Where the canvas editor lives for this page.
  *
- * Both kinds go through the SAME route. A page resolves by `slug || id` because
- * a page created without a slug still has to be openable, and the route
- * resolves both shapes. A block appends `?kind=block`, which is what tells
- * `CanvasEditor` to skip page resolution and hand the id to `BlockEditorV2` in
- * its block-direct mode (load `blocks.get(id).settings`, save via
- * `blocks.update`). The editor header then labels itself "Block", so the user
- * can tell which of the two they are in.
+ * `slug || id` because a page created without a slug still has to be openable,
+ * and the editor route resolves both shapes.
  */
-export const canvasEditorHref = (experience: ExperienceView): string => {
-  if (experience.kind === 'block') {
-    return `/portal-v2/${encodeURIComponent(experience.id)}/canvas?${CANVAS_KIND_PARAM}=block`;
-  }
-  return `/portal-v2/${encodeURIComponent(experience.slug || experience.id)}/canvas`;
-};
+export const canvasEditorHref = (experience: ExperienceView): string =>
+  `/portal-v2/${encodeURIComponent(experience.slug || experience.id)}/canvas`;
 
-/** An external landing has no canvas of ours to open. A block always does. */
+/** An external landing has no canvas of ours to open. */
 export const canEditCanvas = (experience: ExperienceView): boolean =>
-  experience.kind === 'block' || !experience.externalUrl;
+  !experience.externalUrl;
+
+/** `/p/{slug}` is the only preview surface, so no slug means no preview. */
+export const canPreview = (experience: ExperienceView): boolean =>
+  Boolean(experience.slug) && !experience.externalUrl;
 
 /**
- * A page previews at `/p/{slug}`, so no slug means no preview. A block previews
- * at `/embed/block/{id}` and always has an id.
+ * Chỉ TEMPLATE và BLOCK fork được.
+ *
+ * Gương của `experienceUsecase.Use`: gặp `kind: 'copy'` nó trả
+ * `cannot fork a copy; only a template can be used`. Chặn ở đây để nút không
+ * gửi đi một lời gọi chắc chắn hỏng — nhưng nơi gọi PHẢI hiện lý do thành chữ,
+ * một nút xám không tự giải thích được vì sao nó xám.
  */
-export const canPreview = (experience: ExperienceView): boolean =>
-  experience.kind === 'block' ||
-  (Boolean(experience.slug) && !experience.externalUrl);
+export const canUseExperience = (experience: ExperienceView): boolean =>
+  experience.state === 'template' || experience.state === 'block';

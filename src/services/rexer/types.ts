@@ -125,18 +125,10 @@ export interface FirebaseLoginResponse {
 
 // ── Feedback (Alpha) ─────────────────────────────────────────────────────
 export type FeedbackCategory =
-  | 'bug'
-  | 'improvement'
-  | 'question'
-  | 'praise'
-  | 'other';
+  'bug' | 'improvement' | 'question' | 'praise' | 'other';
 export type FeedbackSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type FeedbackStatus =
-  | 'new'
-  | 'triaged'
-  | 'in_progress'
-  | 'resolved'
-  | 'wontfix';
+  'new' | 'triaged' | 'in_progress' | 'resolved' | 'wontfix';
 
 export interface Feedback {
   id: string;
@@ -835,9 +827,84 @@ export interface Product {
   /** V2: id of the source template if this product was cloned from one. */
   source_template_id?: string;
 
+  // ── V2 (nhánh feature/v2-migration, migration 000057_products_v2) ───────
+  /**
+   * Khối định vị giá trị. ĐÂY là nguồn mà `core.AutoSlots` bên BE chấm điểm
+   * và AI đọc khi sinh nội dung — không phải cột `features` ở trên.
+   *
+   * Hai nguồn features tồn tại song song và BE KHÔNG tự đồng bộ chúng
+   * (`applyValueInput` lấy `value.features` nguyên xi từ client). Ghi một bên
+   * mà quên bên kia là cách trang sinh ra mất nội dung mà không ai báo.
+   */
+  value?: ProductValueBlock;
+  /** Ảnh bìa THẬT theo cách BE chấm ATT — `thumbnail_url` KHÔNG được tính. */
+  cover_media_id?: string | null;
+  variants_v2?: ProductVariantV2[];
+  handle?: string;
+  body_html?: string;
+  /** Đường phân loại đầy đủ dạng "A > B > C" — khác `category_id`. */
+  category?: string;
+  type?: string;
+  brand_name?: string;
+  tags?: string[];
+  source?: 'shopify' | 'csv' | 'manual';
+  channels?: string[];
+  options?: ProductOptionV2[];
+  seo?: { title?: string; description?: string };
+  kind?: 'physical' | 'digital' | 'service';
+  conversion_mode?: 'checkout' | 'lead' | 'booking';
+
   created_at?: string;
   updated_at?: string;
   created_by?: string;
+}
+
+/** Khối value như BE v2 trả về. */
+export interface ProductValueBlock {
+  features?: string[];
+  benefits?: string[];
+  competitors?: ProductCompetitorV2[];
+  claims?: ProductClaimV2[];
+  disclaimers?: string[];
+}
+
+export interface ProductCompetitorV2 {
+  name: string;
+  theirs: string;
+  ours: string;
+}
+
+/** `ok` do BE tự tính qua `core.DeriveClaims` — client gửi lên sẽ bị bỏ qua. */
+export interface ProductClaimV2 {
+  text: string;
+  proof?: string;
+  ok?: boolean;
+}
+
+/**
+ * Biến thể v2. Tên trường KHÁC hẳn shape của Portal V2 và khác cả kiểu:
+ *
+ *   tiền  → `*_cents`, số nguyên (int64). Gửi `price` là BE bỏ qua im lặng.
+ *   grams → SỐ NGUYÊN. Gửi 1.97 thì BE trả 400 "expected=int".
+ *   qty   → `qty`, không phải `quantity`.
+ */
+export interface ProductVariantV2 {
+  sku?: string;
+  option1?: string;
+  option2?: string;
+  option3?: string;
+  barcode?: string;
+  price_cents?: number;
+  compare_at_cents?: number;
+  cost_cents?: number;
+  qty?: number;
+  inventory_policy?: 'deny' | 'continue';
+  grams?: number;
+}
+
+export interface ProductOptionV2 {
+  name: string;
+  values: string[];
 }
 
 export interface ProductMediaBinding {
@@ -911,6 +978,38 @@ export interface CreateProductRequest {
   /** Admin-gated by BE; non-admin requests setting true return 403. */
   is_public_template?: boolean;
   source_template_id?: string;
+
+  // ── V2 (spec §9.1) — nhánh feature/v2-migration ──────────────────────────
+  handle?: string;
+  body_html?: string;
+  /** Đường phân loại dạng "A > B > C". Khác `category_id` (uuid). */
+  category?: string;
+  type?: string;
+  brand_name?: string;
+  tags?: string[];
+  source?: 'shopify' | 'csv' | 'manual';
+  channels?: string[];
+  options?: ProductOptionV2[];
+  variants_v2?: ProductVariantV2[];
+  seo?: { title?: string; description?: string };
+  /**
+   * Khối định vị giá trị. Gửi CẢ `features` (ở trên, có label+description) lẫn
+   * `value.features` — BE không tự suy cái này ra cái kia.
+   */
+  value?: ProductValueInput;
+  /** ATT chấm theo trường này; `thumbnail_url` KHÔNG được tính. */
+  cover_media_id?: string;
+  kind?: 'physical' | 'digital' | 'service';
+  conversion_mode?: 'checkout' | 'lead' | 'booking';
+}
+
+/** Đầu vào khối value. `ok` của claim do BE tự tính, client gửi sẽ bị bỏ qua. */
+export interface ProductValueInput {
+  features?: string[];
+  benefits?: string[];
+  competitors?: ProductCompetitorV2[];
+  claims?: { text: string; proof?: string }[];
+  disclaimers?: string[];
 }
 export type UpdateProductRequest = Partial<CreateProductRequest>;
 
@@ -981,10 +1080,7 @@ export type UpdateProductCategoryRequest =
 
 // ── Campaign ─────────────────────────────────────────────────────────────
 export type CampaignObjective =
-  | 'awareness'
-  | 'traffic'
-  | 'conversion'
-  | 'retention';
+  'awareness' | 'traffic' | 'conversion' | 'retention';
 
 export interface CampaignKPI {
   name: string;
@@ -1293,18 +1389,10 @@ export type AIBlockRole =
 export type AIBlockLayoutType = 'text' | 'image' | 'mixed';
 
 export type AIFieldDataType =
-  | 'text'
-  | 'number'
-  | 'select'
-  | 'image'
-  | 'textarea';
+  'text' | 'number' | 'select' | 'image' | 'textarea';
 
 export type AIBlockTone =
-  | 'formal'
-  | 'friendly'
-  | 'energetic'
-  | 'luxury'
-  | 'minimal';
+  'formal' | 'friendly' | 'energetic' | 'luxury' | 'minimal';
 
 /** §5.2 — single field in the template Input Schema. */
 export interface AITemplateField {
@@ -1810,10 +1898,7 @@ export interface UpdatePortalClientRequest {
 }
 
 export type PortalMemberRole =
-  | 'brand_owner'
-  | 'brand_member'
-  | 'brand_viewer'
-  | 'staff';
+  'brand_owner' | 'brand_member' | 'brand_viewer' | 'staff';
 
 export interface PortalMember {
   user_id: string;
@@ -1945,10 +2030,7 @@ export interface PortalAdChannelListResponse {
 }
 
 export type PortalAdObjective =
-  | 'awareness'
-  | 'traffic'
-  | 'conversion'
-  | 'retention';
+  'awareness' | 'traffic' | 'conversion' | 'retention';
 export type PortalAdStatus = 'draft' | 'active' | 'paused' | 'completed';
 
 export interface PortalAdCampaign {
@@ -2391,11 +2473,7 @@ export interface UpdateBrandUserRequest {
 // ── Brand custom domains ─────────────────────────────────────────────────
 export type BrandDomainTarget = 'landing' | 'curate_cdn' | 'tracking';
 export type BrandDomainStatus =
-  | 'pending'
-  | 'verifying'
-  | 'verified'
-  | 'failed'
-  | string;
+  'pending' | 'verifying' | 'verified' | 'failed' | string;
 
 export interface BrandDomain {
   id: string;
@@ -2504,11 +2582,7 @@ export interface PageMetadataAdInteractive {
 }
 export interface PageMetadataCurate {
   trigger:
-    | 'time_on_page'
-    | 'scroll_50'
-    | 'exit_intent'
-    | 'click_element'
-    | string;
+    'time_on_page' | 'scroll_50' | 'exit_intent' | 'click_element' | string;
   trigger_config: {
     delay_ms?: number;
     scroll_threshold_pct?: number;
@@ -2532,6 +2606,11 @@ export interface Page {
   description?: string;
   type: PageType;
   type_metadata: PageTypeMetadata;
+  /**
+   * Dấu Proven — CỘT THẬT trên `pages` ở nhánh v2 (`models.Page.Proven`).
+   * Không có ở deployment v1 nên để optional; thiếu ⇒ chưa đánh dấu.
+   */
+  proven?: boolean;
   status: PageStatus;
   template_version_id: string;
   active_release_id?: string;
@@ -2665,10 +2744,7 @@ export interface PublishPageResponse {
 
 // ── Block (canonical CRUD entity) ────────────────────────────────────────
 export type BlockScope =
-  | 'system'
-  | 'brand_private'
-  | 'brand_team'
-  | 'brand_public';
+  'system' | 'brand_private' | 'brand_team' | 'brand_public';
 
 /** Taxonomy AI-recommend per-block (BE shipped 2026-06-19 — persist ở Block,
  *  seed từ block_type khi tạo). Đồng bộ enum BlockTaxonomyFields. */
@@ -2688,11 +2764,7 @@ export interface BlockAITaxonomy {
  *  Flow marketing↔dev: draft (brief) → in_dev → review → published; changes_requested
  *  = trả lại sửa. Block legacy (status rỗng) coi như `published`. */
 export type BlockStatus =
-  | 'draft'
-  | 'in_dev'
-  | 'review'
-  | 'changes_requested'
-  | 'published';
+  'draft' | 'in_dev' | 'review' | 'changes_requested' | 'published';
 
 export interface BlockReviewFields {
   /** Trạng thái duyệt (BE 000035). Rỗng = legacy → coi như published. */
@@ -3132,11 +3204,7 @@ export type InsightStepKey =
 
 /** Trạng thái của từng bước; `skipped` khi bước không cần chạy. */
 export type InsightStepStatus =
-  | 'queued'
-  | 'running'
-  | 'succeeded'
-  | 'failed'
-  | 'skipped';
+  'queued' | 'running' | 'succeeded' | 'failed' | 'skipped';
 
 /** Experience goal được AI phân loại. */
 export type ExperienceGoal =

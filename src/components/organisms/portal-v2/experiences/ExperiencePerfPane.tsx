@@ -18,6 +18,8 @@ import { cn } from '@/lib/cn';
 
 type ExperiencePerfPaneProps = {
   experience: ExperienceView;
+  /** null = chưa chạy lần nào. Không phải "chạy rồi mà bằng 0". */
+  stats: ExperienceStats | null;
 };
 
 const Kpi = ({
@@ -58,9 +60,11 @@ const FUNNEL_STAGES: {
   { role: 'CON', labelKey: 'funnelConverted', pick: s => s.converted },
 ];
 
-export const ExperiencePerfPane = ({ experience }: ExperiencePerfPaneProps) => {
+export const ExperiencePerfPane = ({
+  experience,
+  stats,
+}: ExperiencePerfPaneProps) => {
   const t = useTranslations('portalV2.experiences');
-  const { stats } = experience;
 
   /* R5, structurally: no fact rows means no numbers — not zeroes, none. */
   if (!stats) {
@@ -173,33 +177,39 @@ export const ExperiencePerfPane = ({ experience }: ExperiencePerfPaneProps) => {
           </div>
         </section>
 
+        {/*
+          Ẩn mục rỗng: `features`/`benefits` là chữ do người soạn, phần lớn bản
+          ghi bỏ trống. Một tiêu đề không có gì bên dưới đọc như đang hỏng.
+        */}
         {[
           { key: 'featuresHeading', items: experience.features },
           { key: 'benefitsHeading', items: experience.benefits },
-        ].map(({ key, items }) => (
-          <section
-            key={key}
-            className='rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] px-3.5 py-3'
-          >
-            <h3 className='font-[family-name:var(--pv2-disp)] text-[13px] font-bold tracking-[-0.02em] text-[var(--pv2-ink)]'>
-              {t(key)}
-            </h3>
-            <ul className={cn('mt-2 flex flex-col gap-1.5')}>
-              {items.map(item => (
-                <li
-                  key={item}
-                  className='flex gap-2 text-[12px] leading-relaxed text-[var(--pv2-mut)]'
-                >
-                  <span
-                    className='mt-1.5 size-1 shrink-0 rounded-full bg-[var(--pv2-slate-300)]'
-                    aria-hidden
-                  />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
+        ]
+          .filter(({ items }) => items.length > 0)
+          .map(({ key, items }) => (
+            <section
+              key={key}
+              className='rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] px-3.5 py-3'
+            >
+              <h3 className='font-[family-name:var(--pv2-disp)] text-[13px] font-bold tracking-[-0.02em] text-[var(--pv2-ink)]'>
+                {t(key)}
+              </h3>
+              <ul className={cn('mt-2 flex flex-col gap-1.5')}>
+                {items.map(item => (
+                  <li
+                    key={item}
+                    className='flex gap-2 text-[12px] leading-relaxed text-[var(--pv2-mut)]'
+                  >
+                    <span
+                      className='mt-1.5 size-1 shrink-0 rounded-full bg-[var(--pv2-slate-300)]'
+                      aria-hidden
+                    />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
       </aside>
     </div>
   );

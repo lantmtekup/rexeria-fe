@@ -3,7 +3,6 @@
 import { Check, Plus, Sparkles, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import {
@@ -158,6 +157,21 @@ export const ProductValuePanel = ({
                           })
                         }
                       />
+                      <button
+                        type='button'
+                        aria-label={t('removeRow')}
+                        title={t('removeRow')}
+                        className='mt-1 self-start text-[11px] text-[var(--pv2-error)] hover:underline'
+                        onClick={() =>
+                          patchValue({
+                            competitors: v.competitors.filter(
+                              (_, xi) => xi !== i
+                            ),
+                          })
+                        }
+                      >
+                        {t('removeRow')}
+                      </button>
                     </div>
                   ) : (
                     <>
@@ -189,7 +203,14 @@ export const ProductValuePanel = ({
               variant='dashed'
               size='sm'
               className='mt-2.5'
-              onClick={() => toast.message(t('toastCompetitorAdded'))}
+              onClick={() =>
+                patchValue({
+                  competitors: [
+                    ...v.competitors,
+                    { n: '', theirs: '', ours: '' },
+                  ],
+                })
+              }
             >
               <Plus className='size-3' strokeWidth={2.6} aria-hidden />
               {t('addCompetitor')}
@@ -276,6 +297,19 @@ export const ProductValuePanel = ({
                           })
                         }
                       />
+                      <button
+                        type='button'
+                        aria-label={t('removeRow')}
+                        title={t('removeRow')}
+                        className='mt-1 text-[11px] text-[var(--pv2-error)] hover:underline'
+                        onClick={() =>
+                          patchValue({
+                            claims: v.claims.filter((_, xi) => xi !== i),
+                          })
+                        }
+                      >
+                        {t('removeRow')}
+                      </button>
                     </>
                   ) : (
                     <>
@@ -310,7 +344,14 @@ export const ProductValuePanel = ({
               variant='dashed'
               size='sm'
               className='mt-2.5'
-              onClick={() => toast.message(t('toastClaimAdded'))}
+              onClick={() =>
+                // `ok` do BE tự tính lại qua core.DeriveClaims khi lưu; đặt
+                // false ở đây chỉ để hàng mới hiện đúng trạng thái "chưa có
+                // bằng chứng" trước khi người dùng gõ.
+                patchValue({
+                  claims: [...v.claims, { t: '', proof: '', ok: false }],
+                })
+              }
             >
               <Plus className='size-3' strokeWidth={2.6} aria-hidden />
               {t('addClaim')}

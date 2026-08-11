@@ -4,18 +4,18 @@ import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
 import { objectivePillStyle } from '@/lib/portal-v2/experiences/roleStyles';
-import {
-  JOURNEY_OBJECTIVES,
-  segmentById,
-} from '@/lib/portal-v2/journeys/constants';
+import { JOURNEY_OBJECTIVES } from '@/lib/portal-v2/journeys/constants';
 import {
   countNodesOfKind,
   journeyHome,
 } from '@/lib/portal-v2/journeys/helpers';
+import type { PersonaOption } from '@/services/portal-v2/journeyAudience';
 import type { Journey } from '@/lib/portal-v2/journeys/types';
 
 type JourneyOverviewPaneProps = {
   journey: Journey;
+  /** Chân dung của brand — `brand_profiles.audience`. */
+  personas?: PersonaOption[];
 };
 
 const Row = ({ label, children }: { label: string; children: ReactNode }) => (
@@ -29,13 +29,17 @@ const Row = ({ label, children }: { label: string; children: ReactNode }) => (
   </div>
 );
 
-export const JourneyOverviewPane = ({ journey }: JourneyOverviewPaneProps) => {
+export const JourneyOverviewPane = ({
+  journey,
+  personas = [],
+}: JourneyOverviewPaneProps) => {
   const t = useTranslations('portalV2.journeys');
   const pill = objectivePillStyle(journey.obj);
   const objectiveLabelKey =
     JOURNEY_OBJECTIVES.find(o => o.id === journey.obj)?.labelKey ??
     'objInsight';
-  const segment = segmentById(journey.seg);
+  // Chân dung do người soạn chọn; tên lấy từ hồ sơ brand chứ không suy ra.
+  const persona = personas.find(p => p.id === journey.personaId) ?? null;
 
   return (
     <div>
@@ -64,10 +68,12 @@ export const JourneyOverviewPane = ({ journey }: JourneyOverviewPaneProps) => {
       </Row>
 
       <Row label={t('overAudience')}>
-        <p className='font-medium'>{segment ? segment.n : t('segmentAll')}</p>
-        {segment ? (
+        <p className='font-medium'>
+          {persona ? persona.name : t('segmentAll')}
+        </p>
+        {persona ? (
           <p className='mt-0.5 max-w-[62ch] text-[12.5px] text-[var(--pv2-mut)]'>
-            {segment.want}
+            {t('personaBehaves', { seg: persona.behaves || '—' })}
           </p>
         ) : null}
       </Row>

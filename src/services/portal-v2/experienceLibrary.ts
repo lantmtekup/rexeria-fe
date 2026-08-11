@@ -1,113 +1,85 @@
-import {
-  enrichBlocksWithThumbnailUrls,
-  enrichPagesWithThumbnailUrls,
-} from '@/lib/pages/resolve-thumbnails';
-import { mapBlockToExperience } from '@/lib/portal-v2/experiences/mapBlock';
-import { mapPageToExperience } from '@/lib/portal-v2/experiences/mapPage';
+import { v2ToExperienceView } from '@/lib/portal-v2/experiences/fromV2';
 import type { ExperienceView } from '@/lib/portal-v2/experiences/types';
-import { rexerApi } from '@/services/rexer/endpoints';
+import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 
 export type ExperienceLibraryQuery = {
-  /** Free-text search — forwarded to both list APIs as `q`. */
+  /** Tìm toàn văn — đẩy xuống server qua `q`. */
   q?: string;
+  /** Giới hạn theo thương hiệu; chỉ platform admin dùng được. */
+  brandId?: string | null;
 };
 
 export type ExperienceLibraryResult = {
-  /** Pages and blocks in one array; `ExperienceView.kind` tells them apart. */
   items: ExperienceView[];
-  /** Hard failure — neither source returned anything. */
   error: string | null;
-  /** One source failed while the other returned rows. */
-  softError: string | null;
 };
 
-/** Same ceiling `fetchExchangeCatalog` uses — the two read the same two APIs. */
-const PAGE_LIMIT = 500;
+/** Trần CỨNG của BE: `normalizePage` cắt mọi `page_size` xuống 100. */
+const SERVER_PAGE_MAX = 100;
+/** Chặn vòng lặp — 10 trang là 1000 mục, quá xa mọi thư viện thật. */
+const MAX_PAGES = 10;
 
 /**
- * The Experiences library — TWO sources, kept apart by `kind`:
- * - `GET /pages?type=landing&status=published` (what `/admin/landing-pages` reads)
- * - `GET /blocks?status=published` (what `/admin/blocks` reads)
+ * Thư viện trải nghiệm ← `GET /v1/experiences`.
  *
- * Published-only on both sides: Experiences is where a marketer picks something
- * to USE, not where blocks get reviewed — that lifecycle lives at
- * `/admin/blocks`.
+ * Bản trước suy từ `GET /pages?type=landing&status=published`, và đó là hai
+ * vấn đề gộp làm một:
  *
- * `allSettled` rather than `all` because the two halves are independent: a
- * blocks outage must not blank the pages tab. That is the same soft/hard error
- * split `fetchExchangeCatalog` uses, and the workspace renders `softError` as a
- * strip above a working grid.
+ * 1. Bộ lọc `published` cắt mất phần lớn thư viện — một brand có 33 landing
+ *    page mà chỉ 3 cái published thì màn hình hiện 3, trông như mất dữ liệu.
+ *    `/experiences` trả cả template lẫn bản copy, không lọc theo trạng thái.
+ * 2. Trục sở hữu (template / product copy / topic copy), bậc bằng chứng, số
+ *    phiên, độ phủ — `/pages` không có gì trong số đó, nên bản cũ BỊA bằng
+ *    hàm băm id. Các số đó ổn định theo id nên đọc như phép đo thật.
  *
- * Search goes to both servers; the chip axes narrow client-side (page axes are
- * seeded, block axes come off the record).
+ * Nay `kind`, `subject`, `ev`, `signal_coverage` đều là dữ liệu; thiếu thì để
+ * null và UI nói "chưa đo".
  *
- * No `'use client'` — called from the route's server component for the first
- * paint and again from the workspace on a debounced search.
- *
- * One page of results per source. Pagination is deliberately deferred: the
- * module has no pager UI, and silently showing the first N of a larger set
- * would read as "this is everything". Revisit when a workspace exceeds it.
+ * Không có `'use client'`: hàm này chạy ở server component cho lần vẽ đầu, và
+ * chạy lại từ workspace khi người dùng gõ tìm kiếm.
  */
 export const fetchExperienceLibrary = async (
   query: ExperienceLibraryQuery = {}
 ): Promise<ExperienceLibraryResult> => {
-  const q = query.q?.trim() || undefined;
-
-  const settled = await Promise.allSettled([
-    rexerApi.pages.listAll({
-      type: 'landing',
-      status: 'published',
-      page: 1,
-      limit: PAGE_LIMIT,
-      sort: '-updated_at',
-      ...(q ? { q } : {}),
-    }),
-    rexerApi.blocks.list({
-      status: 'published',
-      page: 1,
-      limit: PAGE_LIMIT,
-      sort_by: 'updated_at',
-      sort_order: 'desc',
-      ...(q ? { q } : {}),
-    }),
-  ]);
-
-  const errors: string[] = [];
-  const items: ExperienceView[] = [];
-
-  const [pagesResult, blocksResult] = settled;
-
-  if (pagesResult.status === 'fulfilled') {
-    // BE list page trả `thumbnail_asset_id` chứ không resolve `thumbnail_url`
-    // → batch-resolve qua media trước khi map, giống admin landing list.
-    const pages = await enrichPagesWithThumbnailUrls(
-      pagesResult.value.items ?? []
-    );
-    items.push(...pages.map(mapPageToExperience));
-  } else {
-    const reason = pagesResult.reason;
-    errors.push(
-      reason instanceof Error ? reason.message : 'Failed to load landing pages'
-    );
-  }
-
-  if (blocksResult.status === 'fulfilled') {
-    const blocks = await enrichBlocksWithThumbnailUrls(
-      blocksResult.value.items ?? []
-    );
-    items.push(...blocks.map(mapBlockToExperience));
-  } else {
-    const reason = blocksResult.reason;
-    errors.push(
-      reason instanceof Error ? reason.message : 'Failed to load blocks'
-    );
-  }
-
-  const joined = errors.length ? errors.join(' · ') : null;
-
-  return {
-    items,
-    error: items.length === 0 ? joined : null,
-    softError: items.length > 0 ? joined : null,
+  const common = {
+    state: 'all',
+    ...(query.q?.trim() ? { q: query.q.trim() } : {}),
+    ...(query.brandId ? { brand_id: query.brandId } : {}),
   };
+
+  try {
+    // Phải lặp trang: xin `page_size: 200` thì BE trả 100 và KHÔNG báo gì —
+    // màn hình sẽ hiện 100/110 mà trông như đã đủ.
+    const first = await rexerV2Api.experiences.list({
+      ...common,
+      page: 1,
+      page_size: SERVER_PAGE_MAX,
+    });
+
+    const items = [...(first.items ?? [])];
+    const pages = Math.min(
+      Math.ceil((first.total ?? items.length) / SERVER_PAGE_MAX),
+      MAX_PAGES
+    );
+
+    if (pages > 1) {
+      const rest = await Promise.all(
+        Array.from({ length: pages - 1 }, (_, i) =>
+          rexerV2Api.experiences.list({
+            ...common,
+            page: i + 2,
+            page_size: SERVER_PAGE_MAX,
+          })
+        )
+      );
+      rest.forEach(r => items.push(...(r.items ?? [])));
+    }
+
+    return { items: items.map(v2ToExperienceView), error: null };
+  } catch (err) {
+    return {
+      items: [],
+      error: err instanceof Error ? err.message : 'Failed to load experiences',
+    };
+  }
 };

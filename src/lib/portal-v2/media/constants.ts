@@ -17,12 +17,7 @@ import type {
 } from '@/lib/portal-v2/media/types';
 
 export type MediaToneId =
-  | 'violet'
-  | 'blue'
-  | 'success'
-  | 'warning'
-  | 'error'
-  | 'mut';
+  'violet' | 'blue' | 'success' | 'warning' | 'error' | 'mut';
 
 const MEDIA_TONE_VAR: Record<MediaToneId, string> = {
   violet: '--pv2-violet',

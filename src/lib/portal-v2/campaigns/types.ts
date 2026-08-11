@@ -12,29 +12,27 @@
 
 /** Prototype `CAMP_TYPES` (rexer-demo-v3.html :15610). */
 export type CampaignType =
-  | 'launch'
-  | 'seasonal'
-  | 'sale'
-  | 'always'
-  | 'retention';
+  'launch' | 'seasonal' | 'sale' | 'always' | 'retention';
 
 /** The commercial intent — distinct from `brief.objective`, which is prose. */
 export type CampaignGoal = 'awareness' | 'traffic' | 'conversion' | 'retention';
 
 /** The persisted statuses. `building` is not one of them — see `CampaignStage`. */
-export type CampaignStatus = 'draft' | 'active' | 'paused' | 'completed';
-
 /**
- * What the UI shows. `building` is DERIVED, never stored: a `draft` campaign
- * whose items have started moving reads as "In build" (prototype
- * `syncCampaignStage`).
+ * Trạng thái chiến dịch — do BE SUY RA và LƯU, không phải FE đặt.
+ *
+ * `core.DeriveCampaignStage`: có hạng mục `live` ⇒ live; có hạng mục rời `todo`
+ * ⇒ building; còn lại ⇒ planning. `done` là lần chốt tay duy nhất, qua
+ * `PATCH /campaigns/{id}/status` (endpoint đó chỉ nhận `'done'` hoặc `null`).
+ *
+ * Bản trước khai hai bộ từ vựng: `CampaignStatus = draft|active|paused|
+ * completed` (được cho là "lưu") và `CampaignStage` (được cho là "suy ra").
+ * Cả hai đều sai — DB chỉ chứa `planning` và `building`, và chính BE mới là
+ * nơi suy. Chép luật đó sang FE là cách hai bên lệch nhau.
+ *
+ * KHÔNG có `paused`: taxonomy §5.1 của BE không có trạng thái này.
  */
-export type CampaignStage =
-  | 'planning'
-  | 'building'
-  | 'live'
-  | 'paused'
-  | 'done';
+export type CampaignStage = 'planning' | 'building' | 'live' | 'done';
 
 /**
  * The lifecycle the campaign screen is organised around (`CAMP_PHASES`,
@@ -45,11 +43,7 @@ export type CampaignPhase = 'plan' | 'build' | 'run' | 'learn';
 
 /** Plan §mod-campaigns: "Not started → In build → In review → Ready → Live". */
 export type CampaignItemStatus =
-  | 'todo'
-  | 'building'
-  | 'review'
-  | 'ready'
-  | 'live';
+  'todo' | 'building' | 'review' | 'ready' | 'live';
 
 /** "hạng mục theo sản phẩm hoặc chủ đề" — a SKU or a topic with no SKU behind it. */
 export type CampaignSubjectKind = 'product' | 'topic';
@@ -81,8 +75,14 @@ export type CampaignBrief = {
 export type CampaignView = {
   id: string;
   name: string;
-  status: CampaignStatus;
-  type: CampaignType;
+  /** Giá trị server trả về, xem `CampaignStage`. */
+  status: CampaignStage;
+  /**
+   * null với bản ghi cũ: cột `type` cho phép NULL và 20/20 chiến dịch hiện có
+   * đều rỗng. `POST /campaigns` bắt buộc trường này nên bản mới luôn có — đừng
+   * mặc định thành 'launch', đó là gán nhãn cho thứ chưa ai đặt.
+   */
+  type: CampaignType | null;
   goal: CampaignGoal | null;
   owner: string;
   channels: string[];
@@ -107,10 +107,16 @@ export type CampaignView = {
 /** The draft a create/edit form hands back — no id, no derived fields. */
 export type CampaignDraft = {
   name: string;
-  type: CampaignType;
+  /**
+   * null với bản ghi cũ: cột `type` cho phép NULL và 20/20 chiến dịch hiện có
+   * đều rỗng. `POST /campaigns` bắt buộc trường này nên bản mới luôn có — đừng
+   * mặc định thành 'launch', đó là gán nhãn cho thứ chưa ai đặt.
+   */
+  type: CampaignType | null;
   goal: CampaignGoal | null;
   owner: string;
-  status: CampaignStatus;
+  /** Giá trị server trả về, xem `CampaignStage`. */
+  status: CampaignStage;
   channels: string[];
   budgetAmount: number | null;
   budgetCurrency: string;
@@ -146,7 +152,18 @@ export type CampaignExperience = {
   origin: string | null;
   /** Copies only — the campaign that owns it. */
   campaign: string | null;
-  /** Copies only — its words were rewritten for the subject it is filed under. */
+  /**
+   * Copies only — its words were rewritten for the subject it is filed under.
+   *
+   * KHÔNG CÓ GÌ ĐẶT TRƯỜNG NÀY LÚC NÀY. Nó từng được một nút "Adapt cho sản
+   * phẩm" bật lên trong React state, nhưng không có route BE nào ghi lại, nên
+   * cờ mất ngay lần tải lại trong khi hạng mục đã kịp qua cổng ship. Nút đã bỏ.
+   *
+   * `speaksForSubject` và `subjectLane` vẫn đọc trường này, và sẽ sống lại
+   * nguyên vẹn khi BE có đường adapt. Tới lúc đó, một bản copy viết cho sản
+   * phẩm khác chỉ qua cổng bằng hai lối thật: sửa lời văn, hoặc thay bằng bản
+   * khác — đúng hai lối `shipWhy_words` đang chỉ.
+   */
   adapted?: boolean;
 };
 
@@ -213,11 +230,7 @@ export type CampaignVerdict = {
 };
 
 export type CampaignHealthState =
-  | 'healthy'
-  | 'valuable'
-  | 'delayed'
-  | 'risk'
-  | 'complete';
+  'healthy' | 'valuable' | 'delayed' | 'risk' | 'complete';
 
 export type CampaignHealth = {
   state: CampaignHealthState;

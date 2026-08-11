@@ -38,11 +38,7 @@ export type DeploySubjectKind = 'product' | 'topic';
 
 /** `CAMP_TYPES` (~L9401), carried so a live group reads like its campaign. */
 export type DeployCampaignType =
-  | 'launch'
-  | 'seasonal'
-  | 'sale'
-  | 'always'
-  | 'retention';
+  'launch' | 'seasonal' | 'sale' | 'always' | 'retention';
 
 /**
  * A publishing surface — `DATA.channels`. `connected` is the only mutable

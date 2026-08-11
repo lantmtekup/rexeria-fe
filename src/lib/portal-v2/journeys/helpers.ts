@@ -12,6 +12,8 @@
 import {
   OUTCOME_FOR_OBJECTIVE,
   segmentById,
+  isEntrySource,
+  type JourneySegment,
 } from '@/lib/portal-v2/journeys/constants';
 import type {
   Journey,
@@ -171,7 +173,9 @@ export const validateJourney = (j: Journey): JourneyCheck[] => {
   checks.push({ ok: !cyclic, msg: 'No circular routing' });
 
   checks.push({
-    ok: j.nodes.every(n => n.kind !== 'experience' || Boolean(n.xName)),
+    // BE kiểm `experience_id` (`node.x`), KHÔNG kiểm nhãn: một node có tên
+    // hiển thị mà chưa có id vẫn trượt `experience_ref` ở server.
+    ok: j.nodes.every(n => n.kind !== 'experience' || Boolean(n.x)),
     msg: 'Every experience node links a real experience',
   });
   checks.push({
@@ -185,6 +189,26 @@ export const validateJourney = (j: Journey): JourneyCheck[] => {
     msg: 'Entries, actions and outcomes name their system',
   });
 
+  /*
+   * Bốn luật dưới đây BE có mà bản này thiếu, nên panel Requirements từng báo
+   * "100% ready" trong khi `PUT` trả 422. Giữ đồng bộ với
+   * `internal/core/journey_validator.go` — đây là bản sao BẮT BUỘC (một bản
+   * nháp chưa lưu thì không hỏi server được), nên lệch một luật là màn hình
+   * nói dối về thứ server sẽ nhận.
+   */
+  checks.push({
+    ok: j.nodes.every(n => n.kind !== 'entry' || isEntrySource(n.src)),
+    msg: 'Every entry names a known source',
+  });
+  checks.push({
+    ok: j.nodes.every(n => n.kind !== 'decision' || n.to.length >= 2),
+    msg: 'Every decision has at least two branches',
+  });
+  checks.push({
+    ok: j.nodes.every(n => n.kind !== 'outcome' || n.to.length === 0),
+    msg: 'An outcome ends the journey — no routes out of it',
+  });
+
   return checks;
 };
 
@@ -193,6 +217,15 @@ export const validateJourney = (j: Journey): JourneyCheck[] => {
  * every linked experience. A score that cannot go stale, and a missing list
  * that is always the truth.
  */
+/**
+ * `key → tên hiển thị`, để dịch lỗi của BE sang chữ người dùng thấy trên canvas.
+ * BE nói "node n3"; trên màn hình nó tên là "New experience".
+ */
+export const nodeNamesOf = (
+  j: Journey | null | undefined
+): Record<string, string> =>
+  Object.fromEntries((j?.nodes ?? []).map(n => [n.id, n.name]));
+
 export const journeyReadiness = (j: Journey): JourneyReadiness => {
   const checks: JourneyCheck[] = [
     ...validateJourney(j),
@@ -300,9 +333,13 @@ export const journeyStats = (
 export const walkJourney = (
   list: Journey[],
   j: Journey,
-  segId: string
+  segId: string,
+  segments: JourneySegment[]
 ): JourneyWalkStage[] => {
-  const share = segmentById(segId)?.share ?? 1;
+  // `all` = không thu hẹp ⇒ hệ số 1. Một phân khúc cụ thể thì dùng share ĐO
+  // ĐƯỢC; bản trước lấy hằng số viết tay rồi nhân vào số phiên có thật.
+  const share =
+    segId === 'all' ? 1 : (segmentById(segments, segId)?.share ?? 0);
   const layout = orderedLayout(j);
   const nodeStats = resolveNodeStats(list, j);
 
@@ -472,7 +509,7 @@ export const createJourney = (input: JourneyDraftInput): Journey => {
     campaignName: null,
     origin: null,
     obj: input.obj,
-    seg: input.seg,
+    personaId: input.personaId,
     updated: 'just now',
     tagline: 'A route from a front door to a result.',
     summary:

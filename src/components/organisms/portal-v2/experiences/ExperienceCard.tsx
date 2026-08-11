@@ -68,15 +68,9 @@ export const ExperienceCard = ({
             {experience.name}
           </h3>
           {/* The slug, not the name, is what identifies a page in the wild —
-              and two pages can share a name. A block has no slug; its type code
-              is the equivalent stable identifier, and it is what a user would
-              search for. */}
+              and two pages can share a name. */}
           <p className='truncate font-mono text-[11px] text-[var(--pv2-faint)]'>
-            {experience.kind === 'block'
-              ? (experience.typeCode ?? '—')
-              : experience.slug
-                ? `/${experience.slug}`
-                : t('noSlug')}
+            {experience.slug ? `/${experience.slug}` : t('noSlug')}
           </p>
         </div>
 
@@ -89,15 +83,22 @@ export const ExperienceCard = ({
 
       <div className='flex items-center gap-2 border-t border-[var(--pv2-hair)] px-3.5 py-2.5 text-[11px] text-[var(--pv2-faint)]'>
         <Layers className='size-3.5 shrink-0' strokeWidth={2.2} aria-hidden />
-        {/* A block IS one layer, so counting its blocks says nothing — it
-            reports its instrumentation and stops there. */}
         <span className='truncate'>
-          {experience.kind === 'block'
-            ? t('cardFooterMetaBlock', { pct: experience.coverage.pct })
-            : t('cardFooterMeta', {
-                layers: experience.layers.length,
-                pct: experience.coverage.pct,
-              })}
+          {/*
+            `coveragePct` null = BE nói loại này KHÔNG đo được. Bản cũ luôn có
+            số vì nó bốc từ hàm băm id; giờ thiếu thì nói thiếu.
+
+            Đếm VAI PHỄU, không đếm block: danh sách không trả số block, và
+            `funnel_coverage` là tối đa 5 chữ vai. Ghi "5 layer" ở đây rồi mở
+            ra thấy 7 block là đúng kiểu vênh thẻ-với-chi-tiết mà journey đang
+            mắc (62% ngoài thẻ / 33% khi mở).
+          */}
+          {experience.coveragePct !== null
+            ? t('cardFooterMeta', {
+                roles: experience.funnelRoles.length,
+                pct: experience.coveragePct,
+              })
+            : t('cardFooterUnmeasured')}
         </span>
         <span className='flex-1' />
         <span className='shrink-0 tabular-nums'>{experience.updatedLabel}</span>

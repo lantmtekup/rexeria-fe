@@ -2351,12 +2351,7 @@ export function resolveElementMeta(
         href: 'Link CTA',
       }[
         field as
-          | 'label'
-          | 'imageUrl'
-          | 'hoverImageUrl'
-          | 'hoverTitle'
-          | 'cta'
-          | 'href'
+          'label' | 'imageUrl' | 'hoverImageUrl' | 'hoverTitle' | 'cta' | 'href'
       ];
       const kind =
         field === 'imageUrl' || field === 'hoverImageUrl' ? 'image' : 'text';
@@ -2396,11 +2391,7 @@ export function resolveElementMeta(
         glassImageUrl: 'Ly',
       }[
         field as
-          | 'name'
-          | 'color'
-          | 'bgImageUrl'
-          | 'bottleImageUrl'
-          | 'glassImageUrl'
+          'name' | 'color' | 'bgImageUrl' | 'bottleImageUrl' | 'glassImageUrl'
       ];
       const isImage =
         field === 'bgImageUrl' ||

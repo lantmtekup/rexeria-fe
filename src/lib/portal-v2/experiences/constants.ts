@@ -1,20 +1,14 @@
-import type { BlockCategory } from '@/components/modules/block-editor/types';
-import {
-  BLOCK_CATEGORY_LABEL,
-  BLOCK_CATEGORY_ORDER,
-} from '@/lib/block-type-catalog';
 import type {
   EvidenceTier,
+  ExperienceCategory,
   ExperienceDetailTab,
   ExperienceFilters,
   ExperienceInteraction,
   ExperienceObjective,
-  ExperienceTab,
+  ExperienceState,
   ExperienceVehicle,
   FunnelRole,
-  LayerComponentKey,
 } from '@/lib/portal-v2/experiences/types';
-import type { BlockSurface } from '@/services/rexer/types';
 
 /**
  * THE SPINE — prototype `DATA.expObjs` (~L5511).
@@ -35,56 +29,34 @@ export const OBJECTIVE_ROLE: Record<ExperienceObjective, FunnelRole> = {
 };
 
 /**
- * THE NAVIGATION — prototype `XSTATES` + All (~L16071), plus Blocks.
- *
- * One row, read left to right as the library widens then turns a corner:
- * everything → the three page ownership states → the block half. Blocks sit at
- * the end rather than on a row of their own because the axes never overlap: a
- * block has `scope`, not template-vs-copy, so no tab has to express both.
- *
- * `all` genuinely means all — pages AND blocks.
+ * Prototype `XSTATES` + All (~L16071) — the page's primary navigation.
+ * Ownership (template vs copy) is orthogonal to Category / Type / Objective.
  */
-export const EXPERIENCE_TABS: {
-  id: ExperienceTab;
+export const EXPERIENCE_STATES: {
+  id: ExperienceState | 'all';
   labelKey: string;
 }[] = [
   { id: 'all', labelKey: 'stateAll' },
   { id: 'template', labelKey: 'stateTemplate' },
+  // Bản của brand chưa dùng cho chiến dịch nào — đứng ngay sau Template vì đó
+  // là chặng kế tiếp của luồng: xem thư viện → lấy một bản → sửa → mới gán.
+  { id: 'unassigned', labelKey: 'stateUnassigned' },
   { id: 'product', labelKey: 'stateProduct' },
   { id: 'topic', labelKey: 'stateTopic' },
-  { id: 'block', labelKey: 'tabBlocks' },
+  // `kind: 'block'` là loại THỨ TƯ mà `/v1/experiences` trả về. Bản cũ không
+  // có tab này vì nó suy từ `/pages`, nơi block không tồn tại; gộp block vào
+  // một trong ba tab kia là gán cho chúng một quyền sở hữu chúng không có.
+  { id: 'block', labelKey: 'stateBlock' },
 ];
 
-/**
- * Block categories — BLOCK axis.
- *
- * Derived from the shared catalog so this list can never drift from the one
- * `/admin/blocks` filters by. Labels come from `BLOCK_CATEGORY_LABEL` and are
- * proper nouns ("Hero", "FAQ"), so they are passed through as `label` rather
- * than routed through i18n like the seeded axes.
- */
-export const EXPERIENCE_BLOCK_CATEGORIES: {
-  id: BlockCategory | 'all';
-  /** Pre-resolved label; `labelKey` is set only for the `all` entry. */
-  label?: string;
-  labelKey?: string;
-}[] = [
-  { id: 'all', labelKey: 'blockCatAny' },
-  ...BLOCK_CATEGORY_ORDER.map(id => ({
-    id,
-    label: BLOCK_CATEGORY_LABEL[id],
-  })),
-];
-
-/** Where a block is allowed to land — `Block.supported_surfaces`. BLOCK axis. */
-export const EXPERIENCE_SURFACES: {
-  id: BlockSurface | 'all';
+/** `DATA.expCategories` (~L5480) — what KIND of artifact this is. */
+export const EXPERIENCE_CATEGORIES: {
+  id: ExperienceCategory | 'all';
   labelKey: string;
 }[] = [
-  { id: 'all', labelKey: 'surfaceAny' },
-  { id: 'landing', labelKey: 'surfaceLanding' },
-  { id: 'ad', labelKey: 'surfaceAd' },
-  { id: 'curate', labelKey: 'surfaceCurate' },
+  { id: 'all', labelKey: 'catAny' },
+  { id: 'blocks', labelKey: 'catBlocks' },
+  { id: 'collection', labelKey: 'catCollection' },
 ];
 
 /** `DATA.expCats` (~L5497) — the vehicle. */
@@ -179,14 +151,43 @@ export const EXPERIENCE_DETAIL_TABS: {
   { id: 'perf', labelKey: 'tabPerf', questionKey: 'tabPerfQ' },
 ];
 
-/** `COMP_NAME` (~L12401). */
-export const LAYER_COMPONENT_LABEL_KEY: Record<LayerComponentKey, string> = {
+/**
+ * `COMP_NAME` (~L12401), mở rộng cho `component_kind` thật của canvas.
+ *
+ * Bảng TRA, không phải enum: `kind` từ BE là chuỗi tự do. Không khớp thì in
+ * nguyên chuỗi — một loại block mới phải hiện ra khó đọc, chứ không được biến
+ * mất khỏi danh sách.
+ */
+export const COMPONENT_KIND_LABEL_KEY: Record<string, string> = {
   n: 'componentTitle',
+  title: 'componentTitle',
   h: 'componentHeadline',
+  headline: 'componentHeadline',
   b: 'componentBody',
+  body: 'componentBody',
+  text: 'componentBody',
   media: 'componentMedia',
   product: 'componentProduct',
   cta: 'componentCta',
+  button: 'componentCta',
+};
+
+/** `block_signal.signals` — tín hiệu mức block. Cùng luật tra như trên. */
+export const BLOCK_SIGNAL_LABEL_KEY: Record<string, string> = {
+  dwell: 'sigDwell',
+  scroll: 'sigScroll',
+  tap: 'sigTap',
+  complete: 'sigComplete',
+  exit: 'sigExit',
+};
+
+/** `component.signal.event` — cái component ấy BÁO VỀ. */
+export const COMPONENT_EVENT_LABEL_KEY: Record<string, string> = {
+  view: 'evtView',
+  play: 'evtPlay',
+  spin: 'evtSpin',
+  tap: 'evtTap',
+  complete: 'evtComplete',
 };
 
 /** Prototype `xCoverCell` (~L15726) — mint ≥80, amber ≥50, else rose. */
@@ -197,59 +198,9 @@ export const FUNNEL_ORDER: FunnelRole[] = ['ATT', 'EDU', 'EXP', 'TRU', 'CON'];
 
 export const EXPERIENCE_DEFAULT_FILTERS: ExperienceFilters = {
   q: '',
-  tab: 'all',
+  state: 'all',
+  category: 'all',
   vehicle: 'all',
   objective: 'all',
   ev: 'all',
-  blockCat: 'all',
-  surface: 'all',
 };
-
-/** Which `ExperienceFilters` key a Refine chip row writes to. */
-export type RefineAxis =
-  | 'vehicle'
-  | 'objective'
-  | 'ev'
-  | 'blockCat'
-  | 'surface';
-
-export type RefineFacet = {
-  key: RefineAxis;
-  /** i18n key for the row's uppercase label. */
-  labelKey: string;
-  options: { id: string; label?: string; labelKey?: string }[];
-};
-
-/**
- * The Refine drawer, per tab.
- *
- * The Blocks tab swaps the whole facet set for the two axes a block actually
- * has on the wire — its catalog category and the surfaces it is allowed on —
- * so it is never offered "Kiểu: Microsite", which for a block would be a chip
- * with nothing behind it.
- *
- * Every other tab (including `all`) keeps the shared axes. Those are seeded,
- * and blocks are seeded through the same helpers as pages, so narrowing by
- * objective or evidence on the All tab is meaningful for both halves.
- */
-export const REFINE_FACETS_SHARED: RefineFacet[] = [
-  { key: 'vehicle', labelKey: 'filterVehicle', options: EXPERIENCE_VEHICLES },
-  {
-    key: 'objective',
-    labelKey: 'filterObjective',
-    options: EXPERIENCE_OBJECTIVES,
-  },
-  { key: 'ev', labelKey: 'filterEvidence', options: EXPERIENCE_EVIDENCE },
-];
-
-export const REFINE_FACETS_BLOCK: RefineFacet[] = [
-  {
-    key: 'blockCat',
-    labelKey: 'filterBlockCategory',
-    options: EXPERIENCE_BLOCK_CATEGORIES,
-  },
-  { key: 'surface', labelKey: 'filterSurface', options: EXPERIENCE_SURFACES },
-];
-
-export const refineFacetsFor = (tab: ExperienceTab): RefineFacet[] =>
-  tab === 'block' ? REFINE_FACETS_BLOCK : REFINE_FACETS_SHARED;

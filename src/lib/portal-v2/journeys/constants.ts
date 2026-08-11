@@ -165,53 +165,44 @@ export const ENTRY_SOURCES: EntrySource[] = [
 export const entrySourceById = (id: string | undefined): EntrySource | null =>
   id ? (ENTRY_SOURCES.find(s => s.id === id) ?? null) : null;
 
+/**
+ * Nguồn vào có hợp lệ không — gương `taxonomy.IsValidEntrySource` bên BE.
+ * Tám id ở đây khớp đúng danh sách đó; lệch một cái là `PUT` trả 422 mà màn
+ * hình không hề báo trước.
+ */
+export const isEntrySource = (id: string | undefined): boolean =>
+  Boolean(id) && ENTRY_SOURCES.some(s => s.id === id);
+
 export type JourneySegment = {
   id: string;
   n: string;
-  /** Behavioural share of traffic — scales the walk-through. */
+  /**
+   * Tỉ lệ traffic ĐO ĐƯỢC, 0..1. Bằng 0 nghĩa là chưa đo được lượt nào — đừng
+   * nhân nó vào số phiên rồi vẽ ra một cái phễu bằng không.
+   */
   share: number;
+  /** Số phiên của phân khúc trong cửa sổ đo. */
+  sessions: number;
   want: string;
 };
 
 /**
- * `SEGMENTS` (~L8108), trimmed to the fields the walk-through reads. `all` is
- * the unscaled perspective and is not a segment — it is the absence of one.
+ * Phân khúc hành vi — dữ liệu THẬT từ `GET /v1/intel/segments`.
+ *
+ * Bản trước là một mảng cứng chép lại chính endpoint đó rồi đóng băng `share`
+ * lại: `s1` ghi 0.07 trong khi API trả `share` ĐO ĐƯỢC từ `shopper_profiles`.
+ * Con số đóng băng ấy không nằm yên — nó nhân vào số phiên có thật trong
+ * `walkJourney`, nên màn Simulate hiện "7% của N phiên" với N thật và 7% bịa.
+ *
+ * `all` là góc nhìn không thu hẹp, KHÔNG phải một phân khúc — đó là sự vắng
+ * mặt của phân khúc.
  */
-export const JOURNEY_SEGMENTS: JourneySegment[] = [
-  {
-    id: 's1',
-    n: 'High Intent',
-    share: 0.07,
-    want: 'They have decided. They are checking they are not wrong.',
-  },
-  {
-    id: 's2',
-    n: 'Active Comparator',
-    share: 0.14,
-    want: 'They want to know why yours, not the one they already own.',
-  },
-  {
-    id: 's3',
-    n: 'Trust Seeker',
-    share: 0.17,
-    want: 'They believe the product might work. They do not yet believe you.',
-  },
-  {
-    id: 's4',
-    n: 'Product Researcher',
-    share: 0.12,
-    want: 'They want to understand it fully before they care what it costs.',
-  },
-  {
-    id: 's5',
-    n: 'Price Sensitive',
-    share: 0.11,
-    want: 'They want permission to spend.',
-  },
-];
+export const JOURNEY_SEGMENTS: JourneySegment[] = [];
 
-export const segmentById = (id: string): JourneySegment | null =>
-  JOURNEY_SEGMENTS.find(s => s.id === id) ?? null;
+export const segmentById = (
+  segments: JourneySegment[],
+  id: string
+): JourneySegment | null => segments.find(s => s.id === id) ?? null;
 
 /**
  * `J_OUTCOME` (~L23319) — a new journey is never empty. The objective decides

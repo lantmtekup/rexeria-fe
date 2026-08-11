@@ -3,6 +3,12 @@ import type { MediaAsset } from '@/lib/portal-v2/media/types';
 import { rexerApi } from '@/services/rexer/endpoints';
 
 export type MediaCatalogQuery = {
+  /**
+   * Giới hạn theo thương hiệu — chỉ có tác dụng với platform admin: BE ghi đè
+   * trường này bằng brand của người dùng thường (`scopedMediaFilter`), nên
+   * không mở đường đọc chéo tenant.
+   */
+  brandId?: string | null;
   q?: string;
 };
 
@@ -18,7 +24,11 @@ export const fetchMediaCatalog = async (
   query: MediaCatalogQuery = {}
 ): Promise<MediaCatalogResult> => {
   try {
-    const res = await rexerApi.media.list({ limit: LIST_LIMIT, q: query.q });
+    const res = await rexerApi.media.list({
+      limit: LIST_LIMIT,
+      q: query.q,
+      ...(query.brandId ? { brand_id: query.brandId } : {}),
+    });
     return {
       assets: (res.items ?? []).map(mapRexerMediaAssetToUi),
       error: null,

@@ -1,40 +1,47 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
+import { ListFilter, Loader2, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import { FilterChips } from '@/components/molecules/portal-v2/FilterChips';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
 import { ExperienceCard } from '@/components/organisms/portal-v2/experiences/ExperienceCard';
 import { ExperienceDetailModal } from '@/components/organisms/portal-v2/experiences/ExperienceDetailModal';
-import { ExperienceToolbar } from '@/components/organisms/portal-v2/experiences/ExperienceToolbar';
+import { UseExperienceModal } from '@/components/organisms/portal-v2/experiences/UseExperienceModal';
+import { errorMessage } from '@/services/portal-v2/_error';
+import {
+  forkExperience,
+  type ForkTarget,
+} from '@/services/portal-v2/experienceUse';
+import { promoteToLibrary } from '@/services/portal-v2/experiencePromote';
+import { setExperienceProven } from '@/services/portal-v2/experienceProven';
+import { RxApiError } from '@/services/rexer/client';
 import { ExchangePreviewShell } from '@/components/organisms/portal-v2/exchange/ExchangePreviewShell';
 import {
+  EXPERIENCE_CATEGORIES,
   EXPERIENCE_DEFAULT_FILTERS,
-  EXPERIENCE_TABS,
-  refineFacetsFor,
-  type RefineAxis,
+  EXPERIENCE_EVIDENCE,
+  EXPERIENCE_OBJECTIVES,
+  EXPERIENCE_STATES,
+  EXPERIENCE_VEHICLES,
 } from '@/lib/portal-v2/experiences/constants';
 import {
   canEditCanvas,
   canPreview,
   canvasEditorHref,
-  countByTab,
+  countByState,
   filterExperiences,
   findById,
 } from '@/lib/portal-v2/experiences/helpers';
-import {
-  EXPERIENCE_DEFAULT_TAB,
-  writeExperienceTabParam,
-} from '@/lib/portal-v2/experiences/tabParam';
+import { writeExchangePreviewParam } from '@/lib/portal-v2/exchange/previewParam';
 import type {
   ExperienceFilters,
-  ExperienceTab,
+  ExperienceState,
   ExperienceView,
 } from '@/lib/portal-v2/experiences/types';
-import { writeExchangePreviewParam } from '@/lib/portal-v2/exchange/previewParam';
 import type { PreviewItem } from '@/lib/portal-v2/preview/types';
 import { fetchExperienceLibrary } from '@/services/portal-v2/experienceLibrary';
 import { cn } from '@/lib/cn';
@@ -42,36 +49,51 @@ import { cn } from '@/lib/cn';
 type ExperiencesWorkspaceProps = {
   initialItems: ExperienceView[];
   initialError: string | null;
-  /** One source failed while the other returned rows — shown as a strip. */
-  initialSoftError?: string | null;
-  /** Tab from `?tab=` — reopens e.g. the Blocks tab on a pasted link. */
-  initialTab?: ExperienceTab | null;
+  /**
+   * Brand đang xem. Phải mang theo: ô tìm kiếm nạp lại danh sách sau mỗi lần
+   * gõ — quên truyền là bộ lọc rơi mất và lưới bỗng hiện trải nghiệm của brand
+   * khác ngay khi người dùng gõ chữ đầu tiên.
+   */
+  brandId?: string | null;
   /** Experience id from `?preview=` — reopens that preview on a pasted link. */
   initialPreviewId?: string | null;
 };
 
 type ModalMode = 'detail' | 'preview' | null;
 
+/** Facet axes that live behind the Refine toggle (prototype `RKEYS`). */
+type RefineAxis = 'category' | 'vehicle' | 'objective' | 'ev';
+
 const SEARCH_DEBOUNCE_MS = 350;
 
-/**
- * The library of everything after the click — landing pages AND blocks.
- *
- * ONE tab row carries the whole navigation: All, the three page ownership
- * states, then Blocks. All means all; the ownership tabs are page lineage so
- * they exclude blocks by construction; Blocks is the block half and swaps the
- * Refine drawer for the two axes a block actually has on the wire.
- *
- * Everything BELOW the tabs is shared on purpose: one card, one detail modal,
- * one preview shell. A block behaves exactly like a page; only the record it
- * loads and the route it edits at differ.
- */
+const REFINE_FACETS: {
+  key: RefineAxis;
+  labelKey: string;
+  options:
+    | typeof EXPERIENCE_CATEGORIES
+    | typeof EXPERIENCE_VEHICLES
+    | typeof EXPERIENCE_OBJECTIVES
+    | typeof EXPERIENCE_EVIDENCE;
+}[] = [
+  {
+    key: 'category',
+    labelKey: 'filterCategory',
+    options: EXPERIENCE_CATEGORIES,
+  },
+  { key: 'vehicle', labelKey: 'filterVehicle', options: EXPERIENCE_VEHICLES },
+  {
+    key: 'objective',
+    labelKey: 'filterObjective',
+    options: EXPERIENCE_OBJECTIVES,
+  },
+  { key: 'ev', labelKey: 'filterEvidence', options: EXPERIENCE_EVIDENCE },
+];
+
 export const ExperiencesWorkspace = ({
   initialItems,
   initialError,
-  initialSoftError = null,
-  initialTab = null,
   initialPreviewId = null,
+  brandId = null,
 }: ExperiencesWorkspaceProps) => {
   const t = useTranslations('portalV2.experiences');
   const router = useRouter();
@@ -87,13 +109,113 @@ export const ExperiencesWorkspace = ({
   });
 
   const [items, setItems] = useState<ExperienceView[]>(initialItems);
+  /** id đang ghi dấu Proven xuống server — khoá nút để không bấm kép. */
+  const [provenPendingId, setProvenPendingId] = useState<string | null>(null);
+
+  /** Lý do lần bấm Proven gần nhất thất bại — null khi chưa bấm hoặc đã xong. */
+  const [provenError, setProvenError] = useState<string | null>(null);
+
+  /**
+   * Bật/tắt Proven. Cập nhật lạc quan trước để nút phản hồi tức thì, hỏng thì
+   * trả về giá trị cũ — một lời gọi là xong, không cần nạp lại cả danh sách.
+   *
+   * Nhánh `catch` TRƯỚC ĐÂY nuốt trọn lỗi: nút bật rồi tắt lại, không một chữ
+   * nào. Đo thật thì đó chính là chuyện đang xảy ra — BE trả **403
+   * `client-portal users cannot modify library templates`**, nên với tài khoản
+   * brand thì nút này không bao giờ chạy được, mà màn hình lại đọc như "bấm
+   * không ăn". Hỏng thì phải NÓI hỏng, và nói vì sao.
+   */
+  const handleToggleProven = async (experience: ExperienceView) => {
+    const next = !experience.proven;
+    const apply = (value: boolean) =>
+      setItems(prev =>
+        prev.map(x => (x.id === experience.id ? { ...x, proven: value } : x))
+      );
+
+    setProvenPendingId(experience.id);
+    setProvenError(null);
+    apply(next);
+    try {
+      const confirmed = await setExperienceProven(experience.id, next);
+      if (confirmed !== next) apply(confirmed);
+    } catch (err) {
+      apply(experience.proven);
+      // 403 là LUẬT, không phải trục trặc: `assertTemplateMutable` chặn
+      // client-portal user, và chặn cả template hệ thống (`brand_id` NULL) với
+      // mọi người trừ platform admin. Dịch thành câu người dùng làm được gì
+      // tiếp; các lỗi khác thì đưa nguyên văn của BE.
+      setProvenError(
+        err instanceof RxApiError && err.status === 403
+          ? t('provenForbidden')
+          : errorMessage(err, t('provenFailed'))
+      );
+    } finally {
+      setProvenPendingId(null);
+    }
+  };
+  /** Trải nghiệm đang chờ chọn đích để fork; null = hộp đóng. */
+  const [useTarget, setUseTarget] = useState<ExperienceView | null>(null);
+
+  /**
+   * Fork xong thì NẠP LẠI danh sách, không nhét bản mới vào state.
+   *
+   * Bản copy vừa tạo làm đổi số đếm của cả hai tab và làm hạng mục đổi trạng
+   * thái (`SyncItemAfterCopyChange` chạy ở BE). Ghép tay ở FE là dựng lại một
+   * bản sao của luật server — đúng thứ đã khiến id suy ở FE trỏ vào hư không.
+   */
+  const handleUseConfirm = async (target: ForkTarget) => {
+    if (!useTarget) return;
+    const copy = await forkExperience(useTarget.id, target, brandId);
+    const res = await fetchExperienceLibrary({ q: filters.q, brandId });
+    setItems(res.items);
+    setLoadError(res.error);
+    setUseTarget(null);
+    // Mở thẳng bản copy vừa có: nó là thứ người dùng vừa tạo ra, và nó nằm ở
+    // tab khác tab đang đứng nên rất dễ "bấm xong không thấy gì".
+    setActiveId(copy.id);
+    setFilters(prev => ({ ...prev, state: copy.state }));
+    toast.success(t('useDone', { name: copy.name }));
+  };
+
+  const [promotePendingId, setPromotePendingId] = useState<string | null>(null);
+  /** Kết quả lần promote gần nhất — hiện tên template mới để còn tìm lại được. */
+  const [promoteNote, setPromoteNote] = useState<{
+    name: string;
+    error: string | null;
+  } | null>(null);
+
+  /**
+   * Đưa trang vào thư viện Automation: promote thành template rồi đánh dấu
+   * Proven. KHÔNG cập nhật lạc quan gì ở đây — thứ được tạo là một bản ghi
+   * MỚI, không nằm trong danh sách page đang hiện.
+   */
+  const handlePromote = async (experience: ExperienceView) => {
+    if (promotePendingId) return;
+    setPromotePendingId(experience.id);
+    setPromoteNote(null);
+    try {
+      const res = await promoteToLibrary(experience.id, experience.name);
+      setPromoteNote({
+        name: res.template.name,
+        error: res.provenError,
+      });
+    } catch (err) {
+      setPromoteNote({
+        name: experience.name,
+        error: err instanceof Error ? err.message : 'Promote failed',
+      });
+    } finally {
+      setPromotePendingId(null);
+    }
+  };
+
   const [loadError, setLoadError] = useState<string | null>(initialError);
-  const [softError, setSoftError] = useState<string | null>(initialSoftError);
   const [searching, setSearching] = useState(false);
-  const [filters, setFilters] = useState<ExperienceFilters>(() => ({
-    ...EXPERIENCE_DEFAULT_FILTERS,
-    tab: initialTab ?? EXPERIENCE_DEFAULT_TAB,
-  }));
+  const [filters, setFilters] = useState<ExperienceFilters>(
+    EXPERIENCE_DEFAULT_FILTERS
+  );
+  /** Category / Type / Objective / Evidence — collapsed until asked for. */
+  const [refineOpen, setRefineOpen] = useState(false);
 
   const [activeId, setActiveId] = useState<string | null>(
     deepLinkedExperience?.id ?? null
@@ -113,7 +235,7 @@ export const ExperiencesWorkspace = ({
 
   modalModeRef.current = modalMode;
 
-  /* Search hits BOTH servers (`?q=`); the chip axes and the tab rows narrow
+  /* Search hits the server (`?q=`); the chip axes are seeded values and narrow
      client-side, so they never trigger a fetch. */
   useEffect(() => {
     if (skipFirstSearch.current) {
@@ -124,12 +246,11 @@ export const ExperiencesWorkspace = ({
     let cancelled = false;
     const handle = setTimeout(() => {
       setSearching(true);
-      void fetchExperienceLibrary({ q: filters.q })
+      void fetchExperienceLibrary({ q: filters.q, brandId })
         .then(res => {
           if (cancelled) return;
           setItems(res.items);
           setLoadError(res.error);
-          setSoftError(res.softError);
         })
         .finally(() => {
           if (!cancelled) setSearching(false);
@@ -140,7 +261,7 @@ export const ExperiencesWorkspace = ({
       cancelled = true;
       clearTimeout(handle);
     };
-  }, [filters.q]);
+  }, [filters.q, brandId]);
 
   const visible = useMemo(
     () => filterExperiences(items, filters),
@@ -149,66 +270,45 @@ export const ExperiencesWorkspace = ({
 
   const active = findById(items, activeId);
 
-  const isBlockTab = filters.tab === 'block';
-
-  /* ── tabs ────────────────────────────────────────────────────────────── */
-
-  const tabItems = useMemo(
+  const stateTabs = useMemo(
     () =>
-      EXPERIENCE_TABS.map(tab => ({
-        id: tab.id,
-        label: t(tab.labelKey),
-        count: countByTab(items, tab.id),
+      EXPERIENCE_STATES.map(s => ({
+        id: s.id,
+        label: t(s.labelKey),
+        count: countByState(items, s.id),
       })),
     [items, t]
   );
 
-  /**
-   * Moving on or off the Blocks tab clears the axes the drawer stops showing.
-   *
-   * Leave them set and the next tab silently hides rows the user has no visible
-   * control to release — the token that would explain it lives in a drawer they
-   * are no longer looking at.
-   */
-  const handleTabChange = useCallback((id: string) => {
-    const tab = id as ExperienceTab;
-    setFilters(prev => {
-      if (prev.tab === tab) return prev;
-      const swapsDrawer = (prev.tab === 'block') !== (tab === 'block');
-      if (!swapsDrawer) return { ...prev, tab };
-      return {
-        ...prev,
-        tab,
-        vehicle: 'all',
-        objective: 'all',
-        ev: 'all',
-        blockCat: 'all',
-        surface: 'all',
-      };
-    });
-    writeExperienceTabParam(tab);
+  const handleStateChange = useCallback((id: string) => {
+    setFilters(prev => ({
+      ...prev,
+      state: id as ExperienceState | 'all',
+    }));
   }, []);
 
-  const handleQChange = useCallback((q: string) => {
-    setFilters(prev => ({ ...prev, q }));
-  }, []);
+  const chipOptions = <T extends string>(defs: { id: T; labelKey: string }[]) =>
+    defs.map(d => ({ id: d.id, label: t(d.labelKey) }));
 
-  const handleFacetChange = useCallback((key: RefineAxis, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  }, []);
-
-  const facets = refineFacetsFor(filters.tab);
-
-  const facetValues = useMemo(
-    (): Record<RefineAxis, string> => ({
-      vehicle: filters.vehicle,
-      objective: filters.objective,
-      ev: filters.ev,
-      blockCat: filters.blockCat,
-      surface: filters.surface,
-    }),
-    [filters]
+  const activeRefines = useMemo(
+    () =>
+      REFINE_FACETS.flatMap(facet => {
+        const value = filters[facet.key];
+        if (value === 'all') return [];
+        const opt = facet.options.find(o => o.id === value);
+        if (!opt) return [];
+        return [{ key: facet.key, label: t(opt.labelKey) }];
+      }),
+    [filters, t]
   );
+
+  const handleClearRefine = useCallback((key: RefineAxis) => {
+    setFilters(prev => ({ ...prev, [key]: 'all' }));
+  }, []);
+
+  const handleToggleRefine = useCallback(() => {
+    setRefineOpen(prev => !prev);
+  }, []);
 
   /* ── preview ─────────────────────────────────────────────────────────── */
 
@@ -218,12 +318,9 @@ export const ExperiencesWorkspace = ({
     (experience: ExperienceView): PreviewItem => ({
       id: experience.id,
       name: experience.name,
-      // A page renders from `/p/{slug}`; a block from `/embed/block/{id}`.
-      // `ExchangePreviewShell` already branches on this.
-      source: experience.kind === 'block' ? 'block' : 'page',
+      source: 'page',
       slug: experience.slug ?? undefined,
-      blockId: experience.kind === 'block' ? experience.id : undefined,
-      kindLabel: t(experience.kind === 'block' ? 'kindBlock' : 'kindPage'),
+      kindLabel: t('catCollection'),
       evidence: experience.stats
         ? { sessions: experience.stats.sessions, lift: experience.stats.lift }
         : null,
@@ -343,34 +440,165 @@ export const ExperiencesWorkspace = ({
           </div>
         ) : (
           <>
-            {softError ? (
+            {loadError ? (
               <div
                 className={cn(
                   'mb-4 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)]',
                   'bg-[var(--pv2-paper)] px-4 py-3 text-[12.5px] text-[var(--pv2-mut)]'
                 )}
               >
-                {t('loadErrorPartial')} — {softError}
+                {loadError}
               </div>
             ) : null}
 
-            {/* The whole navigation: All · the three ownership states · Blocks. */}
             <div className='sticky top-0 z-10 -mx-5 mb-3.5 bg-[var(--pv2-canvas)] px-5 md:-mx-8 md:px-8'>
               <Tabs
-                items={tabItems}
-                value={filters.tab}
-                onChange={handleTabChange}
+                items={stateTabs}
+                value={filters.state}
+                onChange={handleStateChange}
                 aria-label={t('stateTabsAria')}
               />
             </div>
 
-            <ExperienceToolbar
-              q={filters.q}
-              onQChange={handleQChange}
-              facets={facets}
-              values={facetValues}
-              onFacetChange={handleFacetChange}
-            />
+            <div className='mb-3.5 flex flex-col gap-2.5'>
+              <div className='flex flex-wrap items-center justify-between gap-2'>
+                <label
+                  className={cn(
+                    'flex w-full max-w-[320px] shrink-0 items-center gap-2 rounded-[10px]',
+                    'border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-[11px] py-2 text-[var(--pv2-faint)]',
+                    'transition-colors focus-within:border-[var(--pv2-violet)]',
+                    'sm:w-[320px]'
+                  )}
+                >
+                  <Search
+                    className='size-3.5 shrink-0'
+                    strokeWidth={2.2}
+                    aria-hidden
+                  />
+                  <input
+                    type='search'
+                    value={filters.q}
+                    onChange={e =>
+                      setFilters(prev => ({ ...prev, q: e.target.value }))
+                    }
+                    placeholder={t('searchPlaceholder')}
+                    aria-label={t('searchAria')}
+                    className='min-w-0 flex-1 border-0 bg-transparent text-[12.5px] text-[var(--pv2-ink)] outline-none placeholder:text-[var(--pv2-faint)]'
+                  />
+                </label>
+
+                <button
+                  type='button'
+                  aria-expanded={refineOpen}
+                  aria-controls='experiences-refine-panel'
+                  aria-label={t('filterRefineAria')}
+                  tabIndex={0}
+                  onClick={handleToggleRefine}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleToggleRefine();
+                    }
+                  }}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5',
+                    'text-[12px] font-semibold transition-colors duration-150',
+                    'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2 focus-visible:outline-none',
+                    'active:scale-[0.98]',
+                    refineOpen
+                      ? 'border-[var(--pv2-ink)] bg-[var(--pv2-ink)] text-[var(--pv2-paper)]'
+                      : 'border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-[var(--pv2-mut)] hover:border-[color-mix(in_srgb,var(--pv2-violet)_35%,var(--pv2-hair))] hover:text-[var(--pv2-ink)]'
+                  )}
+                >
+                  <ListFilter
+                    className='size-3.5 shrink-0'
+                    strokeWidth={2}
+                    aria-hidden
+                  />
+                  {t('filterRefine')}
+                  {activeRefines.length > 0 ? (
+                    <span
+                      className={cn(
+                        'ml-0.5 inline-flex min-w-[1.1rem] items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums',
+                        refineOpen
+                          ? 'bg-[var(--pv2-paper)]/20 text-[var(--pv2-paper)]'
+                          : 'bg-[var(--pv2-canvas)] text-[var(--pv2-ink)]'
+                      )}
+                    >
+                      {activeRefines.length}
+                    </span>
+                  ) : null}
+                </button>
+
+                {activeRefines.map(token => (
+                  <button
+                    key={token.key}
+                    type='button'
+                    tabIndex={0}
+                    title={t('clearRefineAria', { label: token.label })}
+                    aria-label={t('clearRefineAria', { label: token.label })}
+                    onClick={() => handleClearRefine(token.key)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleClearRefine(token.key);
+                      }
+                    }}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5',
+                      'text-[12px] font-semibold transition-colors duration-150',
+                      'border-[color-mix(in_srgb,var(--pv2-violet)_28%,var(--pv2-hair))]',
+                      'bg-[color-mix(in_srgb,var(--pv2-violet)_12%,var(--pv2-paper))] text-[var(--pv2-violet)]',
+                      'hover:border-[var(--pv2-violet)] hover:bg-[var(--pv2-violet)] hover:text-[var(--pv2-paper)]',
+                      'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2 focus-visible:outline-none',
+                      'active:scale-[0.98]'
+                    )}
+                  >
+                    {token.label}
+                    <span
+                      className='text-[13px] leading-none opacity-75'
+                      aria-hidden
+                    >
+                      ×
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {refineOpen ? (
+                <div
+                  id='experiences-refine-panel'
+                  className={cn(
+                    'flex flex-col gap-2.5 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)]',
+                    'bg-[var(--pv2-paper)] px-4 py-3.5'
+                  )}
+                >
+                  {REFINE_FACETS.map(facet => (
+                    <div
+                      key={facet.key}
+                      className='flex min-w-0 flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2.5'
+                    >
+                      <span
+                        className={cn(
+                          'w-[74px] shrink-0 text-[9.5px] font-bold tracking-[0.09em]',
+                          'text-[var(--pv2-faint)] uppercase'
+                        )}
+                      >
+                        {t(facet.labelKey)}
+                      </span>
+                      <FilterChips
+                        inline
+                        options={chipOptions(facet.options)}
+                        value={filters[facet.key]}
+                        onChange={id =>
+                          setFilters(prev => ({ ...prev, [facet.key]: id }))
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
 
             {searching ? (
               <div className='mt-4 flex items-center justify-center gap-2 py-10 text-[13px] text-[var(--pv2-mut)]'>
@@ -380,9 +608,7 @@ export const ExperiencesWorkspace = ({
             ) : visible.length ? (
               <>
                 <p className='mb-3 text-[12px] text-[var(--pv2-faint)]'>
-                  {t(isBlockTab ? 'resultsCountBlocks' : 'resultsCount', {
-                    count: visible.length,
-                  })}
+                  {t('resultsCount', { count: visible.length })}
                 </p>
                 <div className='grid grid-cols-[repeat(auto-fill,minmax(244px,1fr))] gap-4'>
                   {visible.map(experience => (
@@ -403,7 +629,7 @@ export const ExperiencesWorkspace = ({
                 )}
               >
                 <p className='text-[14px] font-semibold text-[var(--pv2-ink)]'>
-                  {t(isBlockTab ? 'emptyBlocks' : 'empty')}
+                  {t('empty')}
                 </p>
                 <p className='mt-1.5 text-[13px] text-[var(--pv2-faint)]'>
                   {t('emptyHint')}
@@ -414,12 +640,47 @@ export const ExperiencesWorkspace = ({
         )}
       </div>
 
+      {promoteNote ? (
+        <div className='mx-auto w-full px-5 pb-4 md:px-8'>
+          <p
+            className={cn(
+              'rounded-[var(--pv2-r)] border px-3.5 py-3 text-[12.5px]',
+              promoteNote.error
+                ? 'border-[var(--pv2-hair)] text-[var(--pv2-warning)]'
+                : 'border-[var(--pv2-hair)] text-[var(--pv2-success)]'
+            )}
+          >
+            {promoteNote.error
+              ? t('promoteHalfDone', {
+                  name: promoteNote.name,
+                  error: promoteNote.error,
+                })
+              : t('promoteDone', { name: promoteNote.name })}
+          </p>
+        </div>
+      ) : null}
+
       {modalMode === 'detail' && active ? (
         <ExperienceDetailModal
           experience={active}
           onClose={handleCloseDetail}
           onPreview={handlePreview}
           onEdit={handleEdit}
+          onUse={setUseTarget}
+          onToggleProven={handleToggleProven}
+          onPromote={handlePromote}
+          provenPending={provenPendingId === active.id}
+          provenError={provenError}
+          promotePending={promotePendingId === active.id}
+        />
+      ) : null}
+
+      {useTarget ? (
+        <UseExperienceModal
+          experience={useTarget}
+          brandId={brandId}
+          onClose={() => setUseTarget(null)}
+          onConfirm={handleUseConfirm}
         />
       ) : null}
 

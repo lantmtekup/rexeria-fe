@@ -397,7 +397,8 @@ export const floorNumbers = (
   journey: Journey
 ): FloorNumbers => {
   const stages = stagesOf(journey);
-  const walk = walkJourney(list, journey, 'all');
+  // 'all' ⇒ hệ số 1, nên không cần danh sách phân khúc ở đây.
+  const walk = walkJourney(list, journey, 'all', []);
 
   const reached = new Map<string, number>();
   /* stage → graph column → summed reach */
