@@ -13,21 +13,10 @@
  */
 
 export type MotionTriggerKind =
-  | 'in-view'
-  | 'scrub'
-  | 'load'
-  | 'loop'
-  | 'hover'
-  | 'click';
+  'in-view' | 'scrub' | 'load' | 'loop' | 'hover' | 'click';
 
 export type MotionEffectCategory =
-  | 'entrance'
-  | 'text'
-  | 'scroll'
-  | 'image'
-  | 'hover'
-  | 'loop'
-  | 'special';
+  'entrance' | 'text' | 'scroll' | 'image' | 'hover' | 'loop' | 'special';
 
 export interface MotionEffectDefaults {
   /** Giây. Với trigger 'scrub' chỉ là độ dài tương đối trong timeline scrub. */

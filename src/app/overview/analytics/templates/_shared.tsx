@@ -30,12 +30,7 @@ export const ctr = (clicks: number, views: number) =>
 /* ---------- accents ---------- */
 
 export type Accent =
-  | 'blue'
-  | 'emerald'
-  | 'amber'
-  | 'indigo'
-  | 'violet'
-  | 'fuchsia';
+  'blue' | 'emerald' | 'amber' | 'indigo' | 'violet' | 'fuchsia';
 
 export const ACCENT_MAP: Record<
   Accent,

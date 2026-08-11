@@ -359,12 +359,7 @@ export function IntakeWizard({
 
   // Helpers cập nhật brief theo section (chỉ các section dạng object).
   type ObjSection =
-    | 'brand'
-    | 'product'
-    | 'objective'
-    | 'audience'
-    | 'market'
-    | 'assets';
+    'brand' | 'product' | 'objective' | 'audience' | 'market' | 'assets';
   function patch<K extends ObjSection>(
     section: K,
     val: Partial<NonNullable<InsightBrief[K]>>

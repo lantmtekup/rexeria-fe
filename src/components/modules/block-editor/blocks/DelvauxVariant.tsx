@@ -827,8 +827,7 @@ export function DelvauxVariant({
                   objectFit: 'cover' as const,
                   opacity: i === active ? 1 : 0,
                   visibility: (i === active ? 'visible' : 'hidden') as
-                    | 'visible'
-                    | 'hidden',
+                    'visible' | 'hidden',
                   transition: 'all 0.3s ease',
                 };
                 if (!variant.imageUrl) {
