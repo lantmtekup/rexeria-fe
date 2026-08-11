@@ -376,15 +376,6 @@ export const CampaignsWorkspace = ({
     });
   };
 
-  const handlePatchExperience = (
-    id: string,
-    patch: Partial<CampaignExperience>
-  ) => {
-    setExperiences(prev =>
-      prev.map(e => (e.id === id ? { ...e, ...patch } : e))
-    );
-  };
-
   /**
    * A finished campaign's route becomes the next one's starting point — the
    * fork is promoted back to a blueprint, and the copy keeps its numbers.
@@ -432,7 +423,6 @@ export const CampaignsWorkspace = ({
           onRouteJourney={handleRouteJourney}
           onCarryRoute={handleCarryRoute}
           onEnsureExperiences={handleEnsureExperience}
-          onPatchExperience={handlePatchExperience}
           onPromoteJourney={handlePromoteJourney}
           onJourneyChange={next =>
             setJourneys(prev => prev.map(j => (j.id === next.id ? next : j)))

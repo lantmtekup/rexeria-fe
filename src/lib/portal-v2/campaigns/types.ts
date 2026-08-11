@@ -152,7 +152,18 @@ export type CampaignExperience = {
   origin: string | null;
   /** Copies only — the campaign that owns it. */
   campaign: string | null;
-  /** Copies only — its words were rewritten for the subject it is filed under. */
+  /**
+   * Copies only — its words were rewritten for the subject it is filed under.
+   *
+   * KHÔNG CÓ GÌ ĐẶT TRƯỜNG NÀY LÚC NÀY. Nó từng được một nút "Adapt cho sản
+   * phẩm" bật lên trong React state, nhưng không có route BE nào ghi lại, nên
+   * cờ mất ngay lần tải lại trong khi hạng mục đã kịp qua cổng ship. Nút đã bỏ.
+   *
+   * `speaksForSubject` và `subjectLane` vẫn đọc trường này, và sẽ sống lại
+   * nguyên vẹn khi BE có đường adapt. Tới lúc đó, một bản copy viết cho sản
+   * phẩm khác chỉ qua cổng bằng hai lối thật: sửa lời văn, hoặc thay bằng bản
+   * khác — đúng hai lối `shipWhy_words` đang chỉ.
+   */
   adapted?: boolean;
 };
 

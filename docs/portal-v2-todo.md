@@ -42,17 +42,35 @@ vì `experience_id`), khiến màn hình báo "100% ready" rồi `PUT` trả 422
 
 ---
 
-## 3. Experiences trong Campaigns vẫn cục bộ
+## 3. Experiences trong Campaigns — phần lớn đã ráp (cập nhật 2026-08-11)
 
-`bindRouteToItems`, `ensureCampaignExperiences`, `handleEnsureExperience`,
-`handlePatchExperience` chỉ đổi React state. Gắn trải nghiệm vào hạng mục chiến
-dịch → thấy ngay, **tải lại trang là mất**.
+~~Gắn trải nghiệm vào hạng mục chỉ đổi React state, tải lại là mất.~~ **Đã sửa**
+cùng ngày doc này viết, commit `4c548b9`: `CampaignDetail.tsx` gọi
+`attachExperienceToItem` / `detachExperienceFromItem`, và id bản copy lấy từ
+phản hồi server chứ không suy ở FE nữa.
 
-`ensureCampaignJourneys` cũng dựng bản tại chỗ cho chiến dịch chưa có fork; bản
-đó không nằm trên server.
+`handleEnsureExperience` giờ chỉ là cập nhật cache SAU khi server trả lời — đúng
+vai, không phải nợ.
 
-BE có `POST /campaigns/{cid}/items/{iid}/experiences` và `DELETE` tương ứng —
-chưa ráp.
+Còn lại thật sự:
+
+- **`ensureCampaignJourneys`** vẫn dựng bản tại chỗ cho chiến dịch chưa có fork;
+  bản đó không nằm trên server.
+- **Nút "Adapt cho sản phẩm" đã gỡ (2026-08-11).** Nó gọi
+  `onPatchExperience(id, {adapted: true})`, chỉ đổi React state, rồi báo *"Đã
+  adapt cho sản phẩm này — stage khớp rồi."* Nhánh này KHÔNG có route adapt nào
+  ở BE, và `toCampaignExperience` không map `adapted` — nên cờ mất ngay lần tải
+  lại, **trong khi hạng mục đã kịp đi qua cổng ship nhờ nó**. Prop tự khai là
+  `Mock Studio Adapt` nhưng UI không nói ra.
+
+  Gỡ rồi thì cổng ship rơi về hai lối thật mà `shipWhy_words` vẫn luôn chỉ:
+  *"Sửa lại cho đúng, hoặc thay bằng cái khác."* Đường journey-lens `fit ===
+  'edit'` nay mở đúng hạng mục để người dùng tự sửa, thay vì bật cờ.
+
+  Trường `adapted` GIỮ NGUYÊN trong `CampaignExperience` —
+  `shipGate.speaksForSubject` và `subjectLane` vẫn đọc, và cả cụm sống lại
+  nguyên vẹn khi BE có đường adapt. `feat/v2-portal-gaps` đã có
+  `internal/usecase/experience_adapt.go`; đợi merge.
 
 ---
 

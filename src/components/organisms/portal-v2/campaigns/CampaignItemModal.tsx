@@ -51,8 +51,6 @@ type CampaignItemModalProps = {
   onAttachMaster: (masterId: string) => Promise<string | null>;
   /** Gỡ một trải nghiệm khỏi hạng mục — trả false khi server từ chối. */
   onDetachExperience: (experienceId: string) => Promise<boolean>;
-  /** Mock Studio Adapt — marks the copy as rewritten for this subject. */
-  onAdaptExperience?: (experienceId: string) => void;
 };
 
 /**
@@ -73,7 +71,6 @@ export const CampaignItemModal = ({
   onDelete,
   onAttachMaster,
   onDetachExperience,
-  onAdaptExperience,
 }: CampaignItemModalProps) => {
   const t = useTranslations('portalV2.campaigns');
 
@@ -337,19 +334,6 @@ export const CampaignItemModal = ({
                     </span>
                   ) : null}
                 </span>
-                {onAdaptExperience &&
-                draft.kind === 'product' &&
-                view &&
-                !view.template &&
-                !view.adapted ? (
-                  <Button
-                    size='sm'
-                    variant='ghost'
-                    onClick={() => onAdaptExperience(id)}
-                  >
-                    {t('adaptExperience')}
-                  </Button>
-                ) : null}
                 <button
                   type='button'
                   aria-label={t('detachExperience')}

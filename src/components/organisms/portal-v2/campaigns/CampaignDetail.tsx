@@ -77,7 +77,6 @@ type CampaignDetailProps = {
   onRouteJourney: (blueprintId: string) => void;
   onCarryRoute: () => void;
   onEnsureExperiences: (copies: CampaignExperience[]) => void;
-  onPatchExperience: (id: string, patch: Partial<CampaignExperience>) => void;
   onPromoteJourney: () => void;
   onJourneyChange: (next: Journey) => void;
 };
@@ -103,7 +102,6 @@ export const CampaignDetail = ({
   onRouteJourney,
   onCarryRoute,
   onEnsureExperiences,
-  onPatchExperience,
   onPromoteJourney,
   onJourneyChange,
 }: CampaignDetailProps) => {
@@ -313,11 +311,6 @@ export const CampaignDetail = ({
       return true;
     };
 
-  const handleAdaptExperience = (experienceId: string) => {
-    onPatchExperience(experienceId, { adapted: true });
-    toast.success(t('journeyLensAdapted'));
-  };
-
   const handleOpenSubjectJourney = (index: number, nodeId?: string) => {
     if (!journey) {
       toast.error(t('journeyLensNoRoute'));
@@ -364,11 +357,10 @@ export const CampaignDetail = ({
       return;
     }
 
-    if (card.fit === 'edit' && card.mine) {
-      handleAdaptExperience(card.mine.id);
-      return;
-    }
-
+    // `edit` nghĩa là bản copy đã có nhưng lời văn chưa hợp chủ thể. Không có
+    // đường BE nào viết lại nó, nên mở đúng hạng mục để người dùng tự sửa —
+    // trước đây chỗ này chỉ đặt cờ `adapted` trong state rồi báo "đã adapt",
+    // một lời khẳng định không có gì đỡ ở server và mất ngay khi tải lại.
     if (card.mine) {
       setItemIndex(journeyLens.itemIndex);
     }
@@ -581,7 +573,6 @@ export const CampaignDetail = ({
           onDelete={() => handleDeleteItem(itemIndex ?? 0)}
           onAttachMaster={handleAttachMaster(activeItem)}
           onDetachExperience={handleDetachExperience(activeItem)}
-          onAdaptExperience={handleAdaptExperience}
         />
       ) : null}
 
