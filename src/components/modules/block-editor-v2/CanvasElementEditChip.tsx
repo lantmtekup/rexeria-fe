@@ -75,6 +75,12 @@ function chipIcon(kind: ElementKind) {
     kind === 'pnjStickyMenuItems' ||
     kind === 'mintV2ServicesItems' ||
     kind === 'coolHunterGalleryItems' ||
+    kind === 'scrollImgScaleItems' ||
+    kind === 'letterSliderSlides' ||
+    kind === 'cgModularSliderSlides' ||
+    kind === 'cgResponsiveTeamMembers' ||
+    kind === 'cg3dSliderSlides' ||
+    kind === 'cgPageTransitionsPages' ||
     kind === 'alturaOlympusFeatures' ||
     kind === 'alturaOlympusImages' ||
     kind === 'mintV2ProcessSteps' ||

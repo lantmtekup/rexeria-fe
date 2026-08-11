@@ -21,6 +21,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useContainerMobile } from './useContainerMobile';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface Props {
@@ -42,7 +43,133 @@ const COLORS = {
   cream: '#e9e4dc',
 } as const;
 
-const IMAGE_PARALLAX_SLOPE = 0.05;
+/**
+ * Hai tier layout. `mobile` (<672) giữ nguyên toạ độ Framer gốc 375×948: hai
+ * ảnh thành dải full-bleed trên cùng, title OVER/VIEW canh phải ở ~nửa khung,
+ * description, ba dòng subheading lệch chéo, panorama kéo ngang dưới đáy.
+ * Không đổi một pixel nào ở nhánh này.
+ *
+ * `wide` (≥672): giữ nguyên NGỮ PHÁP của bản gốc — ảnh flush hai mép, title
+ * nêm vào khe giữa hai ảnh, description dưới ảnh người, dải subheading chéo và
+ * panorama chạy hết khung — chỉ đổi tỉ lệ card 375/948 (dọc 2.53×) sang
+ * 1440/1160, vì giữ nguyên thì ở 1440 card cao 3643px.
+ *
+ * Điều KHÔNG được làm: hạ tỉ lệ tương đối của chữ và ảnh xuống ~một nửa rồi
+ * rải chúng ra canvas rộng. Bố cục gốc dày và cài răng lược; làm vậy biến mọi
+ * phần tử thành vật thể nhỏ rời rạc trôi trong bãi trống. Cỡ chữ và bề rộng
+ * ảnh ở đây bám sát tỉ lệ mobile (title 17.2cqi → 13cqi, không phải 8.5cqi).
+ *
+ * Ba chỗ buộc phải dùng `calc` thay vì số cố định:
+ *  - `title2Top` / `titleHeight` = bội của `titleSize` (mobile: 68 và 126 trên
+ *    font 64.6 → hệ số 1.0526 và 1.95).
+ *  - `sub2Top` / `sub3Top` = `sub1Top` + bội của line-height 1.1095 × `subSize`
+ *    — ba dòng phải cách nhau ĐÚNG một line-height mới ra hiệu ứng chéo.
+ *  - `descTop` = chiều cao ảnh tháp (17cqi × 261/178 = 24.93cqi) + gap.
+ * Cả ba đều phụ thuộc font-size đang clamp, hardcode % sẽ chỉ đúng ở đúng một
+ * bề rộng. Clamp `N = maxPx / 1440 * 100`; gutter dùng chung
+ * `clamp(24px, 5cqi, 72px)`, cặp ảnh rộng `17cqi` mỗi cái + gap `2cqi`.
+ */
+const TIER = {
+  mobile: {
+    // 100% — fill frame mobile 390 (không khóa 375 → hở olive 2 mép).
+    cardMaxWidth: '100%',
+    cardAspect: '375 / 948',
+    cardMinHeight: '0px',
+    towerLeft: '197px',
+    towerRight: 'auto',
+    towerWidth: '178px',
+    towerHeight: '261px',
+    towerAspect: 'auto',
+    towerBleed: '-30px -25px -42px -24px',
+    personLeft: 'auto',
+    personRight: 'auto',
+    personWidth: '178px',
+    personHeight: '142px',
+    personAspect: 'auto',
+    personInnerTop: '-100px',
+    personInnerHeight: '222px',
+    personInnerLeft: '-100px',
+    titleLeft: '0px',
+    titleRight: 'auto',
+    titleTop: '177px',
+    titleWidth: '185px',
+    titleHeight: '126px',
+    titleSize: '64.6px',
+    titleTracking: '-1.3px',
+    title1Top: '1px',
+    title2Top: '68px',
+    descLeft: '25.0667%',
+    descRight: 'auto',
+    descTop: '37.2363%',
+    descWidth: '63.2%',
+    descSize: '11px',
+    descTracking: '0.44px',
+    subSize: '28.4px',
+    subTracking: '0.55px',
+    sub1Top: '52.0042%',
+    sub2Top: '55.274%',
+    sub3Top: '58.439%',
+    panoramaHeight: '29.6414%',
+    imageSlope: 0.05,
+  },
+  wide: {
+    cardMaxWidth: '1440px',
+    cardAspect: '1440 / 1160',
+    cardMinHeight: 'clamp(700px, 80.6cqi, 1160px)',
+    // Ảnh giữ thế FLUSH hai mép như mobile (người trái, tháp phải). Không thu
+    // về một cụm nhỏ góc phải — làm vậy hai ảnh thành hai con tem trôi giữa
+    // bãi trống. Tháp hẹp hơn người vì tỉ lệ 178/261 rất dọc: 24cqi đã cao
+    // 35.2cqi rồi.
+    towerLeft: 'auto',
+    towerRight: '0px',
+    towerWidth: '24cqi',
+    towerHeight: 'auto',
+    towerAspect: '178 / 261',
+    // Bleed px của mobile (-30/-25/-42/-24 trên khung 178×261) ≈ -13% đều bốn
+    // phía; nới lên -15% vì khung wide cao gấp ~1.9 lần.
+    towerBleed: '-15%',
+    personLeft: '0px',
+    personRight: 'auto',
+    personWidth: '26cqi',
+    personHeight: 'auto',
+    personAspect: '178 / 142',
+    // Mobile để top -100px + height 222px trên khung cao 142 → hụt 14% dưới
+    // đáy, chỉ được che khi parallax đã trôi xuống. Ở wide hụt này thành ~42px
+    // nên nới height cho phủ kín ngay từ scroll 0.
+    personInnerTop: '-70%',
+    personInnerHeight: '184%',
+    personInnerLeft: '-56%',
+    // Title nằm GIỮA hai ảnh, canh phải để nêm vào khe cạnh tháp — đúng thế
+    // cài răng lược của bản gốc (mobile: chữ hết ở x=185, tháp bắt đầu x=197).
+    // Đẩy title xuống dưới hai ảnh là làm nó thành đảo riêng.
+    // Cỡ chữ 13cqi (mobile 17.2cqi) — hạ còn một nửa như trước là mất hết sức
+    // nặng, chữ trôi lửng giữa khung.
+    titleLeft: '29cqi',
+    titleRight: '27cqi',
+    titleTop: 'clamp(24px, 3cqi, 44px)',
+    titleWidth: 'auto',
+    titleHeight: 'calc(1.95 * clamp(56px, 13cqi, 187px))',
+    titleSize: 'clamp(56px, 13cqi, 187px)',
+    titleTracking: '-0.02em',
+    title1Top: '0px',
+    title2Top: 'calc(1.0526 * clamp(56px, 13cqi, 187px))',
+    // Nằm ngay dưới ảnh người (cao 20.74cqi = 26cqi × 142/178), hẹp lại để
+    // không đâm vào cột title.
+    descLeft: 'clamp(24px, 4cqi, 58px)',
+    descRight: 'auto',
+    descTop: 'calc(20.74cqi + clamp(24px, 3cqi, 44px))',
+    descWidth: 'clamp(200px, 24cqi, 346px)',
+    descSize: 'clamp(13px, 1.25cqi, 18px)',
+    descTracking: '0.04em',
+    subSize: 'clamp(28px, 5cqi, 72px)',
+    subTracking: '0.019em',
+    sub1Top: '55%',
+    sub2Top: 'calc(55% + 1.1095 * clamp(28px, 5cqi, 72px))',
+    sub3Top: 'calc(55% + 2.219 * clamp(28px, 5cqi, 72px))',
+    panoramaHeight: '22%',
+    imageSlope: 0.03,
+  },
+} as const;
 
 const TITLE_OVER_OFFSET = -59.4;
 const TITLE_VIEW_OFFSET = 80;
@@ -250,6 +377,8 @@ export function FramerRealEstate02Overview({
   const rootRef = React.useRef<HTMLElement>(null);
 
   const isCanvas = useIsCanvasEdit(rootRef);
+  const isMobile = useContainerMobile(rootRef);
+  const tier = isMobile ? TIER.mobile : TIER.wide;
 
   const panoramaWrapRef = React.useRef<HTMLDivElement>(null);
   const panoramaTrackRef = React.useRef<HTMLDivElement>(null);
@@ -455,7 +584,7 @@ export function FramerRealEstate02Overview({
           end: 'max',
           onUpdate: self => {
             gsap.set(tower, {
-              y: -IMAGE_PARALLAX_SLOPE * self.scroll(),
+              y: -tier.imageSlope * self.scroll(),
               force3D: false,
             });
           },
@@ -469,14 +598,14 @@ export function FramerRealEstate02Overview({
           end: 'max',
           onUpdate: self => {
             gsap.set(person, {
-              y: IMAGE_PARALLAX_SLOPE * self.scroll(),
+              y: tier.imageSlope * self.scroll(),
               force3D: false,
             });
           },
         });
       }
     },
-    [isCanvas]
+    [isCanvas, tier]
   );
 
   return (
@@ -486,9 +615,29 @@ export function FramerRealEstate02Overview({
       style={{ ...ROOT_STYLE, ...blockBackgroundStyle(background) }}
       className={cn('freo-root', className)}
     >
-      <div style={CARD_STYLE} className='freo-card @container'>
-        <div style={TOWER_WRAP_STYLE}>
-          <div style={TOWER_INNER_WRAP_STYLE} className='freo-tower-parallax'>
+      <div
+        style={{
+          ...CARD_STYLE,
+          maxWidth: tier.cardMaxWidth,
+          aspectRatio: tier.cardAspect,
+          minHeight: tier.cardMinHeight,
+        }}
+        className='freo-card @container'
+      >
+        <div
+          style={{
+            ...TOWER_WRAP_STYLE,
+            left: tier.towerLeft,
+            right: tier.towerRight,
+            width: tier.towerWidth,
+            height: tier.towerHeight,
+            aspectRatio: tier.towerAspect,
+          }}
+        >
+          <div
+            style={{ ...TOWER_INNER_WRAP_STYLE, inset: tier.towerBleed }}
+            className='freo-tower-parallax'
+          >
             <div style={TOWER_OVERLAY_STYLE}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -508,8 +657,25 @@ export function FramerRealEstate02Overview({
           </div>
         </div>
 
-        <div style={PERSON_WRAP_STYLE}>
-          <div style={PERSON_INNER_WRAP_STYLE} className='freo-person-parallax'>
+        <div
+          style={{
+            ...PERSON_WRAP_STYLE,
+            left: tier.personLeft,
+            right: tier.personRight,
+            width: tier.personWidth,
+            height: tier.personHeight,
+            aspectRatio: tier.personAspect,
+          }}
+        >
+          <div
+            style={{
+              ...PERSON_INNER_WRAP_STYLE,
+              top: tier.personInnerTop,
+              height: tier.personInnerHeight,
+              left: tier.personInnerLeft,
+            }}
+            className='freo-person-parallax'
+          >
             <div style={TOWER_OVERLAY_STYLE}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -529,10 +695,27 @@ export function FramerRealEstate02Overview({
           </div>
         </div>
 
-        <div style={TITLE_CONTAINER_STYLE}>
+        <div
+          style={{
+            ...TITLE_CONTAINER_STYLE,
+            left: tier.titleLeft,
+            right: tier.titleRight,
+            top: tier.titleTop,
+            width: tier.titleWidth,
+            height: tier.titleHeight,
+          }}
+        >
           <p
             data-element-key='title1'
-            style={composeStyle(TITLE1_STYLE, styleOf('title1'))}
+            style={composeStyle(
+              TITLE1_STYLE,
+              {
+                fontSize: tier.titleSize,
+                letterSpacing: tier.titleTracking,
+                top: tier.title1Top,
+              },
+              styleOf('title1')
+            )}
             className={selectableClass(
               activeKey === 'title1',
               'freo-title-over'
@@ -543,7 +726,15 @@ export function FramerRealEstate02Overview({
 
           <p
             data-element-key='title2'
-            style={composeStyle(TITLE2_STYLE, styleOf('title2'))}
+            style={composeStyle(
+              TITLE2_STYLE,
+              {
+                fontSize: tier.titleSize,
+                letterSpacing: tier.titleTracking,
+                top: tier.title2Top,
+              },
+              styleOf('title2')
+            )}
             className={selectableClass(
               activeKey === 'title2',
               'freo-title-view'
@@ -555,7 +746,18 @@ export function FramerRealEstate02Overview({
 
         <p
           data-element-key='description'
-          style={composeStyle(DESCRIPTION_STYLE, styleOf('description'))}
+          style={composeStyle(
+            DESCRIPTION_STYLE,
+            {
+              left: tier.descLeft,
+              right: tier.descRight,
+              top: tier.descTop,
+              width: tier.descWidth,
+              fontSize: tier.descSize,
+              letterSpacing: tier.descTracking,
+            },
+            styleOf('description')
+          )}
           className={selectableClass(
             activeKey === 'description',
             'freo-description'
@@ -566,7 +768,15 @@ export function FramerRealEstate02Overview({
 
         <p
           data-element-key='subheadingLine1'
-          style={composeStyle(SUBHEADING1_STYLE, styleOf('subheadingLine1'))}
+          style={composeStyle(
+            SUBHEADING1_STYLE,
+            {
+              top: tier.sub1Top,
+              fontSize: tier.subSize,
+              letterSpacing: tier.subTracking,
+            },
+            styleOf('subheadingLine1')
+          )}
           className={selectableClass(
             activeKey === 'subheadingLine1',
             'freo-subheading-1'
@@ -577,7 +787,15 @@ export function FramerRealEstate02Overview({
 
         <p
           data-element-key='subheadingLine2'
-          style={composeStyle(SUBHEADING2_STYLE, styleOf('subheadingLine2'))}
+          style={composeStyle(
+            SUBHEADING2_STYLE,
+            {
+              top: tier.sub2Top,
+              fontSize: tier.subSize,
+              letterSpacing: tier.subTracking,
+            },
+            styleOf('subheadingLine2')
+          )}
           className={selectableClass(
             activeKey === 'subheadingLine2',
             'freo-subheading-2'
@@ -588,7 +806,15 @@ export function FramerRealEstate02Overview({
 
         <p
           data-element-key='subheadingLine3'
-          style={composeStyle(SUBHEADING3_STYLE, styleOf('subheadingLine3'))}
+          style={composeStyle(
+            SUBHEADING3_STYLE,
+            {
+              top: tier.sub3Top,
+              fontSize: tier.subSize,
+              letterSpacing: tier.subTracking,
+            },
+            styleOf('subheadingLine3')
+          )}
           className={selectableClass(
             activeKey === 'subheadingLine3',
             'freo-subheading-3'
@@ -599,7 +825,7 @@ export function FramerRealEstate02Overview({
 
         <div
           ref={panoramaWrapRef}
-          style={PANORAMA_WRAP_STYLE}
+          style={{ ...PANORAMA_WRAP_STYLE, height: tier.panoramaHeight }}
           className={cn(
             !isCanvas && 'cursor-grab touch-pan-y active:cursor-grabbing'
           )}

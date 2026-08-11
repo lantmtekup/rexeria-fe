@@ -38,12 +38,19 @@ export type BlockType =
   | 'flip_gallery'
   | 'wheel_gallery'
   | 'scroll_img_scale'
+  | 'cg_radga_horizontal'
+  | 'cg_page_transitions'
+  | 'cg_3d_slider'
   | 'hover_reveal_list'
   | 'hover_equalizer_heading'
   | 'brutalist_text'
   | 'image_explosion'
   | 'marquee_band'
   | 'letter_slider'
+  | 'cg_modular_slider'
+  | 'cg_responsive_team'
+  | 'cg_responsive_landing_loader'
+  | 'cg_landing_page_reveal'
   | 'seamless_scroll_gallery'
   | 'product_spec_sheet'
   | 'story_slides'
@@ -146,6 +153,7 @@ export type BlockType =
   // ── Gambit Delvaux (port từ apps/gambit-delvaux) ──
   | 'gambit_product_overview'
   | 'gambit_delvaux_intro'
+  | 'lusion_lp_reveal'
   | 'gambit_brand_heritage'
   | 'gambit_related_products'
   | 'gambit_product_details'
@@ -931,6 +939,57 @@ export interface ScrollImgScaleContent {
 }
 
 /**
+ * RADGA Horizontal Scroll — sticky pin + horizontal scrub gallery + outro.
+ * Port từ Codegrid cg-radga-horizontal-scroll-animation (discord 223).
+ */
+export interface CgRadgaHorizontalSlide {
+  titleLine1?: string;
+  titleLine2?: string;
+  imageUrl?: string;
+  imageAlt?: string;
+}
+
+export interface CgRadgaHorizontalContent {
+  slides?: CgRadgaHorizontalSlide[];
+  outroTitle?: string;
+}
+
+/**
+ * 3D Image Scroll — curved Three.js plane + scroll-scrub texture.
+ * Port từ Codegrid cg-3d-slider-threejs (discord 215). Bỏ chữ 4 góc.
+ *
+ * Component: `blocks/Cg3dSlider.tsx`.
+ */
+export interface Cg3dSliderSlide {
+  title?: string;
+  imageUrl?: string;
+  imageAlt?: string;
+}
+
+export interface Cg3dSliderContent {
+  slides?: Cg3dSliderSlide[];
+}
+
+/**
+ * Page Transitions — nav + hero title; màn phủ 2×5 block tím scaleY khi
+ * đổi trang (reveal on mount / cover → swap → reveal on nav). Port từ
+ * Codegrid cg-js-page-transitions (discord 206).
+ *
+ * Component: `blocks/CgPageTransitions.tsx`.
+ */
+export interface CgPageTransitionsPage {
+  /** Nhãn nav (Home / About / Contact). */
+  navLabel?: string;
+  /** Tiêu đề hero giữa trang. */
+  title?: string;
+}
+
+export interface CgPageTransitionsContent {
+  logoText?: string;
+  pages?: CgPageTransitionsPage[];
+}
+
+/**
  * Cool Hunter Product — mask bg scale + title + product table + panel copy.
  * Port từ apps/cool-hunter ProductSection.tsx.
  */
@@ -971,12 +1030,7 @@ export interface CoolHunterFooterContent {
 
 /** Named scrim presets for PnjHero storefront wash. */
 export type PnjHeroScrimPresetId =
-  | 'pnj'
-  | 'none'
-  | 'softLight'
-  | 'softDark'
-  | 'mint'
-  | 'navyFade';
+  'pnj' | 'none' | 'softLight' | 'softDark' | 'mint' | 'navyFade';
 
 /** One absolute overlay layer on the storefront image. */
 export interface PnjHeroScrimLayer {
@@ -1121,12 +1175,7 @@ export interface TheGrandFooterPolicy {
  * xem `blocks/theGrandFooterSocialIcons.tsx`.
  */
 export type TheGrandFooterSocialPlatform =
-  | 'facebook'
-  | 'instagram'
-  | 'linkedin'
-  | 'tripadvisor'
-  | 'youtube'
-  | 'tiktok';
+  'facebook' | 'instagram' | 'linkedin' | 'tripadvisor' | 'youtube' | 'tiktok';
 
 /** 1 icon social ở cột 4 của The Grand · Footer. */
 export interface TheGrandFooterSocial {
@@ -1899,9 +1948,43 @@ export interface MarqueeBandContent {
   seconds?: number;
 }
 
+/** Một slide trong Letter Slider (tên sản phẩm + ảnh). */
+export interface LetterSliderSlide {
+  title: string;
+  imageUrl: string;
+  imageAlt?: string;
+}
+
 /** Letter slider — slider sản phẩm, chữ mở từng ký tự (port CodeGrid 027). */
 export interface LetterSliderContent {
-  slides: { title: string; imageUrl: string }[];
+  slides: LetterSliderSlide[];
+}
+
+/** Một slide trong Modular Carousel (tiêu đề + ảnh). */
+export interface CgModularSliderSlide {
+  title: string;
+  imageUrl: string;
+  imageAlt?: string;
+}
+
+/** Modular carousel — title strip + dual-clip image (port CodeGrid 164). */
+export interface CgModularSliderContent {
+  slides: CgModularSliderSlide[];
+}
+
+/** Một thành viên trong Responsive Team carousel. */
+export interface CgResponsiveTeamMember {
+  name: string;
+  role: string;
+  imageUrl: string;
+  imageAlt?: string;
+  /** Nền marquee layer (vd #fff, #c4bca9). */
+  bgColor?: string;
+}
+
+/** Team carousel — portrait stack + marquee name clip-path (port CodeGrid 107). */
+export interface CgResponsiveTeamContent {
+  members: CgResponsiveTeamMember[];
 }
 
 /** Seamless scroll gallery — dải ảnh cuộn ngang vô tận liền mạch (port CodeGrid 238). */
@@ -2957,6 +3040,49 @@ export interface GambitDelvauxIntroContent {
 }
 
 /**
+ * Lusion LP Reveal (port Codegrid / Awwwards rebuild `cg-lusion-lp-reveal`):
+ * màn preloader đen phủ kín (thanh bar + counter reel 0→100) rồi scale/rotate
+ * thoát, hé lộ 2 dòng headline phía dưới. Không pin/scrub — timeline on-mount.
+ *
+ * Ba bề mặt (apps-port-host / GambitDelvauxIntro):
+ *  - Editor canvas: lưới phẳng, 2 dòng + chrome loader tĩnh;
+ *  - PreviewMode: portal `absolute inset-0` → device frame;
+ *  - /p: overlay `fixed inset-0` in-place (SSR first paint).
+ *
+ * Component: `blocks/LusionLpReveal.tsx`.
+ */
+export interface LusionLpRevealContent {
+  /** Dòng headline trái (mặc định "Website"). */
+  line1: string;
+  /** Dòng headline phải (mặc định "Content"). */
+  line2: string;
+}
+
+/**
+ * Responsive Landing Loader (port Codegrid `cg-responsive-landing-page`):
+ * preloader counter + copy letter + lớp đen/đỏ — không hero/ảnh/nền sau.
+ * Component: `blocks/CgResponsiveLandingLoader.tsx`.
+ */
+export interface CgResponsiveLandingLoaderContent {
+  /** Chữ copy animate từng ký tự (mặc định "New reality"). */
+  copyText: string;
+}
+
+/**
+ * Landing Page Reveal (port Codegrid `24012024-Landing-Page-Reveal`):
+ * overlay counter + logo letter + image strip → hero scale reveal + headline.
+ * Không nav/menu. Component: `blocks/CgLandingPageReveal.tsx`.
+ */
+export interface CgLandingPageRevealContent {
+  /** Thương hiệu — overlay logo + headline hero (mặc định "kudos"). */
+  brandText: string;
+  /** Ảnh hero full-bleed sau khi overlay thoát. */
+  heroImageUrl: string;
+  /** Ảnh trong dải strip loader (lặp 10 lần). */
+  loaderImageUrl: string;
+}
+
+/**
  * Heritage - Knockout Video (section `BrandHeritage` của apps/gambit-delvaux):
  * sân khấu DÁN cao 1 khung hình, quãng scrub 2.2 khung hình, một timeline
  * scrub 2 chiều gồm 3 chặng:
@@ -3037,11 +3163,7 @@ export interface GambitProductDetailsAccordion {
 }
 /** Icon dựng sẵn của dòng hành động (SVG inline trong block). */
 export type GambitProductDetailsActionIcon =
-  | 'plane'
-  | 'chat'
-  | 'pin'
-  | 'search'
-  | 'arrow';
+  'plane' | 'chat' | 'pin' | 'search' | 'arrow';
 export interface GambitProductDetailsAction {
   label: string;
   /** URL / token link (`#page:`, `#block:`) — rỗng = nút không điều hướng. */
@@ -3974,6 +4096,11 @@ export type BlockContent =
   | CoolHunterStoryContent
   | CoolHunterGalleryContent
   | ScrollImgScaleContent
+  | CgRadgaHorizontalContent
+  | CgPageTransitionsContent
+  | CgResponsiveLandingLoaderContent
+  | CgLandingPageRevealContent
+  | Cg3dSliderContent
   | CoolHunterProductContent
   | CoolHunterQuoteContent
   | CoolHunterFooterContent
@@ -4032,6 +4159,8 @@ export type BlockContent =
   | PixelRevealContent
   | MarqueeBandContent
   | LetterSliderContent
+  | CgModularSliderContent
+  | CgResponsiveTeamContent
   | SeamlessScrollGalleryContent
   | ProductSpecSheetContent
   | FramerYumeHeroContent
@@ -4083,6 +4212,7 @@ export type BlockContent =
   | DelvauxVariantContent
   | GambitProductOverviewContent
   | GambitDelvauxIntroContent
+  | LusionLpRevealContent
   | GambitBrandHeritageContent
   | GambitProductDetailsContent
   | GambitRelatedProductsContent
@@ -4223,10 +4353,7 @@ export interface ExtraElementStyle {
  * animation > plain.
  */
 export type TextAnimationMode =
-  | 'none'
-  | 'fade-up'
-  | 'typewriter'
-  | 'split-slide-up';
+  'none' | 'fade-up' | 'typewriter' | 'split-slide-up';
 
 export interface TextCounterConfig {
   /** Starting value of the count-up. Defaults to 0. */
@@ -6050,6 +6177,67 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     aiLabelEn:
       'vertical title+image list; images scale up near viewport center, down when far',
   },
+  cg_page_transitions: {
+    type: 'cg_page_transitions',
+    category: 'hero',
+    style: 'modern',
+    tags: [
+      'hero',
+      'nav',
+      'transition',
+      'animation',
+      'codegrid',
+      'page-transition',
+    ],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-07',
+    label: 'Page Transitions',
+    accent: '#746df8',
+    adminLabel: 'Page Transitions',
+    gradient: 'from-violet-400 to-indigo-600',
+    defaultName: 'Page Transitions',
+    aiLabelVi:
+      'nav + hero tiêu đề lớn; màn phủ 2 hàng × 5 cột block tím scaleY khi đổi trang (reveal / cover)',
+    aiLabelEn:
+      'nav + large hero title; 2×5 purple block curtain scales Y on page change (reveal / cover)',
+  },
+  cg_3d_slider: {
+    type: 'cg_3d_slider',
+    category: 'gallery',
+    style: 'modern',
+    tags: ['gallery', '3d', 'scroll', 'threejs', 'animation', 'codegrid'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-07',
+    label: '3D Image Scroll',
+    accent: '#0a0a0a',
+    adminLabel: '3D Image Scroll',
+    gradient: 'from-neutral-900 to-black',
+    defaultName: '3D Image Scroll',
+    aiLabelVi:
+      'slider 3D cong: plane Three.js cuộn sticky, texture ảnh+tiêu đề theo scroll',
+    aiLabelEn:
+      'curved 3D slider: sticky Three.js plane, image+title texture scrubbed by scroll',
+  },
+  cg_radga_horizontal: {
+    type: 'cg_radga_horizontal',
+    category: 'gallery',
+    style: 'modern',
+    tags: ['gallery', 'horizontal', 'scroll', 'animation', 'codegrid', 'radga'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-07',
+    label: 'RADGA Horizontal Scroll',
+    accent: '#b4aea7',
+    adminLabel: 'RADGA Horizontal Scroll',
+    gradient: 'from-stone-400 to-stone-700',
+    defaultName: 'RADGA Horizontal Scroll',
+    aiLabelVi:
+      'gallery cuộn ngang ghim sticky; tiêu đề trượt vào khi slide active, parallax ảnh',
+    aiLabelEn:
+      'sticky pinned horizontal scroll gallery; titles slide in on active slide, image parallax',
+  },
   hover_reveal_list: {
     type: 'hover_reveal_list',
     category: 'interactive',
@@ -6248,17 +6436,53 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     type: 'letter_slider',
     category: 'interactive',
     style: 'modern',
-    tags: ['text', 'slider', 'animation'],
+    tags: ['text', 'slider', 'animation', 'product', 'codegrid'],
     status: 'ready',
     responsive: true,
-    updatedAt: '2026-07-05',
+    updatedAt: '2026-08-07',
     label: 'Letter Slider',
-    accent: '#0f0f0f',
+    accent: '#1a1a1a',
     adminLabel: 'Letter Slider',
-    gradient: 'from-violet-500 to-fuchsia-600',
+    gradient: 'from-neutral-800 to-neutral-950',
     defaultName: 'Letter Slider',
     aiLabelVi: 'slider sản phẩm, chữ mở từng ký tự',
     aiLabelEn: 'product slider revealing letters one by one',
+  },
+  cg_modular_slider: {
+    type: 'cg_modular_slider',
+    category: 'interactive',
+    style: 'modern',
+    tags: ['slider', 'carousel', 'gallery', 'animation', 'codegrid'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-07',
+    label: 'Modular Carousel',
+    accent: '#0f0f0f',
+    adminLabel: 'Modular Carousel',
+    gradient: 'from-neutral-900 to-black',
+    defaultName: 'Modular Carousel',
+    aiLabelVi:
+      'carousel modular: dải tiêu đề trượt ngang + ảnh cắt đôi ở giữa, click để chuyển slide',
+    aiLabelEn:
+      'modular carousel: horizontal title strip + center dual-clip image, click to advance',
+  },
+  cg_responsive_team: {
+    type: 'cg_responsive_team',
+    category: 'interactive',
+    style: 'modern',
+    tags: ['team', 'slider', 'carousel', 'marquee', 'animation', 'codegrid'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-07',
+    label: 'Responsive Team',
+    accent: '#c4bca9',
+    adminLabel: 'Responsive Team',
+    gradient: 'from-stone-300 to-stone-500',
+    defaultName: 'Responsive Team',
+    aiLabelVi:
+      'team carousel: ảnh + tên marquee clip-path, click trái/phải để chuyển thành viên',
+    aiLabelEn:
+      'team carousel: portrait + marquee name clip-path, click left/right to change member',
   },
   seamless_scroll_gallery: {
     type: 'seamless_scroll_gallery',
@@ -6746,9 +6970,9 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     gradient: 'from-amber-100 to-orange-200',
     defaultName: 'Location Collage',
     aiLabelVi:
-      'block "location collage" card cố định 375×585 nền #e9e4dc: 3 ảnh position-absolute tràn mép trái/phải cố ý (không mask/crop), mỗi ảnh trôi liên tục theo scrollY tuyệt đối (không phải theo % tiến trình cuộn riêng block) — ảnh dưới-trái hệ số -0.1, 2 ảnh phải hệ số +0.1; heading "LOCATION" Inter 300 72px màu #565440 tràn mép trái, trượt ngang 1 lần mỗi khi cuộn vào viewport',
+      'block "location collage" nền #e9e4dc: mobile card cố định 375×585 với 3 ảnh 178×237 xếp collage dọc (1 dưới-trái, 2 chồng bên phải), wide card 1440×660 đổi thành staircase ngang — heading chiếm ~26% trái, ảnh 1 dính đáy, ảnh 2 dính đỉnh, ảnh 3 dính mép phải ở cao độ giữa; 3 ảnh position-absolute tràn mép cố ý (không mask/crop), mỗi ảnh trôi dọc liên tục theo tiến trình cuộn của block, heading "LOCATION" Inter 300 màu #565440 trượt ngang vào từ mép trái 1 lần mỗi khi cuộn vào viewport',
     aiLabelEn:
-      '"location collage" block: fixed 375×585 card on #e9e4dc background — 3 position-absolute photos deliberately bleeding past the left/right edges (no mask/crop), each drifting continuously with raw absolute scrollY (not the block\'s own scroll-progress) — lower-left photo factor -0.1, the other two +0.1; "LOCATION" heading in Inter 300 72px #565440 bleeding off the left edge, sliding in horizontally each time it re-enters the viewport',
+      '"location collage" block on #e9e4dc background: fixed 375×585 mobile card with 3 178×237 photos in a vertical collage (one lower-left, two stacked right); wide 1440×660 card turns it into a horizontal staircase — heading takes the left ~26%, photo 1 flush to the bottom, photo 2 flush to the top, photo 3 flush to the right edge at mid height; the 3 position-absolute photos deliberately bleed past the edges (no mask/crop) and drift vertically with the block\'s scroll progress, "LOCATION" heading in Inter 300 #565440 slides in horizontally from the left edge each time it re-enters the viewport',
   },
   framer_realestate02_commute: {
     type: 'framer_realestate02_commute',
@@ -7122,6 +7346,68 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'màn intro phủ kín màn hình: hai màn tách ra hé lộ logo, logo bay lên đỉnh + thu nhỏ, ảnh sản phẩm trồi lên, tên sản phẩm hiện dần theo clip rồi cả màn trượt xuống biến mất',
     aiLabelEn:
       'full-screen intro overlay: curtains split to reveal the logo, logo flies to the top and shrinks, product image rises, product name wipes in, then the whole overlay slides away',
+  },
+  lusion_lp_reveal: {
+    type: 'lusion_lp_reveal',
+    category: 'intro',
+    style: 'minimal',
+    tags: ['clone', 'lusion', 'codegrid', 'intro', 'overlay', 'preloader'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-07',
+    label: 'Intro - Lusion LP Reveal',
+    accent: '#000000',
+    adminLabel: 'Intro - Lusion LP Reveal',
+    gradient: 'from-neutral-900 to-neutral-700',
+    defaultName: 'Intro - Lusion LP Reveal',
+    aiLabelVi:
+      'màn preloader đen với thanh bar + counter reel đếm lên, thanh xoay/scale thoát rồi hé lộ hai dòng headline phía dưới',
+    aiLabelEn:
+      'black preloader with growing bars and a digit counter reel, bars rotate and scale away to reveal two headline lines underneath',
+  },
+  cg_responsive_landing_loader: {
+    type: 'cg_responsive_landing_loader',
+    category: 'intro',
+    style: 'modern',
+    tags: ['intro', 'preloader', 'loader', 'codegrid', 'animation', 'overlay'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-07',
+    label: 'Responsive Landing Loader',
+    accent: '#ff0000',
+    adminLabel: 'Responsive Landing Loader',
+    gradient: 'from-neutral-900 via-red-600 to-neutral-800',
+    defaultName: 'Responsive Landing Loader',
+    aiLabelVi:
+      'màn preloader full-screen: counter đếm ngẫu nhiên 0–100, chữ copy animate từng ký tự, lớp đen thu + lớp đỏ collapse rồi biến mất — không hé lộ ảnh/nền',
+    aiLabelEn:
+      'full-screen preloader: random 0–100 counter, per-letter copy animation, black/red layers collapse then disappear — no image or background reveal',
+  },
+  cg_landing_page_reveal: {
+    type: 'cg_landing_page_reveal',
+    category: 'intro',
+    style: 'minimal',
+    tags: [
+      'intro',
+      'preloader',
+      'loader',
+      'codegrid',
+      'animation',
+      'overlay',
+      'reveal',
+    ],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-08-07',
+    label: 'Landing Page Reveal',
+    accent: '#e6e0d8',
+    adminLabel: 'Landing Page Reveal',
+    gradient: 'from-stone-200 via-stone-100 to-neutral-900',
+    defaultName: 'Landing Page Reveal',
+    aiLabelVi:
+      'màn intro full-screen: counter đếm 0–100%, logo chữ lớn, dải ảnh trượt, overlay mờ đi hé lộ hero zoom out và headline',
+    aiLabelEn:
+      'full-screen intro: 0–100% counter, oversized logo type, sliding image strip, overlay fades to reveal zoomed-out hero and headline',
   },
   gambit_brand_heritage: {
     type: 'gambit_brand_heritage',

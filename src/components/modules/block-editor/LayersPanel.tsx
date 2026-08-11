@@ -83,6 +83,30 @@ import {
   scrollImgScaleItemElements,
 } from './blocks/_registry/defs/scrollImgScale';
 import {
+  letterSliderSlideElements,
+  resolveLetterSliderSlides,
+} from './blocks/_registry/defs/letterSlider';
+import {
+  cgModularSliderSlideElements,
+  resolveCgModularSliderSlides,
+} from './blocks/_registry/defs/cgModularSlider';
+import {
+  cgResponsiveTeamMemberElements,
+  resolveCgResponsiveTeamMembers,
+} from './blocks/_registry/defs/cgResponsiveTeam';
+import {
+  cg3dSliderSlideElements,
+  resolveCg3dSliderSlides,
+} from './blocks/_registry/defs/cg3dSlider';
+import {
+  cgRadgaHorizontalSlideElements,
+  resolveCgRadgaHorizontalSlides,
+} from './blocks/_registry/defs/cgRadgaHorizontal';
+import {
+  cgPageTransitionsPageElements,
+  resolveCgPageTransitionsPages,
+} from './blocks/_registry/defs/cgPageTransitions';
+import {
   housentOurExcellenceItemElements,
   resolveHousentOurExcellenceItems,
 } from './blocks/_registry/defs/housentOurExcellence';
@@ -233,6 +257,12 @@ import {
   type SustainitOurExpertiseContent,
   type HousentOurExcellenceContent,
   type ScrollImgScaleContent,
+  type LetterSliderContent,
+  type CgModularSliderContent,
+  type CgResponsiveTeamContent,
+  type Cg3dSliderContent,
+  type CgRadgaHorizontalContent,
+  type CgPageTransitionsContent,
   type FramerClarityServicesContent,
   type LineaPortfolioItem,
   type BelgoAboutProductContent,
@@ -833,7 +863,6 @@ export const ELEMENTS_BY_TYPE: Partial<Record<BlockType, LayerElement[]>> = {
     BACKGROUND_LAYER,
     { key: 'title', label: 'Tiêu đề', icon: Type },
   ],
-  letter_slider: [BACKGROUND_LAYER],
   seamless_scroll_gallery: [
     BACKGROUND_LAYER,
     { key: 'title', label: 'Tiêu đề', icon: Type },
@@ -1187,6 +1216,104 @@ export function elementsForType(
       {
         key: 'items',
         label: 'Thêm / quản lý mục',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'letter_slider') {
+    const slides = resolveLetterSliderSlides(
+      (content ?? {}) as unknown as LetterSliderContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...letterSliderSlideElements(slides),
+      {
+        key: 'slides',
+        label: 'Thêm / quản lý slide',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'cg_modular_slider') {
+    const slides = resolveCgModularSliderSlides(
+      (content ?? {}) as unknown as CgModularSliderContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...cgModularSliderSlideElements(slides),
+      {
+        key: 'slides',
+        label: 'Thêm / quản lý slide',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'cg_responsive_team') {
+    const members = resolveCgResponsiveTeamMembers(
+      (content ?? {}) as unknown as CgResponsiveTeamContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...cgResponsiveTeamMemberElements(members),
+      {
+        key: 'members',
+        label: 'Thêm / quản lý thành viên',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'cg_3d_slider') {
+    const slides = resolveCg3dSliderSlides(
+      (content ?? {}) as unknown as Cg3dSliderContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...cg3dSliderSlideElements(slides),
+      {
+        key: 'slides',
+        label: 'Thêm / quản lý slide',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'cg_radga_horizontal') {
+    const slides = resolveCgRadgaHorizontalSlides(
+      (content ?? {}) as CgRadgaHorizontalContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...cgRadgaHorizontalSlideElements(slides),
+      {
+        key: 'slides',
+        label: 'Thêm / quản lý slide',
+        icon: ListChecks,
+      },
+      {
+        key: 'outroTitle',
+        label: 'Outro',
+        icon: Type,
+        fieldType: 'text',
+      },
+    ];
+  }
+  if (type === 'cg_page_transitions') {
+    const pages = resolveCgPageTransitionsPages(
+      (content ?? {}) as CgPageTransitionsContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      {
+        key: 'logoText',
+        label: 'Logo',
+        icon: Type,
+        fieldType: 'text',
+        groupId: 'brand',
+        groupLabel: 'Brand',
+      },
+      ...cgPageTransitionsPageElements(pages),
+      {
+        key: 'pages',
+        label: 'Thêm / quản lý trang',
         icon: ListChecks,
       },
     ];

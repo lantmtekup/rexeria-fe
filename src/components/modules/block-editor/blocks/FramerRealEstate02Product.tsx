@@ -21,6 +21,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useContainerMobile } from './useContainerMobile';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface Props {
@@ -48,6 +49,62 @@ const TEXT_PARALLAX_RANGE = 24;
 const LINE_REVEAL_DURATION = 0.7;
 const LINE_REVEAL_EASE = 'power3.out';
 const LINE_STAGGER = 0.12;
+
+/**
+ * Hai tier layout. `mobile` (<672) giữ nguyên toạ độ Framer gốc 375×443:
+ * gutter trái 25.07% để trống, ảnh flush top-right, đoạn text nằm NGAY DƯỚI
+ * ảnh và canh cùng mép trái với ảnh. Không đổi một pixel nào ở nhánh này.
+ *
+ * `wide` (≥672): xoay chồng dọc đó thành SPLIT — text sang cột trái (chính là
+ * cái gutter cũ), ảnh giữ flush top-right. Scale thẳng bố cục mobile là hỏng:
+ * aspect 375/443 ở 1440 cho card cao 1700px, và đoạn text sẽ rộng 1079px
+ * (~120ch) — quá dài để đọc.
+ *
+ * Clamp `N = maxPx / 1440 * 100`.
+ */
+const TIER = {
+  mobile: {
+    // 100% — fill frame mobile 390 (không khóa 375 → hở olive 2 mép).
+    cardMaxWidth: '100%',
+    cardAspect: '375 / 443',
+    cardMinHeight: '0px',
+    photoLeft: '25.07%',
+    photoRight: 'auto',
+    photoWidth: '74.93%',
+    photoHeight: '42.21%',
+    photoAspect: 'auto',
+    textLeft: '25.07%',
+    textTop: '49.44%',
+    textBottom: 'auto',
+    textWidth: '69.60%',
+    textDisplay: 'block',
+    textAlign: 'flex-start',
+    textSize: '11px',
+  },
+  wide: {
+    cardMaxWidth: '1440px',
+    cardAspect: '1440 / 620',
+    cardMinHeight: 'clamp(420px, 43cqi, 620px)',
+    photoLeft: 'auto',
+    photoRight: '0px',
+    photoWidth: '54%',
+    // Full chiều cao card. Giữ `aspectRatio 1124/748` của file nguồn thì ảnh
+    // hụt ~100px dưới đáy, để lại dải nền tan chết ở nửa phải. Khung 54%/100%
+    // ≈ 1.25 so với nguồn 1.50 nên `objectFit: cover` chỉ cắt bớt hai cạnh.
+    photoHeight: '100%',
+    photoAspect: 'auto',
+    // Cột text canh giữa theo chiều dọc bằng flex chứ KHÔNG bằng
+    // `translateY(-50%)`: wrap này đang là target parallax của GSAP (`y`),
+    // transform tay sẽ bị tween ghi đè.
+    textLeft: 'clamp(24px, 6cqi, 88px)',
+    textTop: '0px',
+    textBottom: '0px',
+    textWidth: 'clamp(240px, 36cqi, 520px)',
+    textDisplay: 'flex',
+    textAlign: 'center',
+    textSize: 'clamp(13px, 1.25cqi, 18px)',
+  },
+} as const;
 
 const ROOT_STYLE: React.CSSProperties = {
   position: 'relative',
@@ -128,6 +185,8 @@ export function FramerRealEstate02Product({
   const textRef = React.useRef<HTMLParagraphElement>(null);
 
   const isCanvas = useIsCanvasEdit(rootRef);
+  const isMobile = useContainerMobile(rootRef);
+  const tier = isMobile ? TIER.mobile : TIER.wide;
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -236,8 +295,25 @@ export function FramerRealEstate02Product({
       style={{ ...ROOT_STYLE, ...blockBackgroundStyle(background) }}
       className={cn('frep-root', className)}
     >
-      <div style={CARD_STYLE} className='frep-card @container'>
-        <div style={PHOTO_WRAP_STYLE}>
+      <div
+        style={{
+          ...CARD_STYLE,
+          maxWidth: tier.cardMaxWidth,
+          aspectRatio: tier.cardAspect,
+          minHeight: tier.cardMinHeight,
+        }}
+        className='frep-card @container'
+      >
+        <div
+          style={{
+            ...PHOTO_WRAP_STYLE,
+            left: tier.photoLeft,
+            right: tier.photoRight,
+            width: tier.photoWidth,
+            height: tier.photoHeight,
+            aspectRatio: tier.photoAspect,
+          }}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             ref={photoImageRef}
@@ -249,11 +325,26 @@ export function FramerRealEstate02Product({
           />
         </div>
 
-        <div ref={textWrapRef} style={TEXT_WRAP_STYLE}>
+        <div
+          ref={textWrapRef}
+          style={{
+            ...TEXT_WRAP_STYLE,
+            left: tier.textLeft,
+            top: tier.textTop,
+            bottom: tier.textBottom,
+            width: tier.textWidth,
+            display: tier.textDisplay,
+            alignItems: tier.textAlign,
+          }}
+        >
           <p
             ref={textRef}
             data-element-key='bodyText'
-            style={composeStyle(TEXT_STYLE, styleOf('bodyText'))}
+            style={composeStyle(
+              TEXT_STYLE,
+              { fontSize: tier.textSize },
+              styleOf('bodyText')
+            )}
             className={selectableClass(activeKey === 'bodyText', 'frep-body')}
           >
             {content.bodyText}

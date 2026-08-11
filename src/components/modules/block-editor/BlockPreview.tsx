@@ -172,6 +172,8 @@ const STICKY_SCROLL_BLOCK_TYPES = new Set<Block['blockType']>([
   'the_grand_location',
   'the_grand_discover',
   'the_grand_service',
+  'cg_radga_horizontal',
+  'cg_3d_slider',
   'pnj_variant',
   'pnj_details',
   'mint_discover',
@@ -297,8 +299,7 @@ export function BlockPreview({
   // matches `BlockMotion` 1:1 (track-based timeline). In edit mode the
   // runtime no-ops, so this can run unconditionally.
   const motionForDevice = readVariant(block.motion, device) as
-    | BlockMotion
-    | undefined;
+    BlockMotion | undefined;
   const effectiveMode: EditorMode = motionMode;
 
   // Device frame element + its measured (unscaled) height. Declared up here

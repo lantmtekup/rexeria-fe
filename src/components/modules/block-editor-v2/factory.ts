@@ -9,6 +9,7 @@ import { delvauxSubnavDef } from '@/components/modules/block-editor/blocks/_regi
 import { delvauxVariantDef } from '@/components/modules/block-editor/blocks/_registry/defs/delvauxVariant';
 import { gambitProductOverviewDef } from '@/components/modules/block-editor/blocks/_registry/defs/gambitProductOverview';
 import { gambitDelvauxIntroDef } from '@/components/modules/block-editor/blocks/_registry/defs/gambitDelvauxIntro';
+import { lusionLpRevealDef } from '@/components/modules/block-editor/blocks/_registry/defs/lusionLpReveal';
 import { gambitProductDetailsDef } from '@/components/modules/block-editor/blocks/_registry/defs/gambitProductDetails';
 import { gambitBrandHeritageDef } from '@/components/modules/block-editor/blocks/_registry/defs/gambitBrandHeritage';
 import { gambitRelatedProductsDef } from '@/components/modules/block-editor/blocks/_registry/defs/gambitRelatedProducts';
@@ -47,6 +48,14 @@ import { coolHunterSectionProgressDef } from '@/components/modules/block-editor/
 import { coolHunterStoryDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterStory';
 import { coolHunterGalleryDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterGallery';
 import { scrollImgScaleDef } from '@/components/modules/block-editor/blocks/_registry/defs/scrollImgScale';
+import { letterSliderDef } from '@/components/modules/block-editor/blocks/_registry/defs/letterSlider';
+import { cgModularSliderDef } from '@/components/modules/block-editor/blocks/_registry/defs/cgModularSlider';
+import { cgResponsiveTeamDef } from '@/components/modules/block-editor/blocks/_registry/defs/cgResponsiveTeam';
+import { cgRadgaHorizontalDef } from '@/components/modules/block-editor/blocks/_registry/defs/cgRadgaHorizontal';
+import { cgPageTransitionsDef } from '@/components/modules/block-editor/blocks/_registry/defs/cgPageTransitions';
+import { cgResponsiveLandingLoaderDef } from '@/components/modules/block-editor/blocks/_registry/defs/cgResponsiveLandingLoader';
+import { cgLandingPageRevealDef } from '@/components/modules/block-editor/blocks/_registry/defs/cgLandingPageReveal';
+import { cg3dSliderDef } from '@/components/modules/block-editor/blocks/_registry/defs/cg3dSlider';
 import { coolHunterProductDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterProduct';
 import { coolHunterQuoteDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterQuote';
 import { coolHunterFooterDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterFooter';
@@ -218,7 +227,6 @@ import type {
   InteractiveGridContent,
   PixelRevealContent,
   MarqueeBandContent,
-  LetterSliderContent,
   SeamlessScrollGalleryContent,
   ProductSpecSheetContent,
   PollContent,
@@ -1521,15 +1529,6 @@ const MARQUEE_BAND_EN: MarqueeBandContent = {
   text: 'Creative · Technology · Media',
 };
 
-const LETTER_SLIDER_VI: LetterSliderContent = {
-  slides: [
-    { title: 'Happy City', imageUrl: MEDIA.architecture[1] },
-    { title: 'Maison Noir', imageUrl: MEDIA.interior[1] },
-    { title: 'Riverside', imageUrl: MEDIA.nature[3] },
-  ],
-};
-const LETTER_SLIDER_EN: LetterSliderContent = { ...LETTER_SLIDER_VI };
-
 const SEAMLESS_SCROLL_GALLERY_VI: SeamlessScrollGalleryContent = {
   title: 'Dự án tiêu biểu',
   images: pickMedia(7, 16),
@@ -2223,6 +2222,14 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   cool_hunter_story: coolHunterStoryDef.defaultContent.vi,
   cool_hunter_gallery: coolHunterGalleryDef.defaultContent.vi,
   scroll_img_scale: scrollImgScaleDef.defaultContent.vi,
+  letter_slider: letterSliderDef.defaultContent.vi,
+  cg_modular_slider: cgModularSliderDef.defaultContent.vi,
+  cg_responsive_team: cgResponsiveTeamDef.defaultContent.vi,
+  cg_radga_horizontal: cgRadgaHorizontalDef.defaultContent.vi,
+  cg_page_transitions: cgPageTransitionsDef.defaultContent.vi,
+  cg_responsive_landing_loader: cgResponsiveLandingLoaderDef.defaultContent.vi,
+  cg_landing_page_reveal: cgLandingPageRevealDef.defaultContent.vi,
+  cg_3d_slider: cg3dSliderDef.defaultContent.vi,
   cool_hunter_product: coolHunterProductDef.defaultContent.vi,
   cool_hunter_quote: coolHunterQuoteDef.defaultContent.vi,
   cool_hunter_footer: coolHunterFooterDef.defaultContent.vi,
@@ -2281,7 +2288,6 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   interactive_grid: INTERACTIVE_GRID_VI,
   pixel_reveal: PIXEL_REVEAL_VI,
   marquee_band: MARQUEE_BAND_VI,
-  letter_slider: LETTER_SLIDER_VI,
   seamless_scroll_gallery: SEAMLESS_SCROLL_GALLERY_VI,
   product_spec_sheet: PRODUCT_SPEC_SHEET_VI,
   framer_yume_hero: FRAMER_YUME_HERO_VI,
@@ -2320,6 +2326,7 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   delvaux_variant: delvauxVariantDef.defaultContent.vi,
   gambit_product_overview: gambitProductOverviewDef.defaultContent.vi,
   gambit_delvaux_intro: gambitDelvauxIntroDef.defaultContent.vi,
+  lusion_lp_reveal: lusionLpRevealDef.defaultContent.vi,
   gambit_product_details: gambitProductDetailsDef.defaultContent.vi,
   gambit_brand_heritage: gambitBrandHeritageDef.defaultContent.vi,
   gambit_related_products: gambitRelatedProductsDef.defaultContent.vi,
@@ -2447,6 +2454,14 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   cool_hunter_story: coolHunterStoryDef.defaultContent.en,
   cool_hunter_gallery: coolHunterGalleryDef.defaultContent.en,
   scroll_img_scale: scrollImgScaleDef.defaultContent.en,
+  letter_slider: letterSliderDef.defaultContent.en,
+  cg_modular_slider: cgModularSliderDef.defaultContent.en,
+  cg_responsive_team: cgResponsiveTeamDef.defaultContent.en,
+  cg_radga_horizontal: cgRadgaHorizontalDef.defaultContent.en,
+  cg_page_transitions: cgPageTransitionsDef.defaultContent.en,
+  cg_responsive_landing_loader: cgResponsiveLandingLoaderDef.defaultContent.en,
+  cg_landing_page_reveal: cgLandingPageRevealDef.defaultContent.en,
+  cg_3d_slider: cg3dSliderDef.defaultContent.en,
   cool_hunter_product: coolHunterProductDef.defaultContent.en,
   cool_hunter_quote: coolHunterQuoteDef.defaultContent.en,
   cool_hunter_footer: coolHunterFooterDef.defaultContent.en,
@@ -2505,7 +2520,6 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   interactive_grid: INTERACTIVE_GRID_EN,
   pixel_reveal: PIXEL_REVEAL_EN,
   marquee_band: MARQUEE_BAND_EN,
-  letter_slider: LETTER_SLIDER_EN,
   seamless_scroll_gallery: SEAMLESS_SCROLL_GALLERY_EN,
   product_spec_sheet: PRODUCT_SPEC_SHEET_EN,
   framer_yume_hero: FRAMER_YUME_HERO_EN,
@@ -2544,6 +2558,7 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   delvaux_variant: delvauxVariantDef.defaultContent.en,
   gambit_product_overview: gambitProductOverviewDef.defaultContent.en,
   gambit_delvaux_intro: gambitDelvauxIntroDef.defaultContent.en,
+  lusion_lp_reveal: lusionLpRevealDef.defaultContent.en,
   gambit_product_details: gambitProductDetailsDef.defaultContent.en,
   gambit_brand_heritage: gambitBrandHeritageDef.defaultContent.en,
   gambit_related_products: gambitRelatedProductsDef.defaultContent.en,
