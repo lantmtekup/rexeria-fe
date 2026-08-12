@@ -159,6 +159,8 @@
       "evidenceHeading": "Bằng chứng",
       "evidenceNote": "Là track record, không phải lời hứa. Thêm vào workspace sẽ bắt đầu từ đầu — bản copy kế thừa thiết kế, không kế thừa số liệu.",
       "sessions": "phiên",
+      "objUnset": "Chưa khai mục tiêu",
+      "coverageUnknown": "Chưa đo độ phủ",
       "coverageHeading": "Coverage theo thiết kế",
       "coverageStats": "{blocks} block · {pct}% component đã instrument",
       "coverageOk": "Xây cho {objective}, và có block chứng minh mục tiêu.",

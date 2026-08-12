@@ -23,12 +23,17 @@ export type ExchangeListingMeta = {
   price: number;
   featured: boolean;
   badge?: string;
-  objective: Exclude<ExchangeObjective, 'all'>;
+  /**
+   * `null` = người bán chưa khai mục tiêu. KHÔNG lùi về một giá trị mặc định:
+   * dán nhãn sẵn lên món chưa khai là bịa ra một lời khẳng định.
+   */
+  objective: Exclude<ExchangeObjective, 'all'> | null;
   kind: Exclude<ExchangeKind, 'all'>;
   grad: string;
   summary?: string;
   evidence?: ExchangeEvidence;
-  coverage: ExchangeCoverage;
+  /** Vắng = chưa đo. Danh sách chợ không trả độ phủ; 0% là một phép đo. */
+  coverage?: ExchangeCoverage;
   layerRoles: string[];
 };
 

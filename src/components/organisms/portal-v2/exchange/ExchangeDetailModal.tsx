@@ -97,7 +97,9 @@ export const ExchangeDetailModal = ({
       subtitle={t('detailSub', {
         author: listing.author,
         kind: kindLabel,
-        objective: t(objectiveLabelKey(meta.objective)),
+        objective: meta.objective
+          ? t(objectiveLabelKey(meta.objective))
+          : t('objUnset'),
       })}
       footer={footer}
     >
@@ -145,11 +147,14 @@ export const ExchangeDetailModal = ({
               {t('coverageHeading')}
             </h3>
             <div className='mt-2 flex flex-wrap items-center gap-2'>
+              {/* Vắng độ phủ ⇒ nói "chưa đo", không in 0%. */}
               <span className='text-[13px] font-semibold text-[var(--pv2-ink)]'>
-                {t('coverageStats', {
-                  blocks: meta.coverage.blocks,
-                  pct: meta.coverage.pct,
-                })}
+                {meta.coverage
+                  ? t('coverageStats', {
+                      blocks: meta.coverage.blocks,
+                      pct: meta.coverage.pct,
+                    })
+                  : t('coverageUnknown')}
               </span>
               {meta.layerRoles.map(role => (
                 <span
@@ -160,22 +165,24 @@ export const ExchangeDetailModal = ({
                 </span>
               ))}
             </div>
-            <p
-              className={cn(
-                'mt-2 text-[12.5px] leading-relaxed',
-                meta.coverage.objCovered
-                  ? 'text-[var(--pv2-mut)]'
-                  : 'text-[var(--pv2-faint)]'
-              )}
-            >
-              {meta.coverage.objCovered
-                ? t('coverageOk', {
-                    objective: t(objectiveLabelKey(meta.objective)),
-                  })
-                : t('coverageGap', {
-                    objective: t(objectiveLabelKey(meta.objective)),
-                  })}
-            </p>
+            {meta.coverage && meta.objective ? (
+              <p
+                className={cn(
+                  'mt-2 text-[12.5px] leading-relaxed',
+                  meta.coverage.objCovered
+                    ? 'text-[var(--pv2-mut)]'
+                    : 'text-[var(--pv2-faint)]'
+                )}
+              >
+                {meta.coverage.objCovered
+                  ? t('coverageOk', {
+                      objective: t(objectiveLabelKey(meta.objective)),
+                    })
+                  : t('coverageGap', {
+                      objective: t(objectiveLabelKey(meta.objective)),
+                    })}
+              </p>
+            ) : null}
           </section>
         </div>
       </div>

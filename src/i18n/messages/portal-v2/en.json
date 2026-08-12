@@ -159,6 +159,8 @@
       "evidenceHeading": "Evidence",
       "evidenceNote": "A track record, not a promise. Added to your workspace it starts fresh — a copy inherits the design, never the numbers.",
       "sessions": "sessions",
+      "objUnset": "Objective not set",
+      "coverageUnknown": "Coverage not measured",
       "coverageHeading": "Coverage by design",
       "coverageStats": "{blocks} blocks · {pct}% of components instrumented",
       "coverageOk": "Built to {objective}, and it carries a block to prove it.",
