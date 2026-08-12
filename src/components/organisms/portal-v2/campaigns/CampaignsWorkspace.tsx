@@ -10,6 +10,7 @@ import {
   useJourney as forkJourneyOntoCampaign,
 } from '@/services/portal-v2/journeyBoard';
 import {
+  addCampaignItem,
   createCampaign as createCampaignApi,
   deleteCampaigns as deleteCampaignsApi,
   duplicateCampaign as duplicateCampaignApi,
@@ -244,7 +245,40 @@ export const CampaignsWorkspace = ({
     // Id do SERVER cấp, không phải `nextCampaignId` đếm trong mảng — id bịa ở
     // FE sẽ trỏ vào hư không ngay lần tải lại trang đầu tiên.
     const id = saved.id;
-    const created = saved;
+
+    // Hạng mục KHÔNG đi kèm lệnh tạo: `CreateCampaignV2Request` không có chỗ
+    // cho chúng, BE nhận riêng qua `POST /campaigns/{id}/items`. Bước
+    // Merchandise của wizard vẫn thu thập lựa chọn, nên trước đây nó bị bỏ rơi
+    // lặng lẽ — chiến dịch sinh ra rỗng dù người dùng đã chọn xong sản phẩm,
+    // và màn chi tiết báo "Nothing is being sold yet".
+    //
+    // Gắn TUẦN TỰ, không song song: thứ tự hạng mục là thứ người dùng vừa
+    // thấy ở wizard, và Promise.all trả về theo thứ tự hoàn thành.
+    const wanted: { kind: 'product' | 'topic'; value: string }[] = [
+      ...wizard.subjects.map(p => ({ kind: 'product' as const, value: p })),
+      ...wizard.topics.map(name => ({ kind: 'topic' as const, value: name })),
+    ];
+    let created = saved;
+    if (wanted.length) {
+      const items = [];
+      for (const w of wanted) {
+        const item = await addCampaignItem(id, w.kind, w.value).catch(
+          () => null
+        );
+        if (item) items.push(item);
+      }
+      created = { ...saved, items };
+      // Giữ chiến dịch vừa tạo dù gắn hụt — nó đã nằm trên server. Nói rõ hụt
+      // bao nhiêu, thay vì để người dùng tự đếm trên màn chi tiết.
+      if (items.length < wanted.length) {
+        toast.error(
+          t('toastItemsPartial', {
+            done: items.length,
+            total: wanted.length,
+          })
+        );
+      }
+    }
 
     if (wizard.journeyId) {
       // Chiến dịch đã có id thật ⇒ fork được ngay. Hỏng thì vẫn giữ chiến dịch

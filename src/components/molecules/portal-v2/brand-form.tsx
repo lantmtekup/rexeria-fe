@@ -210,7 +210,12 @@ export const LineList = ({
         <TextTextarea
           rows={5}
           value={items.join('\n')}
-          onChange={e =>
+          // KHÔNG trimEnd lúc gõ. Khi đang gõ, con trỏ luôn ở cuối dòng, nên
+          // dấu cách vừa nhấn luôn là ký tự cuối — trimEnd sẽ cắt nó ngay
+          // trước khi kịp gõ chữ tiếp theo, và ô này không bao giờ nhập được
+          // dấu cách. Chuẩn hoá lúc rời ô là đủ: giá trị lưu xuống vẫn sạch.
+          onChange={e => onChange(e.target.value.split('\n'))}
+          onBlur={e =>
             onChange(e.target.value.split('\n').map(s => s.trimEnd()))
           }
         />

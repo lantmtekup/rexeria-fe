@@ -543,6 +543,7 @@
       "pickerEmpty": "No published page matches",
       "pickerEmptyHint": "Only published landing pages can be linked. Publish the page first, then come back.",
       "pickerNote": "The node stores the page's name and coverage, not the page itself.",
+      "toastItemsPartial": "Campaign created, but only {done} of {total} subjects attached. Open it to add the rest.",
       "toastCreateFailed": "Could not create the journey",
       "toastDuplicateFailed": "Could not duplicate",
       "toastForkFailed": "Could not attach to the campaign",

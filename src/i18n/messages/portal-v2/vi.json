@@ -543,6 +543,7 @@
       "pickerEmpty": "Không có trang publish nào khớp",
       "pickerEmptyHint": "Chỉ landing page đã publish mới liên kết được. Publish trang trước rồi quay lại.",
       "pickerNote": "Node chỉ lưu tên và độ đo của trang, không lưu bản thân trang.",
+      "toastItemsPartial": "Đã tạo chiến dịch nhưng chỉ gắn được {done}/{total} hạng mục. Mở chiến dịch để thêm nốt.",
       "toastCreateFailed": "Không tạo được hành trình",
       "toastDuplicateFailed": "Không nhân bản được",
       "toastForkFailed": "Không gắn được vào chiến dịch",
