@@ -1,3 +1,4 @@
+import { DEFAULT_BEHAVE_SEGMENT } from '@/lib/portal-v2/brand/constants';
 import type {
   BrandColor,
   BrandData,
@@ -132,9 +133,12 @@ export const brandDataToPut = (d: BrandData, version: number) => ({
     id: a.id,
     name: a.n,
     tier: a.tier,
-    // BE bắt buộc trường này. Rỗng thì lùi về mô tả hành vi suy từ chặng mua,
-    // hơn là để cả lượt lưu chết vì một ô người dùng không nhìn thấy.
-    behaves: a.behaves?.trim() || `Ở chặng ${a.stage || 'khám phá'}`,
+    // BE chỉ nhận MỘT trong tám phân khúc `s1`..`s8` (ValidatePersonas). Bản
+    // trước lùi về một câu tiếng Việt suy từ chặng mua — chuỗi đó không nằm
+    // trong tập hợp lệ, nên nó không cứu được lượt lưu nào mà bảo đảm 400 cho
+    // TẤT CẢ. Lùi về `s7`, phân khúc bắt-tất mà chính BE dùng khi không luật
+    // nào khớp.
+    behaves: a.behaves?.trim() || DEFAULT_BEHAVE_SEGMENT,
     stage: a.stage,
     awareness: a.awareness,
     motivations: a.motivations,

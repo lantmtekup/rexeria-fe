@@ -155,3 +155,40 @@ export const BRAND_TABS = [
     descKey: 'tabVisualDesc',
   },
 ];
+
+/**
+ * Từ vựng BE bắt buộc cho một persona. Đây là BẢN SAO của luật bên
+ * `internal/core/brand_profile_validator.go` — đổi bên đó thì phải sửa cả đây.
+ *
+ * Bản sao này bắt buộc vì form phải dựng dropdown TRƯỚC khi hỏi server, và một
+ * ô nhập tự do ở ba trường dưới đây chỉ dẫn tới `PUT` trả 400 cho CẢ lượt lưu —
+ * kể cả những section người dùng không đụng tới.
+ */
+
+/** `tier` — chữ THƯỜNG. `taxonomy.PersonaTiers`. */
+export const PERSONA_TIERS: { id: string; n: string }[] = [
+  { id: 'primary', n: 'Primary' },
+  { id: 'secondary', n: 'Secondary' },
+  { id: 'retention', n: 'Retention' },
+];
+
+/**
+ * `behaves` — MỘT trong tám phân khúc hành vi `s1`..`s8` (spec §8.6,
+ * `core/segment.go`). KHÔNG phải chữ tự do: chuỗi nào khác cũng bị
+ * `ValidatePersonas` từ chối.
+ *
+ * `s7` là phân khúc bắt-tất của BE (`AssignSegment` rơi về Casual explorer),
+ * nên nó là mặc định an toàn cho một persona vừa tạo.
+ */
+export const BEHAVE_SEGMENTS: { id: string; n: string }[] = [
+  { id: 's1', n: 'High intent' },
+  { id: 's2', n: 'Active comparator' },
+  { id: 's3', n: 'Trust seeker' },
+  { id: 's4', n: 'Product researcher' },
+  { id: 's5', n: 'Price sensitive' },
+  { id: 's6', n: 'Story engaged' },
+  { id: 's7', n: 'Casual explorer' },
+  { id: 's8', n: 'Returning decider' },
+];
+
+export const DEFAULT_BEHAVE_SEGMENT = 's7';
