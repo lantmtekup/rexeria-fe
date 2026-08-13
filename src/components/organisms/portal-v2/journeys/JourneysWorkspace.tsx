@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import type { JourneySegment } from '@/lib/portal-v2/journeys/constants';
 import type { PersonaOption } from '@/services/portal-v2/journeyAudience';
 
+import { errorMessage } from '@/services/portal-v2/_error';
 import { fetchExperienceRefs } from '@/services/portal-v2/journeyMeasured';
 import {
   saveFailureReasons,
@@ -216,11 +217,15 @@ export const JourneysWorkspace = ({
 
   const handleDuplicate = useCallback(
     async (journey: Journey) => {
-      const res = await duplicateJourneyApi(journey.id).catch(() => null);
-      if (!res) {
-        toast.error(t('toastDuplicateFailed'));
-        return;
-      }
+      // Nhánh `catch` TRƯỚC ĐÂY nuốt trọn lỗi thật (403/400/500 đều thành một
+      // câu chung chung) — nói ra nguyên văn BE thay vì đoán.
+      const res = await duplicateJourneyApi(journey.id).catch(
+        (err: unknown) => {
+          toast.error(errorMessage(err, t('toastDuplicateFailed')));
+          return null;
+        }
+      );
+      if (!res) return;
       versionsRef.current[res.journey.id] = res.version;
       setJourneys(prev => [res.journey, ...prev]);
       toast.success(`Duplicated — ${res.journey.name}`);
@@ -231,11 +236,17 @@ export const JourneysWorkspace = ({
   const handleCreate = useCallback(
     async (input: JourneyDraftInput) => {
       const draft = createJourney(input);
-      const res = await createJourneyApi(draft, brandId).catch(() => null);
-      if (!res) {
-        toast.error(t('toastCreateFailed'));
-        return;
-      }
+      // Nhánh `catch` TRƯỚC ĐÂY nuốt trọn lỗi thật, nút New journey đọc như
+      // "bấm không ăn" dù BE đã từ chối có lý do (từng là 403 client-portal
+      // trước PORTAL-WRITE-2, cũng có thể là 400 persona_id sai hay 500) —
+      // nói ra nguyên văn BE thay vì một câu chung chung không ai sửa được.
+      const res = await createJourneyApi(draft, brandId).catch(
+        (err: unknown) => {
+          toast.error(errorMessage(err, t('toastCreateFailed')));
+          return null;
+        }
+      );
+      if (!res) return;
       // Id do SERVER cấp — id dựng ở FE sẽ trỏ vào hư không sau lần tải lại đầu.
       versionsRef.current[res.journey.id] = res.version;
       setJourneys(prev => [res.journey, ...prev]);
