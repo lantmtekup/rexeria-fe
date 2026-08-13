@@ -352,6 +352,17 @@ export const rexerApi = {
       );
       return r.template_version;
     },
+    /**
+     * Flat lookup — versionId alone, no templateId. For a caller that only
+     * has a template_version_id (Page.template_version_id) and needs the
+     * owning template_id back; see resolveTemplateFromVersionId.
+     */
+    versionByID: async (versionId: string): Promise<TemplateVersion> => {
+      const r = await rx<TemplateVersionResponse>(
+        `/template-versions/${versionId}`
+      );
+      return r.template_version;
+    },
     preview: (id: string) =>
       rx<TemplatePreviewResponse>(`/templates/${id}/preview`),
     update: async (
