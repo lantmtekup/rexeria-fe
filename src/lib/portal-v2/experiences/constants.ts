@@ -41,10 +41,16 @@ export const EXPERIENCE_STATES: {
   { id: 'unassigned', labelKey: 'stateUnassigned' },
   { id: 'product', labelKey: 'stateProduct' },
   { id: 'topic', labelKey: 'stateTopic' },
-  // KHÔNG còn tab `template` và `block`: màn này chỉ nạp bản copy của brand
-  // (ba state `unassigned` / `product_copies` / `topic_copies`), nên hai tab
-  // đó vĩnh viễn đếm 0. Một tab luôn rỗng không nói "bạn chưa có gì" — nó nói
-  // "chỗ này hỏng". Template và block thuộc về màn Exchange.
+  // Template CỦA CHÍNH BRAND. Nhân bản một bản copy cho ra một template nháp
+  // (`promotePage`), và nó không hiện ở Exchange vì màn đó lọc `active` — nên
+  // không có tab này thì bấm Nhân bản xong thứ vừa tạo biến mất khỏi mọi màn.
+  //
+  // Tab cũ bị bỏ vì nó nạp `state: 'templates'` nguyên xi, tức là gộp cả kho hệ
+  // thống. Nay `experienceLibrary` lọc theo `brand_id` trước khi trả về, nên ở
+  // đây chỉ còn hàng của brand — đo thật: 3, không phải 79.
+  { id: 'template', labelKey: 'stateTemplate' },
+  // KHÔNG có tab `block`: màn này không nạp block, nên tab đó vĩnh viễn đếm 0.
+  // Một tab luôn rỗng không nói "bạn chưa có gì" — nó nói "chỗ này hỏng".
 ];
 
 /** `DATA.expCategories` (~L5480) — what KIND of artifact this is. */

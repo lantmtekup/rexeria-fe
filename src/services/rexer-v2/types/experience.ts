@@ -161,6 +161,30 @@ export type RxUseExperienceRequest = {
   brand_id?: string;
 };
 
+/**
+ * `POST /v1/experiences` — `models.CreateExperienceRequest`.
+ *
+ * `category` quyết định BE dựng ra cái gì: `collection` → một **Template**
+ * (`createTemplate`, status `draft`), `blocks` → một **Block**. Cả hai đều
+ * KHÔNG phải bản copy, nên món vừa tạo không rơi vào thư viện Experiences —
+ * chỗ đó chỉ nạp ba state copy. Nó thuộc về Exchange, và chỉ hiện ở đó sau khi
+ * chuyển sang `active`.
+ *
+ * Các trường taxonomy đi qua `validate:"omitempty,oneof=..."`: gửi chuỗi rỗng
+ * thì BE bỏ qua, gửi giá trị ngoài bộ đóng thì 400. Nên đừng gửi `''` như một
+ * lựa chọn — bỏ hẳn khỏi body.
+ */
+export type RxCreateExperienceRequest = {
+  name: string;
+  category: 'collection' | 'blocks';
+  vehicle?: string;
+  objective?: string;
+  interactions?: string[];
+  tagline?: string;
+  summary?: string;
+  template_code?: string;
+};
+
 /** `POST /v1/experiences/{id}/promote` — `name` bắt buộc (BE validate min=1). */
 export type RxPromoteExperienceRequest = {
   name: string;
@@ -176,6 +200,14 @@ export type RxExperienceListQuery = {
   q?: string;
   campaign_id?: string;
   item_id?: string;
+  /**
+   * `updated` | `name` | `shelf_rank`.
+   *
+   * `shelf_rank` được BE tính thật (`applyEvidence` → `shelfLess`): lift giảm
+   * dần → số phiên giảm dần, mục CHƯA ĐO chìm xuống đáy và không bao giờ được
+   * xếp lẫn vào nhóm đã đo. Không làm được ở FE — danh sách không trả `lift`
+   * lẫn `sessions`, chỉ trả bậc `ev`.
+   */
   sort?: string;
   page?: number;
   page_size?: number;

@@ -52,6 +52,7 @@ import type {
   RxPutGovernanceRequest,
 } from './types/settings';
 import type {
+  RxCreateExperienceRequest,
   RxExperience,
   RxExperienceCoverage,
   RxExperienceDetail,
@@ -486,8 +487,26 @@ export const rexerV2Api = {
       rxV2<RxExperienceCoverage>(`/experiences/${experienceId}/coverage`),
 
     /**
-     * `POST /v1/experiences/{id}/duplicate` — bản sao thuộc cùng brand, cùng
-     * loại với bản gốc: nhân bản một template ra template, một copy ra copy.
+     * `POST /v1/experiences` — tạo mới. 201 kèm `edit_url`.
+     *
+     * `category: 'collection'` dựng một **Template** ở trạng thái `draft`,
+     * `'blocks'` dựng một **Block**. Không đường nào ra một bản copy, nên món
+     * vừa tạo KHÔNG hiện ở thư viện Experiences. Đó là lý do màn hình phải
+     * đưa người dùng thẳng vào canvas bằng `edit_url` thay vì chèn một thẻ.
+     */
+    create: (body: RxCreateExperienceRequest) =>
+      rxV2<RxExperience>('/experiences', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+
+    /**
+     * `POST /v1/experiences/{id}/duplicate` — bản sao thuộc cùng brand.
+     *
+     * KHÔNG cùng loại với bản gốc: `Duplicate` (`usecase/experience.go:866`)
+     * nhân bản một **copy** bằng cách PROMOTE nó thành một template mới, vì
+     * hai copy cùng `origin`+`item` sẽ đếm trùng fact row (spec §4.11). Template
+     * ra template. Nghĩa là nhân bản từ màn này cho ra một món nằm ở Exchange.
      */
     duplicate: (experienceId: string) =>
       rxV2<RxExperience>(`/experiences/${experienceId}/duplicate`, {
