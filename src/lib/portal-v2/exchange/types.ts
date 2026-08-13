@@ -34,7 +34,6 @@ export type ExchangeListingMeta = {
   evidence?: ExchangeEvidence;
   /** Vắng = chưa đo. Danh sách chợ không trả độ phủ; 0% là một phép đo. */
   coverage?: ExchangeCoverage;
-  layerRoles: string[];
 };
 
 export type ExchangeListingView = {

@@ -1,25 +1,13 @@
 export type MiningStageId =
-  | 'sessions'
-  | 'pdp'
-  | 'cart'
-  | 'checkout'
-  | 'purchase';
+  'sessions' | 'pdp' | 'cart' | 'checkout' | 'purchase';
 
 export type MiningJourneyPhase =
-  | 'aware'
-  | 'consider'
-  | 'decide'
-  | 'convert'
-  | 'retain';
+  'aware' | 'consider' | 'decide' | 'convert' | 'retain';
 
 export type MiningRisk = 'low' | 'med' | 'high';
 export type MiningSourceStatus = 'connected' | 'error' | 'off';
 export type MiningExperimentStatus =
-  | 'running'
-  | 'draft'
-  | 'won'
-  | 'lost'
-  | 'stopped';
+  'running' | 'draft' | 'won' | 'lost' | 'stopped';
 
 export type MiningStage = {
   id: MiningStageId;
@@ -35,7 +23,6 @@ export type MiningEvidence = {
 };
 
 export type MiningDraftBlock = {
-  r: string;
   n: string;
   h?: string;
   b?: string;

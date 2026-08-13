@@ -74,7 +74,6 @@ export const mapExchangeItemToListing = (
           },
         }
       : {}),
-    layerRoles: item.roles ?? [],
     // `coverage` KHÔNG có trong danh sách chợ. Bỏ trống chứ không điền 0: 0%
     // là một phép đo, và ở đây chưa ai đo gì cả.
   };

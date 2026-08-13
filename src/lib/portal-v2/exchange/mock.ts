@@ -15,7 +15,6 @@ export const EXCHANGE_PAGE_META_PRESETS: Omit<
       'Catches the shopper who bounces on a shade grid. Three taps, one match.',
     evidence: { lift: 0.18, sessions: 12400, tier: 'Strong' },
     coverage: { pct: 92, blocks: 4, objCovered: true },
-    layerRoles: ['ATT', 'EXP', 'EDU', 'CON'],
   },
   {
     price: 39,
@@ -24,7 +23,6 @@ export const EXCHANGE_PAGE_META_PRESETS: Omit<
     summary: 'Product story with a single decisive CTA.',
     evidence: { lift: 0.12, sessions: 8600, tier: 'Moderate' },
     coverage: { pct: 88, blocks: 5, objCovered: true },
-    layerRoles: ['ATT', 'EDU', 'CON'],
   },
   {
     price: 29,
@@ -33,7 +31,6 @@ export const EXCHANGE_PAGE_META_PRESETS: Omit<
     summary: 'Conversion-first layout with proof blocks built in.',
     evidence: { lift: 0.09, sessions: 5200, tier: 'Moderate' },
     coverage: { pct: 85, blocks: 4, objCovered: true },
-    layerRoles: ['ATT', 'EXP', 'CON'],
   },
   {
     price: 29,
@@ -41,7 +38,6 @@ export const EXCHANGE_PAGE_META_PRESETS: Omit<
     objective: 'insight',
     summary: 'Learn what shoppers prefer before you ask for the sale.',
     coverage: { pct: 76, blocks: 3, objCovered: false },
-    layerRoles: ['ATT', 'EXP'],
   },
   {
     price: 0,
@@ -49,7 +45,6 @@ export const EXCHANGE_PAGE_META_PRESETS: Omit<
     objective: 'lead',
     summary: 'Free starter template for lead capture flows.',
     coverage: { pct: 70, blocks: 3, objCovered: true },
-    layerRoles: ['ATT', 'CON'],
   },
   {
     price: 0,
@@ -57,7 +52,6 @@ export const EXCHANGE_PAGE_META_PRESETS: Omit<
     objective: 'cta',
     summary: 'Community template — simple CTA surface.',
     coverage: { pct: 65, blocks: 2, objCovered: true },
-    layerRoles: ['EDU', 'CON'],
   },
 ];
 
@@ -72,7 +66,6 @@ export const EXCHANGE_BLOCK_META_PRESETS: Omit<
     summary: 'Single conversion block with social proof slot.',
     evidence: { lift: 0.06, sessions: 2100, tier: 'Early' },
     coverage: { pct: 100, blocks: 1, objCovered: true },
-    layerRoles: ['CON'],
   },
   {
     price: 0,
@@ -80,7 +73,6 @@ export const EXCHANGE_BLOCK_META_PRESETS: Omit<
     objective: 'insight',
     summary: 'Poll block for first-party preference data.',
     coverage: { pct: 100, blocks: 1, objCovered: true },
-    layerRoles: ['ATT'],
   },
   {
     price: 29,
@@ -89,7 +81,6 @@ export const EXCHANGE_BLOCK_META_PRESETS: Omit<
     objective: 'cta',
     summary: 'Hero + CTA block pair for campaign inserts.',
     coverage: { pct: 100, blocks: 2, objCovered: false },
-    layerRoles: ['ATT', 'CON'],
   },
   {
     price: 0,
@@ -97,7 +88,6 @@ export const EXCHANGE_BLOCK_META_PRESETS: Omit<
     objective: 'lead',
     summary: 'Email capture block with minimal friction.',
     coverage: { pct: 100, blocks: 1, objCovered: true },
-    layerRoles: ['CON'],
   },
   {
     price: 9,
@@ -106,7 +96,6 @@ export const EXCHANGE_BLOCK_META_PRESETS: Omit<
     summary: 'Compact offer block for product grids.',
     evidence: { lift: 0.04, sessions: 980, tier: 'Early' },
     coverage: { pct: 100, blocks: 1, objCovered: true },
-    layerRoles: ['CON'],
   },
   {
     price: 19,
@@ -114,7 +103,6 @@ export const EXCHANGE_BLOCK_META_PRESETS: Omit<
     objective: 'cta',
     summary: 'Educate-then-act block with media slot.',
     coverage: { pct: 100, blocks: 1, objCovered: true },
-    layerRoles: ['EDU'],
   },
 ];
 

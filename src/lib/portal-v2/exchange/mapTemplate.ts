@@ -62,7 +62,6 @@ export const mapTemplateToListing = (t: Template): ExchangeListingView => {
     kind: 'page',
     grad: gradientFor(t.id),
     ...(t.description ? { summary: t.description } : {}),
-    layerRoles: [],
     // evidence / coverage bỏ trống: chưa ai đo template này trên chợ.
   };
 
