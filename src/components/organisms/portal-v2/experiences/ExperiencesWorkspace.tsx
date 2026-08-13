@@ -11,6 +11,10 @@ import { Tabs } from '@/components/molecules/portal-v2/Tabs';
 import { ExperienceCard } from '@/components/organisms/portal-v2/experiences/ExperienceCard';
 import { ExperienceDetailModal } from '@/components/organisms/portal-v2/experiences/ExperienceDetailModal';
 import { UseExperienceModal } from '@/components/organisms/portal-v2/experiences/UseExperienceModal';
+import {
+  deleteExperiences,
+  duplicateExperience,
+} from '@/services/portal-v2/experienceActions';
 import { errorMessage } from '@/services/portal-v2/_error';
 import {
   forkExperience,
@@ -358,6 +362,86 @@ export const ExperiencesWorkspace = ({
     };
   }, [modalMode, active]);
 
+  /* ── Chọn nhiều · nhân bản · xoá ───────────────────────────────────────── */
+
+  const [selected, setSelected] = useState<string[]>([]);
+  /** `null` = không hỏi; `'bulk'` = xoá cả lô; id = xoá một món. */
+  const [deleteTarget, setDeleteTarget] = useState<string | 'bulk' | null>(
+    null
+  );
+  const [busy, setBusy] = useState(false);
+
+  const toggleSelect = useCallback((experience: ExperienceView) => {
+    setSelected(prev =>
+      prev.includes(experience.id)
+        ? prev.filter(x => x !== experience.id)
+        : [...prev, experience.id]
+    );
+  }, []);
+
+  const clearSelection = useCallback(() => setSelected([]), []);
+
+  const handleDuplicate = useCallback(
+    async (experience: ExperienceView) => {
+      setBusy(true);
+      const copy = await duplicateExperience(experience.id).catch(() => null);
+      setBusy(false);
+      if (!copy) {
+        toast.error(t('duplicateFailed'));
+        return;
+      }
+
+      /*
+        Nhân bản một COPY ra một TEMPLATE, không phải copy thứ hai — spec §4.11:
+        hai copy cùng `origin + campaign + item` sẽ đếm trùng dòng fact, và có
+        unique constraint chặn ở tầng cấu trúc. BE làm đúng luật đó.
+
+        Hệ quả cho màn này: thứ vừa tạo KHÔNG thuộc về đây. Màn Experiences chỉ
+        nạp copy của brand; template nằm ở thư viện dùng chung.
+
+        Nên không chèn nó vào lưới và không đụng vào bộ lọc. Chèn một món rồi
+        để bộ lọc giấu đi, hoặc đổi bộ lọc sang một tab không tồn tại, đều là
+        cách màn hình nói dối về việc vừa xảy ra. Nói thẳng nó đi đâu.
+      */
+      const landsHere = EXPERIENCE_STATES.some(x => x.id === copy.state);
+      if (!landsHere) {
+        toast.success(t('duplicatedToLibrary', { name: copy.name }));
+        return;
+      }
+
+      setItems(prev => {
+        const at = prev.findIndex(x => x.id === experience.id);
+        if (at < 0) return [copy, ...prev];
+        return [...prev.slice(0, at + 1), copy, ...prev.slice(at + 1)];
+      });
+      setFilters(prev => ({ ...prev, state: copy.state, q: '' }));
+      toast.success(t('duplicated', { name: copy.name }));
+    },
+    [t]
+  );
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deleteTarget) return;
+    const ids = deleteTarget === 'bulk' ? [...selected] : [deleteTarget];
+    setBusy(true);
+    const { deleted, failed } = await deleteExperiences(ids);
+    setBusy(false);
+    if (deleted.length) {
+      const gone = new Set(deleted);
+      setItems(prev => prev.filter(x => !gone.has(x.id)));
+      setSelected(prev => prev.filter(x => !gone.has(x)));
+      toast.success(
+        deleted.length === 1
+          ? t('deletedOne')
+          : t('deletedMany', { count: deleted.length })
+      );
+    }
+    // Hỏng một phần thì nói rõ hỏng mấy món — im lặng ở đây nghĩa là người
+    // dùng tưởng đã xoá hết trong khi vài món còn nguyên.
+    if (failed.length) toast.error(t('deleteFailed', { count: failed.length }));
+    setDeleteTarget(null);
+  }, [deleteTarget, selected, t]);
+
   const toPreviewItem = useCallback(
     (experience: ExperienceView): PreviewItem => ({
       id: experience.id,
@@ -658,6 +742,33 @@ export const ExperiencesWorkspace = ({
                 <p className='mb-3 text-[12px] text-[var(--pv2-faint)]'>
                   {t('resultsCount', { count: visible.length })}
                 </p>
+                {selected.length > 0 ? (
+                  <div
+                    role='toolbar'
+                    aria-label={t('bulkAria')}
+                    className='mb-3.5 flex flex-wrap items-center gap-2 rounded-[var(--pv2-r)] bg-[var(--pv2-ink)] px-3.5 py-2.5'
+                  >
+                    <span className='mr-1 text-[12.5px] font-semibold text-[var(--pv2-paper)]'>
+                      {t('bulkSelected', { count: selected.length })}
+                    </span>
+                    <button
+                      type='button'
+                      disabled={busy}
+                      onClick={() => setDeleteTarget('bulk')}
+                      className='cursor-pointer rounded-full bg-[var(--pv2-error)] px-3 py-1.5 text-[12px] font-semibold text-[var(--pv2-paper)] transition-colors hover:bg-[color-mix(in_srgb,var(--pv2-error)_80%,#000)] disabled:cursor-not-allowed disabled:opacity-60'
+                    >
+                      {t('bulkDelete')}
+                    </button>
+                    <span className='flex-1' />
+                    <button
+                      type='button'
+                      onClick={clearSelection}
+                      className='cursor-pointer rounded-full bg-white/[0.13] px-3 py-1.5 text-[12px] font-semibold text-[var(--pv2-paper)] transition-colors hover:bg-white/25'
+                    >
+                      {t('bulkClear')}
+                    </button>
+                  </div>
+                ) : null}
                 <div className='grid grid-cols-[repeat(auto-fill,minmax(244px,1fr))] gap-4'>
                   {visible.map(experience => (
                     <ExperienceCard
@@ -665,6 +776,10 @@ export const ExperiencesWorkspace = ({
                       experience={experience}
                       onOpen={handleOpen}
                       onPreview={handlePreview}
+                      selected={selected.includes(experience.id)}
+                      onToggleSelect={toggleSelect}
+                      onDuplicate={handleDuplicate}
+                      onDelete={e => setDeleteTarget(e.id)}
                     />
                   ))}
                 </div>
@@ -730,6 +845,50 @@ export const ExperiencesWorkspace = ({
           onClose={() => setUseTarget(null)}
           onConfirm={handleUseConfirm}
         />
+      ) : null}
+
+      {deleteTarget ? (
+        <div
+          role='dialog'
+          aria-modal='true'
+          aria-label={t('deleteTitle')}
+          className='fixed inset-0 z-[var(--pv2-z-modal)] grid place-items-center bg-black/40 px-4'
+          onClick={() => (busy ? undefined : setDeleteTarget(null))}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            className='w-full max-w-[420px] rounded-[var(--pv2-r)] bg-[var(--pv2-paper)] p-5 shadow-[var(--pv2-sh-lift)]'
+          >
+            <h2 className='text-[16px] font-semibold text-[var(--pv2-ink)]'>
+              {t('deleteTitle')}
+            </h2>
+            <p className='mt-1.5 text-[13px] leading-relaxed text-[var(--pv2-mut)]'>
+              {deleteTarget === 'bulk'
+                ? t('deleteBodyMany', { count: selected.length })
+                : t('deleteBodyOne', {
+                    name: findById(items, deleteTarget)?.name ?? '',
+                  })}
+            </p>
+            <div className='mt-4 flex justify-end gap-2'>
+              <button
+                type='button'
+                disabled={busy}
+                onClick={() => setDeleteTarget(null)}
+                className='cursor-pointer rounded-full border border-[var(--pv2-hair)] px-3.5 py-1.5 text-[12.5px] font-semibold text-[var(--pv2-ink)] disabled:opacity-60'
+              >
+                {t('cancel')}
+              </button>
+              <button
+                type='button'
+                disabled={busy}
+                onClick={handleConfirmDelete}
+                className='cursor-pointer rounded-full bg-[var(--pv2-error)] px-3.5 py-1.5 text-[12.5px] font-semibold text-[var(--pv2-paper)] disabled:opacity-60'
+              >
+                {t('deleteConfirm')}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       <ExchangePreviewShell

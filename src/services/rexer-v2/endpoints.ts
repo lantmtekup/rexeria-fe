@@ -484,6 +484,19 @@ export const rexerV2Api = {
     /** `GET /v1/experiences/{id}/coverage` — độ phủ phễu ĐO ĐƯỢC, không seed. */
     coverage: (experienceId: string) =>
       rxV2<RxExperienceCoverage>(`/experiences/${experienceId}/coverage`),
+
+    /**
+     * `POST /v1/experiences/{id}/duplicate` — bản sao thuộc cùng brand, cùng
+     * loại với bản gốc: nhân bản một template ra template, một copy ra copy.
+     */
+    duplicate: (experienceId: string) =>
+      rxV2<RxExperience>(`/experiences/${experienceId}/duplicate`, {
+        method: 'POST',
+      }),
+
+    /** `DELETE /v1/experiences/{id}` — 204, không có thân phản hồi. */
+    remove: (experienceId: string) =>
+      rxV2<void>(`/experiences/${experienceId}`, { method: 'DELETE' }),
   },
 
   // ── Exchange (spec §15) — v2-only, absent from the v1 deployment ────────

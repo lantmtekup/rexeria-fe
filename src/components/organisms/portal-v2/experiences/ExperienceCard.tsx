@@ -1,6 +1,6 @@
 'use client';
 
-import { Layers } from 'lucide-react';
+import { Copy, Layers, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { KeyboardEvent, MouseEvent } from 'react';
 
@@ -15,6 +15,10 @@ type ExperienceCardProps = {
   experience: ExperienceView;
   onOpen: (experience: ExperienceView) => void;
   onPreview: (experience: ExperienceView) => void;
+  selected: boolean;
+  onToggleSelect: (experience: ExperienceView) => void;
+  onDuplicate: (experience: ExperienceView) => void;
+  onDelete: (experience: ExperienceView) => void;
 };
 
 const cardShell = cn(
@@ -29,12 +33,17 @@ export const ExperienceCard = ({
   experience,
   onOpen,
   onPreview,
+  selected,
+  onToggleSelect,
+  onDuplicate,
+  onDelete,
 }: ExperienceCardProps) => {
   const t = useTranslations('portalV2.experiences');
 
   const handleClick = (e: MouseEvent<HTMLElement>) => {
-    /* The cover's Preview button lives inside the card's click target. */
+    /* Preview, ô chọn và menu hành động đều nằm TRONG vùng bấm của thẻ. */
     if ((e.target as HTMLElement).closest('[data-experience-preview]')) return;
+    if ((e.target as HTMLElement).closest('[data-card-action]')) return;
     onOpen(experience);
   };
 
@@ -52,8 +61,62 @@ export const ExperienceCard = ({
       aria-label={t('openExperience', { name: experience.name })}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      className={cardShell}
+      className={cn(
+        cardShell,
+        'relative',
+        selected &&
+          'border-[var(--pv2-electric)] ring-2 ring-[color-mix(in_srgb,var(--pv2-electric)_35%,transparent)]'
+      )}
     >
+      {/*
+        Ô chọn và hai nút hành động nổi trên ảnh bìa. `data-card-action` để
+        handleClick bỏ qua — bấm vào chúng là một việc khác, không phải mở thẻ.
+        Ô chọn LUÔN hiện khi đã chọn: một thẻ đang được chọn mà dấu tích chỉ
+        hiện lúc rê chuột thì danh sách nói dối về thứ sắp bị xoá.
+      */}
+      <label
+        data-card-action
+        className={cn(
+          'absolute top-2.5 left-2.5 z-10 grid size-6 cursor-pointer place-items-center rounded-md',
+          'border border-[var(--pv2-hair)] bg-[var(--pv2-paper)]/95 transition-opacity',
+          selected
+            ? 'opacity-100'
+            : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
+        )}
+      >
+        <input
+          type='checkbox'
+          checked={selected}
+          onChange={() => onToggleSelect(experience)}
+          aria-label={t('selectExperience', { name: experience.name })}
+          className='size-3.5 cursor-pointer accent-[var(--pv2-electric)]'
+        />
+      </label>
+
+      <div
+        data-card-action
+        className='absolute top-2.5 right-2.5 z-10 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100'
+      >
+        <button
+          type='button'
+          onClick={() => onDuplicate(experience)}
+          title={t('duplicate')}
+          aria-label={t('duplicateExperience', { name: experience.name })}
+          className='grid size-6 cursor-pointer place-items-center rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)]/95 text-[var(--pv2-mut)] hover:text-[var(--pv2-ink)]'
+        >
+          <Copy className='size-3.5' strokeWidth={2.2} aria-hidden />
+        </button>
+        <button
+          type='button'
+          onClick={() => onDelete(experience)}
+          title={t('delete')}
+          aria-label={t('deleteExperience', { name: experience.name })}
+          className='grid size-6 cursor-pointer place-items-center rounded-md border border-[var(--pv2-hair)] bg-[var(--pv2-paper)]/95 text-[var(--pv2-mut)] hover:border-[var(--pv2-error)] hover:text-[var(--pv2-error)]'
+        >
+          <Trash2 className='size-3.5' strokeWidth={2.2} aria-hidden />
+        </button>
+      </div>
+
       <ExperienceCover
         experience={experience}
         showPreview={canPreview(experience)}
