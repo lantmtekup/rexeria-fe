@@ -1,6 +1,8 @@
 'use client';
 
-import { Plus, Trash2 } from 'lucide-react';
+import { Loader2, Plus, Trash2, Upload } from 'lucide-react';
+import { toast } from 'sonner';
+import { useRef, useState } from 'react';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import {
@@ -17,6 +19,8 @@ import type {
   BrandData,
   BrandLogo,
 } from '@/lib/portal-v2/brand/types';
+import { errorMessage } from '@/services/portal-v2/_error';
+import { uploadMediaFile } from '@/services/portal-v2/mediaUpload';
 
 type VisualPanelProps = {
   data: BrandData;
@@ -26,6 +30,15 @@ type VisualPanelProps = {
 
 export const VisualPanel = ({ data, editing, onChange }: VisualPanelProps) => {
   const V = data.visual;
+  /** Logo id currently mid-upload — disables its picker, shows a spinner. */
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  /**
+   * Uploaded filename per logo id, THIS SESSION ONLY. `BrandLogo.asset` is
+   * just the media id (mapProfile ↔ BE `media_id`) — the profile round-trip
+   * carries no filename, so after a reload the badge falls back to "Attached".
+   */
+  const [names, setNames] = useState<Record<string, string>>({});
+  const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const patchVisual = (partial: Partial<typeof V>) => {
     onChange({ ...data, visual: { ...V, ...partial } });
@@ -39,6 +52,30 @@ export const VisualPanel = ({ data, editing, onChange }: VisualPanelProps) => {
       asset: null,
     };
     patchVisual({ logos: [...V.logos, logo] });
+  };
+
+  /**
+   * There used to be no picker here at all — just a read-only "no file
+   * attached" badge — so a logo's `asset` could never become non-null, and
+   * brandDataToPut() silently DROPS any logo without one (media_id is
+   * required BE-side; the alternative was a 400 for the whole profile).
+   * A user could type a name + "when it's used" and have it vanish on save
+   * with zero indication why.
+   */
+  const handleAttachLogoFile = async (logoId: string, file: File) => {
+    setUploadingId(logoId);
+    try {
+      const asset = await uploadMediaFile(file);
+      const logos = V.logos.map(x =>
+        x.id === logoId ? { ...x, asset: asset.id } : x
+      );
+      patchVisual({ logos });
+      setNames(prev => ({ ...prev, [logoId]: asset.name }));
+    } catch (err) {
+      toast.error(errorMessage(err, 'Upload failed'));
+    } finally {
+      setUploadingId(null);
+    }
   };
 
   const handleAddColor = () => {
@@ -69,8 +106,45 @@ export const VisualPanel = ({ data, editing, onChange }: VisualPanelProps) => {
               key={l.id}
               className='flex items-center gap-3 rounded-[12px] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-3.5 py-3'
             >
-              <span className='w-[140px] shrink-0 truncate rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 py-1.5 text-[11.5px] font-semibold text-[var(--pv2-faint)]'>
-                {l.asset ? `asset:${l.asset}` : 'no file attached'}
+              <span className='w-[140px] shrink-0'>
+                <input
+                  ref={el => {
+                    fileInputs.current[l.id] = el;
+                  }}
+                  type='file'
+                  accept='image/*'
+                  className='hidden'
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    e.target.value = '';
+                    if (file) void handleAttachLogoFile(l.id, file);
+                  }}
+                />
+                {editing ? (
+                  <button
+                    type='button'
+                    onClick={() => fileInputs.current[l.id]?.click()}
+                    disabled={uploadingId === l.id}
+                    className='flex w-full items-center justify-center gap-1.5 truncate rounded border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 py-1.5 text-[11.5px] font-semibold text-[var(--pv2-faint)] transition-colors hover:border-[var(--pv2-electric)] hover:text-[var(--pv2-electric)] disabled:opacity-60'
+                  >
+                    {uploadingId === l.id ? (
+                      <Loader2 className='size-3.5 animate-spin' aria-hidden />
+                    ) : (
+                      <>
+                        <Upload className='size-3 shrink-0' aria-hidden />
+                        <span className='truncate'>
+                          {l.asset
+                            ? (names[l.id] ?? 'Attached')
+                            : 'Attach image'}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <span className='block truncate rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 py-1.5 text-[11.5px] font-semibold text-[var(--pv2-faint)]'>
+                    {l.asset ? (names[l.id] ?? 'Attached') : 'no file attached'}
+                  </span>
+                )}
               </span>
               <span className='flex min-w-0 flex-1 flex-col gap-1'>
                 {editing ? (
@@ -97,6 +171,12 @@ export const VisualPanel = ({ data, editing, onChange }: VisualPanelProps) => {
                         patchVisual({ logos });
                       }}
                     />
+                    {!l.asset ? (
+                      <i className='text-[11px] text-[var(--pv2-warning)] not-italic'>
+                        Attach an image to keep this — unattached variations are
+                        not saved.
+                      </i>
+                    ) : null}
                   </>
                 ) : (
                   <>
