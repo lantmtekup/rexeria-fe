@@ -69,6 +69,7 @@ export const mapTemplateToListing = (t: Template): ExchangeListingView => {
   return {
     id: `tpl-${t.id}`,
     source: 'page',
+    templateId: t.id,
     templateVersionId: t.current_version_id,
     name: t.name || t.code || 'Untitled',
     author: authorOf(t),

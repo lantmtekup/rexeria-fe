@@ -39,6 +39,7 @@ import { cn } from '@/lib/cn';
 import { fetchExchangeCatalog } from '@/services/portal-v2/exchangeCatalog';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
+import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 
 type ModalMode = 'detail' | 'buy' | 'preview' | null;
 
@@ -326,13 +327,28 @@ export const ExchangeWorkspace = ({
             ...prev,
             added: { ...prev.added, [listing.id]: block.id },
           }));
+        } else if (listing.exchangeItemId) {
+          // Món trên CHỢ. Hợp đồng Exchange cố ý không trả source id (doc của
+          // RxExchangeItemDetail), nên không dựng được page từ nó — phải đi
+          // qua endpoint sinh ra đúng cho việc này, và nó tự fork sang brand
+          // của người gọi.
+          const exp = await rexerV2Api.exchange.add(listing.exchangeItemId);
+          setSession(prev => ({
+            ...prev,
+            added: { ...prev.added, [listing.id]: exp.id },
+          }));
         } else {
-          if (!listing.templateVersionId) {
-            throw new Error('Missing template version id');
+          // Template hệ thống. BE nhận `template_id`, KHÔNG nhận
+          // `template_version_id` (`models/page.go:118`) — bản trước gửi
+          // nhầm trường nên BE thấy cả template_id lẫn external_url đều rỗng
+          // và trả "exactly one of template_id or external_url is required".
+          // Nút Thêm cho experience vì thế chưa bao giờ chạy được.
+          if (!listing.templateId) {
+            throw new Error('Missing template id');
           }
           const page = await rexerApi.pages.create(workspaceId, {
             type: 'landing',
-            template_version_id: listing.templateVersionId,
+            template_id: listing.templateId,
             name: `${listing.name} (Exchange)`,
           });
           setSession(prev => ({

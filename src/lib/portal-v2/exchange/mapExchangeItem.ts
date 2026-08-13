@@ -82,6 +82,7 @@ export const mapExchangeItemToListing = (
   return {
     id: item.id,
     source: item.kind === 'block' ? 'block' : 'page',
+    exchangeItemId: item.id,
     name: item.title || 'Untitled',
     author: item.author || '',
     description: item.preview.tagline || item.preview.summary || '',

@@ -46,6 +46,19 @@ export type ExchangeListingView = {
   slug?: string;
   /** Seed version when installing a landing listing into a workspace. */
   templateVersionId?: string;
+  /**
+   * Id của TEMPLATE nguồn. `POST /workspaces/{ws}/pages` nhận `template_id`,
+   * KHÔNG nhận `template_version_id` (`models/page.go:118`) — gửi nhầm trường
+   * thì BE thấy cả template_id lẫn external_url đều rỗng và trả
+   * "exactly one of template_id or external_url is required".
+   */
+  templateId?: string;
+  /**
+   * Có giá trị ⇒ đây là món trên CHỢ, cài bằng `POST /exchange/items/{id}/add`
+   * chứ không phải `pages.create`. Hợp đồng Exchange cố ý không trả source id
+   * (doc của RxExchangeItemDetail), nên không có đường nào khác.
+   */
+  exchangeItemId?: string;
   blockId?: string;
   name: string;
   author: string;
