@@ -19,6 +19,8 @@ import {
 import { promoteToLibrary } from '@/services/portal-v2/experiencePromote';
 import { setExperienceProven } from '@/services/portal-v2/experienceProven';
 import { RxApiError } from '@/services/rexer/client';
+import { rexerApi } from '@/services/rexer/endpoints';
+import { ExchangeLiveCanvasPreview } from '@/components/organisms/portal-v2/exchange/ExchangeLiveCanvasPreview';
 import { ExchangePreviewShell } from '@/components/organisms/portal-v2/exchange/ExchangePreviewShell';
 import {
   EXPERIENCE_CATEGORIES,
@@ -35,6 +37,7 @@ import {
   countByState,
   filterExperiences,
   findById,
+  previewsFromBlueprint,
 } from '@/lib/portal-v2/experiences/helpers';
 import { writeExchangePreviewParam } from '@/lib/portal-v2/exchange/previewParam';
 import type {
@@ -314,11 +317,45 @@ export const ExperiencesWorkspace = ({
 
   const previewNeighbors = useMemo(() => visible.filter(canPreview), [visible]);
 
+  /**
+   * Blueprint của bản NHÁP đang xem trước.
+   *
+   * `ExchangeLiveCanvasPreview` đọc nó tại thời điểm bắt tay với iframe, nên
+   * giữ trong ref: đổi state ở đây sẽ vẽ lại cả lưới thẻ mà không thêm được gì.
+   * Rỗng thì stage hiện khung trống thay vì `/p/{slug}` trả 404.
+   */
+  const draftBlueprintRef = useRef<Record<string, unknown> | null>(null);
+
+  useEffect(() => {
+    const target = modalMode === 'preview' ? active : null;
+    if (!target || !previewsFromBlueprint(target)) {
+      draftBlueprintRef.current = null;
+      return;
+    }
+    let cancelled = false;
+    draftBlueprintRef.current = null;
+    // Revision MỚI NHẤT — đó là thứ người dùng vừa lấy về hoặc vừa sửa; bản
+    // publish (nếu có) là chuyện khác và đã có `/p/{slug}` lo.
+    rexerApi.pages
+      .revisions(target.id, { page: 1, limit: 1 })
+      .then(res => {
+        if (cancelled) return;
+        const bp = (res.items ?? [])[0]?.canvas_blueprint;
+        if (bp) draftBlueprintRef.current = bp as Record<string, unknown>;
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [modalMode, active]);
+
   const toPreviewItem = useCallback(
     (experience: ExperienceView): PreviewItem => ({
       id: experience.id,
       name: experience.name,
-      source: 'page',
+      // Nháp không có `/p/{slug}` để iframe — `source: 'live'` báo shell rằng
+      // host tự dựng stage, đúng cơ chế canvas editor đang dùng.
+      source: previewsFromBlueprint(experience) ? 'live' : 'page',
       slug: experience.slug ?? undefined,
       kindLabel: t('catCollection'),
       evidence: experience.stats
@@ -692,6 +729,14 @@ export const ExperiencesWorkspace = ({
         neighbors={previewNeighborItems}
         onClose={handleClosePreview}
         onNavigate={handlePreviewNavigate}
+        renderStage={device => (
+          <ExchangeLiveCanvasPreview
+            device={device}
+            lang='vi'
+            urlLabel={active?.slug ? `/${active.slug}` : '/preview'}
+            getBlueprint={() => draftBlueprintRef.current ?? {}}
+          />
+        )}
       />
     </div>
   );

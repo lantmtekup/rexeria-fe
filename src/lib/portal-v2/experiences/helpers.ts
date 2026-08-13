@@ -95,9 +95,25 @@ export const canvasEditorHref = (experience: ExperienceView): string =>
 export const canEditCanvas = (experience: ExperienceView): boolean =>
   !experience.externalUrl;
 
-/** `/p/{slug}` is the only preview surface, so no slug means no preview. */
-export const canPreview = (experience: ExperienceView): boolean =>
-  Boolean(experience.slug) && !experience.externalUrl;
+/**
+ * Xem trước được không.
+ *
+ * Trang ĐÃ PUBLISH thì xem qua `/p/{slug}`. Trang NHÁP không có đường công
+ * khai — `/p/{slug}` của một bản nháp trả 404, vì nó phục vụ từ Release chứ
+ * không phải từ bản ghi trang. Nhưng nháp vẫn xem được: dựng thẳng từ
+ * blueprint của revision mới nhất, đúng cách canvas editor vẫn làm.
+ *
+ * Trang ngoài (`externalUrl`) không có canvas nào để dựng.
+ */
+export const canPreview = (experience: ExperienceView): boolean => {
+  if (experience.externalUrl) return false;
+  if (experience.status === 'published') return Boolean(experience.slug);
+  return true;
+};
+
+/** Nháp ⇒ stage do host dựng từ blueprint, không iframe `/p/{slug}`. */
+export const previewsFromBlueprint = (experience: ExperienceView): boolean =>
+  !experience.externalUrl && experience.status !== 'published';
 
 /**
  * Chỉ TEMPLATE và BLOCK fork được.
