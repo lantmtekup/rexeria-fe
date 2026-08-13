@@ -13,6 +13,7 @@ import {
   Field,
   TextInput,
   TextSelect,
+  TextTextarea,
 } from '@/components/molecules/portal-v2/brand-form';
 import {
   JOURNEY_OBJECTIVES,
@@ -37,6 +38,8 @@ export const NewJourneyModal = ({
   const [name, setName] = useState('');
   const [obj, setObj] = useState<ExperienceObjective>('insight');
   const [personaId, setPersonaId] = useState('');
+  const [tagline, setTagline] = useState('');
+  const [summary, setSummary] = useState('');
 
   const outcome = OUTCOME_FOR_OBJECTIVE[obj];
 
@@ -55,7 +58,13 @@ export const NewJourneyModal = ({
           <Button
             size='sm'
             onClick={() =>
-              onCreate({ name, obj, personaId: personaId || null })
+              onCreate({
+                name,
+                obj,
+                personaId: personaId || null,
+                tagline,
+                summary,
+              })
             }
           >
             {t('create')}
@@ -107,6 +116,23 @@ export const NewJourneyModal = ({
             </option>
           ))}
         </TextSelect>
+      </Field>
+
+      <Field label={t('overDescription')}>
+        <TextInput
+          value={tagline}
+          onChange={e => setTagline(e.target.value)}
+          placeholder={t('metaTaglinePlaceholder')}
+        />
+      </Field>
+
+      <Field label={t('metaSummary')}>
+        <TextTextarea
+          rows={3}
+          value={summary}
+          onChange={e => setSummary(e.target.value)}
+          placeholder={t('metaSummaryPlaceholder')}
+        />
       </Field>
 
       <p className='rounded-[10px] bg-[var(--pv2-canvas)] px-4 py-3 text-[12.5px] leading-relaxed text-[var(--pv2-mut)]'>

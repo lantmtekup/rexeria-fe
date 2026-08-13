@@ -511,8 +511,9 @@ export const createJourney = (input: JourneyDraftInput): Journey => {
     obj: input.obj,
     personaId: input.personaId,
     updated: 'just now',
-    tagline: 'A route from a front door to a result.',
+    tagline: input.tagline?.trim() || 'A route from a front door to a result.',
     summary:
+      input.summary?.trim() ||
       'Drafted from the objective. Add the experiences the shopper moves through, then the decision that splits them.',
     nodes: [
       {
