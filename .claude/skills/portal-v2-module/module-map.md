@@ -1,145 +1,127 @@
-# Portal V2 — Module Map
+# Portal V2 — Module Map (demo v3)
 
-Bảng tra nhanh: plan → prototype → route code → trạng thái implementation.
+Bảng tra: prototype `DATA.nav` → `VIEWS` → route code → trạng thái.
 
-**Plan file:** [`plan-v2/index.html`](../../../plan-v2/index.html) (§4, anchors `#mod-*`)  
-**Prototype:** [`plan-v2/rexer-platform-v2.html`](../../../plan-v2/rexer-platform-v2.html) (`DATA` + `VIEWS`)
+**Prototype (canonical):** [`plan-v2/rexer-demo-v3_new.html`](../../../plan-v2/rexer-demo-v3_new.html) (`DATA.nav` ~L2798, `VIEWS`, `DATA` / `BRAND` / `MINING`)
+
+**Plan (phụ):** [`plan-v2/index.html`](../../../plan-v2/index.html) `#mod-*` — IA 12-mod cũ; chỉ dùng P0 khi không mâu thuẫn v3.
+
+**Pitch:** Mining finds it → Journey plans it → Studio builds/ships → Pulse measures.
+
+Số dòng dưới đây là neo; lệch vài trăm dòng thì grep lại (xem [reference.md](reference.md#prototype-grep)).
 
 ---
 
 ## Summary table
 
-| # | Plan `#mod-*` | Nav / slug | Route (code) | Prototype `VIEWS` | Mock / DATA key | Code status |
-|---|---------------|------------|--------------|-------------------|-----------------|-------------|
-| 1 | `mod-command` | command | `/portal-v2` | `command` → `commandView()` ~L18885 | `DATA` home metrics, campaigns snapshot | **Done** — `CommandWorkspace` |
-| 2 | `mod-brand` | brand | `/portal-v2/brand` | `brand` → `brandView()` ~L17783 | `const BRAND` ~L9048; `BFIELDS`, `BLINES` | **Done** — `BrandWorkspace` |
-| 3 | `mod-campaigns` | campaigns | `/portal-v2/campaigns` | `campaigns` → `campaignsView()` ~L17863 | `DATA.campaigns`, `CAMP_TYPES`, `CAMP_STATUS` | **Placeholder** |
-| 4 | `mod-journey` | journeys | `/portal-v2/journeys` | `journeys` ~L19577 | `DATA.journeys` | **Placeholder** |
-| 5 | `mod-experiences` | experiences | `/portal-v2/experiences` | `experiences()` in `VIEWS` ~L16048 | `DATA.experiences`, `expCategories`, facets | **Placeholder** |
-| 6 | `mod-automation` | automation | `/portal-v2/automation` | `automation` ~L26495 | automation / promote rules in DATA | **Placeholder** |
-| 7 | `mod-media` | media | `/portal-v2/media` | `media()` ~L16269 | `DATA.assets`, folders | **Placeholder** |
-| 8 | `mod-product` | products | `/portal-v2/products` | `product()` ~L16508 | `DATA.products`, readiness | **Placeholder** |
-| 9 | `mod-deploy` | deploy | `/portal-v2/deploy` | `deploy` → `deployView()` ~L18441 | deploy channels, live state | **Placeholder** |
-| 10 | `mod-intel` | ai | `/portal-v2/ai` | `intel` → `intelView()` ~L16724 | intelligence / funnel metrics | **Placeholder** |
-| 11 | `mod-exchange` | exchange | `/portal-v2/exchange` | `exchange` ~L26009 | exchange listings (later) | **Done** — `ExchangeWorkspace` |
-| 12 | `mod-settings` | settings | `/portal-v2/settings` | `settings` ~L26962 | `GOV_DEFAULTS`, `PRIVACY`, `ACCOUNT_TYPES`, `CAPS` | **Done** — `SettingsWorkspace` |
+| Group | Nav id | Label | `VIEWS` | Mock | Route (code) | Status |
+|-------|--------|-------|---------|------|--------------|--------|
+| — | `command` | Command Center | `commandView` ~11189 → `VIEWS.command` ~11446 | `DATA` home metrics | `/portal-v2` | **Done** — `CommandWorkspace` |
+| MINING | `mining` | Journey Audit | `VIEWS.mining` ~13287 | `const MINING` ~5109 (`stages`, `opps`, `sources`) | **gap** — chưa có route | **Not ported** |
+| MINING | `experiments` | Experiments | `VIEWS.experiments` ~13581 | `MINING.experiments` | **gap** | **Not ported** |
+| MINING | `sources` | Sources | `VIEWS.sources` ~13370 | `MINING.sources` | **gap** | **Not ported** |
+| JOURNEY | `brand` | Brand | `brandView` ~12561 → `VIEWS.brand` ~12583 | `const BRAND` ~4433; `BFIELDS`, `BLINES` | `/portal-v2/brand` | **Done** — `BrandWorkspace` |
+| JOURNEY | `journeys` | Journey Builder | `VIEWS.journeys` ~14029 | `DATA.journeys`, `ROLES` / `JKIND` | `/portal-v2/journeys` | **Done** — `JourneysWorkspace` |
+| JOURNEY | `campaigns` | Campaigns | `campaignsView` ~12621 → `VIEWS.campaigns` ~13081 | `DATA.campaigns` | `/portal-v2/campaigns` | **Done** — `CampaignsWorkspace` |
+| STUDIO | `experiences` | Experiences | `VIEWS.experiences()` ~10401 | `DATA.experiences`, `expCategories`, `expObjs` | `/portal-v2/experiences` | **Done** — `ExperiencesWorkspace` |
+| STUDIO | `media` | Media | `VIEWS.media()` ~10543 | `DATA.assets`, `mediaUses`, `mediaKinds` | `/portal-v2/media` | **Done** — `MediaWorkspace` |
+| STUDIO | `product` | Product | `VIEWS.product()` ~10711 | `DATA.products`, `prodStatus` | `/portal-v2/products` (nav id `products`) | **Done** — `ProductWorkspace` |
+| STUDIO | `automation` | Automation | `VIEWS.automation` ~20873 | proven `DATA.experiences` | `/portal-v2/automation` | **Done** — `AutomationWorkspace` |
+| STUDIO | `deploy` | Deploy | `deployView` ~10841 → `VIEWS.deploy` ~11056 | deploy channels / live state | `/portal-v2/deploy` | **Done** — `DeployWorkspace` |
+| PULSE | `analytics` | Analytics | `pulseView` ~11482; lenses `overview` / `analytics` / `insights` | grain / funnel derived in prototype | **gap** — chưa có `/analytics` | **Not ported** |
+| PULSE | `intelligence` | Intelligence | `pulseIntel` ~11922 via `VIEWS.intelligence` ~12190 | Pulse findings (threshold-crossers) | `/portal-v2/ai` (placeholder) | **Placeholder** |
+| — | `exchange` | Exchange | `VIEWS.exchange` ~20505 | `MARKET_ITEMS` | `/portal-v2/exchange` | **Done** — `ExchangeWorkspace` |
+| bottom | `settings` | Settings | `VIEWS.settings` ~21290 | `GOV_DEFAULTS`, `PRIVACY`, `CAPS` | `/portal-v2/settings` | **Done** — `SettingsWorkspace` |
 
-**Lưu ý slug:** Plan dùng `mod-journey` / `mod-product` / `mod-intel`; code nav dùng `journeys`, `products`, `ai`. Luôn follow [`src/lib/portal-v2/nav.ts`](../../../src/lib/portal-v2/nav.ts) cho href.
+`VIEWS.overview` / `VIEWS.insights` (~12187–12189) tồn tại nhưng **không** là item rail — chúng set `S.pulse.lens` rồi gọi `pulseView()`.
+
+**Slug:** prototype `product` → href `products`; prototype `intelligence` → code `ai`. Luôn follow [`nav.ts`](../../../src/lib/portal-v2/nav.ts) cho href hiện có; **không** tự thêm href gap.
 
 ---
 
 ## Per-module notes
 
-### 1. Command Center (`mod-command`)
+### Command Center
 
-- **Plan ~L2113:** Tổng quan vận hành; partial.
-- **Prototype:** `commandView` — dashboard cards, next actions.
-- **CSS hints:** `.band`, insight cards, metric tiles.
-- **P0:** Summary cards + mock alerts; không cần full analytics.
+Dashboard + next actions. Prototype `commandView`. P0: summary cards + mock alerts.
 
-### 2. Brand (`mod-brand`) — REFERENCE
+### MINING — Journey Audit (`mining`)
 
-- **Plan ~L2149:** Brand kit 4 tabs; was missing → **implemented**.
-- **Prototype:** `BTABS`, `bIdentity`, `bEssence`, `bAudience`, `bVisual`; `BRAND` mock Ilia Beauty.
-- **Code:**
-  - [`BrandWorkspace.tsx`](../../../src/components/organisms/portal-v2/brand/BrandWorkspace.tsx)
-  - [`lib/portal-v2/brand/`](../../../src/lib/portal-v2/brand/)
-  - [`brand-form.tsx`](../../../src/components/molecules/portal-v2/brand-form.tsx)
+Audit-first front door: storefront journey **before** ReXeR. Leak map (cùng grammar `chartFunnel` / Pulse), ranked `MINING.opps`, evidence, playbook, Studio hand-off. Confidence derives from source health. **Gap route** — spec rồi hỏi user.
 
-### 3. Campaigns (`mod-campaigns`)
+### MINING — Experiments
 
-- **Plan ~L2184:** Brief, items, status Planning→Live; partial in old marketing.
-- **Prototype:** `campaignsView` — `.cgrid`, `.ccard`, progress bar, item chips.
-- **DATA:** `DATA.campaigns`, `CAMP_TYPES`, `CAMP_STATUS`, `campExpCount`.
-- **P0:** Card grid + detail drawer/modal optional; mock CRUD via edit mode.
+Every test traces to a mined leak; ships past `SHIP_GATE`. List + detail (`xDetail`). **Gap route**.
 
-### 4. Journeys (`mod-journey`)
+### MINING — Sources
 
-- **Plan ~L2229:** Multi-page patterns; missing.
-- **Prototype:** `VIEWS.journeys` — journey builder, roles ATT/EDU/EXP/TRU/CON.
-- **DATA:** `DATA.journeys`, `ROLES`.
-- **P0:** List journeys + readonly flow preview; builder phase 2.
+Integrations hub: connected / needs attention / available. Journey coverage meter. Connect flows client-simulated. **Gap route**.
 
-### 5. Experiences (`mod-experiences`)
+### JOURNEY — Brand (REFERENCE)
 
-- **Plan ~L2273:** Rebuild; template vs copy, editor integration.
-- **Prototype:** `VIEWS.experiences()` — tab rail (all/templates/copies), facet chips, card library.
-- **DATA:** `DATA.experiences`, `expCategories`, `XSTATES`.
-- **CSS:** `.chipbar`, experience cards, ownership tabs.
-- **P0:** Library list + filters; no full block editor.
+4 tabs identity/essence/audience/visual. Code: `BrandWorkspace` + `lib/portal-v2/brand/` + `brand-form.tsx`.
 
-### 6. Automation (`mod-automation`)
+### JOURNEY — Journey Builder
 
-- **Plan ~L2319:** Promote proven experiences; partial.
-- **Prototype:** `VIEWS.automation` — rules / promote queue.
-- **P0:** Read-only list + stub actions.
+Blueprints vs campaign copies; graph stored, scores derived. Code: `JourneysWorkspace`.
 
-### 7. Media (`mod-media`)
+### JOURNEY — Campaigns
 
-- **Plan ~L2359:** Asset library, folders, brand kit scope.
-- **Prototype:** `VIEWS.media()` — asset grid, folders, picker pattern (`pickasset` modals in Brand).
-- **DATA:** `DATA.assets`, folder scopes.
-- **P0:** Grid + folder filter; mock assets from prototype.
+Card grid / detail. Code: `CampaignsWorkspace` + `/campaigns/[id]`.
 
-### 8. Products (`mod-product`)
+### STUDIO — Experiences
 
-- **Plan ~L2395:** Catalogue, readiness 5 cells.
-- **Prototype:** `VIEWS.product()` — product rows, readiness grid.
-- **Route:** `/portal-v2/products` (nav id `products`).
-- **P0:** Product list + readiness badges mock.
+Ownership tabs (all / templates / product copies / topic copies); Refine facets; grid/table. Folder tree **đã bỏ** trong v3.
 
-### 9. Deploy (`mod-deploy`)
+### STUDIO — Media
 
-- **Plan ~L2436:** Publish hub; missing.
-- **Prototype:** `deployView` — channels, live URLs, checks.
-- **P0:** Status list + channel cards mock.
+DAM: Used-for tab rail; kind/status refine; folders = toolbar dropdown.
 
-### 10. AI / Intelligence (`mod-intel`)
+### STUDIO — Product
 
-- **Plan ~L2479:** Funnel intel, Ask; partial.
-- **Prototype:** `intelView` — tables, AI insights, profiles.
-- **Route:** `/portal-v2/ai` (nav label `ai`, plan says Intelligence).
-- **P0:** Placeholder dashboard or 1–2 insight cards mock.
+Shopify-shaped catalogue; **readiness** is the ReXeR column.
 
-### 11. Exchange (`mod-exchange`)
+### STUDIO — Automation / Deploy
 
-- **Plan ~L2520:** Later / marketplace.
-- **Prototype:** `VIEWS.exchange` — hidden nav, header link in shell.
-- **Code:** `ExchangeWorkspace` — catalog from `GET /v1/templates` + mock overlay; install via `pages.create`.
-- **P0:** Featured strip, kind/obj/price filters, detail + buy modals; buy → alert(JSON).
+Proven-experience hub; publish channels + live checks.
 
-### 12. Settings (`mod-settings`)
+### PULSE — Analytics vs Intelligence
 
-- **Plan ~L2544:** Workspace gov, users; partial.
-- **Prototype:** `VIEWS.settings` — governance boxes (`gvNum`, `setGov`, `govReset`, `govExportRows`).
-- **Code:**
-  - [`SettingsWorkspace.tsx`](../../../src/components/organisms/portal-v2/settings/SettingsWorkspace.tsx) + `{General,Measurement,Privacy,Team,Data}Panel`
-  - [`lib/portal-v2/settings/`](../../../src/lib/portal-v2/settings/) — `SETTINGS_DEFAULTS` = prototype `GOV_DEFAULTS`, `validateSettings` = `setGov`
-  - [`settings-form.tsx`](../../../src/components/molecules/portal-v2/settings-form.tsx) — `GovBox`, `Dial`, `ChoiceField`, `RefusalText`
-- **P0:** 5 tabs, edit/save mock, refusals inline + toast, restore defaults, ground-truth JSON export.
+- **Analytics** (rail): measurement only — no advice. Workspace identity band + 3 tabs: Overview, Analytics, Rankings (`insights` id). **Gap route**.
+- **Intelligence** (rail): what to do — threshold-crossers only, **no lens tabs**. Closest code: `/portal-v2/ai` Placeholder. Không còn `intelView`.
+
+### Exchange / Settings
+
+Exchange: header link, `hidden:true` trên rail prototype; code vẫn list exchange ở group đầu. Settings: 5 tabs, `GOV_DEFAULTS`.
 
 ---
 
-## Prototype navigation ↔ VIEWS keys
+## Prototype navigation
 
-From `DATA.nav` (~L5427):
+From `DATA.nav` (~L2798):
 
 ```
-command | brand | campaigns | journeys | experiences | automation | media | product
-deploy | intel (→ ai route) | exchange (hidden rail) | settings
+command
+MINING:  mining | experiments | sources
+JOURNEY: brand | journeys | campaigns
+STUDIO:  experiences | media | product | automation | deploy
+PULSE:   analytics | intelligence
+exchange (hidden) | settings (bottom)
 ```
 
-Adding a module in prototype = `DATA.nav` entry + `VIEWS.{id}` function.  
-In Next.js = route page + optional nav entry (already wired in [`nav.ts`](../../../src/lib/portal-v2/nav.ts)).
+Adding a module in prototype = `DATA.nav` entry + `VIEWS.{id}`.  
+In Next.js: **không** thêm nav/route trừ khi user confirm (xem SKILL gap rules).
+
+Code nav hiện tại (`plan` / `create` / `publish` / `learn`) **lệch** IA này — document only.
 
 ---
 
-## Implementation status legend
+## Status legend
 
 | Status | Meaning |
 |--------|---------|
-| **Done** | Workspace + mock + i18n module namespace |
+| **Done** | Workspace + mock/API wiring đã có trong repo |
 | **Placeholder** | [`Placeholder`](../../../src/components/molecules/portal-v2/Placeholder.tsx) only |
-| **Partial** | Some UI without full prototype parity |
+| **Not ported** | Có trên prototype v3, chưa có route/workspace |
 
-Update this table when a module ships.
+Update bảng này khi module ship hoặc khi `nav.ts` bắt kịp v3.
