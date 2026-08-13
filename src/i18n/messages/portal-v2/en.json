@@ -677,7 +677,7 @@
       "promoteHint": "Create a template from this page and mark it Proven so Automation can use it.",
       "promoteLabel": "Add to library",
       "provenFailed": "Could not save the Proven mark.",
-      "provenForbidden": "A brand account cannot mark Proven — the server refuses it at the permission layer (403). A system template is platform-admin only. Sign in as an admin, or use \"Send to library\" to make a brand-owned template and mark that one.",
+      "provenForbidden": "This is a system template — only a platform admin can mark it Proven. Use \"Add to library\" on a copy to make a brand-owned template instead, then mark that one.",
       "provenHint": "A curation mark you set by hand — it never touches the numbers. Proven designs collect in Automation, ready to roll across a product class.",
       "provenOff": "Mark Proven",
       "provenOn": "Proven",
