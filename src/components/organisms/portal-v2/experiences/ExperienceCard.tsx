@@ -190,16 +190,9 @@ export const ExperienceCard = ({
             `coveragePct` null = BE nói loại này KHÔNG đo được. Bản cũ luôn có
             số vì nó bốc từ hàm băm id; giờ thiếu thì nói thiếu.
 
-            Đếm VAI PHỄU, không đếm block: danh sách không trả số block, và
-            `funnel_coverage` là tối đa 5 chữ vai. Ghi "5 layer" ở đây rồi mở
-            ra thấy 7 block là đúng kiểu vênh thẻ-với-chi-tiết mà journey đang
-            mắc (62% ngoài thẻ / 33% khi mở).
           */}
           {experience.coveragePct !== null
-            ? t('cardFooterMeta', {
-                roles: experience.funnelRoles.length,
-                pct: experience.coveragePct,
-              })
+            ? t('cardFooterMeta', { pct: experience.coveragePct })
             : t('cardFooterUnmeasured')}
         </span>
         <span className='flex-1' />

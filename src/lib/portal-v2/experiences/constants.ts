@@ -7,26 +7,7 @@ import type {
   ExperienceObjective,
   ExperienceState,
   ExperienceVehicle,
-  FunnelRole,
 } from '@/lib/portal-v2/experiences/types';
-
-/**
- * THE SPINE — prototype `DATA.expObjs` (~L5511).
- *
- * Every objective maps to exactly one funnel role, and between them the four
- * objectives cover the funnel. TRUST has no objective and never had one: it is
- * a property of the blocks inside a page, not of the page's purpose.
- *
- * Do NOT reach for `@/lib/portal-v2/exchange/objectiveStyles` instead — that
- * table maps the same four ids to unrelated colours (`lead` → amber there,
- * `lead` → EXP → blue here) and the mismatch produces no type error.
- */
-export const OBJECTIVE_ROLE: Record<ExperienceObjective, FunnelRole> = {
-  insight: 'ATT',
-  lead: 'EXP',
-  cta: 'EDU',
-  convert: 'CON',
-};
 
 /**
  * Prototype `XSTATES` + All (~L16071) — the page's primary navigation.
@@ -196,9 +177,6 @@ export const COMPONENT_EVENT_LABEL_KEY: Record<string, string> = {
 
 /** Prototype `xCoverCell` (~L15726) — mint ≥80, amber ≥50, else rose. */
 export const COVERAGE_THRESHOLDS = { ok: 80, warn: 50 } as const;
-
-/** The funnel stages, in the order the shopper moves through them. */
-export const FUNNEL_ORDER: FunnelRole[] = ['ATT', 'EDU', 'EXP', 'TRU', 'CON'];
 
 export const EXPERIENCE_DEFAULT_FILTERS: ExperienceFilters = {
   q: '',

@@ -1,8 +1,5 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
-
-import { ROLE_STYLE } from '@/lib/portal-v2/experiences/roleStyles';
 import type { ExperienceLayer } from '@/lib/portal-v2/experiences/types';
 import { cn } from '@/lib/cn';
 
@@ -18,14 +15,8 @@ type LayerStackProps = {
  * (khi có) và TÊN block. Bản trước là 5 thanh bo tròn `aria-hidden` không chữ:
  * đúng cho ảnh bìa thẻ, nhưng ở màn chi tiết nó chiếm một phần ba khung mà
  * không nói gì.
- *
- * `role` null là chuyện thường — canvas soạn ở trình dựng trang không gán vai
- * phễu, và 99/100 bản ghi rơi vào diện đó. Khi ấy thẻ vẫn vẽ, chỉ không có
- * dòng vai; đừng gán bừa một vai để lấp chỗ trống.
  */
 export const LayerStack = ({ layers, className }: LayerStackProps) => {
-  const t = useTranslations('portalV2.experiences');
-
   return (
     <div
       className={cn(
@@ -36,7 +27,6 @@ export const LayerStack = ({ layers, className }: LayerStackProps) => {
       )}
     >
       {layers.map((layer, i) => {
-        const role = layer.role ? ROLE_STYLE[layer.role] : null;
         return (
           <div
             key={`${layer.blockType ?? layer.name}-${i}`}
@@ -50,14 +40,6 @@ export const LayerStack = ({ layers, className }: LayerStackProps) => {
               !layer.visible && 'opacity-55'
             )}
           >
-            {role ? (
-              <p
-                className='text-[8.5px] font-bold tracking-[0.07em] uppercase'
-                style={{ color: role.fg }}
-              >
-                {t(role.labelKey)}
-              </p>
-            ) : null}
             <p className='truncate font-[family-name:var(--pv2-disp)] text-[13px] font-bold text-[var(--pv2-ink)]'>
               {layer.name}
             </p>

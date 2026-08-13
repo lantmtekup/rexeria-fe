@@ -23,9 +23,6 @@ export type ExperienceVehicle = 'curated' | 'ads' | 'showcase' | 'microsite';
 /** `DATA.expObjs` (~L5511) → `RxExperience.objective`. */
 export type ExperienceObjective = 'insight' | 'lead' | 'cta' | 'convert';
 
-/** `ROLES` (~L5382) → `RxExperience.role`, and every layer's `r`. */
-export type FunnelRole = 'ATT' | 'EDU' | 'EXP' | 'TRU' | 'CON';
-
 /** `DATA.expInteractions` (~L5521) → `RxExperience.interactions[]`. */
 export type ExperienceInteraction = 'hotspot' | 'swipe' | 'pan' | '360' | 'vr';
 
@@ -66,15 +63,9 @@ export type LayerComponent = {
 /**
  * Một block trong canvas.
  *
- * Nạp từ `GET /v1/experiences/{id}`, KHÔNG suy từ `funnel_coverage` của danh
- * sách: bản cũ làm thế nên mỗi "layer" chỉ là một chữ vai (`ATT`), và vì
- * 99/100 bản ghi trả `funnel_coverage: null` nên màn Chi tiết vẽ ra **rỗng**.
- *
- * `role` null là chuyện thường, không phải lỗi: canvas soạn ở trình dựng trang
- * không gán vai phễu. Đừng lấp bằng một vai đoán được.
+ * Nạp từ `GET /v1/experiences/{id}` — chính các block của canvas.
  */
 export type ExperienceLayer = {
-  role: FunnelRole | null;
   name: string;
   /** `framer_realestate02_menu` — mã block, hiện dạng mono. */
   blockType: string | null;
@@ -163,19 +154,9 @@ export type ExperienceView = {
   category: ExperienceCategory;
   vehicle: ExperienceVehicle;
   objective: ExperienceObjective;
-  /** The one funnel role the objective serves — `OBJECTIVE_ROLE`. */
-  role: FunnelRole;
   interactions: ExperienceInteraction[];
   proven: boolean;
   tagline: string;
-  /**
-   * Các vai phễu mà bản ghi này phủ — `funnel_coverage` của danh sách.
-   *
-   * TÁCH khỏi `layers` vì hai thứ khác hẳn nhau: đây là tối đa 5 chữ suy từ
-   * block, còn `layers` là chính các block. Gộp chúng làm một là lý do thẻ ghi
-   * "5 layer" cho một trang 7 block.
-   */
-  funnelRoles: FunnelRole[];
   /**
    * RỖNG ở danh sách — chỉ `GET /v1/experiences/{id}` mới có block thật, và
    * modal nạp nó khi mở.

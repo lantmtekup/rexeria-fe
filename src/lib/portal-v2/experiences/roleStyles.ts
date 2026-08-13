@@ -1,66 +1,45 @@
-import {
-  COVERAGE_THRESHOLDS,
-  OBJECTIVE_ROLE,
-} from '@/lib/portal-v2/experiences/constants';
+import { COVERAGE_THRESHOLDS } from '@/lib/portal-v2/experiences/constants';
 import type {
   EvidenceTier,
   ExperienceObjective,
-  FunnelRole,
 } from '@/lib/portal-v2/experiences/types';
 
 export type PillStyle = { bg: string; fg: string };
 
 /**
- * The five funnel roles — prototype `ROLES` (~L5382), remapped onto the Studio
- * palette. `bar` is the solid fill used by the funnel stack and the cover.
+ * Objective pill colours.
  *
- * The `fg` hexes are the accessible text variants of the semantic tokens; the
- * repo already uses these exact values (see
- * `@/lib/portal-v2/exchange/objectiveStyles`) because there is no
- * `--pv2-success-fg` family in `tokens.css`.
+ * These used to be derived — `ROLE_STYLE[OBJECTIVE_ROLE[objective]]` — so an
+ * objective was painted in the colour of the funnel role it served. The funnel
+ * role is gone, so the table is direct now. The hexes are unchanged from what
+ * each objective resolved to before, on purpose: dropping the indirection is
+ * not meant to repaint the UI.
+ *
+ * Do NOT reach for `@/lib/portal-v2/exchange/objectiveStyles` instead — that
+ * table maps the same four ids to unrelated colours and the mismatch produces
+ * no type error.
  */
-export const ROLE_STYLE: Record<
-  FunnelRole,
-  PillStyle & { labelKey: string; bar: string }
-> = {
-  ATT: {
-    labelKey: 'roleAtt',
+const OBJECTIVE_STYLE: Record<ExperienceObjective, PillStyle> = {
+  insight: {
     bg: 'color-mix(in srgb, var(--pv2-warning) 18%, transparent)',
     fg: '#b45309',
-    bar: 'var(--pv2-warning)',
   },
-  EDU: {
-    labelKey: 'roleEdu',
-    bg: 'color-mix(in srgb, var(--pv2-violet) 12%, transparent)',
-    fg: 'var(--pv2-violet)',
-    bar: 'var(--pv2-violet)',
-  },
-  EXP: {
-    labelKey: 'roleExp',
+  lead: {
     bg: 'color-mix(in srgb, var(--pv2-electric) 12%, transparent)',
     fg: 'var(--pv2-blue-500)',
-    bar: 'var(--pv2-electric)',
   },
-  TRU: {
-    labelKey: 'roleTru',
-    bg: 'color-mix(in srgb, var(--pv2-error) 12%, transparent)',
-    fg: '#9a2436',
-    bar: 'var(--pv2-error)',
+  cta: {
+    bg: 'color-mix(in srgb, var(--pv2-violet) 12%, transparent)',
+    fg: 'var(--pv2-violet)',
   },
-  CON: {
-    labelKey: 'roleCon',
+  convert: {
     bg: 'color-mix(in srgb, var(--pv2-success) 14%, transparent)',
     fg: '#0e9d6e',
-    bar: 'var(--pv2-success)',
   },
 };
 
-/**
- * Derived from `ROLE_STYLE`, never a second table — prototype `objPill`
- * (~L15522) colours an objective by the funnel role it serves.
- */
 export const objectivePillStyle = (objective: ExperienceObjective): PillStyle =>
-  ROLE_STYLE[OBJECTIVE_ROLE[objective]];
+  OBJECTIVE_STYLE[objective];
 
 /**
  * Typed on `EvidenceTier` rather than substring-matching a label, which is what

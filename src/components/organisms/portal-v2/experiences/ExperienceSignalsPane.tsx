@@ -8,7 +8,6 @@ import {
 } from '@/lib/portal-v2/experiences/constants';
 import {
   COVERAGE_TONE_STYLE,
-  ROLE_STYLE,
   coverageTone,
 } from '@/lib/portal-v2/experiences/roleStyles';
 import type {
@@ -99,7 +98,6 @@ export const ExperienceSignalsPane = ({
         ) : tracked.length ? (
           <ul className='mt-3 flex flex-col gap-1.5'>
             {tracked.map(({ layer, i, component }) => {
-              const role = layer.role ? ROLE_STYLE[layer.role] : null;
               return (
                 <li
                   key={`${i}-${component.key}`}
@@ -111,14 +109,6 @@ export const ExperienceSignalsPane = ({
                   <span className='text-[12.5px] font-semibold text-[var(--pv2-ink)]'>
                     {layer.name}
                   </span>
-                  {role ? (
-                    <span
-                      className='inline-flex rounded-full px-1.5 py-px text-[9px] font-bold tracking-[0.05em] uppercase'
-                      style={{ background: role.bg, color: role.fg }}
-                    >
-                      {t(role.labelKey)}
-                    </span>
-                  ) : null}
                   <code className='font-mono text-[11px] text-[var(--pv2-faint)]'>
                     {component.key}
                   </code>

@@ -8,11 +8,9 @@ import {
   formatMoney,
   formatPct01,
 } from '@/lib/portal-v2/experiences/helpers';
-import { ROLE_STYLE } from '@/lib/portal-v2/experiences/roleStyles';
 import type {
   ExperienceStats,
   ExperienceView,
-  FunnelRole,
 } from '@/lib/portal-v2/experiences/types';
 import { cn } from '@/lib/cn';
 
@@ -47,17 +45,44 @@ const Kpi = ({
   </div>
 );
 
-/** The stages, in order, each a subset of the one above it. */
+/**
+ * The stages, in order, each a subset of the one above it.
+ *
+ * `bar` used to be the funnel ROLE's colour (ATT amber … CON mint). The role is
+ * gone; the measured funnel is not, so the stages keep their own ramp — one
+ * hue darkening as the shopper goes deeper, which reads as progress rather
+ * than as five unrelated categories.
+ */
 const FUNNEL_STAGES: {
-  role: FunnelRole;
   labelKey: string;
+  bar: string;
   pick: (s: ExperienceStats) => number;
 }[] = [
-  { role: 'ATT', labelKey: 'funnelSessions', pick: s => s.sessions },
-  { role: 'EDU', labelKey: 'funnelEngaged', pick: s => s.engaged },
-  { role: 'EXP', labelKey: 'funnelExplored', pick: s => s.explored },
-  { role: 'TRU', labelKey: 'funnelConvinced', pick: s => s.convinced },
-  { role: 'CON', labelKey: 'funnelConverted', pick: s => s.converted },
+  {
+    labelKey: 'funnelSessions',
+    bar: 'color-mix(in srgb, var(--pv2-electric) 35%, transparent)',
+    pick: s => s.sessions,
+  },
+  {
+    labelKey: 'funnelEngaged',
+    bar: 'color-mix(in srgb, var(--pv2-electric) 55%, transparent)',
+    pick: s => s.engaged,
+  },
+  {
+    labelKey: 'funnelExplored',
+    bar: 'color-mix(in srgb, var(--pv2-electric) 75%, transparent)',
+    pick: s => s.explored,
+  },
+  {
+    labelKey: 'funnelConvinced',
+    bar: 'var(--pv2-electric)',
+    pick: s => s.convinced,
+  },
+  {
+    labelKey: 'funnelConverted',
+    bar: 'var(--pv2-success)',
+    pick: s => s.converted,
+  },
 ];
 
 export const ExperiencePerfPane = ({
@@ -117,9 +142,8 @@ export const ExperiencePerfPane = ({
             {FUNNEL_STAGES.map(stage => {
               const value = stage.pick(stats);
               const pct = stats.sessions ? (value / stats.sessions) * 100 : 0;
-              const role = ROLE_STYLE[stage.role];
               return (
-                <li key={stage.role}>
+                <li key={stage.labelKey}>
                   <div className='flex items-baseline justify-between gap-3'>
                     <span className='text-[12px] font-semibold text-[var(--pv2-ink)]'>
                       {t(stage.labelKey)}
@@ -134,7 +158,7 @@ export const ExperiencePerfPane = ({
                   <div className='mt-1 h-2 w-full overflow-hidden rounded-full bg-[var(--pv2-canvas)]'>
                     <span
                       className='block h-full rounded-full'
-                      style={{ width: `${pct}%`, background: role.bar }}
+                      style={{ width: `${pct}%`, background: stage.bar }}
                     />
                   </div>
                 </li>

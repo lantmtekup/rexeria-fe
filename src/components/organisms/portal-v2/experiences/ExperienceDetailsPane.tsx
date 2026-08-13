@@ -9,7 +9,6 @@ import {
 } from '@/lib/portal-v2/experiences/constants';
 import {
   COVERAGE_TONE_STYLE,
-  ROLE_STYLE,
   coverageTone,
   objectivePillStyle,
 } from '@/lib/portal-v2/experiences/roleStyles';
@@ -178,7 +177,6 @@ export const ExperienceDetailsPane = ({
           ) : layers.length ? (
             <ol className='flex flex-col gap-2'>
               {layers.map((layer, i) => {
-                const role = layer.role ? ROLE_STYLE[layer.role] : null;
                 const tracked = layer.components.filter(c => c.tracked).length;
                 return (
                   <li
@@ -193,14 +191,6 @@ export const ExperienceDetailsPane = ({
                         <span className='text-[13px] font-semibold text-[var(--pv2-ink)]'>
                           {layer.name}
                         </span>
-                        {role ? (
-                          <span
-                            className='inline-flex rounded-full px-1.5 py-px text-[9px] font-bold tracking-[0.05em] uppercase'
-                            style={{ background: role.bg, color: role.fg }}
-                          >
-                            {t(role.labelKey)}
-                          </span>
-                        ) : null}
                         {!layer.visible ? (
                           <span className='inline-flex rounded-full border border-dashed border-[var(--pv2-hair)] px-1.5 py-px text-[9px] font-bold tracking-[0.05em] text-[var(--pv2-faint)] uppercase'>
                             {t('layerHidden')}

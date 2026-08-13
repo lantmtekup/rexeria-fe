@@ -921,7 +921,7 @@
       "bulkSelected": "{count} selected",
       "campaignLabel": "Campaign",
       "cancel": "Cancel",
-      "cardFooterMeta": "{roles} funnel roles · {pct}% instrumented",
+      "cardFooterMeta": "{pct}% instrumented",
       "cardFooterUnmeasured": "instrumentation not measured",
       "catAny": "Any category",
       "catBlocks": "Blocks",
