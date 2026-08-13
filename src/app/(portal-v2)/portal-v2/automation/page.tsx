@@ -38,6 +38,7 @@ export default async function PortalV2AutomationPage({ searchParams }: Props) {
       <AutomationWorkspace
         key={scope.brandId ?? 'none'}
         initialExperiences={hub.data?.proven_templates ?? []}
+        initialAutomations={hub.data?.automations ?? []}
         initialProducts={catalog.products}
         initialAssets={catalog.assets}
         initialCampaigns={campaigns.items}
