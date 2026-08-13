@@ -517,14 +517,17 @@
       },
       "campaigns": {
         "eyebrow": "Chiến dịch — chọn một để mở trong Phân tích",
-        "attention": "{count, plural, other {# chiến dịch cần}} chú ý — xếp trước bên dưới."
+        "attention": "{count, plural, other {# chiến dịch cần}} chú ý — xếp trước bên dưới.",
+        "belowControl": "{count, plural, other {# chiến dịch}} đang chạy dưới nhóm đối chứng — xếp trước bên dưới."
       },
       "drill": {
         "boardEyebrow": "Chọn chiến dịch để đi xuống từng cấp",
         "allCampaigns": "Tất cả chiến dịch",
         "experienceCount": "{count, plural, other {# trải nghiệm}}",
         "emptyPhase": "Chưa có trải nghiệm nào ở giai đoạn này.",
-        "experienceFunnel": "Phễu bên trong {name}"
+        "experienceFunnel": "Phễu bên trong {name}",
+        "sessionsCount": "{count, plural, other {# phiên}}",
+        "coverage": "{pct}% điểm đo đã gắn"
       },
       "block": {
         "views": "lượt xem",
@@ -591,7 +594,21 @@
       },
       "empty": {
         "layer": "Chưa theo dõi gì.",
-        "rankings": "Loại này chưa chạy lần nào."
+        "rankings": "Loại này chưa chạy lần nào.",
+        "measure": "Chưa có phiên nào trong lát cắt này — không có gì để đo.",
+        "campaigns": "Chưa chiến dịch nào có dữ liệu đo.",
+        "unmeasured": "Trải nghiệm này chưa chạy lần nào.",
+        "noEndpoint": "Kênh là một chiều của dữ liệu thô nhưng chưa endpoint nào gộp theo kênh — chờ BE bổ sung.",
+        "layersPending": "Xếp hạng Trải nghiệm · Sản phẩm · Hành trình chưa có API theo brand — chờ BE bổ sung.",
+        "componentDrill": "Khoan xuống từng component chưa có endpoint — server mới trả một component mạnh nhất mỗi loại khối.",
+        "mockNotice": "Tab này còn chạy dữ liệu mẫu — chưa nối API. Đừng đọc các số ở đây như phép đo."
+      },
+      "loading": "Đang đọc số đo…",
+      "tier": {
+        "high": "đủ tin",
+        "directional": "định hướng",
+        "early": "mẫu sớm",
+        "unmeasured": "chưa đo"
       }
     },
     "intelligence": {

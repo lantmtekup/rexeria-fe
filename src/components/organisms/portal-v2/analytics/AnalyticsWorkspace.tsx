@@ -11,19 +11,26 @@ import { OverviewPanel } from '@/components/organisms/portal-v2/analytics/Overvi
 import { RankingsPanel } from '@/components/organisms/portal-v2/analytics/RankingsPanel';
 import { PULSE_TABS } from '@/lib/portal-v2/analytics/constants';
 import { writePulseViewState } from '@/lib/portal-v2/analytics/params';
+import type { PulseBlockRow } from '@/lib/portal-v2/analytics/pulseView';
 import type { PulseViewState } from '@/lib/portal-v2/analytics/types';
-import { todayString } from '@/lib/portal-v2/campaigns/helpers';
+import type { PulseOverviewData } from '@/services/portal-v2/analyticsPulse';
 
 type AnalyticsWorkspaceProps = {
   initialState: PulseViewState;
+  /** Nạp ở server — tab đầu tiên không chớp một khung rỗng rồi mới có số. */
+  overview: PulseOverviewData;
+  blocks: PulseBlockRow[];
+  brandId: string | null;
 };
 
 export const AnalyticsWorkspace = ({
   initialState,
+  overview,
+  blocks,
+  brandId,
 }: AnalyticsWorkspaceProps) => {
   const t = useTranslations('portalV2.analytics');
   const [state, setState] = useState<PulseViewState>(initialState);
-  const today = todayString();
 
   useEffect(() => {
     writePulseViewState(state);
@@ -104,14 +111,16 @@ export const AnalyticsWorkspace = ({
           <OverviewPanel
             state={state}
             onStateChange={handleStateChange}
-            today={today}
+            data={overview}
+            blocks={blocks}
           />
         ) : null}
         {state.lens === 'analytics' ? (
           <AnalyticsDrillPanel
             state={state}
             onStateChange={handleStateChange}
-            today={today}
+            campaigns={overview.campaigns}
+            brandId={brandId}
           />
         ) : null}
         {state.lens === 'insights' ? (

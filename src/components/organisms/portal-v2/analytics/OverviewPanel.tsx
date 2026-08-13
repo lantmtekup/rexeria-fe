@@ -1,175 +1,63 @@
 'use client';
 
-import {
-  ArrowRight,
-  BarChart3,
-  Blocks,
-  Map,
-  Package,
-  Sparkles,
-} from 'lucide-react';
+import { ArrowRight, BarChart3, Blocks } from 'lucide-react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 
 import { LiftPill } from '@/components/organisms/portal-v2/campaigns/detail/VerdictStats';
-import { HealthBadge } from '@/components/molecules/portal-v2/campaigns-form';
 import { ChannelMixChart } from '@/components/organisms/portal-v2/analytics/ChannelMixChart';
 import { LeakFunnelSection } from '@/components/organisms/portal-v2/analytics/LeakFunnelSection';
 import { PulseFunnelChart } from '@/components/organisms/portal-v2/analytics/PulseFunnelChart';
 import { PulseMetricHead } from '@/components/organisms/portal-v2/analytics/PulseMetricHead';
 import { PulseRow } from '@/components/organisms/portal-v2/analytics/PulseRow';
-import { HEALTH_RANK } from '@/lib/portal-v2/analytics/constants';
-import {
-  buildPulseFacts,
-  trackingCoverage,
-} from '@/lib/portal-v2/analytics/facts';
-import {
-  channelMix,
-  fmtAssist,
-  fmtLift,
-  fmtMoney,
-  fmtPct,
-  leakFunnel,
-  rollup,
-} from '@/lib/portal-v2/analytics/helpers';
-import { insItems } from '@/lib/portal-v2/analytics/insights';
-import {
-  openCampaignDrill,
-  openInsightCareer,
-} from '@/lib/portal-v2/analytics/params';
-import type {
-  BlockInsightItem,
-  ExperienceInsightItem,
-  InsightType,
-  JourneyInsightItem,
-  ProductInsightItem,
-  PulseViewState,
-} from '@/lib/portal-v2/analytics/types';
-import { campHealth, campVerdict } from '@/lib/portal-v2/campaigns/verdict';
-import {
-  MOCK_CAMPAIGNS,
-  MOCK_CAMPAIGN_EXPERIENCES,
-} from '@/lib/portal-v2/campaigns/mock';
-import { MOCK_JOURNEYS } from '@/lib/portal-v2/journeys/mock';
+import { TierChip } from '@/components/organisms/portal-v2/analytics/TierChip';
+import { fmtMoney, fmtPct } from '@/lib/portal-v2/analytics/helpers';
+import { openCampaignDrill } from '@/lib/portal-v2/analytics/params';
+import type { PulseBlockRow } from '@/lib/portal-v2/analytics/pulseView';
+import type { PulseViewState } from '@/lib/portal-v2/analytics/types';
+import type { PulseOverviewData } from '@/services/portal-v2/analyticsPulse';
 
 type OverviewPanelProps = {
   state: PulseViewState;
   onStateChange: (state: PulseViewState) => void;
-  today: string;
+  data: PulseOverviewData;
+  blocks: PulseBlockRow[];
 };
 
-const LAYER_ICONS = {
-  experiences: Sparkles,
-  products: Package,
-  journeys: Map,
-  blocks: Blocks,
-} as const;
+const roiLabel = (roi: number | null): string =>
+  roi == null ? '—' : `${roi >= 0 ? '+' : ''}${Math.round(roi * 100)}% ROI`;
 
 export const OverviewPanel = ({
   state,
   onStateChange,
-  today,
+  data,
+  blocks,
 }: OverviewPanelProps) => {
   const t = useTranslations('portalV2.analytics');
-  const rows = buildPulseFacts();
-  const total = rollup(rows);
-  const { pct: coveragePct } = trackingCoverage(rows);
-  const { steps, leaks } = leakFunnel(rows);
-  const channels = channelMix(rows);
 
-  const campaignsWithData = MOCK_CAMPAIGNS.filter(campaign =>
-    rows.some(row => row.campaignId === campaign.id)
-  )
-    .map(campaign => ({
-      campaign,
-      health: campHealth(
-        campaign,
-        MOCK_CAMPAIGN_EXPERIENCES,
-        today,
-        MOCK_JOURNEYS
-      ),
-      verdict: campVerdict(campaign, MOCK_CAMPAIGN_EXPERIENCES),
-    }))
-    .sort((a, b) => {
-      const rankA = HEALTH_RANK[a.health.state] ?? 9;
-      const rankB = HEALTH_RANK[b.health.state] ?? 9;
-      return rankA - rankB || (b.verdict?.roi ?? 0) - (a.verdict?.roi ?? 0);
-    });
+  if (data.error || !data.totals) {
+    return (
+      <p className='rounded-[var(--pv2-r)] border border-dashed border-[var(--pv2-hair)] px-4 py-8 text-center text-[13px] text-[var(--pv2-faint)]'>
+        {data.error ?? t('empty.measure')}
+      </p>
+    );
+  }
 
-  const needAttention = campaignsWithData.filter(
-    item => item.health.state === 'risk' || item.health.state === 'delayed'
+  const { totals } = data;
+
+  // "Cần chú ý" là một phát biểu ĐO ĐƯỢC: chạy dưới nhóm đối chứng. Bản trước
+  // đếm theo tình trạng quy trình (trễ hạn/rủi ro) — thứ thuộc màn Chiến dịch,
+  // và ở đây thì suy từ dữ liệu mẫu.
+  const belowControl = data.campaigns.filter(
+    campaign => campaign.lift != null && campaign.lift < 0
   ).length;
-
-  const layers: {
-    type: InsightType;
-    title: string;
-    sub: string;
-    tone: string;
-    items: { id: string; name: string; value: string }[];
-  }[] = [
-    {
-      type: 'experiences',
-      title: t('layers.experiences'),
-      sub: t('layers.experiencesSub', {
-        count: MOCK_CAMPAIGN_EXPERIENCES.filter(item => item.template).length,
-      }),
-      tone: 'var(--pv2-electric)',
-      items: (insItems('experiences') as ExperienceInsightItem[])
-        .slice(0, 3)
-        .map(item => ({
-          id: item.id,
-          name: item.name,
-          value: `${fmtLift(item.rollup.lift)} lift`,
-        })),
-    },
-    {
-      type: 'products',
-      title: t('layers.products'),
-      sub: t('layers.productsSub', { count: insItems('products').length }),
-      tone: 'var(--pv2-success)',
-      items: (insItems('products') as ProductInsightItem[])
-        .slice(0, 3)
-        .map(item => ({
-          id: item.id,
-          name: item.name,
-          value: fmtMoney(item.rollup.revenue),
-        })),
-    },
-    {
-      type: 'journeys',
-      title: t('layers.journeys'),
-      sub: t('layers.journeysSub', { count: insItems('journeys').length }),
-      tone: 'var(--pv2-warning)',
-      items: (insItems('journeys') as JourneyInsightItem[])
-        .slice(0, 3)
-        .map(item => ({
-          id: item.id,
-          name: item.name,
-          value: `${fmtPct(item.rollup.cvr)} complete`,
-        })),
-    },
-    {
-      type: 'blocks',
-      title: t('layers.blocks'),
-      sub: t('layers.blocksSub', { count: insItems('blocks').length }),
-      tone: 'var(--pv2-ink-2)',
-      items: (insItems('blocks') as BlockInsightItem[])
-        .slice(0, 3)
-        .map(item => ({
-          id: item.id,
-          name: item.name,
-          value:
-            item.assist != null
-              ? `${fmtAssist(item.assist)} assist`
-              : t('rankings.untracked'),
-        })),
-    },
-  ];
 
   return (
     <div className='flex flex-col gap-6'>
       <PulseMetricHead
-        rollup={total}
-        coveragePct={coveragePct}
+        rollup={totals.rollup}
+        coveragePct={data.coveragePct}
+        revenueUnmeasured={!totals.revenueMeasured}
         labels={{
           sessions: t('metrics.sessions'),
           conversion: t('metrics.conversion'),
@@ -184,12 +72,18 @@ export const OverviewPanel = ({
         hint={t('charts.funnelSub')}
         note={t('charts.funnelNote')}
       >
-        <PulseFunnelChart
-          steps={steps}
-          leaks={leaks}
-          ariaLabel={t('charts.funnelAria')}
-          riskLabel={t('charts.riskLabel')}
-        />
+        {data.steps.length ? (
+          <PulseFunnelChart
+            steps={data.steps}
+            leaks={data.leaks}
+            ariaLabel={t('charts.funnelAria')}
+            riskLabel={t('charts.riskLabel')}
+          />
+        ) : (
+          <p className='text-[12.5px] text-[var(--pv2-faint)]'>
+            {t('empty.measure')}
+          </p>
+        )}
       </LeakFunnelSection>
 
       <section className='rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-4 md:p-5'>
@@ -201,133 +95,140 @@ export const OverviewPanel = ({
             {t('charts.channelSub')}
           </p>
         </div>
-        <ChannelMixChart rows={channels} />
+        {/*
+          Kênh là một chiều của `fact_daily`, nhưng §8 chỉ nhận nó làm BỘ LỌC —
+          không endpoint nào gộp theo kênh. Để trống có ghi lý do; lấp bằng số
+          băm từ tên kênh thì biểu đồ này đọc như một phép đo.
+        */}
+        <ChannelMixChart rows={[]} />
+        <p className='text-[12.5px] text-[var(--pv2-faint)]'>
+          {t('empty.noEndpoint')}
+        </p>
       </section>
 
       <section>
         <p className='mb-3 text-[10px] font-bold tracking-[0.12em] text-[var(--pv2-faint)] uppercase'>
           {t('layers.eyebrow')}
         </p>
-        <div className='grid gap-3 lg:grid-cols-2'>
-          {layers.map(layer => {
-            const Icon = LAYER_ICONS[layer.type];
-            return (
-              <div
-                key={layer.type}
-                className='rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-4'
-              >
-                <div className='mb-3 flex items-start gap-3'>
-                  <span
-                    className='grid size-8 place-items-center rounded-[var(--pv2-r-sm)] text-[var(--pv2-paper)]'
-                    style={{ background: layer.tone }}
-                  >
-                    <Icon className='size-4' aria-hidden />
+        <div className='rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-4'>
+          <div className='mb-3 flex items-start gap-3'>
+            <span className='grid size-8 place-items-center rounded-[var(--pv2-r-sm)] bg-[var(--pv2-ink-2)] text-[var(--pv2-paper)]'>
+              <Blocks className='size-4' aria-hidden />
+            </span>
+            <div className='min-w-0 flex-1'>
+              <strong className='block text-[14px] text-[var(--pv2-ink)]'>
+                {t('layers.blocks')}
+              </strong>
+              <span className='text-[11.5px] text-[var(--pv2-mut)]'>
+                {t('layers.blocksSub', { count: blocks.length })}
+              </span>
+            </div>
+            <button
+              type='button'
+              onClick={() =>
+                onStateChange({
+                  ...state,
+                  lens: 'insights',
+                  insightType: 'blocks',
+                  insightObjectId: null,
+                })
+              }
+              className='inline-flex items-center gap-1 text-[11.5px] font-semibold text-[var(--pv2-electric)]'
+            >
+              {t('layers.seeAll')}
+              <ArrowRight className='size-3.5' aria-hidden />
+            </button>
+          </div>
+          <div className='flex flex-col gap-1.5'>
+            {blocks.length ? (
+              blocks.slice(0, 3).map(block => (
+                <div
+                  key={block.code}
+                  className='flex items-center justify-between rounded-[8px] px-2.5 py-2'
+                >
+                  <span className='truncate text-[12.5px] font-medium text-[var(--pv2-ink)]'>
+                    {block.code}
                   </span>
-                  <div className='min-w-0 flex-1'>
-                    <strong className='block text-[14px] text-[var(--pv2-ink)]'>
-                      {layer.title}
-                    </strong>
-                    <span className='text-[11.5px] text-[var(--pv2-mut)]'>
-                      {layer.sub}
-                    </span>
-                  </div>
-                  <button
-                    type='button'
-                    onClick={() =>
-                      onStateChange({
-                        ...state,
-                        lens: 'insights',
-                        insightType: layer.type,
-                        insightObjectId: null,
-                        drill: {
-                          campaignId: null,
-                          subject: null,
-                          experienceId: null,
-                          blockIndex: null,
-                          componentEl: null,
-                        },
-                      })
-                    }
-                    className='inline-flex items-center gap-1 text-[11.5px] font-semibold text-[var(--pv2-electric)]'
-                  >
-                    {t('layers.seeAll')}
-                    <ArrowRight className='size-3.5' aria-hidden />
-                  </button>
+                  <span className='shrink-0 text-[12px] text-[var(--pv2-mut)]'>
+                    {fmtPct(block.interRate)} interact
+                  </span>
                 </div>
-                <div className='flex flex-col gap-1.5'>
-                  {layer.items.length ? (
-                    layer.items.map(item => (
-                      <button
-                        key={item.id}
-                        type='button'
-                        onClick={() =>
-                          onStateChange(
-                            openInsightCareer(state, layer.type, item.id)
-                          )
-                        }
-                        className='flex items-center justify-between rounded-[8px] px-2.5 py-2 text-left hover:bg-[var(--pv2-canvas)]'
-                      >
-                        <span className='truncate text-[12.5px] font-medium text-[var(--pv2-ink)]'>
-                          {item.name}
-                        </span>
-                        <span className='shrink-0 text-[12px] text-[var(--pv2-mut)]'>
-                          {item.value}
-                        </span>
-                      </button>
-                    ))
-                  ) : (
-                    <p className='px-2.5 py-2 text-[12px] text-[var(--pv2-faint)]'>
-                      {t('empty.layer')}
-                    </p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+              ))
+            ) : (
+              <p className='px-2.5 py-2 text-[12px] text-[var(--pv2-faint)]'>
+                {t('empty.layer')}
+              </p>
+            )}
+          </div>
         </div>
+        {/*
+          Ba thẻ còn lại (Trải nghiệm · Sản phẩm · Hành trình) cần một bảng xếp
+          hạng theo brand — chưa endpoint nào trả. Gọi lẻ từng mục thì N+1 và
+          vẫn thiếu doanh thu ở grain sản phẩm.
+        */}
+        <p className='mt-3 text-[11.5px] text-[var(--pv2-faint)]'>
+          {t('empty.layersPending')}
+        </p>
       </section>
 
       <section>
-        {needAttention ? (
+        {belowControl ? (
           <div className='mb-3 flex items-center gap-2 rounded-[var(--pv2-r-sm)] bg-[color-mix(in_srgb,var(--pv2-warning)_10%,transparent)] px-3 py-2 text-[12.5px] text-[var(--pv2-ink)]'>
             <BarChart3
               className='size-4 shrink-0 text-[var(--pv2-warning)]'
               aria-hidden
             />
-            <span>{t('campaigns.attention', { count: needAttention })}</span>
+            <span>{t('campaigns.belowControl', { count: belowControl })}</span>
           </div>
         ) : null}
         <p className='mb-3 text-[10px] font-bold tracking-[0.12em] text-[var(--pv2-faint)] uppercase'>
           {t('campaigns.eyebrow')}
         </p>
         <div className='overflow-hidden rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
-          {campaignsWithData.map(({ campaign, health, verdict }) => (
-            <div
-              key={campaign.id}
-              className='border-b border-[var(--pv2-hair)] last:border-b-0'
-            >
-              <div className='flex flex-wrap items-center gap-2 px-4 pt-3'>
-                <HealthBadge health={health} />
-                {verdict ? <LiftPill lift={verdict.lift} /> : null}
+          {data.campaigns.length ? (
+            data.campaigns.map(campaign => (
+              <div
+                key={campaign.id}
+                className='border-b border-[var(--pv2-hair)] last:border-b-0'
+              >
+                <div className='flex flex-wrap items-center gap-2 px-4 pt-3'>
+                  <TierChip tier={campaign.tier} />
+                  {/* lift null = KHÔNG có đối chứng để so; "+0%" là một phát
+                      biểu khác hẳn và là một phát biểu sai. */}
+                  {campaign.lift != null ? (
+                    <LiftPill lift={campaign.lift} />
+                  ) : null}
+                </div>
+                <PulseRow
+                  title={campaign.name}
+                  subtitle={t('drill.sessionsCount', {
+                    count: campaign.sessions,
+                  })}
+                  metrics={[fmtMoney(campaign.revenue), roiLabel(campaign.roi)]}
+                  onClick={() =>
+                    onStateChange(openCampaignDrill(state, campaign.id))
+                  }
+                  className='border-b-0 md:grid-cols-[minmax(0,1.4fr)_auto_auto]'
+                />
               </div>
-              <PulseRow
-                title={campaign.name}
-                subtitle={`${campaign.type} · ${campaign.status}`}
-                metrics={[
-                  verdict ? fmtMoney(verdict.revenue) : '—',
-                  verdict
-                    ? `${verdict.roi >= 0 ? '+' : ''}${Math.round(verdict.roi * 100)}% ROI`
-                    : '—',
-                ]}
-                onClick={() =>
-                  onStateChange(openCampaignDrill(state, campaign.id))
-                }
-                className='border-b-0 md:grid-cols-[minmax(0,1.4fr)_auto_auto]'
-              />
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className='px-4 py-8 text-center text-[13px] text-[var(--pv2-faint)]'>
+              {t('empty.campaigns')}
+            </p>
+          )}
         </div>
       </section>
+
+      <p className='text-[11.5px] leading-relaxed text-[var(--pv2-faint)]'>
+        {t('rankings.disclaimer')}{' '}
+        <Link
+          href='/portal-v2/ai'
+          className='font-semibold text-[var(--pv2-electric)]'
+        >
+          {t('identity.cta')}
+        </Link>
+      </p>
     </div>
   );
 };
