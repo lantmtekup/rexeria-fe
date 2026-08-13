@@ -678,7 +678,7 @@
       "promoteHint": "Tạo template từ trang này và đánh dấu Proven để Automation dùng được.",
       "promoteLabel": "Đưa vào thư viện",
       "provenFailed": "Không lưu được dấu Proven.",
-      "provenForbidden": "Tài khoản brand không đánh dấu Proven được — máy chủ chặn ở tầng quyền (403). Template hệ thống thì chỉ platform admin đổi được. Đăng nhập bằng tài khoản admin, hoặc bấm \"Đưa vào thư viện\" để tạo bản template của brand rồi đánh dấu trên đó.",
+      "provenForbidden": "Đây là template hệ thống — chỉ platform admin đánh dấu Proven được. Bấm \"Đưa vào thư viện\" trên một bản copy để tạo template riêng của brand, rồi đánh dấu trên bản đó.",
       "provenHint": "Dấu do bạn tự đánh, không đụng tới số liệu. Thiết kế được đánh dấu sẽ hiện ở Tự động hóa, sẵn sàng nhân sang cả lớp sản phẩm.",
       "provenOff": "Đánh dấu Proven",
       "provenOn": "Đã chứng minh",
