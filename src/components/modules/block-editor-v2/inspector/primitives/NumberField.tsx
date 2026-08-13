@@ -136,9 +136,13 @@ export function NumberField({
         }}
         placeholder={placeholder}
         aria-label={ariaLabel}
+        // `text-2xs!`: globals.css có rule unlayered `input { font-size: 16px }`
+        // (chống iOS zoom-on-focus) đè font-size của TEXT_NUM — cần !important
+        // để ô số ăn đúng cỡ 11px của inspector scale.
         className={cn(
           'text-foreground placeholder:text-content-muted/60 h-full min-w-0 flex-1 bg-transparent px-1 outline-none',
-          TEXT_NUM
+          TEXT_NUM,
+          'text-2xs!'
         )}
       />
       {unit && (

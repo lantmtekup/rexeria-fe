@@ -1030,7 +1030,12 @@ export interface CoolHunterFooterContent {
 
 /** Named scrim presets for PnjHero storefront wash. */
 export type PnjHeroScrimPresetId =
-  'pnj' | 'none' | 'softLight' | 'softDark' | 'mint' | 'navyFade';
+  | 'pnj'
+  | 'none'
+  | 'softLight'
+  | 'softDark'
+  | 'mint'
+  | 'navyFade';
 
 /** One absolute overlay layer on the storefront image. */
 export interface PnjHeroScrimLayer {
@@ -1175,7 +1180,12 @@ export interface TheGrandFooterPolicy {
  * xem `blocks/theGrandFooterSocialIcons.tsx`.
  */
 export type TheGrandFooterSocialPlatform =
-  'facebook' | 'instagram' | 'linkedin' | 'tripadvisor' | 'youtube' | 'tiktok';
+  | 'facebook'
+  | 'instagram'
+  | 'linkedin'
+  | 'tripadvisor'
+  | 'youtube'
+  | 'tiktok';
 
 /** 1 icon social ở cột 4 của The Grand · Footer. */
 export interface TheGrandFooterSocial {
@@ -3163,7 +3173,11 @@ export interface GambitProductDetailsAccordion {
 }
 /** Icon dựng sẵn của dòng hành động (SVG inline trong block). */
 export type GambitProductDetailsActionIcon =
-  'plane' | 'chat' | 'pin' | 'search' | 'arrow';
+  | 'plane'
+  | 'chat'
+  | 'pin'
+  | 'search'
+  | 'arrow';
 export interface GambitProductDetailsAction {
   label: string;
   /** URL / token link (`#page:`, `#block:`) — rỗng = nút không điều hướng. */
@@ -4353,7 +4367,10 @@ export interface ExtraElementStyle {
  * animation > plain.
  */
 export type TextAnimationMode =
-  'none' | 'fade-up' | 'typewriter' | 'split-slide-up';
+  | 'none'
+  | 'fade-up'
+  | 'typewriter'
+  | 'split-slide-up';
 
 export interface TextCounterConfig {
   /** Starting value of the count-up. Defaults to 0. */
@@ -4630,6 +4647,42 @@ export type ExtraElement =
   | RevealExtraElement
   | SpinWheelExtraElement;
 
+/**
+ * Signal capture — cấu hình một "tracking point" trên một element của block.
+ * `type`/`event`/`object`/`privacy` giữ dạng string mở: vocabulary sống ở
+ * `block-editor-v2/signal/vocabulary.ts`, BE và canvas được phép thêm giá trị
+ * mới mà không cần migrate.
+ */
+export interface ComponentSignalConfig {
+  track: boolean;
+  /** EXPOSURE | ENGAGEMENT | EXPLORATION | ... — map 1:1 sang funnel role. */
+  type?: string;
+  /** Trigger: View | Dwell | Tap | ... */
+  event?: string;
+  /** product | variant | feature | price | content | none */
+  object?: string;
+  /** Ngưỡng đếm: giây dwell (text) hoặc số lần tương tác. Clamp 1–30. */
+  threshold?: number;
+  /** Trọng số trong intent score: 1 Weak · 2 Moderate · 3 Strong. */
+  strength?: number;
+  crm?: string;
+  /** anonymous | pseudonymous | identified */
+  privacy?: string;
+}
+
+/**
+ * Signal capture — cấu hình đo lường của cả block. `undefined` nghĩa là block
+ * CHƯA được instrument (born untracked) — khác với `{ track: false }` là đã
+ * chủ động tắt. Không per-device: đo lường không phụ thuộc viewport.
+ */
+export interface BlockSignalConfig {
+  track?: boolean;
+  /** Block signals cơ học: dwell / scroll / tap / complete / exit. */
+  signals?: Record<string, boolean>;
+  /** Tracking points, key = element key của block. */
+  components?: Record<string, ComponentSignalConfig>;
+}
+
 export interface Block {
   id: string;
   blockType: BlockType;
@@ -4668,6 +4721,12 @@ export interface Block {
    * passed through serialize.
    */
   motion?: DeviceVariants<BlockMotionStored>;
+  /**
+   * Signal capture — instrumentation của block (panel "Signal" trong editor).
+   * Stored verbatim trong canvas_blueprint; nhớ giữ trong whitelist
+   * `migrateBlockV1toV2` kẻo bị strip khi load lại.
+   */
+  signal?: BlockSignalConfig;
 }
 
 /**

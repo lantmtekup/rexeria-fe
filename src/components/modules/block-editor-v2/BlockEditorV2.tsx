@@ -25,6 +25,7 @@ import { BlocksPanel } from '@/components/modules/block-editor-v2/panels/BlocksP
 import { MediaPanel } from '@/components/modules/block-editor-v2/panels/MediaPanel';
 import { PagesPanel } from '@/components/modules/block-editor-v2/panels/PagesPanel';
 import { ProductPanel } from '@/components/modules/block-editor-v2/panels/ProductPanel';
+import { SignalPanel } from '@/components/modules/block-editor-v2/panels/SignalPanel';
 import { LayersPanel } from '@/components/modules/block-editor-v2/LayersPanel';
 import {
   BlockEditorSidebar,
@@ -1819,7 +1820,8 @@ export function BlockEditorV2({
     autosave.state.kind === 'error';
   const activeBlock = canvas.activeBlock;
   const motionForActiveVariant = activeBlock?.motion?.[editVariant] as
-    BlockMotion | undefined;
+    | BlockMotion
+    | undefined;
 
   // Eye → overlay PreviewMode (layout/render khớp /dev/blocks, không mở tab).
   // Live canvas — xem đúng bản đang edit (kể cả chưa lưu).
@@ -1958,6 +1960,22 @@ export function BlockEditorV2({
               {railTab === 'product' && (
                 <ProductPanel onPick={ai.applyProduct} />
               )}
+
+              {railTab === 'signal' &&
+                (activeBlock ? (
+                  <SignalPanel
+                    block={activeBlock}
+                    allBlocks={canvas.blocks}
+                    onEdit={recipe => {
+                      canvas.mutateActive(recipe);
+                      autosave.markDirty();
+                    }}
+                  />
+                ) : (
+                  <p className='p-3 text-xs text-neutral-500'>
+                    Chọn một block trên canvas để cấu hình đo lường.
+                  </p>
+                ))}
 
               {railTab === 'pages' && (
                 <PagesPanel
