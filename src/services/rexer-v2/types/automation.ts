@@ -39,7 +39,10 @@ export type RxAutomationCandidate = {
 export type RxAutomation = {
   id: string;
   brand_id: string;
-  source_template_id: string;
+  /** Đúng 1 trong hai — BE giờ tạo automation thẳng từ canvas của page, không
+   *  bắt buộc phải có template gốc nữa (automations_source_chk). */
+  source_template_id?: string | null;
+  source_page_id?: string | null;
   setup_product_id: string;
   campaign_id: string;
   /** Bản nháp master do BE dựng khi tạo automation — mở được trong canvas. */
