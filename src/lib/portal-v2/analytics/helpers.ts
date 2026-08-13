@@ -93,23 +93,41 @@ export const funnel = (rows: PulseFactRow[]): FunnelStep[] => {
   }));
 };
 
+/**
+ * Giọt giá của từng chỗ rò: phiên mất × chuyển đổi hạ nguồn × AOV.
+ *
+ * Tách khỏi `leakFunnel` để đường dữ liệu THẬT (`/intel/funnel` trả sẵn năm
+ * chặng, không trả hàng fact) dùng đúng công thức này thay vì chép lại một bản
+ * hơi khác — hai bản lệch nhau là cách nhanh nhất để hai màn hình cùng một chỗ
+ * rò báo hai con số.
+ */
+export const leaksFromSteps = (
+  steps: FunnelStep[],
+  converted: number,
+  aov: number
+): FunnelLeak[] =>
+  steps.slice(1).map((step, index) => {
+    const previous = steps[index]!;
+    const downstreamCvr = step.value ? converted / step.value : 0;
+    return {
+      after: previous.label,
+      into: step.label,
+      lost: step.lost,
+      risk: Math.round(step.lost * downstreamCvr * aov),
+    };
+  });
+
 export const leakFunnel = (
   rows: PulseFactRow[]
 ): { total: PulseRollup; steps: FunnelStep[]; leaks: FunnelLeak[] } => {
   const total = rollup(rows);
   const steps = funnel(rows);
-  const leaks = steps.slice(1).map((step, index) => {
-    const previous = steps[index]!;
-    const downstreamCvr = step.value ? total.converted / step.value : 0;
-    return {
-      after: previous.label,
-      into: step.label,
-      lost: step.lost,
-      risk: Math.round(step.lost * downstreamCvr * total.aov),
-    };
-  });
 
-  return { total, steps, leaks };
+  return {
+    total,
+    steps,
+    leaks: leaksFromSteps(steps, total.converted, total.aov),
+  };
 };
 
 export const channelMix = (rows: PulseFactRow[]): ChannelMixRow[] => {

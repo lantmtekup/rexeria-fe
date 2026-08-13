@@ -56,6 +56,17 @@ export const RankingsPanel = ({ state, onStateChange }: RankingsPanelProps) => {
 
   return (
     <div className='flex flex-col gap-4'>
+      {/*
+        Tab này CHƯA nối API: bảng xếp hạng theo brand cho trải nghiệm/sản
+        phẩm/hành trình chưa có endpoint nào trả (xem docs/be-analytics-gaps).
+        Số bên dưới do `insights.ts` băm từ id — ổn định nên trông hệt phép đo,
+        và nó đứng ngay cạnh hai tab đã là số thật. Nói thẳng ra còn hơn để
+        người đọc tự đoán tab nào tin được.
+      */}
+      <p className='rounded-[var(--pv2-r-sm)] border border-[var(--pv2-warning)] bg-[color-mix(in_srgb,var(--pv2-warning)_10%,transparent)] px-3 py-2 text-[12.5px] text-[var(--pv2-ink)]'>
+        {t('empty.mockNotice')}
+      </p>
+
       <div className='flex flex-wrap gap-2'>
         {INSIGHT_TYPES.map(option => (
           <button
@@ -133,9 +144,7 @@ const RankingRow = ({
   }
 
   const base = item as
-    | ExperienceInsightItem
-    | ProductInsightItem
-    | JourneyInsightItem;
+    ExperienceInsightItem | ProductInsightItem | JourneyInsightItem;
   const consistency =
     base.variance == null
       ? ''

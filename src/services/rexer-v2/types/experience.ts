@@ -10,6 +10,8 @@
  * Convention: snake_case wire shapes, `*T` → `T | null`, `omitempty` → optional.
  */
 
+import type { RxFunnelStage } from './intel';
+
 export type RxExperienceKind = 'template' | 'copy' | 'block';
 
 export interface RxExperienceSubject {
@@ -224,6 +226,15 @@ export type RxExperienceStats = {
   revenue_cents: number;
   leads: number;
   dwell_ms_avg: number;
+  /**
+   * Năm chặng phễu của RIÊNG trải nghiệm này — BE có trả (`ExperienceStats.
+   * Funnel`), bản khai trước ở FE bỏ sót nên màn chi tiết phải để 0 cho bốn
+   * chặng giữa. Vắng mặt khi `measured:false`.
+   */
+  funnel?: RxFunnelStage[];
+  /** high | directional | early | unmeasured. */
+  tier?: string;
+  where_it_runs?: { campaigns: string[]; channels: string[] };
 };
 
 export type RxExperienceCoverage = {

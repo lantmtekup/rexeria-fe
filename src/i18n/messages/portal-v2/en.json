@@ -517,14 +517,17 @@
       },
       "campaigns": {
         "eyebrow": "Campaigns — pick one to open it in Analytics",
-        "attention": "{count, plural, one {# campaign needs} other {# campaigns need}} attention — sorted first below."
+        "attention": "{count, plural, one {# campaign needs} other {# campaigns need}} attention — sorted first below.",
+        "belowControl": "{count, plural, other {# campaign}} running below control — sorted first below."
       },
       "drill": {
         "boardEyebrow": "Pick a campaign to follow it down every level",
         "allCampaigns": "All campaigns",
         "experienceCount": "{count, plural, one {# experience} other {# experiences}}",
         "emptyPhase": "No experience sits in this stage yet.",
-        "experienceFunnel": "The funnel inside {name}"
+        "experienceFunnel": "The funnel inside {name}",
+        "sessionsCount": "{count, plural, other {# sessions}}",
+        "coverage": "{pct}% tracked"
       },
       "block": {
         "views": "views",
@@ -591,7 +594,21 @@
       },
       "empty": {
         "layer": "Nothing tracked yet.",
-        "rankings": "Nothing of this kind has run yet."
+        "rankings": "Nothing of this kind has run yet.",
+        "measure": "No sessions in this slice — nothing to measure.",
+        "campaigns": "No campaign has measured data yet.",
+        "unmeasured": "This experience has never run.",
+        "noEndpoint": "Channel is a dimension of the raw data but no endpoint groups by it yet — waiting on BE.",
+        "layersPending": "Experience · Product · Journey rankings have no brand-wide API yet — waiting on BE.",
+        "componentDrill": "Per-component drill has no endpoint — the server returns only the top component per block type.",
+        "mockNotice": "This tab still runs on sample data — not wired to the API. Do not read these numbers as measurements."
+      },
+      "loading": "Reading measurements…",
+      "tier": {
+        "high": "high confidence",
+        "directional": "directional",
+        "early": "early sample",
+        "unmeasured": "unmeasured"
       }
     },
     "intelligence": {

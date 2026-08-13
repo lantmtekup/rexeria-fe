@@ -41,7 +41,15 @@ import type {
   RxJourneyStats,
   RxUpdateJourneyRequest,
 } from './types/journey';
-import type { RxIntelSegmentsResponse } from './types/intel';
+import type {
+  RxIntelBlocksResponse,
+  RxIntelCampaignsResponse,
+  RxIntelFunnel,
+  RxIntelOverview,
+  RxIntelQuery,
+  RxIntelSegmentsResponse,
+  RxIntelTrust,
+} from './types/intel';
 import type {
   RxBrandMembersResponse,
   RxCapabilities,
@@ -75,6 +83,18 @@ import type {
   RxRunAutomationRequest,
   RxRunAutomationResponse,
 } from './types/automation';
+
+/**
+ * Lát cắt §8 → query string. Bỏ khoá rỗng: `campaign_id=` là 400
+ * INVALID_UUID ở BE, không phải "không lọc".
+ */
+const intelQuery = (q: RxIntelQuery): Record<string, string> => {
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(q)) {
+    if (value) out[key] = String(value);
+  }
+  return out;
+};
 
 export const rexerV2Api = {
   // ── Automation — v2-only. BE tự chấm readiness và tự dựng master draft. ──
@@ -210,6 +230,13 @@ export const rexerV2Api = {
   },
 
   // ── Intel (spec §8) ──────────────────────────────────────────────────────
+  //
+  // Mọi số ở đây suy từ `fact_daily` LÚC ĐỌC — không entity nào lưu sẵn, nên
+  // đọc lại sau khi rollup chạy sẽ ra số khác mà không cần ghi gì.
+  //
+  // `experience_id` nhận cả id template lẫn id bản copy: BE tự nở template ra
+  // toàn bộ copy của nó (khái niệm), nên đây chính là lát cắt "thành tích của
+  // một trải nghiệm trên mọi chiến dịch".
   intel: {
     /**
      * `GET /v1/intel/segments` — phân khúc hành vi `s1..s8` kèm số ĐO ĐƯỢC.
@@ -220,6 +247,49 @@ export const rexerV2Api = {
       rxV2<RxIntelSegmentsResponse>(
         `/intel/segments${brandId ? `?brand_id=${encodeURIComponent(brandId)}` : ''}`
       ),
+
+    /** `GET /v1/intel/overview` — tổng đo + bậc tin cậy + đường xu hướng. */
+    overview: (query: RxIntelQuery = {}) =>
+      rxV2<RxIntelOverview>('/intel/overview', { query: intelQuery(query) }),
+
+    /** `GET /v1/intel/funnel` — năm chặng theo vai phễu + chỗ rò lớn nhất. */
+    funnel: (query: RxIntelQuery = {}) =>
+      rxV2<RxIntelFunnel>('/intel/funnel', { query: intelQuery(query) }),
+
+    /**
+     * `GET /v1/intel/campaigns` — đóng góp theo chiến dịch.
+     *
+     * `expand=subjects` mới có tầng hạng mục → trải nghiệm; danh sách trần chỉ
+     * có tầng chiến dịch, nên màn drill phải gọi kèm cờ này.
+     */
+    campaigns: (query: RxIntelQuery = {}, expandSubjects = false) =>
+      rxV2<RxIntelCampaignsResponse>('/intel/campaigns', {
+        query: {
+          ...intelQuery(query),
+          ...(expandSubjects ? { expand: 'subjects' } : {}),
+        },
+      }),
+
+    /** `GET /v1/intel/blocks` — bảng đóng góp, gộp theo `block_type_code`. */
+    blocks: (query: RxIntelQuery = {}) =>
+      rxV2<RxIntelBlocksResponse>('/intel/blocks', {
+        query: intelQuery(query),
+      }),
+
+    /** `GET /v1/intel/blocks/rank` — top block của MỘT vai (ATT|EDU|EXP|TRU|CON). */
+    blocksRank: (role: string, query: RxIntelQuery = {}) =>
+      rxV2<RxIntelBlocksResponse>('/intel/blocks/rank', {
+        query: { ...intelQuery(query), role },
+      }),
+
+    /**
+     * `GET /v1/intel/trust` — kiểm định chất lượng dữ liệu.
+     *
+     * `coverage.tracked_components_pct` là nguồn DUY NHẤT cho ô "độ phủ đo" ở
+     * cấp brand; đừng suy nó từ số block như bản mock từng làm.
+     */
+    trust: (query: RxIntelQuery = {}) =>
+      rxV2<RxIntelTrust>('/intel/trust', { query: intelQuery(query) }),
   },
 
   // ── Journeys (spec §6) ───────────────────────────────────────────────────
