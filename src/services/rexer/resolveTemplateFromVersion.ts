@@ -1,14 +1,19 @@
 /**
  * Resolve `template_version_id` → Template.
  *
- * BE không có GET version-by-id flat, Page cũng không trả `template_id`.
- * Trước đây editor fan-out `GET /templates/:id/versions` song song cho mọi
- * template → spam Network (trông như loop vô tận khi HMR/remount).
+ * Fast path: `GET /template-versions/:id` (flat — versionId alone, no
+ * templateId) returns `template_id` directly, then one `GET /templates/:id`.
+ * Two round trips, always.
  *
- * Chiến lược:
- * 1. Module cache (versionId → template) — remount/HMR không probe lại
- * 2. Fast-path: `template.current_version_id === versionId`
- * 3. Probe tuần tự từng batch nhỏ, dừng ngay khi tìm thấy
+ * Fallback (pre-flat-endpoint BE, or the flat call erroring for any reason):
+ * the old scan — list the whole catalog, then probe each template's
+ * `/versions` in small sequential batches until one matches. Slow (grows
+ * with catalog size — this is exactly the "Edit experience" load-time bug
+ * the flat endpoint was added to fix), but keeps the editor opening instead
+ * of hard-failing during a rolling deploy where FE ships ahead of BE.
+ *
+ * Module cache (versionId → template) either way — remount/HMR does not
+ * re-resolve.
  */
 
 import { rexerApi } from './endpoints';
@@ -59,6 +64,24 @@ async function findByProbingVersions(
   return null;
 }
 
+async function resolveByScanningCatalog(versionId: string): Promise<Template> {
+  const templates = await rexerApi.templates.list({ limit: 500 });
+  const items = templates.items ?? [];
+
+  // Fast-path: HEAD match — không cần gọi /versions.
+  const headHit = items.find(t => t.current_version_id === versionId);
+  if (headHit) return headHit;
+
+  // Chỉ probe các template không match HEAD (page pin version cũ).
+  const found = await findByProbingVersions(items, versionId);
+  if (!found) {
+    throw new Error(
+      `template_version_id "${versionId}" không thuộc template nào (đã probe ${items.length} templates)`
+    );
+  }
+  return found;
+}
+
 /**
  * Tìm Template sở hữu `versionId`.
  * @throws nếu không thuộc template nào trong list.
@@ -69,24 +92,14 @@ export async function resolveTemplateFromVersionId(
   const cached = versionToTemplateCache.get(versionId);
   if (cached) return cached;
 
-  const templates = await rexerApi.templates.list({ limit: 500 });
-  const items = templates.items ?? [];
-
-  // Fast-path: HEAD match — không cần gọi /versions.
-  const headHit = items.find(t => t.current_version_id === versionId);
-  if (headHit) {
-    versionToTemplateCache.set(versionId, headHit);
-    return headHit;
+  let template: Template;
+  try {
+    const v = await rexerApi.templates.versionByID(versionId);
+    template = (await rexerApi.templates.get(v.template_id)).template;
+  } catch {
+    template = await resolveByScanningCatalog(versionId);
   }
 
-  // Chỉ probe các template không match HEAD (page pin version cũ).
-  const found = await findByProbingVersions(items, versionId);
-  if (!found) {
-    throw new Error(
-      `template_version_id "${versionId}" không thuộc template nào (đã probe ${items.length} templates)`
-    );
-  }
-
-  versionToTemplateCache.set(versionId, found);
-  return found;
+  versionToTemplateCache.set(versionId, template);
+  return template;
 }

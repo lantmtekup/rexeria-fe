@@ -146,10 +146,13 @@ export const ExperiencesWorkspace = ({
       if (confirmed !== next) apply(confirmed);
     } catch (err) {
       apply(experience.proven);
-      // 403 là LUẬT, không phải trục trặc: `assertTemplateMutable` chặn
-      // client-portal user, và chặn cả template hệ thống (`brand_id` NULL) với
-      // mọi người trừ platform admin. Dịch thành câu người dùng làm được gì
-      // tiếp; các lỗi khác thì đưa nguyên văn của BE.
+      // 403 còn lại giờ chỉ có MỘT lý do: `assertTemplateMutable` khoá template
+      // hệ thống (`brand_id` NULL) cho mọi người trừ platform admin. Guard chặn
+      // hẳn client-portal (bất kể sở hữu brand nào) đã gỡ — tài khoản brand giờ
+      // đánh Proven được template của chính mình (kể cả bản tạo qua "Add to
+      // library"), miễn đủ vai trò manager (`EnsureBrandRole`, kiểm ở
+      // `ensureManager` trước khi tới đây). Dịch thành câu người dùng làm được
+      // gì tiếp; các lỗi khác thì đưa nguyên văn của BE.
       setProvenError(
         err instanceof RxApiError && err.status === 403
           ? t('provenForbidden')

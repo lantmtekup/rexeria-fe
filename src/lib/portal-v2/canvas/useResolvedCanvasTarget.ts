@@ -11,13 +11,20 @@ import type { Page, PageStatus, Template } from '@/services/rexer/types';
  * Resolve a URL segment into everything `BlockEditor` needs to mount.
  *
  * The segment accepts three shapes, tried in order:
- *   1. Template UUID → editor takes it directly.
- *   2. Page UUID     → page → `template_version_id` → template.
- *   3. Page slug     → page lookup by slug → same as above.
+ *   1. Page UUID or slug → `GET /pages/:pageId` resolves either transparently
+ *      (`GetByIDOrSlug` BE-side) → `template_version_id` → template.
+ *   2. Template UUID     → editor takes it directly (only reached when step 1
+ *      404s, i.e. rawId isn't a page at all).
  *
  * Three shapes because list screens prefer a human-readable slug in the URL but
  * fall back to `page.id` when a page has no slug, while the template APIs are
  * template-scoped and need the derived id.
+ *
+ * PERF: this used to branch on `UUID_RE.test(rawId)` and, for a slug, call
+ * `pages.listAll({ q: rawId, limit: 25 })` then filter client-side for an
+ * exact match — `?q=` is a text search, not an exact filter, and the BE
+ * already resolves slug-or-uuid in one call via `GetByIDOrSlug`. That branch
+ * is gone; `pages.get(rawId)` now handles both shapes identically.
  *
  * This logic is currently duplicated verbatim in
  * `app/(admin)/admin/landing-pages/[id]/page.tsx` and
@@ -98,40 +105,33 @@ export const useResolvedCanvasTarget = (
       try {
         let versionId: string | undefined;
 
-        if (UUID_RE.test(rawId)) {
-          /* Page before template: every navigation from a list is a page id,
-             and trying templates first fills DevTools with 404 noise for the
-             common case. */
-          try {
-            const found = await rexerApi.pages.get(rawId);
-            if (cancelled) return;
-            versionId = found.template_version_id;
-            applyPage(found);
-          } catch {
-            try {
-              const tplRes = await rexerApi.templates.get(rawId);
-              if (cancelled) return;
-              /* A template id carries no page context — a template can back
-                 many pages — so the editor opens on the template alone. */
-              resolvedForRawIdRef.current = rawId;
-              setTemplateId(tplRes.template.id);
-              setTemplate(tplRes.template);
-              return;
-            } catch (tplErr) {
-              throw new Error(
-                `UUID "${rawId}" does not match any page or template: ${rxMessage(tplErr)}`
-              );
-            }
-          }
-        } else {
-          /* Slug. The BE's `?slug=` param does not actually filter, so search
-             by text and match the slug exactly on the client. */
-          const pages = await rexerApi.pages.listAll({ q: rawId, limit: 25 });
+        /* Page before template: every navigation from a list is a page
+           slug/id, and trying templates first fills DevTools with 404 noise
+           for the common case. `pages.get` resolves either shape (see the
+           doc comment above). */
+        try {
+          const found = await rexerApi.pages.get(rawId);
           if (cancelled) return;
-          const found = pages.items?.find(p => p.slug === rawId);
-          if (!found) throw new Error(`No page found with slug "${rawId}"`);
           versionId = found.template_version_id;
           applyPage(found);
+        } catch {
+          if (!UUID_RE.test(rawId)) {
+            throw new Error(`No page found with slug "${rawId}"`);
+          }
+          try {
+            const tplRes = await rexerApi.templates.get(rawId);
+            if (cancelled) return;
+            /* A template id carries no page context — a template can back
+               many pages — so the editor opens on the template alone. */
+            resolvedForRawIdRef.current = rawId;
+            setTemplateId(tplRes.template.id);
+            setTemplate(tplRes.template);
+            return;
+          } catch (tplErr) {
+            throw new Error(
+              `UUID "${rawId}" does not match any page or template: ${rxMessage(tplErr)}`
+            );
+          }
         }
 
         if (!versionId) throw new Error('Page has no template_version_id');

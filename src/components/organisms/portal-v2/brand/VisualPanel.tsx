@@ -2,7 +2,7 @@
 
 import { Loader2, Plus, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import {
@@ -13,6 +13,7 @@ import {
   TextInput,
   TextTextarea,
 } from '@/components/molecules/portal-v2/brand-form';
+import { Modal } from '@/components/molecules/portal-v2/Modal';
 import { cn } from '@/lib/cn';
 import type {
   BrandColor,
@@ -20,6 +21,7 @@ import type {
   BrandLogo,
 } from '@/lib/portal-v2/brand/types';
 import { errorMessage } from '@/services/portal-v2/_error';
+import { fetchMediaByIds } from '@/services/portal-v2/mediaCatalog';
 import { uploadMediaFile } from '@/services/portal-v2/mediaUpload';
 
 type VisualPanelProps = {
@@ -33,12 +35,49 @@ export const VisualPanel = ({ data, editing, onChange }: VisualPanelProps) => {
   /** Logo id currently mid-upload — disables its picker, shows a spinner. */
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   /**
-   * Uploaded filename per logo id, THIS SESSION ONLY. `BrandLogo.asset` is
-   * just the media id (mapProfile ↔ BE `media_id`) — the profile round-trip
-   * carries no filename, so after a reload the badge falls back to "Attached".
+   * Thumbnail (name + url) per logo id, keyed by MEDIA id (`BrandLogo.asset`)
+   * — not logo id, so a logo already carrying an asset from a previous
+   * session resolves to the same picture without a re-upload. A fresh upload
+   * seeds this straight from `uploadMediaFile`'s response; an already-
+   * attached logo (loaded from the saved profile, which only carries
+   * `media_id` — see mapProfile.ts) resolves via the effect below.
    */
-  const [names, setNames] = useState<Record<string, string>>({});
+  const [previews, setPreviews] = useState<
+    Record<string, { name: string; url?: string }>
+  >({});
+  const [lightbox, setLightbox] = useState<{
+    url: string;
+    name: string;
+  } | null>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const assetIds = V.logos
+    .map(l => l.asset)
+    .filter((id): id is string => Boolean(id));
+  const unresolvedIds = assetIds.filter(id => !(id in previews));
+  // Re-run when the SET of unresolved ids changes, not on every `previews`
+  // write from this same effect — a plain [assetIds] dep re-fires each
+  // render (a new array), and depending on `previews` too would loop.
+  const unresolvedKey = unresolvedIds.join(',');
+  useEffect(() => {
+    if (!unresolvedIds.length) return;
+    let alive = true;
+    void fetchMediaByIds(unresolvedIds).then(byId => {
+      if (!alive) return;
+      setPreviews(prev => {
+        const next = { ...prev };
+        for (const id of unresolvedIds) {
+          const a = byId[id];
+          next[id] = a ? { name: a.name, url: a.url } : { name: 'Attached' };
+        }
+        return next;
+      });
+    });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unresolvedKey]);
 
   const patchVisual = (partial: Partial<typeof V>) => {
     onChange({ ...data, visual: { ...V, ...partial } });
@@ -70,7 +109,10 @@ export const VisualPanel = ({ data, editing, onChange }: VisualPanelProps) => {
         x.id === logoId ? { ...x, asset: asset.id } : x
       );
       patchVisual({ logos });
-      setNames(prev => ({ ...prev, [logoId]: asset.name }));
+      setPreviews(prev => ({
+        ...prev,
+        [asset.id]: { name: asset.name, url: asset.url },
+      }));
     } catch (err) {
       toast.error(errorMessage(err, 'Upload failed'));
     } finally {
@@ -106,7 +148,7 @@ export const VisualPanel = ({ data, editing, onChange }: VisualPanelProps) => {
               key={l.id}
               className='flex items-center gap-3 rounded-[12px] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-3.5 py-3'
             >
-              <span className='w-[140px] shrink-0'>
+              <span className='block h-16 w-[140px] shrink-0'>
                 <input
                   ref={el => {
                     fileInputs.current[l.id] = el;
@@ -120,12 +162,51 @@ export const VisualPanel = ({ data, editing, onChange }: VisualPanelProps) => {
                     if (file) void handleAttachLogoFile(l.id, file);
                   }}
                 />
-                {editing ? (
+                {l.asset && previews[l.asset]?.url ? (
+                  <span className='group relative block size-full overflow-hidden rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
+                    <button
+                      type='button'
+                      onClick={() =>
+                        setLightbox({
+                          url: previews[l.asset!]!.url!,
+                          name: previews[l.asset!]?.name || l.n || 'Logo',
+                        })
+                      }
+                      className='block size-full cursor-zoom-in'
+                      aria-label={`View full size — ${l.n || 'logo'}`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={previews[l.asset]!.url}
+                        alt={l.n || previews[l.asset]?.name || ''}
+                        className='size-full object-contain p-1'
+                      />
+                    </button>
+                    {editing ? (
+                      <button
+                        type='button'
+                        onClick={() => fileInputs.current[l.id]?.click()}
+                        disabled={uploadingId === l.id}
+                        aria-label={`Replace image — ${l.n || 'logo'}`}
+                        className='absolute right-1 bottom-1 flex size-6 items-center justify-center rounded-full bg-[var(--pv2-ink)]/70 text-[var(--pv2-paper)] opacity-0 transition-opacity group-hover:opacity-100 disabled:opacity-100'
+                      >
+                        {uploadingId === l.id ? (
+                          <Loader2
+                            className='size-3 animate-spin'
+                            aria-hidden
+                          />
+                        ) : (
+                          <Upload className='size-3' aria-hidden />
+                        )}
+                      </button>
+                    ) : null}
+                  </span>
+                ) : editing ? (
                   <button
                     type='button'
                     onClick={() => fileInputs.current[l.id]?.click()}
                     disabled={uploadingId === l.id}
-                    className='flex w-full items-center justify-center gap-1.5 truncate rounded border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 py-1.5 text-[11.5px] font-semibold text-[var(--pv2-faint)] transition-colors hover:border-[var(--pv2-electric)] hover:text-[var(--pv2-electric)] disabled:opacity-60'
+                    className='flex size-full items-center justify-center gap-1.5 truncate rounded border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 py-1.5 text-[11.5px] font-semibold text-[var(--pv2-faint)] transition-colors hover:border-[var(--pv2-electric)] hover:text-[var(--pv2-electric)] disabled:opacity-60'
                   >
                     {uploadingId === l.id ? (
                       <Loader2 className='size-3.5 animate-spin' aria-hidden />
@@ -134,15 +215,17 @@ export const VisualPanel = ({ data, editing, onChange }: VisualPanelProps) => {
                         <Upload className='size-3 shrink-0' aria-hidden />
                         <span className='truncate'>
                           {l.asset
-                            ? (names[l.id] ?? 'Attached')
+                            ? (previews[l.asset]?.name ?? 'Attached')
                             : 'Attach image'}
                         </span>
                       </>
                     )}
                   </button>
                 ) : (
-                  <span className='block truncate rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 py-1.5 text-[11.5px] font-semibold text-[var(--pv2-faint)]'>
-                    {l.asset ? (names[l.id] ?? 'Attached') : 'no file attached'}
+                  <span className='flex size-full items-center truncate rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 py-1.5 text-[11.5px] font-semibold text-[var(--pv2-faint)]'>
+                    {l.asset
+                      ? (previews[l.asset]?.name ?? 'Attached')
+                      : 'no file attached'}
                   </span>
                 )}
               </span>
@@ -451,6 +534,22 @@ export const VisualPanel = ({ data, editing, onChange }: VisualPanelProps) => {
           </span>
         </div>
       </BrandCard>
+
+      {lightbox ? (
+        <Modal
+          open
+          onClose={() => setLightbox(null)}
+          title={lightbox.name}
+          wide
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightbox.url}
+            alt={lightbox.name}
+            className='max-h-[70vh] w-full rounded-[var(--pv2-r-sm)] object-contain'
+          />
+        </Modal>
+      ) : null}
     </>
   );
 };

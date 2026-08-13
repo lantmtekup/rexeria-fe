@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, Layers, Trash2 } from 'lucide-react';
+import { BadgeCheck, Copy, Layers, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { KeyboardEvent, MouseEvent } from 'react';
 
@@ -158,6 +158,21 @@ export const ExperienceCard = ({
                   ? t('statusArchived')
                   : t('statusDraft')}
             </span>
+            {/*
+              The curation mark (§4.10) — set by hand, never derived. Nowhere
+              on the card before this: the only place it showed at all was the
+              detail modal's own toggle button, so a whole grid of proven work
+              read as indistinguishable from everything else.
+            */}
+            {experience.proven ? (
+              <span
+                title={t('provenHint')}
+                className='inline-flex shrink-0 cursor-help items-center gap-0.5 rounded-full bg-[color-mix(in_srgb,var(--pv2-electric)_14%,transparent)] px-1.5 py-px text-[10px] font-semibold tracking-[0.02em] text-[var(--pv2-electric)] uppercase'
+              >
+                <BadgeCheck className='size-3' strokeWidth={2.4} aria-hidden />
+                {t('provenOn')}
+              </span>
+            ) : null}
           </div>
         </div>
 
