@@ -40,3 +40,27 @@ export const fetchMediaCatalog = async (
     };
   }
 };
+
+/**
+ * Resolve a known set of media ids to their asset (name + url for a
+ * thumbnail) — `?ids=` batches in one request, BE caps at 100 and silently
+ * skips unknowns. Used where only the id got persisted (e.g. a brand logo's
+ * `media_id`) and the caller needs the picture back, not just the id.
+ */
+export const fetchMediaByIds = async (
+  ids: string[]
+): Promise<Record<string, MediaAsset>> => {
+  const unique = [...new Set(ids)].filter(Boolean);
+  if (unique.length === 0) return {};
+  try {
+    const res = await rexerApi.media.list({
+      ids: unique,
+      limit: unique.length,
+    });
+    return Object.fromEntries(
+      (res.items ?? []).map(mapRexerMediaAssetToUi).map(a => [a.id, a])
+    );
+  } catch {
+    return {};
+  }
+};
