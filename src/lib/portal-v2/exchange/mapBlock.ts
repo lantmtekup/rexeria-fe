@@ -53,7 +53,6 @@ export const mapBlockToListing = (block: Block): ExchangeListingView => {
     kind: 'block',
     grad: gradientFor(block.id),
     ...(block.description ? { summary: block.description } : {}),
-    layerRoles: [],
     // evidence / coverage bỏ trống: một block lẻ không có grain khái niệm để
     // đo lift (xem chính BE: `itemFor` trả Evidence nil cho nguồn block).
   };

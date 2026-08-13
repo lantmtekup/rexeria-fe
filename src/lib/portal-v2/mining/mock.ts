@@ -65,21 +65,18 @@ export const MOCK_MINING: MiningData = {
               'Drafted from the mined checkout leak: make the threshold visible early and turn the gap into a bundle offer.',
             blocks: [
               {
-                r: 'ATT',
                 n: 'Name the goal',
                 h: 'You’re $12 from free shipping',
                 b: 'The threshold is the headline — no last-step surprise.',
                 leans: 'Exit survey — shipping surprise',
               },
               {
-                r: 'EXP',
                 n: 'Live progress bar',
                 h: 'Watch the bar fill as the cart grows',
                 b: 'Every add moves the bar.',
                 leans: 'Session replays — 11s hesitation',
               },
               {
-                r: 'CON',
                 n: 'Checkout in place',
                 h: 'Free shipping unlocked — check out',
                 b: 'The moment the bar fills, the CTA says so.',
@@ -173,21 +170,18 @@ export const MOCK_MINING: MiningData = {
               'A creator-match page seeded by the measured TikTok message gap.',
             blocks: [
               {
-                r: 'ATT',
                 n: 'Continue the hook',
                 h: 'The 3-step glass skin routine',
                 b: 'Same words, same promise as the creative.',
                 leans: 'TikTok Ads creative data',
               },
               {
-                r: 'EXP',
                 n: 'The routine, shoppable',
                 h: 'Step 1 · Prep — Step 2 · Tint — Step 3 · Set',
                 b: 'Each step is a shoppable card.',
                 leans: 'Heatmap — 62% stop at the fold',
               },
               {
-                r: 'CON',
                 n: 'Shop the routine',
                 h: 'Get the routine',
                 b: 'One add-to-cart for the set.',
@@ -270,21 +264,18 @@ export const MOCK_MINING: MiningData = {
               'Moves the measured fit question inline, next to the buying decision.',
             blocks: [
               {
-                r: 'ATT',
                 n: 'Name the doubt',
                 h: 'Will it work for my skin?',
                 b: 'Ask the pre-purchase question out loud.',
                 leans: 'Review mining — 217 uncertainty mentions',
               },
               {
-                r: 'EXP',
                 n: '3-question match, inline',
                 h: 'Undertone · skin type · coverage',
                 b: 'The match happens on the PDP.',
                 leans: 'Pulse — standalone quiz at −1%',
               },
               {
-                r: 'CON',
                 n: 'Add with confidence',
                 h: 'Your match · add to cart',
                 b: 'The result lands beside the button.',
@@ -354,21 +345,18 @@ export const MOCK_MINING: MiningData = {
               'Slims the measured drawer overload and pins the checkout action.',
             blocks: [
               {
-                r: 'ATT',
                 n: 'The cart, at a glance',
                 h: 'Your bag · 2 items',
                 b: 'One clean summary line.',
                 leans: 'ReXeR Tag rage-taps',
               },
               {
-                r: 'EXP',
                 n: 'One smart upsell',
                 h: 'Add the travel size — $12',
                 b: 'One upsell selected by cart contents.',
                 leans: 'GA4 device split',
               },
               {
-                r: 'CON',
                 n: 'Sticky checkout',
                 h: 'Checkout · always visible',
                 b: 'Pinned to the drawer bottom edge.',

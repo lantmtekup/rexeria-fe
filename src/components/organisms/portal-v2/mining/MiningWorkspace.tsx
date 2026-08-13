@@ -143,12 +143,9 @@ const AgentDraftModal = ({
           </div>
           <div className='grid gap-px overflow-hidden rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-hair)] md:grid-cols-3'>
             {draft.blocks.map(block => (
-              <article
-                key={`${block.r}-${block.n}`}
-                className='bg-[var(--pv2-paper)] p-4'
-              >
+              <article key={block.n} className='bg-[var(--pv2-paper)] p-4'>
                 <span className='text-[10px] font-bold tracking-[0.12em] text-[var(--pv2-electric)] uppercase'>
-                  {block.r} · {block.n}
+                  {block.n}
                 </span>
                 <h3 className='mt-3 text-sm font-bold text-[var(--pv2-ink)]'>
                   {block.h ?? t('governedClaim')}

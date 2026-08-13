@@ -156,14 +156,6 @@ export const ExchangeDetailModal = ({
                     })
                   : t('coverageUnknown')}
               </span>
-              {meta.layerRoles.map(role => (
-                <span
-                  key={role}
-                  className='rounded-md bg-[var(--pv2-canvas)] px-1.5 py-0.5 text-[10px] font-bold text-[var(--pv2-mut)]'
-                >
-                  {role}
-                </span>
-              ))}
             </div>
             {meta.coverage && meta.objective ? (
               <p
