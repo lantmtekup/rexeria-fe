@@ -27,7 +27,10 @@ import type {
   Readiness,
 } from '@/lib/portal-v2/automation/types';
 import type { RxExperience } from '@/services/rexer-v2/types/experience';
-import type { RxAutomationRunItem } from '@/services/rexer-v2/types/automation';
+import type {
+  RxAutomation,
+  RxAutomationRunItem,
+} from '@/services/rexer-v2/types/automation';
 
 /** Trần mỗi lượt — gương `automationMaxRun` bên BE (`usecase/automation.go`). */
 const AUTOMATION_BATCH_CAP = 200;
@@ -49,6 +52,8 @@ const AUTOMATION_BATCH_CAP = 200;
 type AutomationWorkspaceProps = {
   /** Template đã Proven — `GET /automations` (hub). */
   initialExperiences: RxExperience[];
+  /** Automation đã tạo, cùng lượt gọi hub — `GET /automations`. */
+  initialAutomations: RxAutomation[];
   /** Catalogue THẬT — `GET /products?is_template=false`. */
   initialProducts: Product[];
   /** Asset của catalogue, dùng cho ô EXP (đếm ảnh của từng sản phẩm). */
@@ -62,6 +67,7 @@ type AutomationWorkspaceProps = {
 
 export const AutomationWorkspace = ({
   initialExperiences,
+  initialAutomations,
   initialProducts,
   initialAssets,
   initialCampaigns,
@@ -343,6 +349,8 @@ export const AutomationWorkspace = ({
         {stage === 'hub' ? (
           <AutomationHub
             experiences={experiences}
+            runs={initialAutomations}
+            products={products}
             locked={initialLocked}
             error={initialError}
             onStart={handleStart}
