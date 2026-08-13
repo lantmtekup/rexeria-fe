@@ -345,6 +345,12 @@ export interface Template {
   preview_mode: string; // 'static' | 'rendered' | 'live_stub'
   current_version_id: string;
   thumbnail_url?: string;
+  /**
+   * Slug công khai của trang mà template này được promote ra (`/p/{slug}`).
+   * Suy ở server từ `promoted_from_page_id`, chỉ có khi trang nguồn đã
+   * publish. Template không có slug của riêng nó — slug thuộc về trang.
+   */
+  preview_slug?: string;
   category?: string;
   tags?: string[];
   /** Spec §4.3.1 discriminator (mig 132). 'landing' | 'ad' | 'curate' | 'email'. */

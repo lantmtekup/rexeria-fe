@@ -70,6 +70,10 @@ export const mapTemplateToListing = (t: Template): ExchangeListingView => {
     id: `tpl-${t.id}`,
     source: 'page',
     templateId: t.id,
+    // Xem trước đi qua `/p/{slug}` của trang nguồn. Template không có slug
+    // riêng, và FE của một brand không tra nổi trang thuộc brand khác — nên
+    // slug này do BE giải sẵn (`preview_slug`).
+    ...(t.preview_slug ? { slug: t.preview_slug } : {}),
     templateVersionId: t.current_version_id,
     name: t.name || t.code || 'Untitled',
     author: authorOf(t),
