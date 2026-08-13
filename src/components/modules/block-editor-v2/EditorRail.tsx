@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+  Activity,
   FileText,
   Image as ImageIcon,
   Layers,
@@ -28,7 +29,13 @@ import { cn } from '@/lib/cn';
  * canvas back to full width without losing your place.
  */
 
-export type EditorRailTab = 'blocks' | 'layers' | 'media' | 'product' | 'pages';
+export type EditorRailTab =
+  | 'blocks'
+  | 'layers'
+  | 'media'
+  | 'product'
+  | 'pages'
+  | 'signal';
 
 type RailItem = {
   id: EditorRailTab;
@@ -44,6 +51,7 @@ export const EDITOR_RAIL_ITEMS: RailItem[] = [
   { id: 'media', label: 'Media', icon: ImageIcon },
   { id: 'product', label: 'Sản phẩm', icon: Package },
   { id: 'pages', label: 'Trang', icon: FileText, templateOnly: true },
+  { id: 'signal', label: 'Signal', icon: Activity },
 ];
 
 interface EditorRailProps {
