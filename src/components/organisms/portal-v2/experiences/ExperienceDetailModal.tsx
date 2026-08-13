@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  BadgeCheck,
-  Eye,
-  Library,
-  Loader2,
-  PenLine,
-  PlusCircle,
-} from 'lucide-react';
+import { BadgeCheck, Eye, PenLine, PlusCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -50,12 +43,11 @@ type ExperienceDetailModalProps = {
   /**
    * Bật/tắt dấu Proven trên chính trang này.
    *
-   * KHÔNG đưa trang vào hub Automation: hub đọc `ListProvenTemplates`, tức
-   * bảng `templates`, còn đây là một page. Muốn vào hub thì `onPromote`.
+   * Đủ để vào hub Automation ngay — hub giờ đọc cả copy Proven trực tiếp,
+   * không còn bắt buộc "Add to library" (Promote → template → Proven) như
+   * trước nữa.
    */
   onToggleProven: (experience: ExperienceView) => void;
-  /** Nhân bản trang thành template của brand rồi đánh dấu Proven. */
-  onPromote: (experience: ExperienceView) => void;
   /** Đang ghi xuống server — khoá nút để không bấm kép. */
   provenPending?: boolean;
   /**
@@ -65,7 +57,6 @@ type ExperienceDetailModalProps = {
    * dưới lưới thẻ — tức là sau lưng lớp phủ, không ai thấy.
    */
   provenError?: string | null;
-  promotePending?: boolean;
 };
 
 const CATEGORY_LABEL_KEY = {
@@ -141,10 +132,8 @@ export const ExperienceDetailModal = ({
   onEdit,
   onUse,
   onToggleProven,
-  onPromote,
   provenPending = false,
   provenError = null,
-  promotePending = false,
 }: ExperienceDetailModalProps) => {
   const t = useTranslations('portalV2.experiences');
   const [tab, setTab] = useState<ExperienceDetailTab>('details');
@@ -266,20 +255,6 @@ export const ExperienceDetailModal = ({
           >
             <BadgeCheck className='size-3.5' strokeWidth={2.2} aria-hidden />
             {experience.proven ? t('provenOn') : t('provenOff')}
-          </Button>
-          <Button
-            variant='ghost'
-            size='sm'
-            disabled={promotePending || !editable}
-            title={editable ? t('promoteHint') : t('editExternalHint')}
-            onClick={() => onPromote(experience)}
-          >
-            {promotePending ? (
-              <Loader2 className='size-3.5 animate-spin' aria-hidden />
-            ) : (
-              <Library className='size-3.5' strokeWidth={2.2} aria-hidden />
-            )}
-            {t('promoteLabel')}
           </Button>
           <span className='flex-1' />
           <Button
