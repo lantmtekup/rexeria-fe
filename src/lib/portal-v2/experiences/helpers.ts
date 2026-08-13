@@ -98,22 +98,18 @@ export const canEditCanvas = (experience: ExperienceView): boolean =>
 /**
  * Xem trước được không.
  *
- * Trang ĐÃ PUBLISH thì xem qua `/p/{slug}`. Trang NHÁP không có đường công
- * khai — `/p/{slug}` của một bản nháp trả 404, vì nó phục vụ từ Release chứ
- * không phải từ bản ghi trang. Nhưng nháp vẫn xem được: dựng thẳng từ
- * blueprint của revision mới nhất, đúng cách canvas editor vẫn làm.
+ * Chỉ một điều kiện: có canvas để dựng. Trang ngoài (`externalUrl`) không có.
  *
- * Trang ngoài (`externalUrl`) không có canvas nào để dựng.
+ * KHÔNG hỏi slug, và KHÔNG hỏi `status`. Cả hai đều từng được dùng làm chỉ dấu
+ * "có trang công khai", và cả hai đều sai:
+ *
+ *   - slug có mặt trên cả bản nháp, mà `/p/{slug}` của nháp trả 404
+ *   - `status: 'published'` KHÔNG bảo đảm có Release. Đo trên dữ liệu thật:
+ *     "The Jack Pine" mang status published, `releases: []`, và `/p/{slug}`
+ *     vẫn 404. Trang công khai phục vụ từ RELEASE, không phải từ cột status.
  */
-export const canPreview = (experience: ExperienceView): boolean => {
-  if (experience.externalUrl) return false;
-  if (experience.status === 'published') return Boolean(experience.slug);
-  return true;
-};
-
-/** Nháp ⇒ stage do host dựng từ blueprint, không iframe `/p/{slug}`. */
-export const previewsFromBlueprint = (experience: ExperienceView): boolean =>
-  !experience.externalUrl && experience.status !== 'published';
+export const canPreview = (experience: ExperienceView): boolean =>
+  !experience.externalUrl;
 
 /**
  * Chỉ TEMPLATE và BLOCK fork được.

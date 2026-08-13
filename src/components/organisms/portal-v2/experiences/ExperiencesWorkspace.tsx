@@ -37,7 +37,6 @@ import {
   countByState,
   filterExperiences,
   findById,
-  previewsFromBlueprint,
 } from '@/lib/portal-v2/experiences/helpers';
 import { writeExchangePreviewParam } from '@/lib/portal-v2/exchange/previewParam';
 import type {
@@ -324,16 +323,20 @@ export const ExperiencesWorkspace = ({
    * giữ trong ref: đổi state ở đây sẽ vẽ lại cả lưới thẻ mà không thêm được gì.
    * Rỗng thì stage hiện khung trống thay vì `/p/{slug}` trả 404.
    */
-  const draftBlueprintRef = useRef<Record<string, unknown> | null>(null);
+  const blueprintRef = useRef<Record<string, unknown> | null>(null);
+  /** Nạp xong mà không có blueprint nào — khác với "đang nạp". */
+  const [previewEmpty, setPreviewEmpty] = useState(false);
 
   useEffect(() => {
     const target = modalMode === 'preview' ? active : null;
-    if (!target || !previewsFromBlueprint(target)) {
-      draftBlueprintRef.current = null;
+    if (!target || target.externalUrl) {
+      blueprintRef.current = null;
+      setPreviewEmpty(false);
       return;
     }
     let cancelled = false;
-    draftBlueprintRef.current = null;
+    blueprintRef.current = null;
+    setPreviewEmpty(false);
     // Revision MỚI NHẤT — đó là thứ người dùng vừa lấy về hoặc vừa sửa; bản
     // publish (nếu có) là chuyện khác và đã có `/p/{slug}` lo.
     rexerApi.pages
@@ -341,9 +344,15 @@ export const ExperiencesWorkspace = ({
       .then(res => {
         if (cancelled) return;
         const bp = (res.items ?? [])[0]?.canvas_blueprint;
-        if (bp) draftBlueprintRef.current = bp as Record<string, unknown>;
+        if (bp) blueprintRef.current = bp as Record<string, unknown>;
+        // Không có revision ⇒ nói ra. Dựng canvas rỗng sẽ hiện một khung
+        // trắng trông y như trang thật mà chẳng có gì, và người dùng không
+        // biết đó là lỗi hay là trang trống.
+        else setPreviewEmpty(true);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (!cancelled) setPreviewEmpty(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -353,9 +362,11 @@ export const ExperiencesWorkspace = ({
     (experience: ExperienceView): PreviewItem => ({
       id: experience.id,
       name: experience.name,
-      // Nháp không có `/p/{slug}` để iframe — `source: 'live'` báo shell rằng
-      // host tự dựng stage, đúng cơ chế canvas editor đang dùng.
-      source: previewsFromBlueprint(experience) ? 'live' : 'page',
+      // LUÔN dựng từ blueprint. `/p/{slug}` phục vụ từ một Release, mà một
+      // trang có thể mang `status: 'published'` với `releases: []` — đo được
+      // trên dữ liệu thật. Nên không có chỉ dấu nào ở đây nói chắc trang công
+      // khai tồn tại; blueprint thì luôn có và luôn là thứ trang này ĐANG là.
+      source: 'live',
       slug: experience.slug ?? undefined,
       kindLabel: t('catCollection'),
       evidence: experience.stats
@@ -729,14 +740,20 @@ export const ExperiencesWorkspace = ({
         neighbors={previewNeighborItems}
         onClose={handleClosePreview}
         onNavigate={handlePreviewNavigate}
-        renderStage={device => (
-          <ExchangeLiveCanvasPreview
-            device={device}
-            lang='vi'
-            urlLabel={active?.slug ? `/${active.slug}` : '/preview'}
-            getBlueprint={() => draftBlueprintRef.current ?? {}}
-          />
-        )}
+        renderStage={device =>
+          previewEmpty ? (
+            <div className='grid h-full place-items-center px-8 text-center text-[13px] text-[var(--pv2-mut)]'>
+              {t('previewNoContent')}
+            </div>
+          ) : (
+            <ExchangeLiveCanvasPreview
+              device={device}
+              lang='vi'
+              urlLabel={active?.slug ? `/${active.slug}` : '/preview'}
+              getBlueprint={() => blueprintRef.current ?? {}}
+            />
+          )
+        }
       />
     </div>
   );

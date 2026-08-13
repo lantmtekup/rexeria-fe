@@ -670,6 +670,7 @@
       "previewExperience": "Xem trước {name}",
       "previewLabel": "Xem trước",
       "previewLoadError": "Không tải được trang này để xem trước.",
+      "previewNoContent": "Trải nghiệm này chưa có bản dựng nào để xem trước.",
       "previewNoSlug": "Trang này chưa có slug công khai nên không có gì để xem trước.",
       "previewUnavailable": "Không thể xem trước experience này.",
       "promoteDone": "Đã tạo template “{name}” và đánh dấu Proven — mở Automation để nhân bản. Template không hiện ở danh sách này vì đây là danh sách trang.",

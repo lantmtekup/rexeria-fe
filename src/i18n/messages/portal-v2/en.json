@@ -670,6 +670,7 @@
       "previewExperience": "Preview {name}",
       "previewLabel": "Preview",
       "previewLoadError": "Could not load this page for preview.",
+      "previewNoContent": "This experience has no saved canvas to preview yet.",
       "previewNoSlug": "This page has no public slug, so there is nothing to preview.",
       "previewUnavailable": "Preview is unavailable for this experience.",
       "promoteDone": "Created template “{name}” and marked it Proven — open Automation to replicate. It is not in this list because this list shows pages.",
