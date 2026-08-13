@@ -69,9 +69,33 @@ export const ExperienceCard = ({
           </h3>
           {/* The slug, not the name, is what identifies a page in the wild —
               and two pages can share a name. */}
-          <p className='truncate font-mono text-[11px] text-[var(--pv2-faint)]'>
-            {experience.slug ? `/${experience.slug}` : t('noSlug')}
-          </p>
+          <div className='flex min-w-0 items-center gap-1.5'>
+            <p className='truncate font-mono text-[11px] text-[var(--pv2-faint)]'>
+              {experience.slug ? `/${experience.slug}` : t('noSlug')}
+            </p>
+            {/*
+              Trạng thái đứng cạnh slug vì hai thứ này chỉ có nghĩa cùng nhau:
+              `/{slug}` của một bản NHÁP trả 404 — nó chưa có Release nào để
+              phục vụ. Thẻ trước đây in slug như thể địa chỉ nào cũng mở được,
+              nên không cách nào biết trang nào thật sự đang sống.
+            */}
+            <span
+              className={cn(
+                'shrink-0 rounded-full px-1.5 py-px text-[10px] font-semibold tracking-[0.02em] uppercase',
+                experience.status === 'published'
+                  ? 'bg-[color-mix(in_srgb,var(--pv2-success)_14%,transparent)] text-[#15803d]'
+                  : experience.status === 'archived'
+                    ? 'bg-[var(--pv2-canvas)] text-[var(--pv2-faint)]'
+                    : 'bg-[color-mix(in_srgb,var(--pv2-warning)_18%,transparent)] text-[#b45309]'
+              )}
+            >
+              {experience.status === 'published'
+                ? t('statusPublished')
+                : experience.status === 'archived'
+                  ? t('statusArchived')
+                  : t('statusDraft')}
+            </span>
+          </div>
         </div>
 
         <ExperienceMeta experience={experience} />
