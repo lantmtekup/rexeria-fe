@@ -1,6 +1,12 @@
 'use client';
 
-import { ListFilter, Loader2, Search } from 'lucide-react';
+import {
+  ArrowDownWideNarrow,
+  ListFilter,
+  Loader2,
+  Plus,
+  Search,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -8,12 +14,20 @@ import { toast } from 'sonner';
 
 import { FilterChips } from '@/components/molecules/portal-v2/FilterChips';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
+import {
+  ViewToggle,
+  type PortalViewMode,
+} from '@/components/molecules/portal-v2/ViewToggle';
 import { ExperienceCard } from '@/components/organisms/portal-v2/experiences/ExperienceCard';
 import { ExperienceDetailModal } from '@/components/organisms/portal-v2/experiences/ExperienceDetailModal';
+import { ExperienceTable } from '@/components/organisms/portal-v2/experiences/ExperienceTable';
+import { NewExperienceModal } from '@/components/organisms/portal-v2/experiences/NewExperienceModal';
 import { UseExperienceModal } from '@/components/organisms/portal-v2/experiences/UseExperienceModal';
 import {
+  createExperience,
   deleteExperiences,
   duplicateExperience,
+  type NewExperienceDraft,
 } from '@/services/portal-v2/experienceActions';
 import { errorMessage } from '@/services/portal-v2/_error';
 import {
@@ -192,6 +206,16 @@ export const ExperiencesWorkspace = ({
   );
   /** Category / Type / Objective / Evidence — collapsed until asked for. */
   const [refineOpen, setRefineOpen] = useState(false);
+  /** Lưới hay bảng — prototype `xview`. */
+  const [view, setView] = useState<PortalViewMode>('grid');
+  /**
+   * Xếp theo bằng chứng — prototype `xrank`.
+   *
+   * Phải đi vòng qua SERVER: `shelfLess` xếp theo lift rồi số phiên, mà danh
+   * sách không trả trường nào trong hai trường đó (chỉ trả bậc `ev`). Xếp ở FE
+   * thì cùng lắm là xếp theo bậc — thô hơn, và sẽ lệch với thứ tự thật.
+   */
+  const [rank, setRank] = useState(false);
 
   const [activeId, setActiveId] = useState<string | null>(
     deepLinkedExperience?.id ?? null
@@ -222,7 +246,7 @@ export const ExperiencesWorkspace = ({
     let cancelled = false;
     const handle = setTimeout(() => {
       setSearching(true);
-      void fetchExperienceLibrary({ q: filters.q, brandId })
+      void fetchExperienceLibrary({ q: filters.q, brandId, rank })
         .then(res => {
           if (cancelled) return;
           setItems(res.items);
@@ -237,7 +261,7 @@ export const ExperiencesWorkspace = ({
       cancelled = true;
       clearTimeout(handle);
     };
-  }, [filters.q, brandId]);
+  }, [filters.q, brandId, rank]);
 
   const visible = useMemo(
     () => filterExperiences(items, filters),
@@ -351,6 +375,44 @@ export const ExperiencesWorkspace = ({
 
   const clearSelection = useCallback(() => setSelected([]), []);
 
+  /**
+   * Ô tick ở đầu bảng. Phạm vi là những dòng ĐANG THẤY, không phải cả thư
+   * viện — bộ lọc đang bật mà "chọn tất cả" vơ luôn thứ đã bị lọc ra thì lệnh
+   * xoá tiếp theo sẽ giết những món người dùng không hề nhìn thấy.
+   */
+  const toggleAllVisible = useCallback(() => {
+    setSelected(prev => {
+      // So theo ID chứ không theo số lượng: đổi tab xong vẫn còn lựa chọn cũ
+      // thì hai danh sách có thể BẰNG SỐ mà khác hẳn nội dung.
+      const ids = visible.map(x => x.id);
+      const allOn = ids.length > 0 && ids.every(id => prev.includes(id));
+      return allOn ? [] : ids;
+    });
+  }, [visible]);
+
+  const [newOpen, setNewOpen] = useState(false);
+
+  /**
+   * Tạo mới xong thì ĐI THẲNG vào canvas, không chèn thẻ vào lưới.
+   *
+   * `POST /v1/experiences` dựng một template nháp (hoặc block) — không phải bản
+   * copy — nên nó không thuộc thư viện này, y hệt trường hợp nhân bản ở dưới.
+   * Chèn vào lưới sẽ tạo ra một thẻ biến mất ngay lần nạp sau.
+   *
+   * Đi bằng `canvasEditorHref`, KHÔNG bằng `edit_url` của BE — cái đó trỏ tới
+   * `/templates/{id}`, một route FE này không có, và bấm Tạo sẽ rơi thẳng vào
+   * trang NotFound. Xem chú thích ở `createExperience`.
+   */
+  const handleCreate = useCallback(
+    async (draft: NewExperienceDraft) => {
+      const created = await createExperience(draft);
+      setNewOpen(false);
+      toast.success(t('createdOpening', { name: created.name }));
+      router.push(canvasEditorHref(created));
+    },
+    [router, t]
+  );
+
   const handleDuplicate = useCallback(
     async (experience: ExperienceView) => {
       setBusy(true);
@@ -366,12 +428,12 @@ export const ExperiencesWorkspace = ({
         hai copy cùng `origin + campaign + item` sẽ đếm trùng dòng fact, và có
         unique constraint chặn ở tầng cấu trúc. BE làm đúng luật đó.
 
-        Hệ quả cho màn này: thứ vừa tạo KHÔNG thuộc về đây. Màn Experiences chỉ
-        nạp copy của brand; template nằm ở thư viện dùng chung.
+        Template nháp ấy giờ CÓ CHỖ ở màn này (tab "Template của tôi"), nên bản
+        sao hiện ra ngay cạnh bản gốc và bộ lọc nhảy sang tab chứa nó.
 
-        Nên không chèn nó vào lưới và không đụng vào bộ lọc. Chèn một món rồi
-        để bộ lọc giấu đi, hoặc đổi bộ lọc sang một tab không tồn tại, đều là
-        cách màn hình nói dối về việc vừa xảy ra. Nói thẳng nó đi đâu.
+        Vẫn giữ nhánh `landsHere`: hỏi `EXPERIENCE_STATES` chứ không đoán cứng
+        `'template'`. Đổi bộ lọc sang một tab không tồn tại thì lưới sẽ trống
+        trơn ngay sau một thao tác vừa báo thành công — đúng lỗi đã mắc một lần.
       */
       const landsHere = EXPERIENCE_STATES.some(x => x.id === copy.state);
       if (!landsHere) {
@@ -522,6 +584,21 @@ export const ExperiencesWorkspace = ({
               {t('subtitle')}
             </p>
           </div>
+
+          <button
+            type='button'
+            onClick={() => setNewOpen(true)}
+            className={cn(
+              'inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-2',
+              'bg-[var(--pv2-electric)] text-[12.5px] font-semibold text-[var(--pv2-paper)]',
+              'shadow-[0_2px_8px_rgba(56,98,255,0.18)] transition-colors',
+              'hover:bg-[var(--pv2-electric-hover)]',
+              'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2 focus-visible:outline-none'
+            )}
+          >
+            <Plus className='size-3.5' strokeWidth={2.4} aria-hidden />
+            {t('newAction')}
+          </button>
         </div>
       </div>
 
@@ -665,6 +742,37 @@ export const ExperiencesWorkspace = ({
                     </span>
                   </button>
                 ))}
+
+                <span className='flex-1' />
+
+                {/*
+                  Xếp hạng là một lần GỌI LẠI SERVER, không phải sắp lại mảng
+                  đang có — nên nó phải nằm cạnh ô tìm kiếm (thứ cũng gọi lại
+                  server), chứ không nằm trong bảng lọc chip (thứ lọc tại chỗ).
+                */}
+                <button
+                  type='button'
+                  aria-pressed={rank}
+                  title={t('rankHint')}
+                  onClick={() => setRank(prev => !prev)}
+                  className={cn(
+                    'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5',
+                    'cursor-pointer text-[12px] font-semibold transition-colors duration-150',
+                    'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2 focus-visible:outline-none',
+                    rank
+                      ? 'border-[var(--pv2-ink)] bg-[var(--pv2-ink)] text-[var(--pv2-paper)]'
+                      : 'border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-[var(--pv2-mut)] hover:border-[color-mix(in_srgb,var(--pv2-violet)_35%,var(--pv2-hair))] hover:text-[var(--pv2-ink)]'
+                  )}
+                >
+                  <ArrowDownWideNarrow
+                    className='size-3.5 shrink-0'
+                    strokeWidth={2}
+                    aria-hidden
+                  />
+                  {t('rankAction')}
+                </button>
+
+                <ViewToggle value={view} onChange={setView} />
               </div>
 
               {refineOpen ? (
@@ -739,20 +847,33 @@ export const ExperiencesWorkspace = ({
                     </button>
                   </div>
                 ) : null}
-                <div className='grid grid-cols-[repeat(auto-fill,minmax(244px,1fr))] gap-4'>
-                  {visible.map(experience => (
-                    <ExperienceCard
-                      key={experience.id}
-                      experience={experience}
-                      onOpen={handleOpen}
-                      onPreview={handlePreview}
-                      selected={selected.includes(experience.id)}
-                      onToggleSelect={toggleSelect}
-                      onDuplicate={handleDuplicate}
-                      onDelete={e => setDeleteTarget(e.id)}
-                    />
-                  ))}
-                </div>
+                {view === 'table' ? (
+                  <ExperienceTable
+                    experiences={visible}
+                    selected={selected}
+                    onToggleSelect={toggleSelect}
+                    onToggleAll={toggleAllVisible}
+                    onOpen={handleOpen}
+                    onPreview={handlePreview}
+                    onDuplicate={handleDuplicate}
+                    onDelete={e => setDeleteTarget(e.id)}
+                  />
+                ) : (
+                  <div className='grid grid-cols-[repeat(auto-fill,minmax(244px,1fr))] gap-4'>
+                    {visible.map(experience => (
+                      <ExperienceCard
+                        key={experience.id}
+                        experience={experience}
+                        onOpen={handleOpen}
+                        onPreview={handlePreview}
+                        selected={selected.includes(experience.id)}
+                        onToggleSelect={toggleSelect}
+                        onDuplicate={handleDuplicate}
+                        onDelete={e => setDeleteTarget(e.id)}
+                      />
+                    ))}
+                  </div>
+                )}
               </>
             ) : (
               <div
@@ -783,6 +904,13 @@ export const ExperiencesWorkspace = ({
           onToggleProven={handleToggleProven}
           provenPending={provenPendingId === active.id}
           provenError={provenError}
+        />
+      ) : null}
+
+      {newOpen ? (
+        <NewExperienceModal
+          onClose={() => setNewOpen(false)}
+          onConfirm={handleCreate}
         />
       ) : null}
 

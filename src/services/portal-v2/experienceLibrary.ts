@@ -1,5 +1,6 @@
 import { v2ToExperienceView } from '@/lib/portal-v2/experiences/fromV2';
 import type { ExperienceView } from '@/lib/portal-v2/experiences/types';
+import { rexerApi } from '@/services/rexer/endpoints';
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 
 export type ExperienceLibraryQuery = {
@@ -7,6 +8,12 @@ export type ExperienceLibraryQuery = {
   q?: string;
   /** Giới hạn theo thương hiệu; chỉ platform admin dùng được. */
   brandId?: string | null;
+  /**
+   * Xếp theo BẰNG CHỨNG thay vì theo ngày sửa (`sort=shelf_rank`).
+   *
+   * Đổi luôn cách nạp, không chỉ thêm một tham số — xem `fetchRanked`.
+   */
+  rank?: boolean;
 };
 
 export type ExperienceLibraryResult = {
@@ -32,6 +39,38 @@ const MAX_PAGES = 10;
  * vào đây để tìm chỉ có 3.
  */
 const COPY_STATES = ['unassigned', 'product_copies', 'topic_copies'] as const;
+
+/** `GET /v1/templates` — 79 bản ghi thật, một trang là đủ. */
+const TEMPLATE_LOOKUP_LIMIT = 200;
+
+/**
+ * Id của những template DO CHÍNH BRAND NÀY sở hữu.
+ *
+ * Phải hỏi `GET /v1/templates` (v1) chứ không hỏi `/experiences`: repository
+ * gộp `brand_id IS NULL OR brand_id = ?` rồi trả ra một danh sách phẳng, và
+ * `RxExperience` KHÔNG mang `brand_id` — nên từ v2 không cách nào tách template
+ * hệ thống khỏi template của brand. `models.Template` thì có `brand_id`, và
+ * `null` ở đó nghĩa là hàng của hệ thống.
+ *
+ * Hỏng thì trả `null` (KHÔNG phải set rỗng): rỗng đọc như "brand không sở hữu
+ * template nào", và cả 79 template hệ thống sẽ bị loại đúng như mong muốn —
+ * nhưng bản copy của người dùng cũng biến mất mà không ai báo gì.
+ */
+const fetchOwnTemplateIds = async (): Promise<Set<string> | null> => {
+  try {
+    const res = await rexerApi.templates.list({
+      page: 1,
+      limit: TEMPLATE_LOOKUP_LIMIT,
+    });
+    return new Set(
+      (res.items ?? [])
+        .filter(t => (t as { brand_id?: string | null }).brand_id)
+        .map(t => t.id)
+    );
+  } catch {
+    return null;
+  }
+};
 
 /**
  * Thư viện trải nghiệm ← `GET /v1/experiences`.
@@ -61,15 +100,18 @@ export const fetchExperienceLibrary = async (
   };
 
   /** Một `state`, lặp hết trang của nó. */
-  const fetchState = async (state: string) => {
+  const fetchState = async (state: string, sort?: string) => {
+    const page = (n: number) =>
+      rexerV2Api.experiences.list({
+        ...common,
+        state,
+        ...(sort ? { sort } : {}),
+        page: n,
+        page_size: SERVER_PAGE_MAX,
+      });
     // Phải lặp trang: xin `page_size: 200` thì BE trả 100 và KHÔNG báo gì —
     // màn hình sẽ hiện 100/110 mà trông như đã đủ.
-    const first = await rexerV2Api.experiences.list({
-      ...common,
-      state,
-      page: 1,
-      page_size: SERVER_PAGE_MAX,
-    });
+    const first = await page(1);
     const items = [...(first.items ?? [])];
     const pages = Math.min(
       Math.ceil((first.total ?? items.length) / SERVER_PAGE_MAX),
@@ -77,24 +119,63 @@ export const fetchExperienceLibrary = async (
     );
     if (pages > 1) {
       const rest = await Promise.all(
-        Array.from({ length: pages - 1 }, (_, i) =>
-          rexerV2Api.experiences.list({
-            ...common,
-            state,
-            page: i + 2,
-            page_size: SERVER_PAGE_MAX,
-          })
-        )
+        Array.from({ length: pages - 1 }, (_, i) => page(i + 2))
       );
       rest.forEach(r => items.push(...(r.items ?? [])));
     }
     return items;
   };
 
-  try {
-    const chunks = await Promise.all(COPY_STATES.map(fetchState));
+  /**
+   * Template CỦA CHÍNH BRAND — bản sao mà `Duplicate` sinh ra sống ở đây.
+   *
+   * Nhân bản một copy cho ra một **template nháp** (`promotePage`,
+   * `experience.go:831`), nên nó không rơi vào ba state copy. Trước đây nó cũng
+   * không hiện ở Exchange (màn đó lọc `status: 'active'`), tức là bấm Nhân bản
+   * xong không màn nào bày ra thứ vừa tạo.
+   *
+   * Chỉ lấy template của brand, KHÔNG lấy template hệ thống: hệ thống là hàng
+   * dùng chung, thuộc về Exchange. Đo thật trên brand đang dùng: 79 template
+   * thấy được thì 76 là hệ thống, 3 là của brand — nên chỗ này thêm 3 mục, chứ
+   * không phải kéo cả kho về như hồi còn tab template cũ.
+   */
+  const fetchOwnTemplates = async (ownIds: Set<string> | null) => {
+    if (!ownIds || ownIds.size === 0) return [];
+    const all = await fetchState('templates');
+    return all.filter(x => ownIds.has(x.id));
+  };
 
-    // Khử trùng theo id: ba state đáng lẽ rời nhau, nhưng dựa vào điều đó là
+  /**
+   * Chế độ xếp hạng — MỘT lời gọi `state: 'all'` rồi lọc ở FE.
+   *
+   * Không thể giữ nhiều lời gọi rồi nối lại: BE xếp hạng TRONG từng phản hồi,
+   * nên nối các dải đã xếp cho ra thứ tự theo nhóm, không phải thứ tự chung —
+   * một mục `unassigned` chưa đo sẽ đứng trên một `topic_copies` bậc cao, đúng
+   * ngược với điều cái nút hứa.
+   *
+   * `state: 'all'` gộp cả template hệ thống và block (đo thật: 320 bản ghi),
+   * nên phải lọc lại: giữ bản copy, cộng template của chính brand. Lọc GIỮ
+   * NGUYÊN thứ tự, nên hạng chung vẫn đúng sau khi lọc.
+   */
+  const fetchRanked = async (ownIds: Set<string> | null) => {
+    const all = await fetchState('all', 'shelf_rank');
+    return all.filter(x => x.kind === 'copy' || ownIds?.has(x.id));
+  };
+
+  try {
+    const ownIds = await fetchOwnTemplateIds();
+
+    if (query.rank) {
+      const ranked = await fetchRanked(ownIds);
+      return { items: ranked.map(v2ToExperienceView), error: null };
+    }
+
+    const chunks = await Promise.all([
+      ...COPY_STATES.map(s => fetchState(s)),
+      fetchOwnTemplates(ownIds),
+    ]);
+
+    // Khử trùng theo id: các state đáng lẽ rời nhau, nhưng dựa vào điều đó là
     // đặt cược vào một chi tiết BE có thể đổi. Trùng thì giữ bản gặp trước.
     const seen = new Set<string>();
     const items = chunks.flat().filter(x => {
