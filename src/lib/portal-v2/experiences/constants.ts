@@ -37,16 +37,14 @@ export const EXPERIENCE_STATES: {
   labelKey: string;
 }[] = [
   { id: 'all', labelKey: 'stateAll' },
-  { id: 'template', labelKey: 'stateTemplate' },
-  // Bản của brand chưa dùng cho chiến dịch nào — đứng ngay sau Template vì đó
-  // là chặng kế tiếp của luồng: xem thư viện → lấy một bản → sửa → mới gán.
+  // Bản của brand chưa dùng cho chiến dịch nào.
   { id: 'unassigned', labelKey: 'stateUnassigned' },
   { id: 'product', labelKey: 'stateProduct' },
   { id: 'topic', labelKey: 'stateTopic' },
-  // `kind: 'block'` là loại THỨ TƯ mà `/v1/experiences` trả về. Bản cũ không
-  // có tab này vì nó suy từ `/pages`, nơi block không tồn tại; gộp block vào
-  // một trong ba tab kia là gán cho chúng một quyền sở hữu chúng không có.
-  { id: 'block', labelKey: 'stateBlock' },
+  // KHÔNG còn tab `template` và `block`: màn này chỉ nạp bản copy của brand
+  // (ba state `unassigned` / `product_copies` / `topic_copies`), nên hai tab
+  // đó vĩnh viễn đếm 0. Một tab luôn rỗng không nói "bạn chưa có gì" — nó nói
+  // "chỗ này hỏng". Template và block thuộc về màn Exchange.
 ];
 
 /** `DATA.expCategories` (~L5480) — what KIND of artifact this is. */
