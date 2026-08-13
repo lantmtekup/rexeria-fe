@@ -59,9 +59,11 @@ export const fetchExchangeCatalog = async (
       page_size: LIMIT,
       ...(q ? { q } : {}),
     }),
-    // KHÔNG lọc `status`: kho có 62 draft + 13 active, và ý định là mở đủ 75.
-    // `include_archived` để mặc định false nên bản lưu trữ vẫn nằm ngoài.
+    // Chỉ `active` — cùng ý với `published` của block: chợ chỉ bày thứ đã
+    // xong. Kho có 62 draft + 13 active; draft là bản đang dựng dở, bày ra
+    // cho brand khác là mời người ta dùng một trang chưa hoàn thiện.
     rexerApi.templates.list({
+      status: 'active',
       page: 1,
       limit: LIMIT,
       sort: 'updated_at',
