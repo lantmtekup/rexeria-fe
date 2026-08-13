@@ -165,51 +165,99 @@ Shell/nav/pages keys already exist; module-specific keys are additive.
 
 ## Navigation
 
-[`PORTAL_V2_NAV`](../../../src/lib/portal-v2/nav.ts) defines rail items. New module pages do **not** require nav changes if route already listed (all 12 routes exist).
+Canonical IA is prototype `DATA.nav` (~L2798 in `rexer-demo-v3_new.html`):
+
+```
+command
+MINING:  mining | experiments | sources
+JOURNEY: brand | journeys | campaigns
+STUDIO:  experiences | media | product | automation | deploy
+PULSE:   analytics | intelligence
+exchange (hidden:true — header link) | settings (bottom)
+```
+
+[`PORTAL_V2_NAV`](../../../src/lib/portal-v2/nav.ts) still uses the **old** groups (`plan` / `create` / `publish` / `learn`), lists exchange in the first group, and maps Intelligence to `/portal-v2/ai`. **Do not change `nav.ts`** unless the user confirms. Existing module pages keep current hrefs.
 
 Active state: `isPortalV2NavActive(pathname, href)`.
 
-Exchange: topbar link to `/portal-v2/exchange`, not in main rail groups.
+Exchange in prototype: header link + hidden rail entry so the router can reach it. Code: `/portal-v2/exchange` (also in the first nav group — gap, not a license to rewrite the rail).
 
 ---
 
 ## Prototype grep
 
-Run from repo root against [`plan-v2/rexer-platform-v2.html`](../../../plan-v2/rexer-platform-v2.html):
+Canonical file: [`plan-v2/rexer-demo-v3_new.html`](../../../plan-v2/rexer-demo-v3_new.html).
+
+**Do not grep** `rexer-platform-v2.html` or `rexer-demo-v3.html` (superseded).
+
+`VIEWS` is an object literal ~L10398 **plus** later assignments (`VIEWS.mining = …`). Grep both.
 
 ```bash
-# View function assignment
-rg "VIEWS\.\w+\s*=" plan-v2/rexer-platform-v2.html
-rg "function \w+View\(" plan-v2/rexer-platform-v2.html
+# Assignments after the literal
+rg "VIEWS\.\w+\s*=" plan-v2/rexer-demo-v3_new.html
 
-# Module-specific
-rg "function campaignsView" plan-v2/rexer-platform-v2.html
-rg "const BRAND\s*=" plan-v2/rexer-platform-v2.html
-rg "DATA\.campaigns" plan-v2/rexer-platform-v2.html
+# Methods inside const VIEWS
+rg "^\s*(experiences|media|product)\(\)" plan-v2/rexer-demo-v3_new.html
+rg "function \w+View\(" plan-v2/rexer-demo-v3_new.html
 
-# CSS classes (translate to Tailwind, do not copy block)
-rg "\.cgrid|\.ccard|\.bcard|\.mtabs" plan-v2/rexer-platform-v2.html
+# Mock / registries
+rg "const MINING|const BRAND\s*=" plan-v2/rexer-demo-v3_new.html
+rg "BFIELDS|BLINES|BROWS" plan-v2/rexer-demo-v3_new.html
+rg "DATA\.campaigns|DATA\.nav" plan-v2/rexer-demo-v3_new.html
 
-# Field registries (Brand-style forms)
-rg "BFIELDS|BLINES|BROWS" plan-v2/rexer-platform-v2.html
+# CSS (translate to Tailwind + --pv2-*; do not copy blocks)
+rg "\.mine-|\.pulse|\.xtabs|\.cgrid|\.ccard|\.bcard|\.mtabs" plan-v2/rexer-demo-v3_new.html
 ```
 
-### VIEWS registry (inline object ~L16046)
+Line numbers below are anchors; if the file shifted, grep — do not trust stale numbers.
+
+### VIEWS registry
 
 | Key | Kind | Approx line |
 |-----|------|-------------|
-| `experiences` | method in `VIEWS` | ~16048 |
-| `media` | method | ~16269 |
-| `product` | method | ~16508 |
-| `intel` | `intelView` → assigned ~17304 | ~16724 |
-| `brand` | `brandView` → ~17816 | ~17783 |
-| `campaigns` | `campaignsView` → ~18250 | ~17863 |
-| `deploy` | `deployView` → ~18695 | ~18441 |
-| `command` | `commandView` → ~19187 | ~18885 |
-| `journeys` | function → ~19577 | ~19577 |
-| `exchange` | function → ~26009 | ~26009 |
-| `automation` | function → ~26495 | ~26495 |
-| `settings` | arrow → ~26962 | ~26962 |
+| `experiences` | method in `const VIEWS` | ~10401 |
+| `media` | method | ~10543 |
+| `product` | method | ~10711 |
+| `deploy` | `deployView` → `VIEWS.deploy` | ~10841 / ~11056 |
+| `command` | `commandView` → `VIEWS.command` | ~11189 / ~11446 |
+| `analytics` | `pulseView` (3 lenses) | ~11482; `VIEWS.analytics` ~12188 |
+| `overview` | sets lens, not a rail item | ~12187 |
+| `insights` | sets lens (label Rankings), not a rail item | ~12189 |
+| `intelligence` | `pulseIntel` via `VIEWS.intelligence` | ~11922 / ~12190 |
+| `brand` | `brandView` → `VIEWS.brand` | ~12561 / ~12583 |
+| `campaigns` | `campaignsView` → `VIEWS.campaigns` | ~12621 / ~13081 |
+| `mining` | `VIEWS.mining` | ~13287 |
+| `sources` | `VIEWS.sources` | ~13370 |
+| `experiments` | `VIEWS.experiments` | ~13581 |
+| `journeys` | `VIEWS.journeys` | ~14029 |
+| `exchange` | `VIEWS.exchange` | ~20505 |
+| `automation` | `VIEWS.automation` | ~20873 |
+| `settings` | `VIEWS.settings` | ~21290 |
+
+No `intelView`. Old Intelligence screen is Pulse `pulseIntel()`.
+
+### Mock roots
+
+| Const | Approx line | Used by |
+|-------|-------------|---------|
+| `const DATA` | ~2783 | org, nav, experiences, campaigns, journeys, assets, products, … |
+| `const BRAND` | ~4433 | Brand workspace |
+| `BFIELDS` / `BLINES` / `BROWS` | ~4576+ | Brand field registry |
+| `const MINING` | ~5109 | Journey Audit, Sources, Experiments (`stages`, `opps`, `sources`, `experiments`) |
+
+### Pulse lenses
+
+```
+PULSE_WS_LENSES = ['overview', 'analytics', 'insights']
+```
+
+- Rail **Analytics**: `pulseView()` + identity band (“what happened”) + 3 tabs. Internal id `insights` labels as Rankings.
+- Rail **Intelligence**: `pulseIntel()` only — no tabs, advice not measurement.
+- CSS hints: `.pulse`, `.pmtabs`, `.pv-wsid`, `.intel-*` (Pulse intel cards — still translate to `--pv2-*`).
+
+### Mining CSS hints
+
+`.mine-page`, `.mine-opp`, `.mine-cov`, `.mine-leak` / leak map SVG, `.mine-src` — layout reference only.
 
 ---
 
@@ -218,6 +266,8 @@ rg "BFIELDS|BLINES|BROWS" plan-v2/rexer-platform-v2.html
 ```bash
 rg 'id="mod-' plan-v2/index.html
 ```
+
+Plan still lists the old 12 modules (`mod-intel`, no mining/pulse). Use `#mod-*` P0 copy only when it does not contradict v3.
 
 Section §2 branding theme: `#s2` in [`plan-v2/index.html`](../../../plan-v2/index.html).  
 PNG guidelines: `plan-v2/1. ReXerStudio - Branding Identity Guidelines.png`, `plan-v2/2. ReXer - Branding Identity Guidelines.png`.
@@ -248,3 +298,4 @@ Layout scopes theme: `<div data-portal-v2>` in [`layout.tsx`](../../../src/app/(
 - [`rexer-component-style`](../../rexer-component-style/SKILL.md) — general atoms/molecules (portal-v2 overrides Button for module chrome)
 - [`design-taste-frontend`](../../design-taste-frontend/SKILL.md) — landing/marketing only; portal modules = product UI, low motion
 - [`feature-section`](../../feature-section/SKILL.md) — CMS sections (different stack; do not mix with portal-v2 module flow)
+- [`portal-v2-api-wiring`](../portal-v2-api-wiring/SKILL.md) — mock → real API (only when the user asks)

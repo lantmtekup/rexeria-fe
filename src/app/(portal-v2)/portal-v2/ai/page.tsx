@@ -1,5 +1,11 @@
-import { Placeholder } from '@/components/molecules/portal-v2/Placeholder';
+import { IntelligenceWorkspace } from '@/components/organisms/portal-v2/intelligence/IntelligenceWorkspace';
+import { readIntelViewState } from '@/lib/portal-v2/intelligence/params';
 
-export default function PortalV2AiPage() {
-  return <Placeholder titleKey='aiTitle' />;
+type Props = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function PortalV2AiPage({ searchParams }: Props) {
+  const params = await searchParams;
+  return <IntelligenceWorkspace initialState={readIntelViewState(params)} />;
 }

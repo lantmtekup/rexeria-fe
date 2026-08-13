@@ -1,11 +1,15 @@
 import {
+  BarChart3,
   Bot,
+  DatabaseZap,
+  FlaskConical,
   FolderOpen,
   LayoutDashboard,
   Map,
   Package,
   Palette,
   Rocket,
+  ScanSearch,
   Settings,
   Sparkles,
   Store,
@@ -45,6 +49,29 @@ export const PORTAL_V2_NAV: PortalV2NavGroup[] = [
         href: `${PORTAL_V2_BASE}/exchange`,
         labelKey: 'exchange',
         icon: Store,
+      },
+    ],
+  },
+  {
+    groupKey: 'mining',
+    items: [
+      {
+        id: 'mining',
+        href: `${PORTAL_V2_BASE}/mining`,
+        labelKey: 'mining',
+        icon: ScanSearch,
+      },
+      {
+        id: 'experiments',
+        href: `${PORTAL_V2_BASE}/experiments`,
+        labelKey: 'experiments',
+        icon: FlaskConical,
+      },
+      {
+        id: 'sources',
+        href: `${PORTAL_V2_BASE}/sources`,
+        labelKey: 'sources',
+        icon: DatabaseZap,
       },
     ],
   },
@@ -114,6 +141,12 @@ export const PORTAL_V2_NAV: PortalV2NavGroup[] = [
   {
     groupKey: 'learn',
     items: [
+      {
+        id: 'analytics',
+        href: `${PORTAL_V2_BASE}/analytics`,
+        labelKey: 'analytics',
+        icon: BarChart3,
+      },
       {
         id: 'ai',
         href: `${PORTAL_V2_BASE}/ai`,
