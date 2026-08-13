@@ -2065,6 +2065,7 @@
       "runQueued": "Đã xếp hàng {total} bản nháp",
       "runQueuedNote": "Trang đã tạo nhưng NỘI DUNG chưa có — AI đang điền ở nền. Mở lại sau ít phút.",
       "queuedGaps": "còn thiếu: {gaps}",
+      "openDraft": "Mở bản nháp",
       "locked": "Gói tài khoản chưa mở Automation.",
       "widen": "Nới sang lớp hàng cha",
       "masterHint": "Chỉnh master trước khi nhân bản — điểm sẵn sàng hiện ở bước sau."

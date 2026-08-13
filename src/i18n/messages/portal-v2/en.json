@@ -2065,6 +2065,7 @@
       "runQueued": "Queued {total} drafts",
       "runQueuedNote": "Pages are created but EMPTY — AI is filling them in the background. Check back in a few minutes.",
       "queuedGaps": "missing: {gaps}",
+      "openDraft": "Open draft",
       "locked": "Automation is not enabled on this plan.",
       "widen": "Widen to parent class",
       "masterHint": "Adjust the master before replicating — readiness is scored in the next step."

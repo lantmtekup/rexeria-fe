@@ -1,7 +1,15 @@
 'use client';
 
-import { ArrowLeft, Check, Loader2, Sparkles, Wand2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Check,
+  ExternalLink,
+  Loader2,
+  Sparkles,
+  Wand2,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { ReadinessSlots } from '@/components/organisms/portal-v2/automation/ReadinessSlots';
@@ -215,12 +223,21 @@ export const ProductPickStep = ({
             return (
               <span
                 key={item.page_id}
-                className='text-[12px] text-[var(--pv2-mut)]'
+                className='flex flex-wrap items-center gap-1.5 text-[12px] text-[var(--pv2-mut)]'
               >
-                {p?.title ?? item.product_id}
-                {item.auto_gaps.length > 0
-                  ? ` · ${t('queuedGaps', { gaps: item.auto_gaps.join(', ') })}`
-                  : ''}
+                <span>
+                  {p?.title ?? item.product_id}
+                  {item.auto_gaps.length > 0
+                    ? ` · ${t('queuedGaps', { gaps: item.auto_gaps.join(', ') })}`
+                    : ''}
+                </span>
+                <Link
+                  href={`/portal-v2/${encodeURIComponent(item.page_id)}/canvas`}
+                  className='inline-flex items-center gap-1 text-[var(--pv2-electric)] hover:underline'
+                >
+                  {t('openDraft')}
+                  <ExternalLink className='size-3' aria-hidden />
+                </Link>
               </span>
             );
           })}
