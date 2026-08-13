@@ -8,7 +8,6 @@ import type {
   ExperienceState,
   ExperienceVehicle,
   ExperienceView,
-  FunnelRole,
   PageStatusView,
   SignalCoverage,
 } from '@/lib/portal-v2/experiences/types';
@@ -39,7 +38,6 @@ const VEHICLES: ExperienceVehicle[] = [
 ];
 const OBJECTIVES: ExperienceObjective[] = ['insight', 'lead', 'cta', 'convert'];
 const TIERS: EvidenceTier[] = ['high', 'directional', 'early', 'unmeasured'];
-const ROLES: FunnelRole[] = ['ATT', 'EDU', 'EXP', 'TRU', 'CON'];
 const INTERACTIONS: ExperienceInteraction[] = [
   'hotspot',
   'swipe',
@@ -47,14 +45,6 @@ const INTERACTIONS: ExperienceInteraction[] = [
   '360',
   'vr',
 ];
-
-/** Vai phễu mà mỗi mục tiêu phục vụ — giữ nguyên bảng của bản cũ. */
-const OBJECTIVE_ROLE: Record<ExperienceObjective, FunnelRole> = {
-  insight: 'EXP',
-  lead: 'CON',
-  cta: 'CON',
-  convert: 'TRU',
-};
 
 const pick = <T extends string>(
   v: string | null | undefined,
@@ -82,9 +72,6 @@ const STATUS: PageStatusView[] = ['draft', 'published', 'archived'];
 
 export const v2ToExperienceView = (x: RxExperience): ExperienceView => {
   const objective = pick(x.objective, OBJECTIVES) ?? 'lead';
-  const roles = (x.funnel_coverage ?? []).filter((r): r is FunnelRole =>
-    (ROLES as string[]).includes(r)
-  );
 
   return {
     id: x.id,
@@ -109,18 +96,13 @@ export const v2ToExperienceView = (x: RxExperience): ExperienceView => {
       : 'collection') as ExperienceCategory,
     vehicle: pick(x.vehicle, VEHICLES) ?? 'curated',
     objective,
-    role: pick(x.role, ROLES) ?? OBJECTIVE_ROLE[objective],
     interactions: (x.interactions ?? []).filter(
       (i): i is ExperienceInteraction => (INTERACTIONS as string[]).includes(i)
     ),
     proven: x.proven,
     tagline: x.tagline ?? '',
 
-    // `funnel_coverage` chỉ cho biết CÓ những vai nào — không phải các block.
-    funnelRoles: roles,
-    // Block thật chỉ có ở `GET /experiences/{id}`; modal nạp khi mở. Bản cũ
-    // dựng mỗi vai thành một "layer" tên `ATT`, và vì 99/100 bản ghi trả
-    // `funnel_coverage: null` nên màn Chi tiết vẽ ra rỗng.
+    // Block thật chỉ có ở `GET /experiences/{id}`; modal nạp khi mở.
     layers: [],
     // Template model có Features/Benefits nhưng `Experience` không trả ra.
     features: [],
@@ -183,13 +165,12 @@ const layerName = (l: RxExperienceLayer): string => {
  * `GET /experiences/{id}` → các block để vẽ.
  *
  * Đọc CẢ HAI hình dạng canvas (xem `RxExperienceLayer`): `block_type ??
- * blockType`, và coi `role` vắng là chưa gán vai chứ không đoán ra một vai.
+ * blockType`.
  */
 export const v2DetailToLayers = (d: RxExperienceDetail): ExperienceLayer[] =>
   (d.layers ?? []).map(l => {
     const comps = l.components ?? [];
     return {
-      role: pick(l.role, ROLES),
       name: layerName(l),
       blockType: l.block_type ?? l.blockType ?? null,
       // Hình A không mang `isVisible`; vắng ⇒ đang hiện.
