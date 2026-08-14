@@ -44,6 +44,8 @@ interface BlockEditorSidebarProps {
     from: 'desktop' | 'mobile',
     to: 'desktop' | 'mobile'
   ) => void;
+  /** Open the Media tab on the left rail for the selected image element. */
+  onBrowseLibrary?: () => void;
   /** Stored motion for the current device variant. */
   motion?: BlockMotion;
   onChangeMotion?: (next: BlockMotion | null) => void;
@@ -66,6 +68,7 @@ export function BlockEditorSidebar({
   onUpdateElementStyle,
   onUpdateBackground,
   onSyncVariant,
+  onBrowseLibrary,
   motion,
   onChangeMotion,
   onOpenMotionEditor,
@@ -139,6 +142,7 @@ export function BlockEditorSidebar({
               onUpdateStyle={onUpdateElementStyle ?? (() => {})}
               onUpdateBackground={onUpdateBackground ?? (() => {})}
               onSyncVariant={onSyncVariant}
+              onBrowseLibrary={onBrowseLibrary}
             />
           </div>
         )}

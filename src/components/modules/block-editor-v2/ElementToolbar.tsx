@@ -112,6 +112,7 @@ import {
 import { buildAiPrompt } from './buildAiPrompt';
 import { ImagePicker } from './ImagePicker';
 import { getContentAt, setContentAt } from './contentPath';
+import { readImageUrl, writeImageUrl } from './imageField';
 import { LinkControls } from '@/components/modules/block-editor-v2/links/LinkControls';
 import { BACKGROUND_LAYER_KEY, resolveElementMeta } from './resolveElementKind';
 import {
@@ -1129,34 +1130,13 @@ function ImageControls({
         : null;
 
   const c = content as Record<string, unknown>;
-  const alturaImgMatch =
-    blockType === 'altura_olympus' ? fieldKey.match(/^images\[(\d+)\]$/) : null;
-  const alturaImgIndex = alturaImgMatch ? Number(alturaImgMatch[1]) : -1;
-  const alturaImages =
-    alturaImgIndex >= 0
-      ? resolveAlturaOlympusImages(content as AlturaOlympusContent)
-      : null;
-
-  const url =
-    alturaImages && alturaImgIndex >= 0
-      ? (alturaImages[alturaImgIndex] ?? '')
-      : ((getContentAt(c, fieldKey) as string) ?? '');
+  const url = readImageUrl(blockType, content, fieldKey);
   const transform = transformKey
     ? (c[transformKey] as ImageTransform | undefined)
     : undefined;
 
   const setUrl = (next: string) => {
-    if (alturaImages && alturaImgIndex >= 0) {
-      const list = [...alturaImages];
-      while (list.length <= alturaImgIndex) list.push('');
-      list[alturaImgIndex] = next;
-      onContentChange(prev => {
-        const cur = prev as AlturaOlympusContent;
-        return { ...cur, images: list } as BlockContent;
-      });
-      return;
-    }
-    onContentChange(setContentAt(c, fieldKey, next) as BlockContent);
+    onContentChange(prev => writeImageUrl(blockType, prev, fieldKey, next));
   };
   const setTransform = (next: ImageTransform) => {
     if (!transformKey) return;

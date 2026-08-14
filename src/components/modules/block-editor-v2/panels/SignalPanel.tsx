@@ -1,23 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 
-import type {
-  Block,
-  ComponentSignalConfig,
-} from '@/components/modules/block-editor/types';
+import type { Block } from '@/components/modules/block-editor/types';
 import { cn } from '@/lib/cn';
 
-import { FieldRow } from '../inspector/primitives/FieldRow';
 import { InspectorSection } from '../inspector/primitives/InspectorSection';
-import { NumberField } from '../inspector/primitives/NumberField';
-import { SegmentedControl } from '../inspector/primitives/SegmentedControl';
 import {
-  CONTROL_H,
-  CONTROL_FOCUS,
-  CONTROL_SURFACE,
   PANEL_PAD_X,
   TEXT_CONTROL,
   TEXT_META,
@@ -25,17 +15,7 @@ import {
 } from '../inspector/tokens';
 import {
   BLOCK_SIGNALS,
-  COMP_EVENTS,
-  CRM_ACTIONS,
   DEFAULT_BLOCK_SIGNALS,
-  FUNNEL_STAGE_LABEL,
-  PRIVACY,
-  SIGNAL_OBJECTS,
-  SIGNAL_TYPES,
-  STRENGTHS,
-  THRESHOLD_MAX,
-  THRESHOLD_MIN,
-  TYPES_FOR,
   blockSignalCoverage,
   coarseKindOf,
   ensureComponentSignal,
@@ -57,7 +37,7 @@ import type { SignalComponentKind } from '../signal/vocabulary';
  * con số 0.
  *
  * Chrome: Level 0 (chrome.ts) — không viền chồng viền; row phẳng, hover bằng
- * bg-step, row đang mở = đúng 1 ring electric.
+ * bg-step.
  */
 
 type BlockRecipe = (b: Block) => void;
@@ -71,10 +51,6 @@ interface SignalPanelProps {
 }
 
 export function SignalPanel({ block, allBlocks, onEdit }: SignalPanelProps) {
-  // Accordion nào đang mở — navigation, không phải edit: state cục bộ, không
-  // vào history.
-  const [openKey, setOpenKey] = React.useState<string | null>(null);
-
   const elements = React.useMemo(() => signalElementsOf(block), [block]);
   const coverage = React.useMemo(
     () => blockSignalCoverage(allBlocks),
@@ -128,28 +104,11 @@ export function SignalPanel({ block, allBlocks, onEdit }: SignalPanelProps) {
       b.signal.components = comps;
     });
     if (turningOn) {
-      setOpenKey(key);
       const cfg = ensureComponentSignal(block.signal?.components?.[key], kind);
       toast(meaningFrom({ ...cfg, track: true }, kind, label));
     } else {
-      setOpenKey(prev => (prev === key ? null : prev));
       toast(`Đã ngừng theo dõi ${label}`);
     }
-  };
-
-  const patchComponent = (
-    key: string,
-    kind: SignalComponentKind,
-    patch: Partial<ComponentSignalConfig>
-  ) => {
-    onEdit(b => {
-      const cur = b.signal?.components?.[key];
-      if (!b.signal?.components || !cur) return;
-      b.signal.components[key] = {
-        ...ensureComponentSignal(cur, kind),
-        ...patch,
-      };
-    });
   };
 
   return (
@@ -247,218 +206,47 @@ export function SignalPanel({ block, allBlocks, onEdit }: SignalPanelProps) {
               <div className='-mx-1.5 flex flex-col gap-0.5'>
                 {elements.map(el => {
                   const kind = coarseKindOf(block, el.key);
-                  const stored = block.signal?.components?.[el.key];
-                  const isTracked = stored?.track === true;
-                  const cfg = ensureComponentSignal(stored, kind);
-                  const isOpen = isTracked && openKey === el.key;
-                  const typeDef = SIGNAL_TYPES[cfg.type ?? ''];
-                  const Caret = isOpen ? ChevronDown : ChevronRight;
+                  const isTracked =
+                    block.signal?.components?.[el.key]?.track === true;
                   const ElIcon = el.icon;
 
                   return (
                     <div
                       key={el.key}
-                      className={cn(
-                        'rounded-md transition-colors',
-                        isOpen
-                          ? 'ring-1 ring-[var(--pv2-electric)]'
-                          : 'hover:bg-[var(--pv2-canvas)]'
-                      )}
+                      className='flex items-center gap-1.5 rounded-md px-1.5 py-1.5 hover:bg-[var(--pv2-canvas)]'
                     >
-                      <div className='flex items-center gap-1.5 px-1.5 py-1.5'>
-                        <button
-                          type='button'
-                          onClick={() =>
-                            isTracked &&
-                            setOpenKey(prev =>
-                              prev === el.key ? null : el.key
-                            )
-                          }
-                          aria-expanded={isOpen}
-                          aria-label={`Cấu hình điểm đo ${el.label}`}
-                          className={cn(
-                            'flex min-w-0 flex-1 items-center gap-1.5 text-left',
-                            isTracked ? 'cursor-pointer' : 'cursor-default'
-                          )}
-                        >
-                          <ElIcon className='size-3.5 shrink-0 text-[var(--pv2-mut)]' />
-                          <span
-                            className={cn(
-                              'min-w-0 flex-1 truncate',
-                              TEXT_CONTROL,
-                              'text-[var(--pv2-ink)]'
-                            )}
-                          >
-                            {el.label}
-                          </span>
-                          {isTracked && (
-                            <span
-                              className={cn(
-                                'max-w-[45%] shrink-0 truncate',
-                                TEXT_META,
-                                'text-[var(--pv2-mut)]'
-                              )}
-                            >
-                              {typeDef?.n} · {cfg.event}
-                            </span>
-                          )}
-                          {isTracked && (
-                            <Caret className='size-3 shrink-0 text-[var(--pv2-mut)]' />
-                          )}
-                        </button>
-                        <Switch
-                          on={isTracked}
-                          onToggle={() =>
-                            toggleComponent(el.key, kind, el.label)
-                          }
-                          ariaLabel={`Theo dõi ${el.label}`}
-                        />
-                      </div>
-
-                      {isOpen && (
-                        <div className='mx-1.5 mb-1.5 flex flex-col gap-2 rounded-md bg-[var(--pv2-canvas)] p-2'>
-                          {/* Câu nghĩa: kết quả cấu hình, cập nhật live. */}
-                          <p className='text-2xs rounded-sm bg-[var(--pv2-electric-soft)] px-2 py-1.5 text-[var(--pv2-ink)]'>
-                            {meaningFrom(cfg, kind, el.label)}
-                          </p>
-
-                          <FieldRow label='Loại tín hiệu' stacked>
-                            <Select
-                              ariaLabel={`Loại tín hiệu của ${el.label}`}
-                              value={cfg.type ?? ''}
-                              onChange={v =>
-                                patchComponent(el.key, kind, { type: v })
-                              }
-                              options={TYPES_FOR[kind].map(t => ({
-                                value: t,
-                                label: SIGNAL_TYPES[t].n,
-                              }))}
-                            />
-                            <Helper>
-                              {typeDef
-                                ? `${typeDef.d}. ${
-                                    typeDef.r
-                                      ? `Tính vào giai đoạn ${FUNNEL_STAGE_LABEL[typeDef.r]} của funnel.`
-                                      : 'Không tính vào giai đoạn funnel nào.'
-                                  }`
-                                : null}
-                            </Helper>
-                          </FieldRow>
-
-                          <FieldRow label='Kích hoạt khi' stacked>
-                            <Select
-                              ariaLabel={`Sự kiện kích hoạt của ${el.label}`}
-                              value={cfg.event ?? ''}
-                              onChange={v =>
-                                patchComponent(el.key, kind, { event: v })
-                              }
-                              options={COMP_EVENTS[kind].map(e => ({
-                                value: e,
-                                label: e,
-                              }))}
-                            />
-                          </FieldRow>
-
-                          <FieldRow label='Đối tượng' stacked>
-                            <Select
-                              ariaLabel={`Đối tượng của ${el.label}`}
-                              value={cfg.object ?? 'none'}
-                              onChange={v =>
-                                patchComponent(el.key, kind, { object: v })
-                              }
-                              options={Object.entries(SIGNAL_OBJECTS).map(
-                                ([value, label]) => ({ value, label })
-                              )}
-                            />
-                          </FieldRow>
-
-                          <FieldRow label='Ngưỡng đếm' stacked>
-                            <NumberField
-                              ariaLabel={`Ngưỡng của ${el.label}`}
-                              value={cfg.threshold}
-                              min={THRESHOLD_MIN}
-                              max={THRESHOLD_MAX}
-                              unit={kind === 'text' ? 'giây' : 'lần'}
-                              onChange={n =>
-                                patchComponent(el.key, kind, {
-                                  threshold: n ?? (kind === 'text' ? 3 : 1),
-                                })
-                              }
-                            />
-                          </FieldRow>
-
-                          <FieldRow label='Trọng số intent' stacked>
-                            <SegmentedControl
-                              ariaLabel={`Trọng số intent của ${el.label}`}
-                              value={cfg.strength}
-                              onChange={n =>
-                                patchComponent(el.key, kind, { strength: n })
-                              }
-                              options={[1, 2, 3].map(n => ({
-                                value: n,
-                                label: STRENGTHS[n],
-                              }))}
-                            />
-                          </FieldRow>
-
-                          <FieldRow label='Hành động CRM' stacked>
-                            <Select
-                              ariaLabel={`Hành động CRM của ${el.label}`}
-                              value={cfg.crm ?? CRM_ACTIONS[0]}
-                              onChange={v =>
-                                patchComponent(el.key, kind, { crm: v })
-                              }
-                              options={CRM_ACTIONS.map(a => ({
-                                value: a,
-                                label: a,
-                              }))}
-                            />
-                          </FieldRow>
-
-                          <FieldRow label='Định danh' stacked>
-                            <Select
-                              ariaLabel={`Mức định danh của ${el.label}`}
-                              value={cfg.privacy ?? 'pseudonymous'}
-                              onChange={v =>
-                                patchComponent(el.key, kind, { privacy: v })
-                              }
-                              options={Object.entries(PRIVACY).map(
-                                ([value, def]) => ({ value, label: def.n })
-                              )}
-                            />
-                            <Helper>
-                              {PRIVACY[cfg.privacy ?? 'pseudonymous']?.d}
-                            </Helper>
-                          </FieldRow>
-                        </div>
-                      )}
+                      <ElIcon className='size-3.5 shrink-0 text-[var(--pv2-mut)]' />
+                      <span
+                        className={cn(
+                          'min-w-0 flex-1 truncate',
+                          TEXT_CONTROL,
+                          'text-[var(--pv2-ink)]'
+                        )}
+                      >
+                        {el.label}
+                      </span>
+                      <Switch
+                        on={isTracked}
+                        onToggle={() => toggleComponent(el.key, kind, el.label)}
+                        ariaLabel={`Theo dõi ${el.label}`}
+                      />
                     </div>
                   );
                 })}
               </div>
             )}
 
-            {elements.length > 0 && (
+            {/* {elements.length > 0 && (
               <p className={cn(TEXT_META, 'text-[var(--pv2-faint)]')}>
                 Mỗi điểm đo được lưu thành một hành vi đọc được (ví dụ:
                 &ldquo;Khách hàng đã so sánh sản phẩm&rdquo;) thay vì mã sự kiện
                 thô, nên dùng được trực tiếp cho intent score và CRM.
               </p>
-            )}
+            )} */}
           </InspectorSection>
         </>
       )}
     </div>
-  );
-}
-
-/** Helper line dưới một control — mô tả của option đang chọn. */
-function Helper({ children }: { children: React.ReactNode }) {
-  if (!children) return null;
-  return (
-    <p className={cn('mt-1', TEXT_META, 'text-[var(--pv2-faint)]')}>
-      {children}
-    </p>
   );
 }
 
@@ -498,41 +286,5 @@ function Switch({
         />
       </span>
     </button>
-  );
-}
-
-function Select({
-  value,
-  onChange,
-  options,
-  ariaLabel,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-  ariaLabel: string;
-}) {
-  return (
-    <select
-      aria-label={ariaLabel}
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      // `text-2xs!`: globals.css có rule unlayered `select { font-size: 16px }`
-      // (chống iOS zoom-on-focus) đè mọi utility trong @layer — cần !important
-      // để control ăn đúng cỡ 11px của inspector.
-      className={cn(
-        'text-2xs! w-full min-w-0 cursor-pointer px-2',
-        CONTROL_H,
-        CONTROL_SURFACE,
-        CONTROL_FOCUS,
-        'text-[var(--pv2-ink)]'
-      )}
-    >
-      {options.map(o => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
   );
 }

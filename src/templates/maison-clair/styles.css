@@ -1,4 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Marcellus&family=Manrope:wght@200;300;400;500&display=swap');
+
 .mz-root.mz-clair {
+  --font-mz-serif: 'Marcellus', Georgia, serif;
+  --font-mz-sans: 'Manrope', system-ui, sans-serif;
   --bg: #fbfbf9;
   --ink: #1a1a1a;
   --muted: #7e827e;

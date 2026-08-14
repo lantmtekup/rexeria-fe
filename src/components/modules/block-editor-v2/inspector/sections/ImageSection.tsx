@@ -2,10 +2,11 @@
 
 import * as React from 'react';
 
-import { getContentAt, setContentAt } from '../../contentPath';
 import { ImagePicker } from '../../ImagePicker';
+import { readImageUrl, writeImageUrl } from '../../imageField';
 import type {
   BlockContent,
+  BlockType,
   ImageTransform,
 } from '@/components/modules/block-editor/types';
 import { InspectorSection } from '../primitives/InspectorSection';
@@ -19,19 +20,25 @@ function imageTransformKey(fieldKey: string): string | null {
 
 interface ImageSectionProps {
   fieldKey: string;
+  /** Needed by `writeImageUrl` — a few blocks store images off-path. */
+  blockType?: BlockType;
   content: BlockContent;
   onContentChange: (
     next: BlockContent | ((prev: BlockContent) => BlockContent)
   ) => void;
+  /** Open the Media tab on the left rail, targeting this field. */
+  onBrowseLibrary?: () => void;
 }
 
 export function ImageSection({
   fieldKey,
+  blockType,
   content,
   onContentChange,
+  onBrowseLibrary,
 }: ImageSectionProps) {
   const c = content as Record<string, unknown>;
-  const url = (getContentAt(c, fieldKey) as string) ?? '';
+  const url = readImageUrl(blockType, content, fieldKey);
   const transformKey = imageTransformKey(fieldKey);
   const transform = transformKey
     ? (c[transformKey] as ImageTransform | undefined)
@@ -42,8 +49,11 @@ export function ImageSection({
       <ImagePicker
         value={url}
         onChange={next =>
-          onContentChange(setContentAt(c, fieldKey, next) as BlockContent)
+          onContentChange(prev =>
+            writeImageUrl(blockType, prev, fieldKey, next)
+          )
         }
+        onBrowseLibrary={onBrowseLibrary}
         transform={transform}
         onTransformChange={
           transformKey

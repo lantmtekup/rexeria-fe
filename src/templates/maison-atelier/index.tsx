@@ -1,31 +1,11 @@
 'use client';
 
-import { Playfair_Display, Source_Serif_4 } from 'next/font/google';
-
 import * as React from 'react';
 
 import type { TemplateProps } from '../types';
 import { useMaisonMotion } from '../_maison/useMaisonMotion';
 import '../_maison/base.css';
 import './styles.css';
-
-// next/font thay cho <link> Google Fonts render-time — self-host + preload,
-// hết FOUT trên trang public (audit FE 2026-07-04 P7). CSS đọc qua
-// var(--font-*) trong styles.css (--serif/--sans).
-const serifFont = Playfair_Display({
-  subsets: ['latin', 'vietnamese'],
-  weight: ['400', '500', '600'],
-  style: ['normal', 'italic'],
-  display: 'swap',
-  variable: '--font-mz-serif',
-});
-const sansFont = Source_Serif_4({
-  subsets: ['latin', 'vietnamese'],
-  weight: ['300', '400', '500'],
-  style: ['normal', 'italic'],
-  display: 'swap',
-  variable: '--font-mz-sans',
-});
 
 interface Content {
   brandName?: string;
@@ -65,10 +45,7 @@ export default function MaisonAtelier({ page, content }: TemplateProps) {
   const ctaUrl = c.ctaUrl ?? '#book';
 
   return (
-    <div
-      className={`mz-root mz-atelier ${serifFont.variable} ${sansFont.variable}`}
-      ref={ref}
-    >
+    <div className='mz-root mz-atelier' ref={ref}>
       <div className='grain' aria-hidden />
 
       <header className='nav'>

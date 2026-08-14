@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Jost:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
+
 @keyframes mzn-kb {
   from {
     transform: scale(1.02);
@@ -16,6 +18,8 @@
 }
 
 .mz-root.mz-noir {
+  --font-mz-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-mz-sans: 'Jost', system-ui, sans-serif;
   --bg: #0a0a0b;
   --ink: #f3eee4;
   --muted: #8f877a;
