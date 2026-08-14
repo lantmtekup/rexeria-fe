@@ -87,14 +87,19 @@ export interface RxExperienceLayerComponent {
 /**
  * Một block trong canvas, **nguyên xi như lúc được soạn**.
  *
- * BE trả thẳng canvas nên có HAI hình dạng, không phải một:
+ * BE trả thẳng canvas nên có BA hình dạng, không phải một:
  *
  *   A · đã gắn thẻ  `{ key, role, block_type, block_signal, components[] }`
  *   B · canvas thường `{ id, name, blockType, isVisible }`  ← camelCase
+ *   C · canvas mới (BlockEditorV2/SignalPanel) `{ blockType, signal: { track,
+ *       signals, components } }` — `components` ở đây là MAP theo đường dẫn
+ *       field (`"logoUrl"`, `"items[0].imageUrl"`), không phải mảng.
  *
  * Kiểm trên dữ liệu thật 2026-08-07: 24 bản ghi lấy mẫu ra **1 hình A, 14 hình
- * B, 9 rỗng**. Nên mọi trường ở đây đều optional — đọc `block_type ?? blockType`
- * và coi `role` vắng là "chưa gán vai", đừng bịa một vai vào.
+ * B, 9 rỗng**. Hình C xác nhận sau đó trên `the-link-test` — cùng cấu trúc
+ * `block.signal` mà `SignalPanel.tsx` đọc/ghi trên canvas. Nên mọi trường ở
+ * đây đều optional — đọc `block_type ?? blockType` và coi `role` vắng là
+ * "chưa gán vai", đừng bịa một vai vào.
  */
 export interface RxExperienceLayer {
   /** Hình A. */
@@ -108,7 +113,16 @@ export interface RxExperienceLayer {
   name?: string;
   blockType?: string;
   isVisible?: boolean;
-  /** Nội dung đã soạn — cả hai hình đều có, shape tuỳ block. */
+  /** Hình C — cùng shape `block.signal` của canvas (`SignalPanel.tsx`). */
+  signal?: {
+    track?: boolean;
+    signals?: Record<string, boolean>;
+    components?: Record<
+      string,
+      { track?: boolean; event?: string } | null | undefined
+    >;
+  } | null;
+  /** Nội dung đã soạn — cả ba hình đều có, shape tuỳ block. */
   content?: Record<string, unknown> | null;
   contentVi?: Record<string, unknown> | null;
   contentEn?: Record<string, unknown> | null;

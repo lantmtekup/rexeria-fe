@@ -1,5 +1,6 @@
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 import type {
+  RxAutomationBriefPayload,
   RxAutomationCandidate,
   RxAutomationHubResponse,
   RxAutomationRunItem,
@@ -105,10 +106,12 @@ export const fetchCandidates = async (
  */
 export const runAutomationV2 = async (
   automationId: string,
-  productIds: string[]
+  productIds: string[],
+  inputs?: RxAutomationBriefPayload
 ): Promise<RxAutomationRunItem[]> => {
   const res = await rexerV2Api.automations.run(automationId, {
     product_ids: productIds,
+    ...(inputs ? { inputs } : {}),
   });
   return res.created ?? [];
 };
