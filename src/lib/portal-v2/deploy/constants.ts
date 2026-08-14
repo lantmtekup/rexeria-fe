@@ -1,14 +1,17 @@
 /**
  * Portal V2 — Deploy vocabulary.
  *
- * The prototype's tables (`DTABS` ~L18270, `HEALTH` ~L18289, `CAMP_TYPES`
- * ~L9401, `DATA.expCats`) remapped onto Studio tokens. Chrome is translated;
- * the vocabulary of the model stays English — the same decision Brand,
- * Journeys and Experiences already made.
+ * The prototype's tables (`DTABS` ~L18270, `HEALTH` ~L18289) remapped onto
+ * Studio tokens, then cross-checked against `models.ChannelKinds` (spec
+ * §11.1) once the real BE shipped — 7 kinds, not the prototype's 6: `booking`
+ * (migration 000069) is a deposit/reservation gateway with no FE precedent to
+ * port a name/icon from, so its copy is new here, not translated from
+ * anywhere. Chrome is translated; the vocabulary of the model stays English —
+ * the same decision Brand, Journeys and Experiences already made.
  */
 
 import type {
-  DeployCampaignType,
+  DeployChannelKind,
   DeployDomainStatus,
   DeployHealth,
   DeployTabId,
@@ -27,7 +30,8 @@ export const DEPLOY_TABS: {
 
 export type DeployHealthStyle = {
   labelKey: string;
-  /** What the state means — the cell's `title`. */
+  /** What the state means — the cell's `title`, used as a fallback when the
+   *  BE's own `health_reason` for this instance is not available. */
   hintKey: string;
   dot: string;
   bg: string;
@@ -71,18 +75,15 @@ export const DEPLOY_HEALTH: Record<DeployHealth, DeployHealthStyle> = {
 
 export type DeployDomainStatusStyle = {
   labelKey: string;
-  /** What the state means — the pill's `title`. */
   hintKey: string;
   dot: string;
   bg: string;
   fg: string;
 };
 
-/**
- * The domain pill's four states — same shape as `DEPLOY_HEALTH`, a different
- * question. Health asks whether the experience is serving; this asks whether
- * the hostname in front of it actually resolves.
- */
+/** The domain pill's four states — same shape as `DEPLOY_HEALTH`, a different
+ *  question: not whether the experience is serving, but whether the hostname
+ *  in front of the Web channel actually resolves. */
 export const DEPLOY_DOMAIN_STATUS: Record<
   DeployDomainStatus,
   DeployDomainStatusStyle
@@ -117,39 +118,66 @@ export const DEPLOY_DOMAIN_STATUS: Record<
   },
 };
 
-/**
- * The only channel hosted on a domain of its own. Kept as one named constant
- * rather than a literal `'ch1'` scattered through helpers and panes.
- */
-export const DEPLOY_DOMAIN_CHANNEL_ID = 'ch1';
+/** The only channel kind hosted on a domain of its own. */
+export const DEPLOY_WEB_CHANNEL_KIND: DeployChannelKind = 'web';
 
-/**
- * The CNAME target every connected domain points at. `/portal/profile/domains`
- * hardcodes this exact same value client-side — the BE's `verify` response
- * carries `dns_records` but that page ignores them and reconstructs the
- * record from convention, so this route does the same rather than disagree
- * with the page a person may already have this domain open in.
- */
+/** The CNAME target every connected domain points at. `/portal/profile/domains`
+ *  hardcodes this exact same value client-side — the BE's `verify` response
+ *  carries `dns_records` but that page ignores them and reconstructs the
+ *  record from convention, so this route does the same rather than disagree
+ *  with the page a person may already have this domain open in. */
 export const DEPLOY_DNS_CNAME_TARGET = 'edge.rexer-edge.com.';
 
-/** `CAMP_TYPES` — the group header's mark, so live work reads by campaign. */
-export const DEPLOY_CAMPAIGN_TYPE: Record<
-  DeployCampaignType,
-  { labelKey: string; tint: string }
-> = {
-  launch: { labelKey: 'typeLaunch', tint: 'var(--pv2-violet)' },
-  seasonal: { labelKey: 'typeSeasonal', tint: 'var(--pv2-warning)' },
-  sale: { labelKey: 'typeSale', tint: 'var(--pv2-error)' },
-  always: { labelKey: 'typeAlways', tint: 'var(--pv2-blue-500)' },
-  retention: { labelKey: 'typeRetention', tint: 'var(--pv2-success)' },
+export type DeployChannelKindStyle = {
+  /** Two-character mark for the square badge. */
+  abbr: string;
+  /** Studio token used as the badge fill. */
+  tint: string;
+  bodyKey: string;
 };
 
-/** `DATA.expCats` — the sub-label under an experience name. */
-export const DEPLOY_EXPERIENCE_CATEGORY: Record<string, string> = {
-  microsite: 'Microsite',
-  showcase: 'Product showcase',
-  curated: 'Curated edit',
-  ads: 'Ad unit',
+/** `DATA.channels`' per-kind chrome — name comes from the BE (`channel.name`),
+ *  everything else (badge mark, tint, one-line description) is local chrome
+ *  keyed by `kind` since the BE gives no visual metadata. */
+export const DEPLOY_CHANNEL_KIND: Record<
+  DeployChannelKind,
+  DeployChannelKindStyle
+> = {
+  web: {
+    abbr: 'W',
+    tint: 'var(--pv2-violet)',
+    bodyKey: 'channelBodyWeb',
+  },
+  instagram: {
+    abbr: 'IG',
+    tint: 'var(--pv2-error)',
+    bodyKey: 'channelBodyInstagram',
+  },
+  email: {
+    abbr: '@',
+    tint: 'var(--pv2-warning)',
+    bodyKey: 'channelBodyEmail',
+  },
+  qr: {
+    abbr: 'QR',
+    tint: 'var(--pv2-blue-500)',
+    bodyKey: 'channelBodyQr',
+  },
+  paid_social: {
+    abbr: 'PS',
+    tint: 'var(--pv2-success)',
+    bodyKey: 'channelBodyPaidSocial',
+  },
+  shopify: {
+    abbr: 'S',
+    tint: 'var(--pv2-slate-500)',
+    bodyKey: 'channelBodyShopify',
+  },
+  booking: {
+    abbr: 'B',
+    tint: 'var(--pv2-cyan)',
+    bodyKey: 'channelBodyBooking',
+  },
 };
 
 /** The tab a fresh visit opens on — what is out there comes first. */

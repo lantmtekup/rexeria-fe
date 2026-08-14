@@ -1,51 +1,85 @@
 'use client';
 
-import type { DeployChannel } from '@/lib/portal-v2/deploy/types';
+import { useTranslations } from 'next-intl';
+
+import {
+  DEPLOY_CHANNEL_KIND,
+  DEPLOY_HEALTH,
+} from '@/lib/portal-v2/deploy/constants';
+import type { DeployChannel, DeployHealth } from '@/lib/portal-v2/deploy/types';
 import { cn } from '@/lib/cn';
 
 type ChannelBadgeProps = {
-  channel: DeployChannel;
+  channel: Pick<DeployChannel, 'kind'>;
   size?: 'sm' | 'md';
   className?: string;
 };
 
-/** The channel's square mark. Same badge on a chip, a card and a modal head. */
+/** The channel's square mark. Same badge on a chip, a card and a modal head.
+ *  Abbr/tint are local chrome keyed by `kind` — the BE gives no visual
+ *  metadata for a channel, only its name/status. */
 export const ChannelBadge = ({
   channel,
   size = 'sm',
   className,
-}: ChannelBadgeProps) => (
-  <span
-    aria-hidden
-    className={cn(
-      'grid shrink-0 place-items-center rounded-[6px] font-bold text-white',
-      size === 'sm' ? 'size-[18px] text-[9px]' : 'size-8 text-[12px]',
-      className
-    )}
-    style={{ background: channel.tint }}
-  >
-    {channel.abbr}
-  </span>
-);
+}: ChannelBadgeProps) => {
+  const style = DEPLOY_CHANNEL_KIND[channel.kind];
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'grid shrink-0 place-items-center rounded-[6px] font-bold text-white',
+        size === 'sm' ? 'size-[18px] text-[9px]' : 'size-8 text-[12px]',
+        className
+      )}
+      style={{ background: style.tint }}
+    >
+      {style.abbr}
+    </span>
+  );
+};
 
 type ChannelChipProps = {
-  channel: DeployChannel;
+  channel: Pick<DeployChannel, 'id' | 'kind' | 'name'>;
+  /** When given, a coloured dot shows THIS channel's own health on the row —
+   *  health is per channel, not per row (see `types.ts`). */
+  health?: DeployHealth;
+  healthReason?: string;
   className?: string;
 };
 
-/** Read-only: where a live row is being served. */
-export const ChannelChip = ({ channel, className }: ChannelChipProps) => (
-  <span
-    className={cn(
-      'inline-flex items-center gap-1.5 rounded-full border border-[var(--pv2-hair)]',
-      'bg-[var(--pv2-paper)] py-0.5 pr-2 pl-1 text-[11.5px] font-medium text-[var(--pv2-slate-500)]',
-      className
-    )}
-  >
-    <ChannelBadge channel={channel} />
-    {channel.name}
-  </span>
-);
+/** Read-only: where a live row is being served, and (optionally) how that
+ *  one channel is doing. */
+export const ChannelChip = ({
+  channel,
+  health,
+  healthReason,
+  className,
+}: ChannelChipProps) => {
+  const t = useTranslations('portalV2.deploy');
+  const healthStyle = health ? DEPLOY_HEALTH[health] : null;
+
+  return (
+    <span
+      title={healthReason ?? (healthStyle ? t(healthStyle.hintKey) : undefined)}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border border-[var(--pv2-hair)]',
+        'bg-[var(--pv2-paper)] py-0.5 pr-2 pl-1 text-[11.5px] font-medium text-[var(--pv2-slate-500)]',
+        className
+      )}
+    >
+      <ChannelBadge channel={channel} />
+      {channel.name}
+      {healthStyle ? (
+        <span
+          className='size-1.5 shrink-0 rounded-full'
+          style={{ background: healthStyle.dot }}
+          aria-hidden
+        />
+      ) : null}
+    </span>
+  );
+};
 
 type ChannelToggleProps = {
   channel: DeployChannel;

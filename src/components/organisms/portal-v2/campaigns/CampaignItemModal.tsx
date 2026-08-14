@@ -1,8 +1,9 @@
 'use client';
 
-import { Check, Plus, X } from 'lucide-react';
+import { Check, Plus, Rocket, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { Modal } from '@/components/molecules/portal-v2/Modal';
@@ -13,6 +14,7 @@ import {
   TextTextarea,
 } from '@/components/molecules/portal-v2/brand-form';
 import { StageBar } from '@/components/molecules/portal-v2/campaigns-form';
+import { ChannelToggle } from '@/components/organisms/portal-v2/deploy/ChannelChip';
 import { cn } from '@/lib/cn';
 import {
   ITEM_FLOW,
@@ -31,15 +33,27 @@ import type {
   CampaignItemStatus,
   CampaignTeamMember,
 } from '@/lib/portal-v2/campaigns/types';
+import {
+  canDeploySelection,
+  findChannel,
+} from '@/lib/portal-v2/deploy/helpers';
+import type { DeployChannel } from '@/lib/portal-v2/deploy/types';
+import {
+  deployCampaignItem,
+  pauseCampaignItem,
+} from '@/services/portal-v2/deployBoard';
 
 type CampaignItemModalProps = {
   item: CampaignItem;
+  campaignId: string;
   subjectLabel: string;
   campaignName: string;
   /** Every experience the campaign can see — masters and its own copies. */
   experiences: CampaignExperience[];
   /** Brand members Owner can be assigned to. */
   team: CampaignTeamMember[];
+  /** The brand's deploy channels — for the real "go live" action below. */
+  channels: DeployChannel[];
   onClose: () => void;
   onSave: (item: CampaignItem) => void;
   onDelete: () => void;
@@ -53,6 +67,13 @@ type CampaignItemModalProps = {
   onAttachMaster: (masterId: string) => Promise<string | null>;
   /** Gỡ một trải nghiệm khỏi hạng mục — trả false khi server từ chối. */
   onDetachExperience: (experienceId: string) => Promise<boolean>;
+  /**
+   * `POST .../deploy` / `.../pause` vừa xong — `nextStatus` là sự thật từ
+   * server, khác `draft.status` (thứ người dùng có thể đang bấm thử trên các
+   * pill mà chưa Save). Modal tự cập nhật `draft` cục bộ; hàm này chỉ để
+   * `CampaignDetail` đồng bộ lại `campaign.items`.
+   */
+  onDeployed: (nextStatus: CampaignItemStatus) => void;
 };
 
 /**
@@ -65,17 +86,21 @@ type CampaignItemModalProps = {
  */
 export const CampaignItemModal = ({
   item,
+  campaignId,
   subjectLabel,
   campaignName,
   experiences,
   team,
+  channels,
   onClose,
   onSave,
   onDelete,
   onAttachMaster,
   onDetachExperience,
+  onDeployed,
 }: CampaignItemModalProps) => {
   const t = useTranslations('portalV2.campaigns');
+  const td = useTranslations('portalV2.deploy');
 
   const [draft, setDraft] = useState<CampaignItem>(() => ({
     ...item,
@@ -83,6 +108,62 @@ export const CampaignItemModal = ({
   }));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerQuery, setPickerQuery] = useState('');
+  const [selectedChannelIds, setSelectedChannelIds] = useState<string[]>([]);
+  const [deploying, setDeploying] = useState(false);
+  const [pausing, setPausing] = useState(false);
+
+  /**
+   * Real go-live — `POST /campaigns/{id}/items/{itemId}/deploy`, the same
+   * endpoint the Deploy screen's Ready tab calls. `item.status` (the
+   * PERSISTED status), not `draft.status` — a person can click the "live"
+   * pill above without saving, and that must not be read as "already live".
+   */
+  const handleDeploy = async () => {
+    if (!canDeploySelection(selectedChannelIds, channels)) return;
+    setDeploying(true);
+    try {
+      const res = await deployCampaignItem(
+        campaignId,
+        item.id,
+        selectedChannelIds
+      );
+      const names = selectedChannelIds
+        .map(id => findChannel(channels, id)?.name)
+        .filter(Boolean)
+        .join(', ');
+      toast.success(td('deployedToast', { name: subjectLabel }), {
+        description: res.public_url
+          ? td('deployedToastBody', { channels: names, url: res.public_url })
+          : td('deployedToastBodyNoUrl', { channels: names }),
+      });
+      patch({ status: 'live' });
+      onDeployed('live');
+    } catch (err) {
+      toast.error(td('deployFailedToast'), {
+        description: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setDeploying(false);
+    }
+  };
+
+  const handlePause = async () => {
+    setPausing(true);
+    try {
+      await pauseCampaignItem(campaignId, item.id);
+      toast(td('pausedToast', { name: subjectLabel }), {
+        description: td('pausedToastBody'),
+      });
+      patch({ status: 'ready' });
+      onDeployed('ready');
+    } catch (err) {
+      toast.error(td('pauseFailedToast'), {
+        description: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setPausing(false);
+    }
+  };
 
   const patch = (partial: Partial<CampaignItem>) =>
     setDraft(prev => ({ ...prev, ...partial }));
@@ -171,15 +252,32 @@ export const CampaignItemModal = ({
         <div className='flex flex-wrap gap-1.5'>
           {ITEM_FLOW.map(id => {
             const on = draft.status === id;
-            const held = !gate.ok && stageNeedsGate(id) && !on;
+            /* `live` is not a status this pill can set — the BE refuses the
+               status PATCH for it (409). It only ever reaches `live` through
+               the real Deploy action below, which stamps `draft.status`
+               itself on success. So the pill here is read-only for `live`:
+               it lights up once deployed, but clicking it before that does
+               nothing. */
+            const liveLocked = id === 'live' && !on;
+            const held = (!gate.ok && stageNeedsGate(id) && !on) || liveLocked;
             return (
               <button
                 key={id}
                 type='button'
                 aria-pressed={on}
                 disabled={held}
-                title={held ? t('gateHeld') : undefined}
-                onClick={() => patch({ status: id as CampaignItemStatus })}
+                title={
+                  liveLocked
+                    ? t('liveLocked')
+                    : held
+                      ? t('gateHeld')
+                      : undefined
+                }
+                onClick={() =>
+                  id === 'live'
+                    ? undefined
+                    : patch({ status: id as CampaignItemStatus })
+                }
                 className={cn(
                   'rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors',
                   'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none',
@@ -253,6 +351,64 @@ export const CampaignItemModal = ({
           ))}
         </ul>
       </section>
+
+      {/*
+        The real go-live / pull-down — `item.status` (persisted), not
+        `draft.status`: this reads the server's truth, not an unsaved pill
+        click. Deploying picks channels fresh every time (the BE keeps no
+        selection for a not-yet-live item, see deploy `types.ts`).
+      */}
+      {item.status === 'ready' ? (
+        <section className='mb-5 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] px-4 py-3.5'>
+          <p className='mb-2.5 text-[9.5px] font-bold tracking-[0.09em] text-[var(--pv2-faint)] uppercase'>
+            {td('channelsLabel')}
+          </p>
+          <div className='mb-3 flex flex-wrap gap-2'>
+            {channels.map(ch => (
+              <ChannelToggle
+                key={ch.id}
+                channel={ch}
+                selected={selectedChannelIds.includes(ch.id)}
+                onToggle={id =>
+                  setSelectedChannelIds(prev =>
+                    prev.includes(id)
+                      ? prev.filter(x => x !== id)
+                      : [...prev, id]
+                  )
+                }
+                disabledHint={td('channelNotConnected')}
+              />
+            ))}
+          </div>
+          <Button
+            variant='primary'
+            disabled={
+              deploying || !canDeploySelection(selectedChannelIds, channels)
+            }
+            onClick={() => void handleDeploy()}
+          >
+            <Rocket className='size-3.5' strokeWidth={2.2} aria-hidden />
+            {deploying
+              ? td('deploying')
+              : td('deployToChannels', { count: selectedChannelIds.length })}
+          </Button>
+        </section>
+      ) : null}
+
+      {item.status === 'live' ? (
+        <section className='mb-5 flex items-center justify-between gap-3 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-4 py-3.5'>
+          <span className='text-[12.5px] text-[var(--pv2-mut)]'>
+            {td('liveOnCampaignScreen')}
+          </span>
+          <Button
+            variant='danger'
+            disabled={pausing}
+            onClick={() => void handlePause()}
+          >
+            {pausing ? td('pausing') : td('pause')}
+          </Button>
+        </section>
+      ) : null}
 
       {draft.kind === 'topic' ? (
         <Field label={t('fieldTopicName')}>

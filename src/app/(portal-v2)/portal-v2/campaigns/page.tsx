@@ -8,6 +8,7 @@ import {
 } from '@/services/portal-v2/campaignBoardV2';
 import { fetchJourneyBoard } from '@/services/portal-v2/journeyBoard';
 import { fetchCampaignExperienceLibrary } from '@/services/portal-v2/campaignExperiences';
+import { fetchDeployChannels } from '@/services/portal-v2/deployBoard';
 import { fetchProductCatalog } from '@/services/portal-v2/productCatalog';
 import { resolvePortalScope } from '@/services/portal-v2/scope';
 
@@ -22,19 +23,23 @@ export default async function PortalV2CampaignsPage({
   const scope = await resolvePortalScope(params);
   const initialId = readCampaignIdParam(params);
   // Hai nguồn độc lập ⇒ chạy song song; nối tiếp thì thời gian cộng dồn.
-  const [board, journeys, catalog, experiences, team] = await Promise.all([
-    fetchCampaignBoard({ brandId: scope.brandId }),
-    fetchJourneyBoard({ brandId: scope.brandId }),
-    // Hộp "Thêm vào chiến dịch này" phải liệt kê SKU thật của brand — bản
-    // trước dùng `MOCK_PRODUCTS`, tức một dòng mỹ phẩm không tồn tại.
-    fetchProductCatalog({ brandId: scope.brandId }),
-    // Hộp chọn trải nghiệm phải là thư viện THẬT — bản trước dùng
-    // `MOCK_CAMPAIGN_EXPERIENCES`, tức gắn lên một id không tồn tại.
-    fetchCampaignExperienceLibrary(scope.brandId),
-    // Hộp chọn Owner phải là người thật của brand — bản trước dùng
-    // `CAMPAIGN_TEAM`, bốn cái tên bịa không khớp `owner_id` nào ở BE.
-    fetchCampaignTeam(scope.brandId),
-  ]);
+  const [board, journeys, catalog, experiences, team, channels] =
+    await Promise.all([
+      fetchCampaignBoard({ brandId: scope.brandId }),
+      fetchJourneyBoard({ brandId: scope.brandId }),
+      // Hộp "Thêm vào chiến dịch này" phải liệt kê SKU thật của brand — bản
+      // trước dùng `MOCK_PRODUCTS`, tức một dòng mỹ phẩm không tồn tại.
+      fetchProductCatalog({ brandId: scope.brandId }),
+      // Hộp chọn trải nghiệm phải là thư viện THẬT — bản trước dùng
+      // `MOCK_CAMPAIGN_EXPERIENCES`, tức gắn lên một id không tồn tại.
+      fetchCampaignExperienceLibrary(scope.brandId),
+      // Hộp chọn Owner phải là người thật của brand — bản trước dùng
+      // `CAMPAIGN_TEAM`, bốn cái tên bịa không khớp `owner_id` nào ở BE.
+      fetchCampaignTeam(scope.brandId),
+      // Nút Deploy thật trong `CampaignItemModal` cần danh sách kênh thật —
+      // cùng nguồn màn `/portal-v2/deploy` đang đọc.
+      fetchDeployChannels(),
+    ]);
 
   return (
     <div className='flex min-h-0 flex-col'>
@@ -56,6 +61,7 @@ export default async function PortalV2CampaignsPage({
         }))}
         initialExperiences={experiences}
         team={team}
+        channels={channels.items}
         initialError={board.error ?? scope.error}
       />
     </div>
