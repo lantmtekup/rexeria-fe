@@ -119,7 +119,7 @@ export const ProductValuePanel = ({
             <div className='flex flex-col gap-2.5'>
               {v.competitors.map((c, i) => (
                 <div
-                  key={`${i}-${c.n}`}
+                  key={i}
                   className='rounded-[var(--pv2-r-sm)] border border-[var(--pv2-hair)] px-3.5 py-3'
                 >
                   {editing ? (
@@ -244,7 +244,7 @@ export const ProductValuePanel = ({
           <div className='flex flex-col gap-2'>
             {v.claims.map((c, i) => (
               <div
-                key={`${i}-${c.t}`}
+                key={i}
                 className={cn(
                   'flex items-start gap-2.5 rounded-[var(--pv2-r-sm)] border px-3 py-2.5',
                   c.ok
