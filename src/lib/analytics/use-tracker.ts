@@ -5,16 +5,69 @@
  * - `useInitTracker(pageId)`: mounts the tracker + fires `page_view`
  *   once per session. Returns nothing — it's a side-effect hook.
  *
- * - `useBlockTracking()`: sets up the global click capture + scroll-depth
- *   listeners + IntersectionObserver for `[data-block-id]` / `[data-element-id]`.
- *   Call it once near the top of the page, after blocks are rendered.
+ * - `useBlockTracking(signalByBlockId?)`: sets up the global click capture +
+ *   scroll-depth listeners + IntersectionObserver for `[data-block-id]` /
+ *   `[data-element-id]`. Call it once near the top of the page, after blocks
+ *   are rendered.
+ *
+ * OPT-IN GATING (2026-08-14). Every block/element-level event now requires
+ * explicit `block.signal` config — the same config the editor's "Signal" tab
+ * writes into `canvas_blueprint.blocks[].signal`. A block with no `signal` at
+ * all, or `signal.track !== true`, emits nothing beyond the page-level
+ * `page_view`. This is a deliberate coverage change: most blocks in
+ * production have no signal config yet, so `block_view`/`block_dwell`/
+ * per-element `click` will go quiet on unconfigured pages until content
+ * owners opt blocks in via the Signal panel. `page_view` is unaffected — it
+ * is not attached to any block.
+ *
+ * `signalByBlockId` may arrive after mount (e.g. `_legacy-token-view.tsx`
+ * loads its canvas async) — it is read through a ref inside the listeners
+ * below rather than closed over, so passing a fresh map on a later render
+ * takes effect without re-wiring the DOM listeners.
  *
  * Both are pure side-effects; nothing renders.
  */
 
 import * as React from 'react';
 
+import type {
+  BlockSignalConfig,
+  ComponentSignalConfig,
+} from '@/components/modules/block-editor/types';
+
 import { tracker } from './tracker';
+
+/* ---------------- signal gating ---------------- */
+
+/** Master switch for a block — `undefined`/`false` means "born untracked". */
+function blockIsTrackable(signal: BlockSignalConfig | undefined): boolean {
+  return signal?.track === true;
+}
+
+/**
+ * Does this block want a given mechanical signal (`dwell`/`scroll`/`tap`/...)?
+ * Once `track` is on, an omitted key in `signals` defaults to on — matches
+ * `DEFAULT_BLOCK_SIGNALS` in `block-editor-v2/signal/vocabulary.ts`, which
+ * seeds `dwell`/`scroll`/`tap` true the moment the master toggle is first
+ * turned on.
+ */
+function blockWantsSignal(
+  signal: BlockSignalConfig | undefined,
+  key: string
+): boolean {
+  if (!blockIsTrackable(signal)) return false;
+  return signal?.signals?.[key] !== false;
+}
+
+/** A tracking point's config, only if its own toggle is actually on. */
+function elementSignalOf(
+  signal: BlockSignalConfig | undefined,
+  elementKey: string
+): ComponentSignalConfig | undefined {
+  if (!blockIsTrackable(signal)) return undefined;
+  const cfg = signal?.components?.[elementKey];
+  return cfg?.track ? cfg : undefined;
+}
 
 /* ---------------- init + page_view ---------------- */
 
@@ -57,16 +110,35 @@ interface BlockDwell {
 
 /**
  * Wires document-level listeners:
- *   - click capture on `[data-element-id]` → fires `click`
- *   - scroll → fires `scroll_depth` at 25/50/75/100% (once each)
+ *   - click capture on `[data-element-id]` → fires `click` (ungated — this is
+ *     the ad-widget's own manually-assigned ids, a separate mechanism, see
+ *     `InteractiveAdWidget.tsx`; never gated by signal config)
+ *   - click capture on `[data-element-key]` → fires `click` ONLY when the
+ *     owning block's signal config marks that element as a tracking point
+ *     (`signal.components[key].track === true`); carries the tracking
+ *     point's config in `meta.signal`
+ *   - scroll → fires `scroll_depth` at 25/50/75/100% (once each), only while
+ *     at least one block on the page wants the `scroll` signal
  *   - IntersectionObserver on `[data-block-id]` → fires `block_view` (first
- *     time) and `block_dwell` (on exit, with accumulated visible time)
+ *     time) and `block_dwell` (on exit, with accumulated visible time), only
+ *     for blocks whose signal config has `track: true` and hasn't turned
+ *     `dwell` off
+ *
+ * @param signalByBlockId `block.id → block.signal`, built by the caller from
+ *   the page's parsed blocks. See the opt-in note in the file header.
  */
-export function useBlockTracking(): void {
+export function useBlockTracking(
+  signalByBlockId?: Record<string, BlockSignalConfig>
+): void {
+  const signalRef = React.useRef(signalByBlockId);
+  React.useEffect(() => {
+    signalRef.current = signalByBlockId;
+  }, [signalByBlockId]);
+
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    /* ---- click ---- */
+    /* ---- click (legacy, ungated — InteractiveAdWidget's own ids) ---- */
     const onClick = (e: MouseEvent) => {
       const target = e.target;
       if (!(target instanceof HTMLElement)) return;
@@ -93,9 +165,48 @@ export function useBlockTracking(): void {
     };
     document.addEventListener('click', onClick, true);
 
+    /* ---- click (signal-gated — `data-element-key` from RenderBlock) ---- */
+    const onSignalClick = (e: MouseEvent) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      const el = target.closest<HTMLElement>('[data-element-key]');
+      if (!el) return;
+      const elementKey = el.getAttribute('data-element-key');
+      const block = el.closest<HTMLElement>('[data-block-id]');
+      const blockId = block?.getAttribute('data-block-id');
+      if (!elementKey || !blockId) return;
+      const cfg = elementSignalOf(signalRef.current?.[blockId], elementKey);
+      if (!cfg) return;
+      tracker.emit({
+        event_type: 'click',
+        action: 'click',
+        element_id: elementKey,
+        block_id: blockId,
+        target: elementKey,
+        meta: {
+          signal: {
+            type: cfg.type,
+            event: cfg.event,
+            object: cfg.object,
+            threshold: cfg.threshold,
+            strength: cfg.strength,
+            crm: cfg.crm,
+            privacy: cfg.privacy,
+          },
+        },
+      });
+    };
+    document.addEventListener('click', onSignalClick, true);
+
     /* ---- scroll depth ---- */
+    const pageWantsScroll = (): boolean => {
+      const map = signalRef.current;
+      if (!map) return false;
+      return Object.values(map).some(s => blockWantsSignal(s, 'scroll'));
+    };
     const firedScroll = new Set<number>();
     const onScroll = () => {
+      if (!pageWantsScroll()) return;
       const docH = document.documentElement.scrollHeight - window.innerHeight;
       if (docH <= 0) return;
       const pct = Math.round((window.scrollY / docH) * 100);
@@ -161,12 +272,19 @@ export function useBlockTracking(): void {
       },
       { threshold: [0, 0.5] }
     );
-    // Observe currently mounted blocks; re-observe on DOM mutation (block
-    // navigation, lazy mount).
+    // Observe currently mounted blocks that opted into dwell/view tracking;
+    // re-observe on DOM mutation (block navigation, lazy mount, or a signal
+    // map that arrived after the initial mount).
     const observeAll = () => {
-      document
-        .querySelectorAll('[data-block-id]')
-        .forEach(el => io.observe(el));
+      document.querySelectorAll('[data-block-id]').forEach(el => {
+        const blockId = el.getAttribute('data-block-id');
+        if (
+          blockId &&
+          blockWantsSignal(signalRef.current?.[blockId], 'dwell')
+        ) {
+          io.observe(el);
+        }
+      });
     };
     observeAll();
     const mo = new MutationObserver(() => observeAll());
@@ -195,6 +313,7 @@ export function useBlockTracking(): void {
 
     return () => {
       document.removeEventListener('click', onClick, true);
+      document.removeEventListener('click', onSignalClick, true);
       window.removeEventListener('scroll', throttledScroll);
       window.removeEventListener('pagehide', onUnload);
       io.disconnect();
