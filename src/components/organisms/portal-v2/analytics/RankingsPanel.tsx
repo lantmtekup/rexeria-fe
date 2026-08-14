@@ -144,7 +144,9 @@ const RankingRow = ({
   }
 
   const base = item as
-    ExperienceInsightItem | ProductInsightItem | JourneyInsightItem;
+    | ExperienceInsightItem
+    | ProductInsightItem
+    | JourneyInsightItem;
   const consistency =
     base.variance == null
       ? ''

@@ -17,7 +17,11 @@
 export type RxCampaignStatus = 'planning' | 'building' | 'live' | 'done';
 
 export type RxCampaignType =
-  'launch' | 'seasonal' | 'sale' | 'always' | 'retention';
+  | 'launch'
+  | 'seasonal'
+  | 'sale'
+  | 'always'
+  | 'retention';
 
 export type RxCampaignBudget = {
   amount: number | null;

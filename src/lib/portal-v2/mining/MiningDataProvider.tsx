@@ -26,7 +26,8 @@ type MutationResult =
     };
 
 type SourceMutationResult =
-  { ok: true; source: MiningSource } | { ok: false; reason: 'not-found' };
+  | { ok: true; source: MiningSource }
+  | { ok: false; reason: 'not-found' };
 
 type MiningDataContextValue = {
   data: MiningData;

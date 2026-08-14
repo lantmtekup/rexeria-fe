@@ -650,7 +650,8 @@ export function PageCanvas({
                   const active = block.id === activeBlockId;
                   const content = contentOf(block);
                   const motion = readVariant(block.motion, device) as
-                    BlockMotion | undefined;
+                    | BlockMotion
+                    | undefined;
                   return (
                     <PageCanvasBlockFrame
                       key={block.id}

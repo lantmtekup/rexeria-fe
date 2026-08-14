@@ -71,25 +71,29 @@ export const profileToBrandData = (p: RxBrandProfile): BrandData => ({
     personality: p.essence?.personality ?? [],
     perception: p.essence?.perception ?? '',
   },
-  audience: (p.audience ?? []).map((a: RxProfilePersona, i): BrandPersona => ({
-    id: a.id || idOf('persona', i),
-    n: a.name ?? '',
-    tier: a.tier ?? '',
-    behaves: a.behaves ?? '',
-    stage: a.stage ?? '',
-    awareness: a.awareness ?? '',
-    motivations: a.motivations ?? [],
-    objections: a.objections ?? [],
-    action: a.action ?? '',
-    desired: a.desired ?? '',
-  })),
+  audience: (p.audience ?? []).map(
+    (a: RxProfilePersona, i): BrandPersona => ({
+      id: a.id || idOf('persona', i),
+      n: a.name ?? '',
+      tier: a.tier ?? '',
+      behaves: a.behaves ?? '',
+      stage: a.stage ?? '',
+      awareness: a.awareness ?? '',
+      motivations: a.motivations ?? [],
+      objections: a.objections ?? [],
+      action: a.action ?? '',
+      desired: a.desired ?? '',
+    })
+  ),
   visual: {
-    logos: (p.visual?.logos ?? []).map((l: RxProfileLogo, i): BrandLogo => ({
-      id: idOf('logo', i),
-      n: l.name ?? '',
-      use: l.use ?? '',
-      asset: l.media_id || null,
-    })),
+    logos: (p.visual?.logos ?? []).map(
+      (l: RxProfileLogo, i): BrandLogo => ({
+        id: idOf('logo', i),
+        n: l.name ?? '',
+        use: l.use ?? '',
+        asset: l.media_id || null,
+      })
+    ),
     colors: (p.visual?.colors ?? []).map(
       (c: RxProfileColor, i): BrandColor => ({
         id: idOf('color', i),

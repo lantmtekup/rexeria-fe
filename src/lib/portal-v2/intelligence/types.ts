@@ -13,7 +13,11 @@ export type IntelFindingLink = {
   type: InsightType | 'experiences';
   id: string;
   labelKey:
-    'seeRecord' | 'seeTrackRecord' | 'seeLeak' | 'seeCoverage' | 'seeTrend';
+    | 'seeRecord'
+    | 'seeTrackRecord'
+    | 'seeLeak'
+    | 'seeCoverage'
+    | 'seeTrend';
 };
 
 export type IntelFinding = {

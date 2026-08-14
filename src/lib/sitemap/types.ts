@@ -10,7 +10,13 @@ export type SitemapEntry = MetadataRoute.Sitemap[number];
 export interface SitemapConfig {
   priority: number;
   changeFrequency:
-    'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
+    | 'always'
+    | 'hourly'
+    | 'daily'
+    | 'weekly'
+    | 'monthly'
+    | 'yearly'
+    | 'never';
 }
 
 export interface RouteConfig extends SitemapConfig {

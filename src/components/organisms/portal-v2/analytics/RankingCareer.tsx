@@ -36,7 +36,9 @@ export const RankingCareer = ({ item, onBack }: RankingCareerProps) => {
   }
 
   const base = item as
-    ExperienceInsightItem | ProductInsightItem | JourneyInsightItem;
+    | ExperienceInsightItem
+    | ProductInsightItem
+    | JourneyInsightItem;
   const splits = [...base.splits].sort(
     (a, b) => (b.rollup.lift ?? -1) - (a.rollup.lift ?? -1)
   );

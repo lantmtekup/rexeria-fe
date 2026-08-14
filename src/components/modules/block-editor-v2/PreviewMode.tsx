@@ -210,7 +210,8 @@ export function PreviewMode({
                         );
                         const order = readVariant(block.elementOrder, device);
                         const motion = readVariant(block.motion, device) as
-                          BlockMotion | undefined;
+                          | BlockMotion
+                          | undefined;
                         return (
                           <MotionProvider
                             key={`${block.id}:${device}`}

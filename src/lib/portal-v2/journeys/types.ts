@@ -22,7 +22,11 @@ import type { ExperienceObjective } from '@/lib/portal-v2/experiences/types';
 
 /** `DATA.journeyKinds` (~L6300) — the five node types the plan names. */
 export type JourneyNodeKind =
-  'entry' | 'experience' | 'decision' | 'action' | 'outcome';
+  | 'entry'
+  | 'experience'
+  | 'decision'
+  | 'action'
+  | 'outcome';
 
 /** The ownership axis — prototype `jState` (~L19197). */
 export type JourneyState = 'blueprint' | 'copy';

@@ -7,7 +7,11 @@
  */
 
 export type RxJourneyNodeKind =
-  'entry' | 'experience' | 'decision' | 'action' | 'outcome';
+  | 'entry'
+  | 'experience'
+  | 'decision'
+  | 'action'
+  | 'outcome';
 
 export type RxJourneyNode = {
   key: string;

@@ -1,5 +1,9 @@
 export type SettingsTabId =
-  'general' | 'measurement' | 'privacy' | 'team' | 'data';
+  | 'general'
+  | 'measurement'
+  | 'privacy'
+  | 'team'
+  | 'data';
 
 export type PrivacyTier = 'anonymous' | 'pseudonymous' | 'identified';
 

@@ -73,7 +73,8 @@ export const saveFailureReasons = (
 ): string[] => {
   if (!(err instanceof RxApiError)) return [];
   const details = err.details as
-    { errors?: { message?: string; node_key?: string }[] } | undefined;
+    | { errors?: { message?: string; node_key?: string }[] }
+    | undefined;
   return (details?.errors ?? [])
     .map(e => {
       const msg = e.message ?? '';

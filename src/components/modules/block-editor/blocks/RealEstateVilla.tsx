@@ -187,7 +187,8 @@ export function RealEstateVilla({
         );
       }
       const txt = textStackRef.current?.children[index] as
-        HTMLElement | undefined;
+        | HTMLElement
+        | undefined;
       if (txt) {
         gsap.fromTo(
           txt,

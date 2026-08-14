@@ -227,7 +227,8 @@ export function BlockPreview({
   // matches `BlockMotion` 1:1 (track-based timeline). In edit mode the
   // runtime no-ops, so this can run unconditionally.
   const motionForDevice = readVariant(block.motion, device) as
-    BlockMotion | undefined;
+    | BlockMotion
+    | undefined;
   const effectiveMode: EditorMode = motionMode;
 
   // Device frame element + its measured (unscaled) height. Declared up here

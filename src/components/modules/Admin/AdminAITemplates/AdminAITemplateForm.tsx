@@ -594,7 +594,8 @@ function BlockPromptRow({
               onChange={e =>
                 onChange({
                   tone: (e.target.value || undefined) as
-                    AIBlockTone | undefined,
+                    | AIBlockTone
+                    | undefined,
                 })
               }
               className='border-input bg-background h-9 rounded-md border px-3 text-sm'
