@@ -79,12 +79,27 @@ export async function middleware(request: NextRequest) {
   //   LANDING (rewrite nội bộ sang /rexer — URL giữ nguyên `/`).
   // - Subdomain portal.* (portal.rexerstudio.com): `/` đưa thẳng vào app —
   //   đã đăng nhập → role home (/admin | /portal | /home), chưa → /sign-in.
+  // - Subdomain {slug}.rexerstudio.com (2026-08-14, Deploy §11 "check link"):
+  //   `/` phục vụ landing PUBLISHED của đúng slug đó — rewrite nội bộ sang
+  //   `/p/{slug}`, cùng route trang share link `/p/[id]` đã dùng. Wildcard DNS
+  //   `*.rexerstudio.com` phải trỏ vào Worker này (Cloudflare route riêng,
+  //   ngoài repo) thì nhánh này mới thực sự có traffic tới.
   // Các route khác không đổi: /sign-in, /portal, /admin… hoạt động trên mọi
   // host; /rexer/* (landing) vẫn truy cập trực tiếp được.
   const host = request.headers.get('host') ?? '';
   const isPortalHost = host.startsWith('portal.');
 
+  const ROOT_DOMAIN_SUFFIX = '.rexerstudio.com';
+  const isExperienceHost =
+    !isPortalHost &&
+    host !== 'www.rexerstudio.com' &&
+    host.endsWith(ROOT_DOMAIN_SUFFIX);
+
   if (pathname === '/') {
+    if (isExperienceHost) {
+      const slug = host.slice(0, -ROOT_DOMAIN_SUFFIX.length);
+      return NextResponse.rewrite(new URL(`/p/${slug}`, request.url));
+    }
     if (!isPortalHost) {
       return NextResponse.rewrite(new URL('/rexer', request.url));
     }

@@ -9,7 +9,6 @@ import { DeployEmpty } from '@/components/organisms/portal-v2/deploy/DeployEmpty
 import { DeployNote } from '@/components/organisms/portal-v2/deploy/DeployNote';
 import { ownerName } from '@/lib/portal-v2/campaigns/helpers';
 import type { CampaignTeamMember } from '@/lib/portal-v2/campaigns/types';
-import { canDeploySelection } from '@/lib/portal-v2/deploy/helpers';
 import type {
   DeployChannel,
   ReadyDeployRow,
@@ -56,15 +55,12 @@ export const DeployReadyPane = ({
 
       {rows.map(row => {
         const selected = selections[row.id] ?? [];
-        const deployable = canDeploySelection(selected, channels, row.blockers);
-        const deployHint =
-          row.blockers.length > 0
-            ? row.blockers.join(' ')
-            : selected.length === 0
-              ? t('deployNeedsChannel')
-              : !deployable
-                ? t('deployNeedsConnectedChannel')
-                : undefined;
+        /**
+         * No client gate — the BE is the single source of truth on whether a
+         * deploy actually goes through (`core.CheckDeployPreconditions`) and
+         * returns the real reason as a 409, surfaced verbatim via toast. The
+         * blockers banner below stays purely informational.
+         */
         const owner = row.ownerId ? ownerName(row.ownerId, team) : '';
 
         return (
@@ -95,8 +91,7 @@ export const DeployReadyPane = ({
               <Button
                 variant='primary'
                 size='sm'
-                disabled={!deployable || deployingRow === row.id}
-                title={deployHint}
+                disabled={deployingRow === row.id}
                 onClick={() => onDeploy(row)}
                 aria-label={t('deployAria', {
                   name: row.experiences[0]?.name ?? row.subjectName ?? row.id,

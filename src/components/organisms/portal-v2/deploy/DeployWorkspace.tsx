@@ -16,7 +16,6 @@ import {
   DEPLOY_TABS,
 } from '@/lib/portal-v2/deploy/constants';
 import {
-  canDeploySelection,
   deployTotals,
   fakeDomainId,
   fakeVerificationToken,
@@ -186,8 +185,11 @@ export const DeployWorkspace = ({
   const handleDeploy = useCallback(
     async (row: ReadyDeployRow) => {
       const channelIds = selections[row.id] ?? [];
-      if (!canDeploySelection(channelIds, channels, row.blockers)) return;
-
+      /**
+       * No client gate — attempt every deploy and let the BE
+       * (`core.CheckDeployPreconditions`) decide. A failed precondition
+       * comes back as a 409 with the real reason, caught and toasted below.
+       */
       setDeployingRow(row.id);
       try {
         const res = await deployCampaignItem(
