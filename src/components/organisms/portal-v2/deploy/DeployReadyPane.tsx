@@ -1,59 +1,47 @@
 'use client';
 
-import { Rocket, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Rocket } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { ChannelToggle } from '@/components/organisms/portal-v2/deploy/ChannelChip';
 import { DeployEmpty } from '@/components/organisms/portal-v2/deploy/DeployEmpty';
 import { DeployNote } from '@/components/organisms/portal-v2/deploy/DeployNote';
-import { DomainField } from '@/components/organisms/portal-v2/deploy/DomainField';
-import { DEPLOY_EXPERIENCE_CATEGORY } from '@/lib/portal-v2/deploy/constants';
-import { canDeployRow, rowNeedsDomain } from '@/lib/portal-v2/deploy/helpers';
+import { ownerName } from '@/lib/portal-v2/campaigns/helpers';
+import type { CampaignTeamMember } from '@/lib/portal-v2/campaigns/types';
 import type {
-  DeployBrandDomain,
   DeployChannel,
-  Deployment,
+  ReadyDeployRow,
 } from '@/lib/portal-v2/deploy/types';
 
 type DeployReadyPaneProps = {
-  rows: Deployment[];
+  rows: ReadyDeployRow[];
   channels: DeployChannel[];
-  domains: DeployBrandDomain[];
-  domainsLoading: boolean;
-  /** `'fake'` once the brand's domain list could not be loaded from the real
-   *  BE — the banner below is the only place that fact surfaces. */
-  domainSource: 'live' | 'fake';
+  team: CampaignTeamMember[];
+  /** Channels staged per row, client-side only — the BE keeps no selection
+   *  for an item that isn't live yet. */
+  selections: Record<string, string[]>;
   onToggleChannel: (rowId: string, channelId: string) => void;
-  onSelectDomain: (rowId: string, domainId: string | null) => void;
-  onCreateDomain: (rowId: string, value: string) => void;
-  creatingDomainForRow: string | null;
-  onVerifyDomain: (domainId: string) => void;
-  verifyingDomainId: string | null;
-  onDeploy: (row: Deployment) => void;
+  onDeploy: (row: ReadyDeployRow) => void;
+  deployingRow: string | null;
 };
 
 /**
  * The queue — what a campaign has finished and left waiting on a person.
  *
  * The channel picker sits on the card, not behind a dialog: choosing where
- * something goes is the decision this screen exists for, so it is never one
- * click away from the button that acts on it. Nothing about the experience
- * changes on the way out.
+ * something goes is the decision this screen exists for. Domain choice does
+ * NOT live here — a brand's Web channel is bound to one domain once, on the
+ * Channels tab, not picked per deployment (see `types.ts`).
  */
 export const DeployReadyPane = ({
   rows,
   channels,
-  domains,
-  domainsLoading,
-  domainSource,
+  team,
+  selections,
   onToggleChannel,
-  onSelectDomain,
-  onCreateDomain,
-  creatingDomainForRow,
-  onVerifyDomain,
-  verifyingDomainId,
   onDeploy,
+  deployingRow,
 }: DeployReadyPaneProps) => {
   const t = useTranslations('portalV2.deploy');
 
@@ -65,27 +53,15 @@ export const DeployReadyPane = ({
     <div className='space-y-3'>
       <DeployNote>{t('readyNote')}</DeployNote>
 
-      {domainSource === 'fake' ? (
-        <div className='flex items-start gap-2.5 rounded-[var(--pv2-r)] border border-[var(--pv2-warning)]/30 bg-[color-mix(in_srgb,var(--pv2-warning)_10%,transparent)] px-4 py-3 text-[12.5px] leading-relaxed text-[var(--pv2-slate-500)]'>
-          <ShieldAlert
-            className='mt-px size-3.5 shrink-0 text-[var(--pv2-warning)]'
-            strokeWidth={2.2}
-            aria-hidden
-          />
-          <span>{t('domainFakeBanner')}</span>
-        </div>
-      ) : null}
-
       {rows.map(row => {
-        const count = row.channels.length;
-        const needsDomain = rowNeedsDomain(row.channels);
-        const deployable = canDeployRow(row, domains);
-        const deployHint =
-          count === 0
-            ? t('deployNeedsChannel')
-            : !deployable
-              ? t('deployNeedsDomain')
-              : undefined;
+        const selected = selections[row.id] ?? [];
+        /**
+         * No client gate — the BE is the single source of truth on whether a
+         * deploy actually goes through (`core.CheckDeployPreconditions`) and
+         * returns the real reason as a 409, surfaced verbatim via toast. The
+         * blockers banner below stays purely informational.
+         */
+        const owner = row.ownerId ? ownerName(row.ownerId, team) : '';
 
         return (
           <article
@@ -94,74 +70,65 @@ export const DeployReadyPane = ({
           >
             <header className='flex flex-wrap items-center gap-3 px-4 py-3.5'>
               <span
-                className='size-10 shrink-0 rounded-[9px]'
-                style={{ background: row.experience.grad }}
+                className='size-10 shrink-0 rounded-[9px] bg-[var(--pv2-grad-primary)]'
                 aria-hidden
               />
 
               <span className='min-w-0 flex-1'>
                 <span className='block truncate text-[14px] font-bold text-[var(--pv2-ink)]'>
-                  {row.experience.name}
+                  {row.experiences[0]?.name ?? row.subjectName ?? t('untitled')}
                 </span>
                 <span className='block truncate text-[11.5px] text-[var(--pv2-faint)]'>
-                  {row.campaign.name} · {row.subject.name} ·{' '}
+                  {row.campaign.name}
+                  {row.subjectName ? ` · ${row.subjectName}` : ''} ·{' '}
                   {t(
-                    row.subject.kind === 'product'
-                      ? 'subjectProduct'
-                      : 'subjectTopic'
-                  )}{' '}
-                  ·{' '}
-                  {DEPLOY_EXPERIENCE_CATEGORY[row.experience.category] ??
-                    row.experience.category}{' '}
-                  · {t('ownerLabel', { name: row.owner })}
+                    row.kind === 'product' ? 'subjectProduct' : 'subjectTopic'
+                  )}
+                  {owner ? ` · ${t('ownerLabel', { name: owner })}` : ''}
                 </span>
               </span>
 
               <Button
                 variant='primary'
                 size='sm'
-                disabled={!deployable}
-                title={deployHint}
+                disabled={deployingRow === row.id}
                 onClick={() => onDeploy(row)}
-                aria-label={t('deployAria', { name: row.experience.name })}
+                aria-label={t('deployAria', {
+                  name: row.experiences[0]?.name ?? row.subjectName ?? row.id,
+                })}
               >
                 <Rocket className='size-3.5' strokeWidth={2.2} aria-hidden />
-                {t('deployToChannels', { count })}
+                {deployingRow === row.id
+                  ? t('deploying')
+                  : t('deployToChannels', { count: selected.length })}
               </Button>
             </header>
+
+            {row.blockers.length > 0 ? (
+              <div className='flex items-start gap-2.5 border-t border-[var(--pv2-hair)] bg-[color-mix(in_srgb,var(--pv2-error)_8%,transparent)] px-4 py-2.5 text-[12px] leading-relaxed text-[var(--pv2-error)]'>
+                <AlertTriangle
+                  className='mt-px size-3.5 shrink-0'
+                  strokeWidth={2.2}
+                  aria-hidden
+                />
+                <span>{row.blockers.join(' ')}</span>
+              </div>
+            ) : null}
 
             <div className='flex flex-wrap items-center gap-2 border-t border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-4 py-3'>
               <span className='mr-1 text-[10.5px] font-bold tracking-[0.06em] text-[var(--pv2-faint)] uppercase'>
                 {t('channelsLabel')}
               </span>
-              {channels.map(channel => (
+              {channels.map(ch => (
                 <ChannelToggle
-                  key={channel.id}
-                  channel={channel}
-                  selected={row.channels.includes(channel.id)}
+                  key={ch.id}
+                  channel={ch}
+                  selected={selected.includes(ch.id)}
                   onToggle={id => onToggleChannel(row.id, id)}
                   disabledHint={t('channelNotConnected')}
                 />
               ))}
             </div>
-
-            {needsDomain ? (
-              <div className='flex flex-wrap items-start gap-2 border-t border-[var(--pv2-hair)] px-4 py-3.5'>
-                <span className='mt-1.5 shrink-0 text-[10.5px] font-bold tracking-[0.06em] text-[var(--pv2-faint)] uppercase'>
-                  {t('domainLabel')}
-                </span>
-                <DomainField
-                  domains={domains}
-                  loading={domainsLoading}
-                  selectedId={row.domainId}
-                  onSelect={id => onSelectDomain(row.id, id)}
-                  onCreate={value => onCreateDomain(row.id, value)}
-                  creating={creatingDomainForRow === row.id}
-                  onVerify={onVerifyDomain}
-                  verifyingId={verifyingDomainId}
-                />
-              </div>
-            ) : null}
           </article>
         );
       })}

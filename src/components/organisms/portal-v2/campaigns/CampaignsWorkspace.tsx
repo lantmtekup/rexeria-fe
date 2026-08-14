@@ -61,6 +61,7 @@ import type {
   CampaignWizard,
 } from '@/lib/portal-v2/campaigns/types';
 import { wizardDraft } from '@/lib/portal-v2/campaigns/wizard';
+import type { DeployChannel } from '@/lib/portal-v2/deploy/types';
 import type { Journey } from '@/lib/portal-v2/journeys/types';
 
 type CampaignsWorkspaceProps = {
@@ -78,6 +79,9 @@ type CampaignsWorkspaceProps = {
   initialExperiences: CampaignExperience[];
   /** Thành viên brand THẬT — `GET /brands/{id}/users`. Ai Owner có thể gán tới. */
   team: CampaignTeamMember[];
+  /** Kênh deploy THẬT của brand — `GET /v1/channels`. Cho nút Deploy thật
+   *  trong `CampaignItemModal`, cùng danh sách màn Deploy đang đọc. */
+  channels: DeployChannel[];
   /** Nạp hỏng ⇒ nói ra, đừng để đọc như "chưa có chiến dịch nào". */
   initialError?: string | null;
 };
@@ -100,6 +104,7 @@ export const CampaignsWorkspace = ({
   initialProducts,
   initialExperiences,
   team,
+  channels,
   initialError = null,
 }: CampaignsWorkspaceProps) => {
   const t = useTranslations('portalV2.campaigns');
@@ -454,6 +459,7 @@ export const CampaignsWorkspace = ({
           products={initialProducts}
           productNames={productNames}
           team={team}
+          channels={channels}
           today={today}
           onChange={handleChange}
           onBack={() => setOpenId(null)}

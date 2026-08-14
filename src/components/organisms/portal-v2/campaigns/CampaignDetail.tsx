@@ -59,11 +59,13 @@ import type {
   CampaignExperience,
   CampaignGap,
   CampaignItem,
+  CampaignItemStatus,
   CampaignPhase,
   CampaignTeamMember,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
 import { campHealth, campVerdict } from '@/lib/portal-v2/campaigns/verdict';
+import type { DeployChannel } from '@/lib/portal-v2/deploy/types';
 import type { Journey } from '@/lib/portal-v2/journeys/types';
 
 type CampaignDetailProps = {
@@ -73,6 +75,9 @@ type CampaignDetailProps = {
   products: { id: string; name: string }[];
   productNames: Record<string, string>;
   team: CampaignTeamMember[];
+  /** The brand's deploy channels — for `CampaignItemModal`'s real Deploy
+   *  action, the same list the Deploy screen reads. */
+  channels: DeployChannel[];
   today: string;
   onChange: (next: CampaignView) => void;
   onBack: () => void;
@@ -99,6 +104,7 @@ export const CampaignDetail = ({
   products,
   productNames,
   team,
+  channels,
   today,
   onChange,
   onBack,
@@ -218,6 +224,23 @@ export const CampaignDetail = ({
       items: campaign.items.map(c => (c.id === item.id ? next : c)),
     });
     toast.success(t('toastItemSaved'));
+  };
+
+  /**
+   * `POST .../deploy` or `.../pause` already happened inside the modal — this
+   * only folds the server's resulting status into `campaign.items` so the
+   * work table reflects it once the modal closes.
+   */
+  const handleItemDeployed = (status: CampaignItemStatus) => {
+    if (itemIndex === null) return;
+    const target = campaign.items[itemIndex];
+    if (!target) return;
+    onChange({
+      ...campaign,
+      items: campaign.items.map(c =>
+        c.id === target.id ? { ...c, status } : c
+      ),
+    });
   };
 
   const handleDeleteItem = async (index: number) => {
@@ -572,15 +595,18 @@ export const CampaignDetail = ({
           /* Remount per subject — the modal seeds its draft from the prop once. */
           key={activeItem.id}
           item={activeItem}
+          campaignId={campaign.id}
           subjectLabel={subjectName(activeItem, productNames)}
           campaignName={campaign.name}
           experiences={experiences}
           team={team}
+          channels={channels}
           onClose={() => setItemIndex(null)}
           onSave={handleSaveItem}
           onDelete={() => handleDeleteItem(itemIndex ?? 0)}
           onAttachMaster={handleAttachMaster(activeItem)}
           onDetachExperience={handleDetachExperience(activeItem)}
+          onDeployed={handleItemDeployed}
         />
       ) : null}
 

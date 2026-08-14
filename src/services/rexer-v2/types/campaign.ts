@@ -7,6 +7,8 @@
  * client kia.
  */
 
+import type { RxExperience } from './experience';
+
 /**
  * Trạng thái do BE SUY RA (`core.DeriveCampaignStage`), không phải do FE đặt:
  * có item `live` ⇒ live; có item rời `todo` ⇒ building; còn lại ⇒ planning.
@@ -46,8 +48,15 @@ export type RxCampaignItem = {
   owner_id: string | null;
   due_date: string | null;
   note: string | null;
-  /** Bản copy trải nghiệm gắn vào hạng mục; BE trả sẵn, không phải gọi thêm. */
-  experiences?: { id: string; name?: string }[];
+  /**
+   * Bản copy trải nghiệm gắn vào hạng mục; BE trả sẵn, không phải gọi thêm.
+   * Shape thật là `Experience` đầy đủ (`NewCampaignItemV2` serialize nguyên
+   * `[]Experience` — xem `./deploy.ts`'s `RxExperience`), rộng hơn hẳn
+   * `{id, name}`; khai rộng ra để Deploy đọc được `subject`/`thumbnail_url`
+   * mà không phải gọi thêm request. Chỗ nào chỉ cần `id`/`name` vẫn dùng được
+   * như cũ — đây chỉ nới kiểu, không đổi field nào đã có.
+   */
+  experiences?: RxExperience[];
 };
 
 export type RxCampaign = {

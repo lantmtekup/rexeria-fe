@@ -3,7 +3,8 @@
  *
  * Ported from `plan-v2/rexer-platform-v2.html` (`deployView` ~L18441,
  * `DATA.channels` ~L7778, `HEALTH` ~L18289) against `plan-v2/index.html`
- * §`#mod-deploy`.
+ * §`#mod-deploy`, then re-shaped a second time against the REAL BE contract
+ * (`be-ReXeR.ai/internal/domain/models/deploy.go`, spec §11) once it shipped.
  *
  * DEPLOY IS OPERATIONAL, NOT ANALYTICAL. The numbers on this route are the
  * ones you check before you push something out, or the morning after you did:
@@ -11,189 +12,167 @@
  * insight belong to the AI route — nothing here duplicates them.
  *
  * ONE PLACE STATE CHANGES. The plan is explicit: LIVE only happens through
- * Deploy. So a `Deployment` is not a status column on a campaign item — it is
- * the join of an experience, the campaign that owns it, and the channels it is
- * served on. Campaigns mark work `ready`; this route is what turns that into
- * `live`.
+ * Deploy — `POST /campaigns/{id}/items/{itemId}/deploy` is the only path an
+ * item reaches `status: 'live'` (`core.CheckDeployPreconditions` refuses the
+ * item-status PATCH from setting it). Campaigns mark work `ready`; this route
+ * turns that into `live`.
  *
- * P0 is mock — `ops` and the ready↔live transition itself. The domain a row
- * is served on is the one exception: it reads and writes the real
- * `rexerApi.brands.domains.*` backend (see `helpers.ts`'s `mapBrandDomain`),
- * because that BE already exists and already ships in `/portal/profile/domains`.
- * When `/v1/deployments` lands, `ops` becomes a measured join and `mock.ts`
- * stops being the deployments' source — the view types do not move.
+ * WHAT THE REAL BE DOES NOT GIVE YOU, so this file does not invent it:
+ *   - Per-item sessions / cvr / trend / revenue. `GET /deploy/live` and
+ *     `/deploy/ready` carry per-CHANNEL health only; the only real numbers
+ *     are the brand-wide `GET /deploy/kpis` rollup (by channel kind) and,
+ *     inside one channel's own detail (`GET /channels/{id}`), real
+ *     `sessions_24h` per campaign group.
+ *   - A domain picked PER ROW. A brand has at most one `web` channel, and its
+ *     domain is bound once at CONNECT time (`ConnectChannelRequest.domain_id`)
+ *     — not chosen per deployment. The domain picker therefore lives on the
+ *     Web channel's connect flow, not on a Ready row.
+ *   - A hard "domain must be connected" gate on Deploy. `core.
+ *     CheckDeployPreconditions` never checks domain status — only item
+ *     status, an active release, all-selected-channels-connected, resolved
+ *     journeys, and media rights. Domain health only ever downgrades a LIVE
+ *     row's `health` after the fact.
  */
 
-/** `DTABS` (~L18270) — three tabs, in the order a person actually works. */
+/** The three tabs, in the order a person actually works. */
 export type DeployTabId = 'live' | 'ready' | 'channels';
 
 /**
- * `HEALTH` (~L18289). Operational, not analytical: is the thing working, not
- * is it good. `quiet` is live-but-silent, which is a different failure from
- * `broken` (live with a failing tracking point).
+ * `core.DeploymentHealth` (spec §11.3). Operational, not analytical: is the
+ * thing working, not is it good. `quiet` is live-but-silent, a different
+ * failure from `broken` (channel error / domain broken / release missing).
  */
 export type DeployHealth = 'ok' | 'stale' | 'quiet' | 'broken';
 
-/** Where a deployment sits. There is no third state — it is out, or it waits. */
-export type DeployStatus = 'live' | 'ready';
+/** `models.ChannelKind*` — 7 fixed kinds, lazily created per brand. */
+export type DeployChannelKind =
+  | 'web'
+  | 'instagram'
+  | 'email'
+  | 'qr'
+  | 'paid_social'
+  | 'shopify'
+  | 'booking';
+
+export type DeployChannelStatus = 'connected' | 'disconnected' | 'error';
 
 /**
- * Only `ch1` (Web microsite) is hosted on a domain of its own — the other
- * five pipes serve through a platform that already has one.
- *
- * Four states, not the BE's three (`pending | verifying | verified | failed`
- * — `BrandDomainStatus`) — `mapBrandDomain` folds `verified` onto `connected`
- * so a `pending`-typed-but-never-checked domain can never read the same as
- * one that actually cleared a check, which is what `canDeployRow`'s gate
- * depends on. TLS is deliberately not part of this: `tls_status` finishes
- * issuing on its own after `verified`, and gating Deploy on it would leave
- * the button stuck for a fact this route has no control over.
+ * A publishing surface — `GET /channels`. One row per (brand, kind); the BE
+ * lazily creates all 7 on first read, so this is never a partial list.
  */
+export type DeployChannel = {
+  id: string;
+  kind: DeployChannelKind;
+  name: string;
+  status: DeployChannelStatus;
+  connected: boolean;
+  /** Derived by the BE — any live deployment currently on this channel. */
+  live: boolean;
+  /** `config.domain_id` — only ever set for `kind: 'web'`. */
+  domainId: string | null;
+};
+
+/** Four states — the BE's three (`pending|verifying|verified|failed` on
+ *  `BrandDomain`) folded the same way `mapBrandDomain` already folds them for
+ *  `/portal/profile/domains`, so a never-checked domain never reads the same
+ *  as one that actually cleared a check. */
 export type DeployDomainStatus =
   | 'pending'
   | 'verifying'
   | 'connected'
   | 'error';
 
-/**
- * The brand's own domain — `BrandDomain` (`@/services/rexer/types`), mapped
- * down to what this route reads. A domain belongs to the BRAND, not to a
- * `Deployment`: the same `giftedit.rexer.link` can be picked on more than one
- * row, and `mapBrandDomain` is the one place that BE shape becomes this one,
- * the same job `beDomainToLocal` does for `/portal/profile/domains`.
- */
+/** The brand's own domain — mapped from `BrandDomain`
+ *  (`@/services/rexer/types`) the same way `/portal/profile/domains` does. */
 export type DeployBrandDomain = {
   id: string;
   domain: string;
   status: DeployDomainStatus;
-  /** The BE's `verification_token` — the TXT record's value, verbatim. */
   verificationToken: string;
-  /** Why `status === 'error'` — the BE's `failure_reason`, shown under the pill. */
   failureReason: string | null;
 };
 
-/** A campaign item is about a SKU or a topic that has none — `SUBJECT_KINDS`. */
 export type DeploySubjectKind = 'product' | 'topic';
 
-/** `CAMP_TYPES` (~L9401), carried so a live group reads like its campaign. */
-export type DeployCampaignType =
-  | 'launch'
-  | 'seasonal'
-  | 'sale'
-  | 'always'
-  | 'retention';
-
-/**
- * A publishing surface — `DATA.channels`. `connected` is the only mutable
- * field: everything else describes the pipe, not its state.
- */
-export type DeployChannel = {
-  id: string;
-  name: string;
-  /** Two-character mark for the square badge. */
-  abbr: string;
-  connected: boolean;
-  /** Studio token used as the badge fill. */
-  tint: string;
-  /** What the pipe is, in one sentence — shown on the card and in the modal. */
-  body: string;
-};
-
-/**
- * 24 hours, not lifetime. Seeded from the deployment id in `mock.ts` so the
- * figures are identical on the server and after hydration.
- */
-export type DeployOps = {
-  sessions: number;
-  /** Already formatted — `'3.4%'`. Percent maths does not belong in a cell. */
-  cvr: string;
-  /** Signed percent against the previous 24h. */
-  trend: number;
-  /** Failing tracking points. Any at all ⇒ `health: 'broken'`. */
-  errors: number;
-  health: DeployHealth;
-  /** Experience-assisted, in whole dollars. */
-  revenue: number;
-};
-
-/** The experience being served — the record, not the page. */
+/** One experience copy deployed on an item — `CampaignItemV2.experiences[]`. */
 export type DeployExperience = {
   id: string;
   name: string;
-  /** `DATA.expCats` id — microsite / showcase / curated / ads. */
-  category: string;
-  /** The record's own cover gradient, carried verbatim from the prototype. */
-  grad: string;
+  thumbnailUrl: string | null;
 };
 
-/** The campaign that owns the work. Deploy never owns anything. */
-export type DeployCampaign = {
+/** `ProductCampaignSummary` — deliberately thin. No type/owner/dates: those
+ *  live on the full `Campaign` record the Campaigns screen already reads,
+ *  not on the Deploy control-room endpoints. */
+export type DeployCampaignSummary = {
   id: string;
   name: string;
-  type: DeployCampaignType;
-  owner: string;
-  /** `YYYY-MM-DD`. */
-  start: string;
-  /** `YYYY-MM-DD`, or null for ongoing. */
-  end: string | null;
+  status: string;
 };
 
-/**
- * One experience, in one campaign, on a set of channels.
- *
- * `channels` means two things depending on `status`, and that is deliberate:
- * on a live row it is where the thing IS served; on a ready row it is the
- * selection that will be published — the prototype's `S.deploy.chan[item]`,
- * pulled onto the row so nothing has to be looked up by id.
- */
-export type Deployment = {
+/** One channel an item is live on, plus that channel's own health. Health is
+ *  PER CHANNEL, not per row — the same item can be `ok` on Email and `broken`
+ *  on the Web microsite at once. */
+export type DeployChannelHealth = {
+  channelId: string;
+  kind: DeployChannelKind;
+  name: string;
+  deploymentId: string;
+  health: DeployHealth;
+  /** `core.DeploymentHealth`'s human reason, verbatim — not re-derived. */
+  reason: string;
+};
+
+/** One row of the Live tab — `LiveItemView`. */
+export type LiveDeployRow = {
   id: string;
-  status: DeployStatus;
-  experience: DeployExperience;
-  campaign: DeployCampaign;
-  subject: { name: string; kind: DeploySubjectKind };
-  owner: string;
-  /** `DeployChannel` ids. */
-  channels: string[];
-  /** `YYYY-MM-DD` — live rows only. */
-  since: string | null;
-  ops: DeployOps;
-  /** A `DeployBrandDomain` id — resolved against the brand's domain list, the
-   *  same way `channels` resolves against `DeployBoard.channels`. */
-  domainId: string | null;
+  campaignId: string;
+  campaign: DeployCampaignSummary;
+  kind: DeploySubjectKind;
+  /** The subject's display name — from the item's own experience subject, or
+   *  `topic_name` when no experience carries one yet. `null` means genuinely
+   *  unresolved, never a fabricated id string. */
+  subjectName: string | null;
+  experiences: DeployExperience[];
+  ownerId: string | null;
+  channels: DeployChannelHealth[];
 };
 
-/** The board this route owns, whole. One object so a reset is one assignment. */
-export type DeployBoard = {
-  channels: DeployChannel[];
-  deployments: Deployment[];
+/** One row of the Ready tab — `ReadyItemView`. */
+export type ReadyDeployRow = {
+  id: string;
+  campaignId: string;
+  campaign: DeployCampaignSummary;
+  kind: DeploySubjectKind;
+  subjectName: string | null;
+  experiences: DeployExperience[];
+  ownerId: string | null;
+  /** Media-rights (and other precomputed) reasons this item would fail Deploy
+   *  right now. Empty when clear. Shown verbatim — BE-owned text. */
+  blockers: string[];
 };
 
-/** `deployTotals` (~L18397) — the roll-up across everything that is live. */
+/** The five numbers the header band states — `deployTotals`. */
 export type DeployTotals = {
   live: number;
   ready: number;
-  sessions: number;
-  revenue: number;
-  issues: number;
-  /** Distinct channels carrying at least one live deployment. */
-  channels: number;
-  /** Mean across everything live, formatted — `'—'` when nothing is out. */
+  /** From `GET /deploy/kpis`, brand-wide, current window. `null` before the
+   *  KPI call has resolved — never a silent 0. */
+  sessions: number | null;
+  revenue: number | null;
+  /** Mean conversion across the window, formatted — `'—'` when unmeasured. */
   cvr: string;
+  /** Live rows whose worst channel health is not `ok`. */
+  issues: number;
+  /** Channels the BE reports as `live: true` — carrying at least one live
+   *  deployment right now. */
+  channels: number;
 };
 
-/** One campaign's live rows, with the two figures its header states. */
+/** One campaign's live rows, grouped for the Live tab's section headers. */
 export type DeployCampaignGroup = {
-  campaign: DeployCampaign;
-  rows: Deployment[];
-  sessions: number;
+  campaign: DeployCampaignSummary;
+  rows: LiveDeployRow[];
+  /** Rows whose worst channel health is not `ok`. */
   issues: number;
-};
-
-/** What one channel is carrying — the channel card footer and its modal. */
-export type DeployChannelStats = {
-  rows: Deployment[];
-  sessions: number;
-  issues: number;
-  campaigns: number;
 };

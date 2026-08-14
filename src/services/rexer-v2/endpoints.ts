@@ -34,6 +34,19 @@ import type {
   RxUpdateCampaignRequest,
 } from './types/campaign';
 import type {
+  RxChannel,
+  RxChannelDetail,
+  RxChannelListResponse,
+  RxConnectChannelRequest,
+  RxDeployItemRequest,
+  RxDeployItemResponse,
+  RxDeployKPIsResponse,
+  RxDeployLiveResponse,
+  RxDeployReadyResponse,
+  RxDisconnectChannelResponse,
+  RxKPIWindow,
+} from './types/deploy';
+import type {
   RxCreateJourneyRequest,
   RxJourney,
   RxJourneyListResponse,
@@ -437,6 +450,70 @@ export const rexerV2Api = {
       rxV2<void>(`/campaigns/${campaignId}/items/${itemId}`, {
         method: 'DELETE',
       }),
+
+    /**
+     * `POST /campaigns/{id}/items/{itemId}/deploy` (spec §11.2) — the ONLY
+     * path an item reaches `status: 'live'`. Role-gated (brand manager+);
+     * the BE checks, in order: item already `ready`, an experience copy has
+     * an active release, every selected channel is `connected`, the
+     * campaign's journeys are resolved, and media rights are clear. Any
+     * failed precondition is a 409 `INVALID_TRANSITION` whose `message` is
+     * the one line to show verbatim — the reasons are BE-owned text, not
+     * something this client re-derives or templates.
+     */
+    deploy: (campaignId: string, itemId: string, body: RxDeployItemRequest) =>
+      rxV2<RxDeployItemResponse>(
+        `/campaigns/${campaignId}/items/${itemId}/deploy`,
+        { method: 'POST', body }
+      ),
+
+    /** `POST /campaigns/{id}/items/{itemId}/pause` — live → ready. Drops
+     *  every live deployment on the item; channel selection is not kept
+     *  server-side, so re-deploying means picking channels again. */
+    pause: (campaignId: string, itemId: string) =>
+      rxV2<RxCampaignItem>(`/campaigns/${campaignId}/items/${itemId}/pause`, {
+        method: 'POST',
+      }),
+  },
+
+  // ── Deploy control room (spec §11) — channels + the live/ready/kpis reads.
+  // Nested under `/campaigns` where the BE nests it (`deploy`/`pause` above);
+  // everything else is brand-scoped, not campaign-scoped, so it lives here.
+  channels: {
+    /** Lazily creates the brand's 7 channels (6 fixed + `booking`, migration
+     *  000069) on first call — never returns fewer than that. */
+    list: () => rxV2<RxChannelListResponse>('/channels'),
+
+    /** The only surface with real per-campaign `sessions_24h` for a channel. */
+    get: (channelId: string) => rxV2<RxChannelDetail>(`/channels/${channelId}`),
+
+    connect: (channelId: string, body: RxConnectChannelRequest) =>
+      rxV2<RxChannel>(`/channels/${channelId}/connect`, {
+        method: 'POST',
+        body,
+      }),
+
+    /** Side effect: pauses every live deployment on this channel.
+     *  `paused_items` is only the items that lost their LAST live channel. */
+    disconnect: (channelId: string) =>
+      rxV2<RxDisconnectChannelResponse>(`/channels/${channelId}/disconnect`, {
+        method: 'POST',
+      }),
+  },
+
+  deploy: {
+    /** Items live now, grouped by nothing — one row per item, each carrying
+     *  its OWN channels' health. No sessions/cvr/revenue at this grain. */
+    live: () => rxV2<RxDeployLiveResponse>('/deploy/live'),
+
+    /** `status: 'ready'` items waiting on a person, with precomputed
+     *  media-rights `blockers` (other preconditions only surface at deploy
+     *  time, as a 409). */
+    ready: () => rxV2<RxDeployReadyResponse>('/deploy/ready'),
+
+    /** Brand-wide rollup, by channel KIND — not by item, not by campaign. */
+    kpis: (window: RxKPIWindow = '24h') =>
+      rxV2<RxDeployKPIsResponse>(`/deploy/kpis`, { query: { window } }),
   },
 
   // ── Experiences — thư viện trải nghiệm THẬT, thay cho việc suy từ /pages ──

@@ -41,7 +41,7 @@ export const DeployKpis = ({ totals, onOpenIssues }: DeployKpisProps) => {
       id: 'sessions',
       labelKey: 'kpiSessions',
       dot: 'var(--pv2-violet)',
-      value: formatCount(totals.sessions),
+      value: totals.sessions === null ? '—' : formatCount(totals.sessions),
       sub: t('kpiSessionsSub', { count: totals.channels }),
     },
     {
@@ -55,7 +55,7 @@ export const DeployKpis = ({ totals, onOpenIssues }: DeployKpisProps) => {
       id: 'revenue',
       labelKey: 'kpiRevenue',
       dot: 'var(--pv2-warning)',
-      value: formatMoney(totals.revenue),
+      value: totals.revenue === null ? '—' : formatMoney(totals.revenue),
       sub: t('kpiRevenueSub'),
     },
     {

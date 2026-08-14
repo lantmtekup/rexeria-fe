@@ -1,51 +1,106 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { Modal } from '@/components/molecules/portal-v2/Modal';
-import { ChannelBadge } from '@/components/organisms/portal-v2/deploy/ChannelChip';
-import { DeployNote } from '@/components/organisms/portal-v2/deploy/DeployNote';
-import { HealthPill } from '@/components/organisms/portal-v2/deploy/HealthPill';
 import {
-  channelStats,
-  formatCount,
-  groupByCampaign,
-} from '@/lib/portal-v2/deploy/helpers';
-import type { DeployChannel, Deployment } from '@/lib/portal-v2/deploy/types';
+  ChannelBadge,
+  ChannelChip,
+} from '@/components/organisms/portal-v2/deploy/ChannelChip';
+import { DeployNote } from '@/components/organisms/portal-v2/deploy/DeployNote';
+import { DomainField } from '@/components/organisms/portal-v2/deploy/DomainField';
+import { DEPLOY_CHANNEL_KIND } from '@/lib/portal-v2/deploy/constants';
+import { channelStats } from '@/lib/portal-v2/deploy/helpers';
+import type {
+  DeployBrandDomain,
+  DeployChannel,
+  LiveDeployRow,
+} from '@/lib/portal-v2/deploy/types';
 import { cn } from '@/lib/cn';
+
+type ConnectBody = { domainId?: string; shopDomain?: string; token?: string };
 
 type ChannelDetailModalProps = {
   channel: DeployChannel;
-  live: Deployment[];
+  live: LiveDeployRow[];
+  domains: DeployBrandDomain[];
+  domainSource: 'live' | 'fake';
   onClose: () => void;
-  onConnect: (channelId: string) => void;
+  onConnect: (channelId: string, body: ConnectBody) => void;
+  onDisconnect: (channelId: string) => void;
+  connecting: boolean;
+  onCreateDomain: (value: string) => Promise<DeployBrandDomain | null>;
+  creatingDomain: boolean;
+  onVerifyDomain: (domainId: string) => void;
+  verifyingDomainId: string | null;
 };
 
 /**
- * Everything flowing through one pipe — or, when it is closed, what it would
- * carry the moment it opened. A disconnected channel is not an empty screen:
- * it is an argument, which is why the not-connected branch still names the
- * work waiting behind it.
+ * Everything flowing through one pipe — or, when it is closed, what it takes
+ * to open it. `web` needs a bound domain, `shopify` needs a shop + token,
+ * everything else is one click — the BE's `ConnectChannelRequest` shape per
+ * kind (spec §11.1), not something this modal invents.
  */
 export const ChannelDetailModal = ({
   channel,
   live,
+  domains,
+  domainSource,
   onClose,
   onConnect,
+  onDisconnect,
+  connecting,
+  onCreateDomain,
+  creatingDomain,
+  onVerifyDomain,
+  verifyingDomainId,
 }: ChannelDetailModalProps) => {
   const t = useTranslations('portalV2.deploy');
   const stats = channelStats(channel.id, live);
-  const groups = groupByCampaign(stats.rows);
+  const [selectedDomainId, setSelectedDomainId] = useState<string | null>(
+    channel.domainId
+  );
+  const [shopDomain, setShopDomain] = useState('');
+  const [token, setToken] = useState('');
+
+  const handleCreateDomain = async (value: string) => {
+    const created = await onCreateDomain(value);
+    if (created) setSelectedDomainId(created.id);
+  };
 
   if (!channel.connected) {
+    const canConnectWeb = channel.kind === 'web' && !!selectedDomainId;
+    const canConnectShopify =
+      channel.kind === 'shopify' && shopDomain.trim() && token.trim();
+    const disabled =
+      connecting ||
+      (channel.kind === 'web' && !canConnectWeb) ||
+      (channel.kind === 'shopify' && !canConnectShopify);
+
+    const connect = () => {
+      if (channel.kind === 'web') {
+        onConnect(channel.id, { domainId: selectedDomainId ?? undefined });
+      } else if (channel.kind === 'shopify') {
+        onConnect(channel.id, {
+          shopDomain: shopDomain.trim(),
+          token: token.trim(),
+        });
+      } else {
+        onConnect(channel.id, {});
+      }
+    };
+
     return (
       <Modal
         open
         wide
         onClose={onClose}
         title={channel.name}
-        subtitle={t('channelClosedSub', { body: channel.body })}
+        subtitle={t('channelClosedSub', {
+          body: t(DEPLOY_CHANNEL_KIND[channel.kind].bodyKey),
+        })}
         footer={
           <>
             <span className='flex-1' />
@@ -55,14 +110,61 @@ export const ChannelDetailModal = ({
             <Button
               variant='primary'
               size='sm'
-              onClick={() => onConnect(channel.id)}
+              disabled={disabled}
+              onClick={connect}
             >
-              {t('connectChannel', { name: channel.name })}
+              {connecting
+                ? t('connecting')
+                : t('connectChannel', { name: channel.name })}
             </Button>
           </>
         }
       >
-        <DeployNote>{t('channelClosedNote')}</DeployNote>
+        {channel.kind === 'web' ? (
+          <div className='space-y-2'>
+            {domainSource === 'fake' ? (
+              <DeployNote>{t('domainFakeBanner')}</DeployNote>
+            ) : null}
+            <DomainField
+              domains={domains}
+              loading={false}
+              selectedId={selectedDomainId}
+              onSelect={setSelectedDomainId}
+              onCreate={handleCreateDomain}
+              creating={creatingDomain}
+              onVerify={onVerifyDomain}
+              verifyingId={verifyingDomainId}
+            />
+          </div>
+        ) : channel.kind === 'shopify' ? (
+          <div className='space-y-3'>
+            <label className='block'>
+              <span className='mb-1 block text-[11px] font-semibold text-[var(--pv2-mut)]'>
+                {t('shopifyDomainLabel')}
+              </span>
+              <input
+                value={shopDomain}
+                onChange={e => setShopDomain(e.target.value)}
+                placeholder={t('shopifyDomainPlaceholder')}
+                className='h-8 w-full rounded-[8px] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2.5 text-[12.5px] text-[var(--pv2-ink)] outline-none focus:border-[var(--pv2-electric)] focus:ring-2 focus:ring-[var(--pv2-electric)]/15'
+              />
+            </label>
+            <label className='block'>
+              <span className='mb-1 block text-[11px] font-semibold text-[var(--pv2-mut)]'>
+                {t('shopifyTokenLabel')}
+              </span>
+              <input
+                value={token}
+                onChange={e => setToken(e.target.value)}
+                type='password'
+                placeholder={t('shopifyTokenPlaceholder')}
+                className='h-8 w-full rounded-[8px] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2.5 text-[12.5px] text-[var(--pv2-ink)] outline-none focus:border-[var(--pv2-electric)] focus:ring-2 focus:ring-[var(--pv2-electric)]/15'
+              />
+            </label>
+          </div>
+        ) : (
+          <DeployNote>{t('channelClosedNote')}</DeployNote>
+        )}
       </Modal>
     );
   }
@@ -73,9 +175,17 @@ export const ChannelDetailModal = ({
       wide
       onClose={onClose}
       title={channel.name}
-      subtitle={channel.body}
+      subtitle={t(DEPLOY_CHANNEL_KIND[channel.kind].bodyKey)}
       footer={
         <>
+          <Button
+            variant='danger'
+            size='sm'
+            disabled={connecting}
+            onClick={() => onDisconnect(channel.id)}
+          >
+            {connecting ? t('disconnecting') : t('disconnectChannel')}
+          </Button>
           <span className='flex-1' />
           <Button variant='ghost' size='sm' onClick={onClose}>
             {t('close')}
@@ -87,12 +197,6 @@ export const ChannelDetailModal = ({
         <span className='inline-flex items-center gap-1.5'>
           <ChannelBadge channel={channel} />
           {t('channelLiveCount', { count: stats.rows.length })}
-        </span>
-        <span>
-          <b className='font-[family-name:var(--pv2-disp)] text-[var(--pv2-ink)] tabular-nums'>
-            {formatCount(stats.sessions)}
-          </b>{' '}
-          {t('sessions24h')}
         </span>
         <span
           className={cn(
@@ -106,46 +210,41 @@ export const ChannelDetailModal = ({
             ? t('issuesCount', { count: stats.issues })
             : t('noIssues')}
         </span>
-        <span>{t('campaignsCount', { count: stats.campaigns })}</span>
       </div>
 
-      {groups.length ? (
-        <div className='mt-4 space-y-4'>
-          {groups.map(group => (
-            <section key={group.campaign.id}>
-              <h3 className='mb-1.5 text-[10.5px] font-bold tracking-[0.06em] text-[var(--pv2-faint)] uppercase'>
-                {group.campaign.name}
-              </h3>
-              <ul className='divide-y divide-[var(--pv2-hair)] overflow-hidden rounded-[var(--pv2-r)] border border-[var(--pv2-hair)]'>
-                {group.rows.map(row => (
-                  <li
-                    key={row.id}
-                    className='flex flex-wrap items-center gap-3 px-3.5 py-2.5'
-                  >
-                    <span
-                      className='size-7 shrink-0 rounded-[7px]'
-                      style={{ background: row.experience.grad }}
-                      aria-hidden
-                    />
-                    <span className='min-w-0 flex-1'>
-                      <span className='block truncate text-[13px] font-semibold text-[var(--pv2-ink)]'>
-                        {row.experience.name}
-                      </span>
-                      <span className='block truncate text-[11.5px] text-[var(--pv2-faint)]'>
-                        {row.subject.name} ·{' '}
-                        {t('sessionsValue', {
-                          count: formatCount(row.ops.sessions),
-                        })}{' '}
-                        · {row.ops.cvr}
-                      </span>
-                    </span>
-                    <HealthPill health={row.ops.health} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
+      {stats.rows.length ? (
+        <ul className='mt-4 divide-y divide-[var(--pv2-hair)] overflow-hidden rounded-[var(--pv2-r)] border border-[var(--pv2-hair)]'>
+          {stats.rows.map(row => {
+            const onThisChannel = row.channels.find(
+              c => c.channelId === channel.id
+            );
+            return (
+              <li
+                key={row.id}
+                className='flex flex-wrap items-center gap-3 px-3.5 py-2.5'
+              >
+                <span className='min-w-0 flex-1'>
+                  <span className='block truncate text-[13px] font-semibold text-[var(--pv2-ink)]'>
+                    {row.experiences[0]?.name ??
+                      row.subjectName ??
+                      t('untitled')}
+                  </span>
+                  <span className='block truncate text-[11.5px] text-[var(--pv2-faint)]'>
+                    {row.campaign.name}
+                    {row.subjectName ? ` · ${row.subjectName}` : ''}
+                  </span>
+                </span>
+                {onThisChannel ? (
+                  <ChannelChip
+                    channel={channel}
+                    health={onThisChannel.health}
+                    healthReason={onThisChannel.reason}
+                  />
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
       ) : (
         <p className='mt-4 rounded-[var(--pv2-r)] border border-dashed border-[var(--pv2-hair)] px-4 py-6 text-center text-[13px] text-[var(--pv2-faint)]'>
           {t('channelNothingLive')}
