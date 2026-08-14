@@ -17,7 +17,6 @@ import {
   CAMPAIGN_CHANNELS,
   CAMPAIGN_GOALS,
   CAMPAIGN_GOAL_IDS,
-  CAMPAIGN_TEAM,
   CAMPAIGN_TYPES,
   CAMPAIGN_TYPE_IDS,
 } from '@/lib/portal-v2/campaigns/constants';
@@ -26,12 +25,14 @@ import type {
   CampaignDraft,
   CampaignGoal,
   CampaignStage,
+  CampaignTeamMember,
   CampaignType,
 } from '@/lib/portal-v2/campaigns/types';
 
 type CampaignBriefAsideProps = {
   draft: CampaignDraft;
   editing: boolean;
+  team: CampaignTeamMember[];
   onChange: (patch: Partial<CampaignDraft>) => void;
 };
 
@@ -61,6 +62,7 @@ const ReadRow = ({ label, value }: { label: string; value: string }) => (
 export const CampaignBriefAside = ({
   draft,
   editing,
+  team,
   onChange,
 }: CampaignBriefAsideProps) => {
   const t = useTranslations('portalV2.campaigns');
@@ -192,9 +194,9 @@ export const CampaignBriefAside = ({
                 onChange={e => onChange({ owner: e.target.value })}
               >
                 <option value=''>{t('unassigned')}</option>
-                {CAMPAIGN_TEAM.map(member => (
-                  <option key={member} value={member}>
-                    {member}
+                {team.map(member => (
+                  <option key={member.id} value={member.id}>
+                    {member.name}
                   </option>
                 ))}
               </TextSelect>

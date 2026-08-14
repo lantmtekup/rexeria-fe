@@ -18,9 +18,11 @@ import {
   deriveStage,
   fmtBudget,
   fmtRange,
+  ownerName,
 } from '@/lib/portal-v2/campaigns/helpers';
 import type {
   CampaignExperience,
+  CampaignTeamMember,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
 import { campHealth } from '@/lib/portal-v2/campaigns/verdict';
@@ -31,6 +33,7 @@ type CampaignTableProps = {
   campaigns: CampaignView[];
   experiences: CampaignExperience[];
   journeys: Journey[];
+  team: CampaignTeamMember[];
   today: string;
   selected: string[];
   onToggleSelect: (id: string) => void;
@@ -56,6 +59,7 @@ export const CampaignTable = ({
   campaigns,
   experiences,
   journeys,
+  team,
   today,
   selected,
   onToggleSelect,
@@ -97,6 +101,7 @@ export const CampaignTable = ({
         <tbody>
           {campaigns.map(campaign => {
             const on = selected.includes(campaign.id);
+            const owner = ownerName(campaign.owner, team);
             const progress = campProgress(campaign);
             const budget = fmtBudget(
               campaign.budgetAmount,
@@ -156,10 +161,10 @@ export const CampaignTable = ({
                 <td className={cn(cellClass, 'whitespace-nowrap')}>
                   <span
                     className={cn(
-                      !campaign.owner && 'font-semibold text-[var(--pv2-error)]'
+                      !owner && 'font-semibold text-[var(--pv2-error)]'
                     )}
                   >
-                    {campaign.owner || t('unassigned')}
+                    {owner || t('unassigned')}
                   </span>
                 </td>
 

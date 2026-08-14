@@ -18,7 +18,6 @@ import {
   CAMPAIGN_CHANNELS,
   CAMPAIGN_GOALS,
   CAMPAIGN_GOAL_IDS,
-  CAMPAIGN_TEAM,
   CAMPAIGN_TYPES,
   CAMPAIGN_TYPE_IDS,
   CAMPAIGN_WIZARD_STEPS,
@@ -26,6 +25,7 @@ import {
 import { routeMastersFor } from '@/lib/portal-v2/campaigns/journeyLink';
 import type {
   CampaignGoal,
+  CampaignTeamMember,
   CampaignType,
   CampaignWizard,
 } from '@/lib/portal-v2/campaigns/types';
@@ -39,7 +39,7 @@ import {
 import type { Journey } from '@/lib/portal-v2/journeys/types';
 
 type NewCampaignWizardProps = {
-  owner: string;
+  team: CampaignTeamMember[];
   products: { id: string; name: string }[];
   blueprints: Journey[];
   onClose: () => void;
@@ -67,7 +67,7 @@ const legend =
  * whatever happened to be in stock.
  */
 export const NewCampaignWizard = ({
-  owner,
+  team,
   products,
   blueprints,
   onClose,
@@ -76,7 +76,7 @@ export const NewCampaignWizard = ({
   const t = useTranslations('portalV2.campaigns');
 
   const [wizard, setWizard] = useState<CampaignWizard>(() =>
-    blankWizard(owner)
+    blankWizard(team[0]?.id ?? '')
   );
   const [topicDraft, setTopicDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -253,9 +253,10 @@ export const NewCampaignWizard = ({
                 value={wizard.owner}
                 onChange={e => patch({ owner: e.target.value })}
               >
-                {CAMPAIGN_TEAM.map(member => (
-                  <option key={member} value={member}>
-                    {member}
+                <option value=''>{t('unassigned')}</option>
+                {team.map(member => (
+                  <option key={member.id} value={member.id}>
+                    {member.name}
                   </option>
                 ))}
               </TextSelect>

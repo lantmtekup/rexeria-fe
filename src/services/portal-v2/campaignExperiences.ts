@@ -1,4 +1,9 @@
 import type { CampaignExperience } from '@/lib/portal-v2/campaigns/types';
+import {
+  COPY_STATES,
+  fetchExperienceState,
+  fetchOwnTemplateIds,
+} from '@/services/portal-v2/experienceLibrary';
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 import type { RxExperience } from '@/services/rexer-v2/types/experience';
 
@@ -42,11 +47,18 @@ export const detachExperienceFromItem = (
   rexerV2Api.experiences.detachFromItem(campaignId, itemId, experienceId);
 
 /**
- * Thư viện trải nghiệm để chọn gắn — `GET /v1/experiences`.
+ * Thư viện trải nghiệm để chọn gắn — CHỈ trải nghiệm của brand đang thao tác.
  *
  * Hộp chọn trước đây liệt kê `MOCK_CAMPAIGN_EXPERIENCES` (Holiday Gift Edit,
  * The Clean Edit…), một dòng nội dung mỹ phẩm không tồn tại. Gắn một trong số
  * đó là gửi lên BE một id không có thật.
+ *
+ * Bản kế tiếp gọi thẳng `state: 'all'` — tức nguyên thư viện Exchange (mọi
+ * template hệ thống + block của MỌI brand), nên hộp chọn của một chiến dịch
+ * hiện ra hàng trăm mục không thuộc về brand đang xem. Dùng lại đúng bộ lọc
+ * "thư viện của brand" ở trang `portal-v2/experiences`
+ * (`fetchExperienceLibrary`/`experienceLibrary.ts`): ba `COPY_STATES` cộng
+ * template do chính brand sở hữu — không phải toàn bộ Exchange.
  *
  * Lấy CẢ template lẫn copy: hộp chọn cần template để fork, còn các thẻ đã gắn
  * cần bản copy để hiện tên.
@@ -55,13 +67,28 @@ export const fetchCampaignExperienceLibrary = async (
   brandId: string | null
 ): Promise<CampaignExperience[]> => {
   try {
-    const res = await rexerV2Api.experiences.list({
-      state: 'all',
-      page_size: 100,
-      ...(brandId ? { brand_id: brandId } : {}),
-    });
-    return (res.items ?? [])
-      .filter(x => x.kind !== 'block')
+    const common = brandId ? { brand_id: brandId } : {};
+    const ownIds = await fetchOwnTemplateIds();
+
+    const fetchOwnTemplates = async (): Promise<RxExperience[]> => {
+      if (!ownIds || ownIds.size === 0) return [];
+      const all = await fetchExperienceState(common, 'templates');
+      return all.filter(x => ownIds.has(x.id));
+    };
+
+    const chunks = await Promise.all([
+      ...COPY_STATES.map(s => fetchExperienceState(common, s)),
+      fetchOwnTemplates(),
+    ]);
+
+    const seen = new Set<string>();
+    return chunks
+      .flat()
+      .filter(x => {
+        if (seen.has(x.id)) return false;
+        seen.add(x.id);
+        return true;
+      })
       .map(toCampaignExperience);
   } catch {
     return [];

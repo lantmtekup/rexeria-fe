@@ -19,12 +19,14 @@ import {
   deriveStage,
   fmtBudget,
   fmtRange,
+  ownerName,
   shortLabel,
   subjectName,
   unassignedCount,
 } from '@/lib/portal-v2/campaigns/helpers';
 import type {
   CampaignExperience,
+  CampaignTeamMember,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
 import { campHealth } from '@/lib/portal-v2/campaigns/verdict';
@@ -36,6 +38,7 @@ type CampaignCardProps = {
   productNames: Record<string, string>;
   experiences: CampaignExperience[];
   journeys: Journey[];
+  team: CampaignTeamMember[];
   today: string;
   selected: boolean;
   onToggleSelect: (id: string) => void;
@@ -57,6 +60,7 @@ export const CampaignCard = ({
   productNames,
   experiences,
   journeys,
+  team,
   today,
   selected,
   onToggleSelect,
@@ -67,6 +71,7 @@ export const CampaignCard = ({
   const t = useTranslations('portalV2.campaigns');
 
   const stage = deriveStage(campaign);
+  const owner = ownerName(campaign.owner, team);
   const health = campHealth(campaign, experiences, today, journeys);
   const progress = campProgress(campaign);
   const expCount = campExpCount(campaign);
@@ -203,7 +208,7 @@ export const CampaignCard = ({
       <div className='mt-3.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--pv2-hair)] pt-2.5 text-[11px] text-[var(--pv2-faint)]'>
         <span className='inline-flex items-center gap-1'>
           <User className='size-3' strokeWidth={2} aria-hidden />
-          {campaign.owner || t('unassigned')}
+          {owner || t('unassigned')}
         </span>
         {budget ? <span>{budget}</span> : null}
         <span>{t('experienceCount', { count: expCount })}</span>

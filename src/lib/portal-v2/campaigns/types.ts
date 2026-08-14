@@ -56,6 +56,14 @@ export type CampaignItemStatus =
 /** "hạng mục theo sản phẩm hoặc chủ đề" — a SKU or a topic with no SKU behind it. */
 export type CampaignSubjectKind = 'product' | 'topic';
 
+/**
+ * A brand member the work can be assigned to — `GET /brands/{id}/users`.
+ *
+ * Trước đây "Owner" chọn giữa bốn cái tên bịa cứng (`CAMPAIGN_TEAM`) không
+ * khớp người dùng thật nào trong brand — chọn xong thì không có gì để lưu.
+ */
+export type CampaignTeamMember = { id: string; name: string };
+
 export type CampaignItem = {
   id: string;
   kind: CampaignSubjectKind;
@@ -66,6 +74,7 @@ export type CampaignItem = {
   /** Experience ids — always campaign copies, never templates (Rule R1). */
   expIds: string[];
   status: CampaignItemStatus;
+  /** `owner_id` — a member's uuid, or `''` for unassigned. Resolve the display name via `ownerName`/`CampaignTeamMember[]`. */
   owner: string;
   /** `YYYY-MM-DD`, or null for "no deadline / shipped". */
   due: string | null;

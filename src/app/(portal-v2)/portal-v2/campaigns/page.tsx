@@ -2,7 +2,10 @@ import { BrandScopeBar } from '@/components/molecules/portal-v2/BrandScopeBar';
 import { CampaignsWorkspace } from '@/components/organisms/portal-v2/campaigns/CampaignsWorkspace';
 import { readCampaignIdParam } from '@/lib/portal-v2/campaigns/idParam';
 import { withJourneyLinks } from '@/lib/portal-v2/campaigns/journeyLink';
-import { fetchCampaignBoard } from '@/services/portal-v2/campaignBoardV2';
+import {
+  fetchCampaignBoard,
+  fetchCampaignTeam,
+} from '@/services/portal-v2/campaignBoardV2';
 import { fetchJourneyBoard } from '@/services/portal-v2/journeyBoard';
 import { fetchCampaignExperienceLibrary } from '@/services/portal-v2/campaignExperiences';
 import { fetchProductCatalog } from '@/services/portal-v2/productCatalog';
@@ -19,7 +22,7 @@ export default async function PortalV2CampaignsPage({
   const scope = await resolvePortalScope(params);
   const initialId = readCampaignIdParam(params);
   // Hai nguồn độc lập ⇒ chạy song song; nối tiếp thì thời gian cộng dồn.
-  const [board, journeys, catalog, experiences] = await Promise.all([
+  const [board, journeys, catalog, experiences, team] = await Promise.all([
     fetchCampaignBoard({ brandId: scope.brandId }),
     fetchJourneyBoard({ brandId: scope.brandId }),
     // Hộp "Thêm vào chiến dịch này" phải liệt kê SKU thật của brand — bản
@@ -28,6 +31,9 @@ export default async function PortalV2CampaignsPage({
     // Hộp chọn trải nghiệm phải là thư viện THẬT — bản trước dùng
     // `MOCK_CAMPAIGN_EXPERIENCES`, tức gắn lên một id không tồn tại.
     fetchCampaignExperienceLibrary(scope.brandId),
+    // Hộp chọn Owner phải là người thật của brand — bản trước dùng
+    // `CAMPAIGN_TEAM`, bốn cái tên bịa không khớp `owner_id` nào ở BE.
+    fetchCampaignTeam(scope.brandId),
   ]);
 
   return (
@@ -49,6 +55,7 @@ export default async function PortalV2CampaignsPage({
           name: p.title,
         }))}
         initialExperiences={experiences}
+        team={team}
         initialError={board.error ?? scope.error}
       />
     </div>

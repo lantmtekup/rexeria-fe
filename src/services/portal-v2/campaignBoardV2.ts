@@ -5,6 +5,7 @@ import {
 import type {
   CampaignDraft,
   CampaignItem,
+  CampaignTeamMember,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
@@ -62,6 +63,30 @@ export const fetchCampaignDetail = async (
   }
 };
 
+/**
+ * Thành viên brand có thể gán làm Owner — `GET /brands/{id}/users`.
+ *
+ * Bản trước dùng `CAMPAIGN_TEAM`: bốn cái tên bịa cứng trong code (Toan
+ * Nguyen, Maya Okonjo…), không khớp một `owner_id` thật nào ở BE. Chọn một
+ * "tên" đó rồi lưu vừa không gửi lên đâu (hộp Owner trong `CampaignItemModal`
+ * không có id để gửi), vừa hiện lại rỗng sau khi tải lại (BE trả `owner_id`
+ * là uuid, FE không có cách map ngược ra tên bịa).
+ */
+export const fetchCampaignTeam = async (
+  brandId: string | null
+): Promise<CampaignTeamMember[]> => {
+  if (!brandId) return [];
+  try {
+    const res = await rexerV2Api.settings.members(brandId);
+    return (res.items ?? []).map(m => ({
+      id: m.user_id,
+      name: m.display_name || m.email,
+    }));
+  } catch {
+    return [];
+  }
+};
+
 /* ── ghi ──────────────────────────────────────────────────────────────────── */
 
 type BudgetSource = Pick<CampaignView, 'budgetAmount' | 'budgetCurrency'>;
@@ -91,6 +116,7 @@ export const createCampaign = async (
     brief: draft.brief,
     start_date: draft.startDate,
     end_date: draft.endDate,
+    owner_id: draft.owner || null,
     budget: toBudget(draft),
     channels: draft.channels,
   });
@@ -104,6 +130,7 @@ export const saveCampaign = async (c: CampaignView): Promise<CampaignView> => {
     brief: c.brief,
     start_date: c.startDate,
     end_date: c.endDate,
+    owner_id: c.owner || null,
     budget: toBudget(c),
     channels: c.channels,
   });

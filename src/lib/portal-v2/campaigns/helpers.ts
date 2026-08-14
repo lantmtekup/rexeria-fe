@@ -10,8 +10,20 @@ import type {
   CampaignFilters,
   CampaignItem,
   CampaignStage,
+  CampaignTeamMember,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
+
+/**
+ * `owner` giữ uuid (`owner_id`) chứ không phải tên — tra ngược ra tên hiển thị
+ * qua danh sách thành viên THẬT của brand (`fetchCampaignTeam`). Không có id,
+ * hoặc id không khớp ai trong `team` (thành viên đã rời brand), thì trả rỗng —
+ * mọi nơi gọi hàm này đều tự rơi về "Unassigned" với `|| t('unassigned')`.
+ */
+export const ownerName = (
+  ownerId: string,
+  team: CampaignTeamMember[]
+): string => team.find(m => m.id === ownerId)?.name ?? '';
 
 export const emptyBrief = (): CampaignBrief => ({
   objective: '',

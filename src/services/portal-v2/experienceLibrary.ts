@@ -2,6 +2,7 @@ import { v2ToExperienceView } from '@/lib/portal-v2/experiences/fromV2';
 import type { ExperienceView } from '@/lib/portal-v2/experiences/types';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
+import type { RxExperience } from '@/services/rexer-v2/types/experience';
 
 export type ExperienceLibraryQuery = {
   /** Tìm toàn văn — đẩy xuống server qua `q`. */
@@ -38,7 +39,11 @@ const MAX_PAGES = 10;
  * `all` = 320 (171 template + ~146 block + 3 copy), trong khi cái người dùng
  * vào đây để tìm chỉ có 3.
  */
-const COPY_STATES = ['unassigned', 'product_copies', 'topic_copies'] as const;
+export const COPY_STATES = [
+  'unassigned',
+  'product_copies',
+  'topic_copies',
+] as const;
 
 /** `GET /v1/templates` — 79 bản ghi thật, một trang là đủ. */
 const TEMPLATE_LOOKUP_LIMIT = 200;
@@ -56,7 +61,7 @@ const TEMPLATE_LOOKUP_LIMIT = 200;
  * template nào", và cả 79 template hệ thống sẽ bị loại đúng như mong muốn —
  * nhưng bản copy của người dùng cũng biến mất mà không ai báo gì.
  */
-const fetchOwnTemplateIds = async (): Promise<Set<string> | null> => {
+export const fetchOwnTemplateIds = async (): Promise<Set<string> | null> => {
   try {
     const res = await rexerApi.templates.list({
       page: 1,
@@ -70,6 +75,43 @@ const fetchOwnTemplateIds = async (): Promise<Set<string> | null> => {
   } catch {
     return null;
   }
+};
+
+/**
+ * Một `state`, lặp hết trang của nó.
+ *
+ * Export ra module-scope (thay vì closure riêng trong `fetchExperienceLibrary`)
+ * để `fetchCampaignExperienceLibrary` dùng chung đúng một đường lấy dữ liệu
+ * brand-scoped — tránh lặp lại (và lệch) cùng một logic phân trang ở hai nơi.
+ */
+export const fetchExperienceState = async (
+  common: { q?: string; brand_id?: string },
+  state: string,
+  sort?: string
+): Promise<RxExperience[]> => {
+  const page = (n: number) =>
+    rexerV2Api.experiences.list({
+      ...common,
+      state,
+      ...(sort ? { sort } : {}),
+      page: n,
+      page_size: SERVER_PAGE_MAX,
+    });
+  // Phải lặp trang: xin `page_size: 200` thì BE trả 100 và KHÔNG báo gì —
+  // màn hình sẽ hiện 100/110 mà trông như đã đủ.
+  const first = await page(1);
+  const items = [...(first.items ?? [])];
+  const pages = Math.min(
+    Math.ceil((first.total ?? items.length) / SERVER_PAGE_MAX),
+    MAX_PAGES
+  );
+  if (pages > 1) {
+    const rest = await Promise.all(
+      Array.from({ length: pages - 1 }, (_, i) => page(i + 2))
+    );
+    rest.forEach(r => items.push(...(r.items ?? [])));
+  }
+  return items;
 };
 
 /**
@@ -99,32 +141,8 @@ export const fetchExperienceLibrary = async (
     ...(query.brandId ? { brand_id: query.brandId } : {}),
   };
 
-  /** Một `state`, lặp hết trang của nó. */
-  const fetchState = async (state: string, sort?: string) => {
-    const page = (n: number) =>
-      rexerV2Api.experiences.list({
-        ...common,
-        state,
-        ...(sort ? { sort } : {}),
-        page: n,
-        page_size: SERVER_PAGE_MAX,
-      });
-    // Phải lặp trang: xin `page_size: 200` thì BE trả 100 và KHÔNG báo gì —
-    // màn hình sẽ hiện 100/110 mà trông như đã đủ.
-    const first = await page(1);
-    const items = [...(first.items ?? [])];
-    const pages = Math.min(
-      Math.ceil((first.total ?? items.length) / SERVER_PAGE_MAX),
-      MAX_PAGES
-    );
-    if (pages > 1) {
-      const rest = await Promise.all(
-        Array.from({ length: pages - 1 }, (_, i) => page(i + 2))
-      );
-      rest.forEach(r => items.push(...(r.items ?? [])));
-    }
-    return items;
-  };
+  const fetchState = (state: string, sort?: string) =>
+    fetchExperienceState(common, state, sort);
 
   /**
    * Template CỦA CHÍNH BRAND — bản sao mà `Duplicate` sinh ra sống ở đây.

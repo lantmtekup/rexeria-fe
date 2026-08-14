@@ -8,6 +8,7 @@ import type {
   CampaignExperience,
   CampaignGap,
   CampaignReadiness,
+  CampaignTeamMember,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
 import type { Journey } from '@/lib/portal-v2/journeys/types';
@@ -16,6 +17,7 @@ type PlanPhaseProps = {
   campaign: CampaignView;
   draft: CampaignDraft;
   editing: boolean;
+  team: CampaignTeamMember[];
   readiness: CampaignReadiness;
   /** Drives the gate's voice — a demand while planning, a record once closed. */
   finished: boolean;
@@ -40,6 +42,7 @@ export const PlanPhase = ({
   campaign,
   draft,
   editing,
+  team,
   readiness,
   finished,
   experiences,
@@ -68,6 +71,7 @@ export const PlanPhase = ({
     <CampaignBriefAside
       draft={draft}
       editing={editing}
+      team={team}
       onChange={onDraftChange}
     />
   </div>

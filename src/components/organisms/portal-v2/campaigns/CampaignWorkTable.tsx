@@ -13,6 +13,7 @@ import { cn } from '@/lib/cn';
 import {
   fmtDate,
   isLate,
+  ownerName,
   subjectName,
 } from '@/lib/portal-v2/campaigns/helpers';
 import { itemShipGate } from '@/lib/portal-v2/campaigns/shipGate';
@@ -20,6 +21,7 @@ import { subjectLane } from '@/lib/portal-v2/campaigns/subjectLane';
 import type {
   CampaignExperience,
   CampaignItem,
+  CampaignTeamMember,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
 import type { Journey } from '@/lib/portal-v2/journeys/types';
@@ -30,6 +32,7 @@ type CampaignWorkTableProps = {
   productNames: Record<string, string>;
   experiences: CampaignExperience[];
   journeys: Journey[];
+  team: CampaignTeamMember[];
   /** `YYYY-MM-DD` — passed in so the overdue check stays deterministic. */
   today: string;
   editing: boolean;
@@ -58,6 +61,7 @@ export const CampaignWorkTable = ({
   productNames,
   experiences,
   journeys,
+  team,
   today,
   editing,
   onOpenItem,
@@ -88,6 +92,7 @@ export const CampaignWorkTable = ({
         <tbody>
           {items.map((item, index) => {
             const name = subjectName(item, productNames);
+            const owner = ownerName(item.owner, team);
             const late = isLate(item, today);
             const gate = itemShipGate(item, experiences);
             const lane = subjectLane(campaign, item, journeys, experiences);
@@ -135,11 +140,10 @@ export const CampaignWorkTable = ({
                 <td className={cn(cellClass, 'whitespace-nowrap')}>
                   <span
                     className={cn(
-                      !item.owner.trim() &&
-                        'font-semibold text-[var(--pv2-error)]'
+                      !owner && 'font-semibold text-[var(--pv2-error)]'
                     )}
                   >
-                    {item.owner.trim() || t('unassigned')}
+                    {owner || t('unassigned')}
                   </span>
                 </td>
 

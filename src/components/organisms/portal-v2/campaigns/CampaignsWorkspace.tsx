@@ -32,7 +32,6 @@ import {
   CAMPAIGN_DEFAULT_FILTERS,
   CAMPAIGN_STAGES,
   CAMPAIGN_STAGE_ORDER,
-  CAMPAIGN_TEAM,
 } from '@/lib/portal-v2/campaigns/constants';
 import {
   countByStage,
@@ -57,6 +56,7 @@ import type {
   CampaignExperience,
   CampaignFilters,
   CampaignStage,
+  CampaignTeamMember,
   CampaignView,
   CampaignWizard,
 } from '@/lib/portal-v2/campaigns/types';
@@ -76,6 +76,8 @@ type CampaignsWorkspaceProps = {
   initialProducts: { id: string; name: string }[];
   /** Thư viện trải nghiệm THẬT — `GET /experiences`. */
   initialExperiences: CampaignExperience[];
+  /** Thành viên brand THẬT — `GET /brands/{id}/users`. Ai Owner có thể gán tới. */
+  team: CampaignTeamMember[];
   /** Nạp hỏng ⇒ nói ra, đừng để đọc như "chưa có chiến dịch nào". */
   initialError?: string | null;
 };
@@ -97,6 +99,7 @@ export const CampaignsWorkspace = ({
   brandId,
   initialProducts,
   initialExperiences,
+  team,
   initialError = null,
 }: CampaignsWorkspaceProps) => {
   const t = useTranslations('portalV2.campaigns');
@@ -450,6 +453,7 @@ export const CampaignsWorkspace = ({
           experiences={experiences}
           products={initialProducts}
           productNames={productNames}
+          team={team}
           today={today}
           onChange={handleChange}
           onBack={() => setOpenId(null)}
@@ -555,6 +559,7 @@ export const CampaignsWorkspace = ({
             productNames={productNames}
             experiences={experiences}
             journeys={journeys}
+            team={team}
             today={today}
             selected={selected}
             onToggleSelect={id =>
@@ -571,6 +576,7 @@ export const CampaignsWorkspace = ({
             campaigns={visible}
             experiences={experiences}
             journeys={journeys}
+            team={team}
             today={today}
             selected={selected}
             onToggleSelect={id =>
@@ -592,7 +598,7 @@ export const CampaignsWorkspace = ({
 
       {wizardOpen ? (
         <NewCampaignWizard
-          owner={CAMPAIGN_TEAM[0]}
+          team={team}
           products={initialProducts}
           blueprints={journeys.filter(j => j.template)}
           onClose={() => setWizardOpen(false)}

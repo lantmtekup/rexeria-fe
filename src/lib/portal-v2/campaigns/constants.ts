@@ -227,14 +227,6 @@ export const SHIP_TRACK_FLOOR = 0.2;
 /** Below this, a live campaign's numbers are not worth believing. */
 export const TRUST_FLOOR = 0.15;
 
-/** Who the work can be assigned to. */
-export const CAMPAIGN_TEAM = [
-  'Toan Nguyen',
-  'Maya Okonjo',
-  'Linh Tran',
-  'Diego Alvarez',
-] as const;
-
 /** The surfaces a campaign plans against — the same names Deploy publishes to. */
 export const CAMPAIGN_CHANNELS = [
   'Web microsite',

@@ -36,6 +36,7 @@ import {
   deriveStage,
   fmtRange,
   journeyOriginOf,
+  ownerName,
   subjectName,
   syncItemStage,
   toDraft,
@@ -59,6 +60,7 @@ import type {
   CampaignGap,
   CampaignItem,
   CampaignPhase,
+  CampaignTeamMember,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
 import { campHealth, campVerdict } from '@/lib/portal-v2/campaigns/verdict';
@@ -70,6 +72,7 @@ type CampaignDetailProps = {
   experiences: CampaignExperience[];
   products: { id: string; name: string }[];
   productNames: Record<string, string>;
+  team: CampaignTeamMember[];
   today: string;
   onChange: (next: CampaignView) => void;
   onBack: () => void;
@@ -95,6 +98,7 @@ export const CampaignDetail = ({
   experiences,
   products,
   productNames,
+  team,
   today,
   onChange,
   onBack,
@@ -188,6 +192,7 @@ export const CampaignDetail = ({
     const saved = await updateCampaignItem(campaign.id, item.id, {
       due: item.due,
       note: item.note,
+      ownerId: item.owner || null,
     }).catch(() => null);
     if (!saved) {
       toast.error(t('toastItemSaveFailed'));
@@ -438,7 +443,7 @@ export const CampaignDetail = ({
               <p className='mt-1 text-[13.5px] leading-relaxed text-[var(--pv2-mut)]'>
                 {t(campaignTypeStyle(campaign.type).labelKey)} ·{' '}
                 {fmtRange(campaign, t('ongoing'))} ·{' '}
-                {campaign.owner || t('unassigned')}
+                {ownerName(campaign.owner, team) || t('unassigned')}
               </p>
               {campaign.brief.objective ? (
                 <p className='mt-2 max-w-[70ch] border-l-2 border-[var(--pv2-electric)] pl-3 text-[12.5px] leading-relaxed text-[var(--pv2-mut)]'>
@@ -512,6 +517,7 @@ export const CampaignDetail = ({
             campaign={campaign}
             draft={draft}
             editing={editing}
+            team={team}
             readiness={readiness}
             finished={stage === 'done'}
             experiences={experiences}
@@ -531,6 +537,7 @@ export const CampaignDetail = ({
             experiences={experiences}
             journeys={journeys}
             productNames={productNames}
+            team={team}
             journeyName={journey?.name ?? null}
             today={today}
             editing
@@ -568,6 +575,7 @@ export const CampaignDetail = ({
           subjectLabel={subjectName(activeItem, productNames)}
           campaignName={campaign.name}
           experiences={experiences}
+          team={team}
           onClose={() => setItemIndex(null)}
           onSave={handleSaveItem}
           onDelete={() => handleDeleteItem(itemIndex ?? 0)}

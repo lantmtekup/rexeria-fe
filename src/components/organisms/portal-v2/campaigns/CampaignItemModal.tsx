@@ -15,7 +15,6 @@ import {
 import { StageBar } from '@/components/molecules/portal-v2/campaigns-form';
 import { cn } from '@/lib/cn';
 import {
-  CAMPAIGN_TEAM,
   ITEM_FLOW,
   ITEM_STATUS,
   SHIP_TRACK_FLOOR,
@@ -30,6 +29,7 @@ import type {
   CampaignExperience,
   CampaignItem,
   CampaignItemStatus,
+  CampaignTeamMember,
 } from '@/lib/portal-v2/campaigns/types';
 
 type CampaignItemModalProps = {
@@ -38,6 +38,8 @@ type CampaignItemModalProps = {
   campaignName: string;
   /** Every experience the campaign can see — masters and its own copies. */
   experiences: CampaignExperience[];
+  /** Brand members Owner can be assigned to. */
+  team: CampaignTeamMember[];
   onClose: () => void;
   onSave: (item: CampaignItem) => void;
   onDelete: () => void;
@@ -66,6 +68,7 @@ export const CampaignItemModal = ({
   subjectLabel,
   campaignName,
   experiences,
+  team,
   onClose,
   onSave,
   onDelete,
@@ -268,9 +271,9 @@ export const CampaignItemModal = ({
             onChange={e => patch({ owner: e.target.value })}
           >
             <option value=''>{t('unassigned')}</option>
-            {CAMPAIGN_TEAM.map(member => (
-              <option key={member} value={member}>
-                {member}
+            {team.map(member => (
+              <option key={member.id} value={member.id}>
+                {member.name}
               </option>
             ))}
           </TextSelect>

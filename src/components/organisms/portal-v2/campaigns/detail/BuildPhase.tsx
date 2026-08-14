@@ -11,6 +11,7 @@ import { campProgress } from '@/lib/portal-v2/campaigns/helpers';
 import { itemShipGate } from '@/lib/portal-v2/campaigns/shipGate';
 import type {
   CampaignExperience,
+  CampaignTeamMember,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
 import type { Journey } from '@/lib/portal-v2/journeys/types';
@@ -20,6 +21,7 @@ type BuildPhaseProps = {
   experiences: CampaignExperience[];
   journeys: Journey[];
   productNames: Record<string, string>;
+  team: CampaignTeamMember[];
   journeyName: string | null;
   today: string;
   editing: boolean;
@@ -41,6 +43,7 @@ export const BuildPhase = ({
   experiences,
   journeys,
   productNames,
+  team,
   journeyName,
   today,
   editing,
@@ -101,6 +104,7 @@ export const BuildPhase = ({
         productNames={productNames}
         experiences={experiences}
         journeys={journeys}
+        team={team}
         today={today}
         editing={editing}
         onOpenItem={onOpenItem}

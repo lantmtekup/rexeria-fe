@@ -65,9 +65,9 @@ export const v2ToCampaignItem = (x: RxCampaignItem): CampaignItem => ({
   // BE trả sẵn bản copy trải nghiệm của hạng mục, không phải gọi thêm.
   expIds: (x.experiences ?? []).map(e => e.id),
   status: pick(x.status, ITEM_STATUSES) ?? 'todo',
-  // UI muốn TÊN người phụ trách, API chỉ có uuid. Để trống còn hơn hiện một
-  // chuỗi uuid như thể đó là tên.
-  owner: '',
+  // uuid thô — nơi VẼ tự tra tên qua `ownerName`/`CampaignTeamMember[]`, chỗ
+  // này chỉ chép nguyên `owner_id` chứ không tự bịa tên.
+  owner: x.owner_id ?? '',
   due: day(x.due_date),
   note: x.note ?? '',
 });
@@ -83,7 +83,7 @@ export const v2ToCampaignView = (
   // `objective` là cột riêng trên bảng campaigns nhưng `CampaignV2` KHÔNG trả
   // ra — khác với `brief.objective`, vốn là văn xuôi. Để null cho đúng.
   goal: pick(null, GOALS),
-  owner: '',
+  owner: x.owner_id ?? '',
   channels: x.channels ?? [],
   budgetAmount: x.budget?.amount ?? null,
   budgetCurrency: x.budget?.currency || 'VND',
