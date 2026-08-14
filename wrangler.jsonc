@@ -18,9 +18,16 @@
   // Domain thật (zone rexerstudio.com nằm cùng account Cloudflare):
   // - rexerstudio.com        → landing (middleware rewrite / → /rexer)
   // - portal.rexerstudio.com → app (middleware / → sign-in | role home)
+  // - *.rexerstudio.com      → link check sau Deploy (spec §11.2), dạng
+  //   {slug}.rexerstudio.com — middleware rewrite / → /p/{slug}. Wildcard
+  //   PHẢI dùng "Route" (pattern có `*`), "Custom Domains" của Workers
+  //   không nhận wildcard. Route này add trước khi middleware xử lý subdomain
+  //   lên develop (2026-08-14) — cho tới lúc đó mọi {slug}.rexerstudio.com
+  //   tạm fallback hiện landing, không lỗi.
   "routes": [
     { "pattern": "rexerstudio.com", "custom_domain": true },
     { "pattern": "portal.rexerstudio.com", "custom_domain": true },
+    { "pattern": "*.rexerstudio.com/*", "zone_name": "rexerstudio.com" },
   ],
   // Build-time public env được inline lúc `next build` (đọc .env/.env.production).
   // Runtime SECRETS (JWT_SECRET…) KHÔNG để đây — set bằng:
