@@ -4,6 +4,8 @@ import { fetchAutomationHub } from '@/services/portal-v2/automationV2';
 import { fetchCampaignOptions } from '@/services/portal-v2/campaignOptions';
 import { fetchProductCatalog } from '@/services/portal-v2/productCatalog';
 import { resolvePortalScope } from '@/services/portal-v2/scope';
+import { rexerV2Api } from '@/services/rexer-v2/endpoints';
+import type { RxBrandProfile } from '@/services/rexer-v2/types/brandProfile';
 
 type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -20,10 +22,17 @@ type Props = {
 export default async function PortalV2AutomationPage({ searchParams }: Props) {
   const scope = await resolvePortalScope(await searchParams);
 
-  const [hub, catalog, campaigns] = await Promise.all([
+  const [hub, catalog, campaigns, brandProfile] = await Promise.all([
     fetchAutomationHub(scope.brandId),
     fetchProductCatalog({ brandId: scope.brandId }),
     fetchCampaignOptions({ brandId: scope.brandId }),
+    // Hồ sơ thương hiệu cho bước Brief — hỏng/thiếu brand thì brief vẫn chạy,
+    // chỉ là thiếu logo/màu/font, nên suy biến về `null` chứ không chặn trang.
+    scope.brandId
+      ? rexerV2Api.brandProfile
+          .get(scope.brandId)
+          .catch((): RxBrandProfile | null => null)
+      : Promise.resolve<RxBrandProfile | null>(null),
   ]);
 
   return (
@@ -42,6 +51,7 @@ export default async function PortalV2AutomationPage({ searchParams }: Props) {
         initialProducts={catalog.products}
         initialAssets={catalog.assets}
         initialCampaigns={campaigns.items}
+        initialBrandProfile={brandProfile}
         // 403 CAPABILITY_REQUIRED không phải lỗi — nó là "gói chưa có tính
         // năng này", nên nói đúng như vậy thay vì ném một dòng đỏ.
         initialLocked={hub.locked}

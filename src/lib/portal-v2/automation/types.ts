@@ -17,8 +17,8 @@ export type FunnelRole = 'ATT' | 'EXP' | 'EDU' | 'TRU' | 'CON';
 /** Bậc bằng chứng đọc từ kết quả thật; chưa chạy thì `unmeasured`. */
 export type EvidenceTier = 'high' | 'directional' | 'early' | 'unmeasured';
 
-/** Ba chặng của workspace: hub khi rảnh, wizard khi đang nhân bản. */
-export type AutomationStage = 'hub' | 'setup' | 'pick';
+/** Bốn chặng của workspace: hub khi rảnh, wizard khi đang nhân bản. */
+export type AutomationStage = 'hub' | 'setup' | 'pick' | 'brief';
 
 /** Một tầng trong thiết kế — demo `layers[]`, chỉ giữ phần Automation cần. */
 export type AutomationLayer = {

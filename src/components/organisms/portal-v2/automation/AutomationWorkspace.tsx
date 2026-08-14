@@ -2,12 +2,22 @@
 
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AutomationHub } from '@/components/organisms/portal-v2/automation/AutomationHub';
+import { BriefReviewStep } from '@/components/organisms/portal-v2/automation/BriefReviewStep';
 import { MasterSetupStep } from '@/components/organisms/portal-v2/automation/MasterSetupStep';
 import { ProductPickStep } from '@/components/organisms/portal-v2/automation/ProductPickStep';
 import { cn } from '@/lib/cn';
+import {
+  buildBrandBrief,
+  resolveBrandLogoUrl,
+} from '@/lib/ai-brief/fromBrandProfile';
+import {
+  buildProductBrief,
+  productImageUrls,
+} from '@/lib/ai-brief/fromProduct';
+import type { AiBrandBrief } from '@/lib/ai-brief/types';
 import {
   createAutomation,
   fetchCandidates,
@@ -27,8 +37,10 @@ import type {
   Readiness,
 } from '@/lib/portal-v2/automation/types';
 import type { RxExperience } from '@/services/rexer-v2/types/experience';
+import type { RxBrandProfile } from '@/services/rexer-v2/types/brandProfile';
 import type {
   RxAutomation,
+  RxAutomationBriefPayload,
   RxAutomationRunItem,
 } from '@/services/rexer-v2/types/automation';
 
@@ -60,6 +72,12 @@ type AutomationWorkspaceProps = {
   initialAssets: ProductAsset[];
   /** Chiến dịch THẬT — `GET /campaigns`. Chỉ cần id + tên cho dropdown. */
   initialCampaigns: CampaignOption[];
+  /**
+   * Hồ sơ thương hiệu — `GET /brands/{brandId}/profile`. `null` khi chưa xác
+   * định được brand (admin chưa chọn) hoặc brand chưa có hồ sơ; bước Brief
+   * vẫn chạy được, chỉ là không có logo/màu/font để đưa vào AI.
+   */
+  initialBrandProfile: RxBrandProfile | null;
   /** 403 CAPABILITY_REQUIRED — gói chưa mở tính năng, KHÔNG phải hỏng. */
   initialLocked: boolean;
   initialError: string | null;
@@ -71,6 +89,7 @@ export const AutomationWorkspace = ({
   initialProducts,
   initialAssets,
   initialCampaigns,
+  initialBrandProfile,
   initialLocked,
   initialError,
 }: AutomationWorkspaceProps) => {
@@ -113,7 +132,30 @@ export const AutomationWorkspace = ({
   const [runError, setRunError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [candidatesBusy, setCandidatesBusy] = useState(false);
+  const [brandBrief, setBrandBrief] = useState<AiBrandBrief | null>(null);
+  const [briefNote, setBriefNote] = useState('');
   const runningRef = useRef(false);
+
+  /**
+   * Brief brand cho AI — phần đồng bộ (tên/tagline/tone/màu/font) dựng ngay,
+   * logo cần thêm 1 lượt resolve `media_id → URL` nên vá vào sau khi xong.
+   */
+  useEffect(() => {
+    if (!initialBrandProfile) {
+      setBrandBrief(null);
+      return;
+    }
+    setBrandBrief(buildBrandBrief(initialBrandProfile));
+    let cancelled = false;
+    resolveBrandLogoUrl(initialBrandProfile).then(logoUrl => {
+      if (!cancelled && logoUrl) {
+        setBrandBrief(prev => (prev ? { ...prev, logo_url: logoUrl } : prev));
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [initialBrandProfile]);
 
   /**
    * Automation đã tạo, khoá theo bộ ba (thiết kế × sản phẩm gốc × chiến dịch).
@@ -140,12 +182,14 @@ export const AutomationWorkspace = ({
     setSelected([]);
     setWiden(false);
     setQueued(null);
+    setBriefNote('');
     setStage('setup');
   };
 
   const handleCancel = () => {
     setExperienceId(null);
     setSelected([]);
+    setBriefNote('');
     setStage('hub');
   };
 
@@ -263,18 +307,37 @@ export const AutomationWorkspace = ({
    *
    * Không có tiến trình từng sản phẩm để hiện, và cũng không có nội dung tại
    * thời điểm trả về: kết quả là "đã xếp hàng", không phải "đã xong".
+   *
+   * `inputs` (brand + product + ảnh) là brief cho AI, gói cùng lượt run —
+   * OPTIONAL, BE chưa xác nhận nhận field này nên thiếu vẫn chạy được, chỉ
+   * mất phần "hiểu brand/sản phẩm".
    */
   const handleRun = async () => {
     const auto = autoRef.current;
-    if (!auto || runningRef.current) return;
+    if (!auto || runningRef.current || !masterProduct) return;
     runningRef.current = true;
     setRunning(true);
     setRunError(null);
     setQueued(null);
 
+    const assetItems = [
+      ...(brandBrief?.logo_url ? [brandBrief.logo_url] : []),
+      ...productImageUrls(initialAssets, masterProduct.id),
+    ];
+    const inputs: RxAutomationBriefPayload = {
+      ...(brandBrief ? { brand: brandBrief } : {}),
+      product: buildProductBrief(masterProduct),
+      ...(assetItems.length ? { assets: { items: assetItems } } : {}),
+      ...(briefNote.trim() ? { note: briefNote.trim() } : {}),
+    };
+
     try {
       setQueued(
-        await runAutomationV2(auto.id, selected.slice(0, AUTOMATION_BATCH_CAP))
+        await runAutomationV2(
+          auto.id,
+          selected.slice(0, AUTOMATION_BATCH_CAP),
+          inputs
+        )
       );
     } catch (err) {
       setRunError(err instanceof Error ? err.message : t('runFailed'));
@@ -287,14 +350,22 @@ export const AutomationWorkspace = ({
   const steps: { id: AutomationStage; label: string }[] = [
     { id: 'setup', label: t('step1') },
     { id: 'pick', label: t('step2') },
+    { id: 'brief', label: t('step3') },
   ];
+
+  const selectedProducts = useMemo(
+    () => candidates.filter(p => selected.includes(p.id)),
+    [candidates, selected]
+  );
 
   const subtitle =
     stage === 'hub'
       ? t('hubDesc')
       : stage === 'setup'
         ? t('setupDesc')
-        : t('pickDesc', { master: masterProduct?.title ?? '—' });
+        : stage === 'pick'
+          ? t('pickDesc', { master: masterProduct?.title ?? '—' })
+          : t('briefDesc');
 
   return (
     <div className='flex min-h-0 flex-col'>
@@ -385,6 +456,19 @@ export const AutomationWorkspace = ({
             candidatesBusy={candidatesBusy}
             onToggle={handleToggle}
             onBack={() => setStage('setup')}
+            onNext={() => setStage('brief')}
+            cap={AUTOMATION_BATCH_CAP}
+          />
+        ) : null}
+
+        {stage === 'brief' && experience && masterProduct ? (
+          <BriefReviewStep
+            masterProduct={masterProduct}
+            selectedProducts={selectedProducts}
+            brandBrief={brandBrief}
+            note={briefNote}
+            onNoteChange={setBriefNote}
+            onBack={() => setStage('pick')}
             onRun={handleRun}
             cap={AUTOMATION_BATCH_CAP}
             queued={queued}

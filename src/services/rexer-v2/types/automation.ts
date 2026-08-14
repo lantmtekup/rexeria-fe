@@ -1,3 +1,4 @@
+import type { AiBrandBrief, AiProductBrief } from '@/lib/ai-brief/types';
 import type { RxExperience } from './experience';
 
 /**
@@ -88,6 +89,19 @@ export type RxAutomationCandidatesResponse = {
   total: number;
 };
 
+/**
+ * Brief cho AI (brand + product + ảnh) — cộng thêm vào `run`, OPTIONAL: BE
+ * chưa xác nhận nhận field này, request vẫn gửi được nếu thiếu (chỉ mất phần
+ * "hiểu brand/sản phẩm", không vỡ luồng nhân bản hiện có).
+ */
+export type RxAutomationBriefPayload = {
+  brand?: AiBrandBrief;
+  product?: AiProductBrief;
+  assets?: { items: string[] };
+  note?: string;
+};
+
 export type RxRunAutomationRequest = {
   product_ids: string[];
+  inputs?: RxAutomationBriefPayload;
 };

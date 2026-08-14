@@ -1,22 +1,13 @@
 'use client';
 
-import {
-  ArrowLeft,
-  Check,
-  ExternalLink,
-  Loader2,
-  Sparkles,
-  Wand2,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Loader2, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { ReadinessSlots } from '@/components/organisms/portal-v2/automation/ReadinessSlots';
 import { cn } from '@/lib/cn';
 import type { Readiness } from '@/lib/portal-v2/automation/types';
 import type { AutomationProduct } from '@/lib/portal-v2/automation/types';
-import type { RxAutomationRunItem } from '@/services/rexer-v2/types/automation';
 
 /**
  * Bước 2 — chọn sản phẩm để nhân bản.
@@ -39,11 +30,8 @@ export const ProductPickStep = ({
   candidatesBusy,
   onToggle,
   onBack,
-  onRun,
+  onNext,
   cap,
-  queued,
-  runError,
-  running,
 }: {
   masterProduct: AutomationProduct;
   /** Điểm sẵn sàng của chính sản phẩm gốc, do BE chấm cùng lượt ứng viên. */
@@ -60,17 +48,10 @@ export const ProductPickStep = ({
   candidatesBusy: boolean;
   onToggle: (id: string) => void;
   onBack: () => void;
-  onRun: () => void;
+  /** Sang bước review brief — chạy AI thật diễn ra ở bước sau, không phải ở đây. */
+  onNext: () => void;
   /** Trần mỗi lượt — nói ra chứ không lặng lẽ cắt bớt danh sách. */
   cap: number;
-  /**
-   * Nháp đã fork xong. Nội dung do worker nền điền SAU, nên đây là "đã xếp
-   * hàng" chứ không phải "đã xong" — nói đúng để người dùng không mở ngay rồi
-   * tưởng AI bỏ trống.
-   */
-  queued: RxAutomationRunItem[] | null;
-  runError: string | null;
-  running: boolean;
 }) => {
   const t = useTranslations('portalV2.automation');
 
@@ -210,46 +191,8 @@ export const ProductPickStep = ({
         </div>
       ) : null}
 
-      {queued ? (
-        <div className='flex flex-col gap-1.5 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-3.5 py-3'>
-          <span className='text-[13px] font-semibold text-[var(--pv2-ink)]'>
-            {t('runQueued', { total: queued.length })}
-          </span>
-          <span className='text-[12px] text-[var(--pv2-mut)]'>
-            {t('runQueuedNote')}
-          </span>
-          {queued.map(item => {
-            const p = eligible.find(x => x.id === item.product_id);
-            return (
-              <span
-                key={item.page_id}
-                className='flex flex-wrap items-center gap-1.5 text-[12px] text-[var(--pv2-mut)]'
-              >
-                <span>
-                  {p?.title ?? item.product_id}
-                  {item.auto_gaps.length > 0
-                    ? ` · ${t('queuedGaps', { gaps: item.auto_gaps.join(', ') })}`
-                    : ''}
-                </span>
-                <Link
-                  href={`/portal-v2/${encodeURIComponent(item.page_id)}/canvas`}
-                  className='inline-flex items-center gap-1 text-[var(--pv2-electric)] hover:underline'
-                >
-                  {t('openDraft')}
-                  <ExternalLink className='size-3' aria-hidden />
-                </Link>
-              </span>
-            );
-          })}
-        </div>
-      ) : null}
-
-      {runError ? (
-        <p className='text-[12px] text-[var(--pv2-error)]'>{runError}</p>
-      ) : null}
-
       <div className='flex flex-wrap items-center gap-3'>
-        <Button variant='ghost' disabled={running} onClick={onBack}>
+        <Button variant='ghost' onClick={onBack}>
           <ArrowLeft aria-hidden />
           {t('back')}
         </Button>
@@ -260,15 +203,11 @@ export const ProductPickStep = ({
         <span className='flex-1' />
         <Button
           variant='primary'
-          disabled={running || selected.length === 0}
-          onClick={onRun}
+          disabled={selected.length === 0}
+          onClick={onNext}
         >
-          {running ? (
-            <Loader2 className='animate-spin' aria-hidden />
-          ) : (
-            <Wand2 aria-hidden />
-          )}
-          {running ? t('running') : t('automate')}
+          {t('next')}
+          <ArrowRight aria-hidden />
         </Button>
       </div>
     </div>
