@@ -28,9 +28,87 @@
 
 import type {
   DeployBoard,
+  DeployBrandDomain,
   DeployChannel,
   Deployment,
 } from '@/lib/portal-v2/deploy/types';
+
+/**
+ * The brand's domains, as they'd read from `rexerApi.brands.domains.list` —
+ * used only when that call cannot be made (no `brandId`, or the BE is
+ * unreachable). `DeployWorkspace` is the sole caller, and only on that
+ * fallback branch; the live path never imports this.
+ */
+export const MOCK_BRAND_DOMAINS: DeployBrandDomain[] = [
+  {
+    id: 'bd1',
+    domain: 'superserum.rexer.link',
+    status: 'connected',
+    verificationToken: 'rxr_verify_4a1f',
+    failureReason: null,
+  },
+  {
+    id: 'bd2',
+    domain: 'shadefinder.rexer.link',
+    status: 'connected',
+    verificationToken: 'rxr_verify_7c2e',
+    failureReason: null,
+  },
+  {
+    id: 'bd3',
+    domain: 'tint-vs-foundation.rexer.link',
+    status: 'connected',
+    verificationToken: 'rxr_verify_9b3d',
+    failureReason: null,
+  },
+  {
+    /* somebody edited the domain after launch and never re-verified it —
+       editing always drops a domain back to `pending`. */
+    id: 'bd4',
+    domain: 'founders-note.rexer.link',
+    status: 'pending',
+    verificationToken: 'rxr_verify_1e6a',
+    failureReason: null,
+  },
+  {
+    id: 'bd5',
+    domain: 'giftedit.rexer.link',
+    status: 'connected',
+    verificationToken: 'rxr_verify_2f8b',
+    failureReason: null,
+  },
+  {
+    id: 'bd6',
+    domain: 'shadefinder-holiday.rexer.link',
+    status: 'connected',
+    verificationToken: 'rxr_verify_5d0c',
+    failureReason: null,
+  },
+  {
+    id: 'bd7',
+    domain: 'clean-edit-gifting.rexer.link',
+    status: 'connected',
+    verificationToken: 'rxr_verify_6a4e',
+    failureReason: null,
+  },
+  {
+    /* the campaign ended, the page never came down, and nobody renewed the
+       domain either — `error` here is the same neglect the `stale` health
+       on its row is already naming. */
+    id: 'bd8',
+    domain: 'clean-edit.rexer.link',
+    status: 'error',
+    verificationToken: 'rxr_verify_0c7f',
+    failureReason: 'CNAME record not found.',
+  },
+  {
+    id: 'bd9',
+    domain: 'shadefinder-spring.rexer.link',
+    status: 'connected',
+    verificationToken: 'rxr_verify_3b9a',
+    failureReason: null,
+  },
+];
 
 /** `DATA.channels` — six surfaces, three of them connected. */
 export const MOCK_CHANNELS: DeployChannel[] = [
@@ -201,6 +279,7 @@ export const MOCK_DEPLOYMENTS: Deployment[] = [
       health: 'ok',
       revenue: 1840,
     },
+    domainId: 'bd1',
   },
   {
     id: 'd-m1-i9-e1',
@@ -219,9 +298,12 @@ export const MOCK_DEPLOYMENTS: Deployment[] = [
       health: 'ok',
       revenue: 1490,
     },
+    domainId: 'bd2',
   },
   {
-    /* serving fine, reporting badly — the failure Deploy is meant to catch */
+    /* serving fine, reporting badly — the failure Deploy is meant to catch.
+       The domain resolves fine: health and domain status are independent
+       axes, and this row is here to show they can disagree. */
     id: 'd-m1-i9-e6',
     status: 'live',
     experience: TINT_VS_FOUNDATION,
@@ -238,9 +320,14 @@ export const MOCK_DEPLOYMENTS: Deployment[] = [
       health: 'broken',
       revenue: 610,
     },
+    domainId: 'bd3',
   },
   {
-    /* live for months, reporting almost nothing: nobody is arriving */
+    /* live for months, reporting almost nothing: somebody edited the domain
+       after launch and never re-verified it — editing always drops a
+       domain back to `pending`, so this is what a forgotten re-verify
+       looks like, and the quiet health explains itself once the domain
+       pill is read next to it. */
     id: 'd-m1-i9-e8',
     status: 'live',
     experience: FOUNDERS_NOTE,
@@ -257,6 +344,7 @@ export const MOCK_DEPLOYMENTS: Deployment[] = [
       health: 'quiet',
       revenue: 120,
     },
+    domainId: 'bd4',
   },
 
   /* ── m3 · Christmas 2026 — a topic, not a SKU, running the gift journey ── */
@@ -277,6 +365,7 @@ export const MOCK_DEPLOYMENTS: Deployment[] = [
       health: 'ok',
       revenue: 4380,
     },
+    domainId: 'bd5',
   },
   {
     id: 'd-m3-i4-e1',
@@ -295,6 +384,7 @@ export const MOCK_DEPLOYMENTS: Deployment[] = [
       health: 'ok',
       revenue: 2210,
     },
+    domainId: 'bd6',
   },
   {
     id: 'd-m3-i4-e4',
@@ -313,9 +403,12 @@ export const MOCK_DEPLOYMENTS: Deployment[] = [
       health: 'ok',
       revenue: 540,
     },
+    domainId: 'bd7',
   },
 
-  /* ── m4 · Clean Beauty ’26 — the campaign ended, the page never came down ── */
+  /* ── m4 · Clean Beauty ’26 — the campaign ended, the page never came down.
+     Nobody has renewed the domain either — `error` here is not a data-entry
+     accident, it is the same neglect the `stale` health is already naming. */
   {
     id: 'd-m4-i10-e4',
     status: 'live',
@@ -333,10 +426,13 @@ export const MOCK_DEPLOYMENTS: Deployment[] = [
       health: 'stale',
       revenue: 210,
     },
+    domainId: 'bd8',
   },
 
   /* ── the queue — finished by a campaign, waiting on a person here ──────── */
   {
+    /* Web microsite is picked but nothing has been typed yet — the Deploy
+       button on this row is the one that stays disabled, naming why. */
     id: 'd-m3-i1-e3',
     status: 'ready',
     experience: GIFT_EDIT,
@@ -346,8 +442,11 @@ export const MOCK_DEPLOYMENTS: Deployment[] = [
     channels: ['ch1', 'ch3'],
     since: null,
     ops: NO_SIGNAL_YET,
+    domainId: null,
   },
   {
+    /* the counter-example: everything this row needs is already filled in,
+       so its Deploy button is the one that is actually clickable. */
     id: 'd-m2-i5-e1',
     status: 'ready',
     experience: SHADE_FINDER,
@@ -357,6 +456,7 @@ export const MOCK_DEPLOYMENTS: Deployment[] = [
     channels: ['ch1', 'ch2'],
     since: null,
     ops: NO_SIGNAL_YET,
+    domainId: 'bd9',
   },
 ];
 
@@ -374,3 +474,8 @@ export const cloneDeployBoard = (board: DeployBoard): DeployBoard => ({
     ops: { ...d.ops },
   })),
 });
+
+/** A fresh copy of the fallback domain list — same reason as `cloneDeployBoard`. */
+export const cloneBrandDomains = (
+  domains: DeployBrandDomain[]
+): DeployBrandDomain[] => domains.map(d => ({ ...d }));

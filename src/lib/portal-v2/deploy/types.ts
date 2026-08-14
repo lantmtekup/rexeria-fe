@@ -16,8 +16,12 @@
  * served on. Campaigns mark work `ready`; this route is what turns that into
  * `live`.
  *
- * P0 is mock. When `/v1/deployments` lands, `ops` becomes a measured join and
- * `mock.ts` is the only file that goes — the view types do not move.
+ * P0 is mock — `ops` and the ready↔live transition itself. The domain a row
+ * is served on is the one exception: it reads and writes the real
+ * `rexerApi.brands.domains.*` backend (see `helpers.ts`'s `mapBrandDomain`),
+ * because that BE already exists and already ships in `/portal/profile/domains`.
+ * When `/v1/deployments` lands, `ops` becomes a measured join and `mock.ts`
+ * stops being the deployments' source — the view types do not move.
  */
 
 /** `DTABS` (~L18270) — three tabs, in the order a person actually works. */
@@ -33,12 +37,51 @@ export type DeployHealth = 'ok' | 'stale' | 'quiet' | 'broken';
 /** Where a deployment sits. There is no third state — it is out, or it waits. */
 export type DeployStatus = 'live' | 'ready';
 
+/**
+ * Only `ch1` (Web microsite) is hosted on a domain of its own — the other
+ * five pipes serve through a platform that already has one.
+ *
+ * Four states, not the BE's three (`pending | verifying | verified | failed`
+ * — `BrandDomainStatus`) — `mapBrandDomain` folds `verified` onto `connected`
+ * so a `pending`-typed-but-never-checked domain can never read the same as
+ * one that actually cleared a check, which is what `canDeployRow`'s gate
+ * depends on. TLS is deliberately not part of this: `tls_status` finishes
+ * issuing on its own after `verified`, and gating Deploy on it would leave
+ * the button stuck for a fact this route has no control over.
+ */
+export type DeployDomainStatus =
+  | 'pending'
+  | 'verifying'
+  | 'connected'
+  | 'error';
+
+/**
+ * The brand's own domain — `BrandDomain` (`@/services/rexer/types`), mapped
+ * down to what this route reads. A domain belongs to the BRAND, not to a
+ * `Deployment`: the same `giftedit.rexer.link` can be picked on more than one
+ * row, and `mapBrandDomain` is the one place that BE shape becomes this one,
+ * the same job `beDomainToLocal` does for `/portal/profile/domains`.
+ */
+export type DeployBrandDomain = {
+  id: string;
+  domain: string;
+  status: DeployDomainStatus;
+  /** The BE's `verification_token` — the TXT record's value, verbatim. */
+  verificationToken: string;
+  /** Why `status === 'error'` — the BE's `failure_reason`, shown under the pill. */
+  failureReason: string | null;
+};
+
 /** A campaign item is about a SKU or a topic that has none — `SUBJECT_KINDS`. */
 export type DeploySubjectKind = 'product' | 'topic';
 
 /** `CAMP_TYPES` (~L9401), carried so a live group reads like its campaign. */
 export type DeployCampaignType =
-  'launch' | 'seasonal' | 'sale' | 'always' | 'retention';
+  | 'launch'
+  | 'seasonal'
+  | 'sale'
+  | 'always'
+  | 'retention';
 
 /**
  * A publishing surface — `DATA.channels`. `connected` is the only mutable
@@ -115,6 +158,9 @@ export type Deployment = {
   /** `YYYY-MM-DD` — live rows only. */
   since: string | null;
   ops: DeployOps;
+  /** A `DeployBrandDomain` id — resolved against the brand's domain list, the
+   *  same way `channels` resolves against `DeployBoard.channels`. */
+  domainId: string | null;
 };
 
 /** The board this route owns, whole. One object so a reset is one assignment. */

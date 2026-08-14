@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
@@ -15,25 +15,43 @@ import {
   DEPLOY_TABS,
 } from '@/lib/portal-v2/deploy/constants';
 import {
+  canDeployRow,
   deployTotals,
   deploymentsByStatus,
+  fakeDomainId,
+  fakeVerificationToken,
   findChannel,
+  findDomain,
+  isValidDomain,
+  mapBrandDomain,
   markLive,
   markReady,
   resolveChannels,
+  setRowDomainId,
+  simulateDomainStatus,
   toggleChannel,
   toggleRowChannel,
 } from '@/lib/portal-v2/deploy/helpers';
 import {
+  MOCK_BRAND_DOMAINS,
   MOCK_DEPLOY_BOARD,
+  cloneBrandDomains,
   cloneDeployBoard,
 } from '@/lib/portal-v2/deploy/mock';
 import type {
   DeployBoard,
+  DeployBrandDomain,
   DeployTabId,
   Deployment,
 } from '@/lib/portal-v2/deploy/types';
+import { rexerApi } from '@/services/rexer/endpoints';
 import { cn } from '@/lib/cn';
+
+/** One alias, reused everywhere a timer id is stored — `setTimeout`'s return
+ * type resolves differently depending on which lib TS picks at each call
+ * site otherwise, and a `Map<string, number>` fighting a `NodeJS.Timeout`
+ * from the same `setTimeout` call is not a distinction worth having. */
+type TimerId = ReturnType<typeof setTimeout>;
 
 /**
  * Deploy — the publish hub the plan says is missing.
@@ -46,7 +64,9 @@ import { cn } from '@/lib/cn';
  *
  * P0 is mock (`lib/portal-v2/deploy/mock.ts`): deploying and pausing move a
  * row and toast the payload that a `/v1/deployments` call would carry. Nothing
- * is persisted, and nothing pretends to be.
+ * is persisted, and nothing pretends to be. The domain a row is served on is
+ * the one exception — it reads and writes the real `rexerApi.brands.domains`
+ * backend, the same one `/portal/profile/domains` already ships against.
  */
 export const DeployWorkspace = () => {
   const t = useTranslations('portalV2.deploy');
@@ -57,6 +77,53 @@ export const DeployWorkspace = () => {
   const [tab, setTab] = useState<DeployTabId>(DEPLOY_DEFAULT_TAB);
   /** The channel whose detail is open, by id. */
   const [openChannel, setOpenChannel] = useState<string | null>(null);
+
+  /* ── the brand's domains — real BE, mock fallback ─────────────────────── */
+  const [brandId, setBrandId] = useState<string | null>(null);
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+  const [domains, setDomains] = useState<DeployBrandDomain[]>([]);
+  const [domainsLoading, setDomainsLoading] = useState(true);
+  /** `'fake'` once `auth.me()` or `domains.list` failed — see `mock.ts`. */
+  const [domainSource, setDomainSource] = useState<'live' | 'fake'>('live');
+  const [creatingDomainForRow, setCreatingDomainForRow] = useState<
+    string | null
+  >(null);
+  const [verifyingDomainId, setVerifyingDomainId] = useState<string | null>(
+    null
+  );
+
+  // Load real data: /auth/me → brand_id + workspace_id → the brand's domains.
+  // Falls back to MOCK_BRAND_DOMAINS on any failure, same as
+  // `/portal/profile/domains` — a demo without a reachable BE still demos.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const me = await rexerApi.auth.me();
+        const bid = me.brand?.id;
+        if (!bid) throw new Error('cannot resolve brand id');
+        const ws = me.user.active_workspace_id;
+        if (cancelled) return;
+        setBrandId(bid);
+        setWorkspaceId(ws ?? null);
+
+        const res = await rexerApi.brands.domains.list(bid);
+        if (cancelled) return;
+        setDomains((res.items ?? []).map(mapBrandDomain));
+        setDomainSource('live');
+      } catch {
+        if (!cancelled) {
+          setDomains(cloneBrandDomains(MOCK_BRAND_DOMAINS));
+          setDomainSource('fake');
+        }
+      } finally {
+        if (!cancelled) setDomainsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const live = useMemo(() => deploymentsByStatus(board, 'live'), [board]);
   const ready = useMemo(() => deploymentsByStatus(board, 'ready'), [board]);
@@ -96,15 +163,151 @@ export const DeployWorkspace = () => {
     []
   );
 
+  const handleSelectDomain = useCallback(
+    (rowId: string, domainId: string | null) => {
+      setBoard(prev => ({
+        ...prev,
+        deployments: setRowDomainId(prev.deployments, rowId, domainId),
+      }));
+    },
+    []
+  );
+
+  /**
+   * Add a domain to the brand and point this row at it. Real path calls
+   * `rexerApi.brands.domains.create`; the fallback (no `brandId`, or the
+   * live load already failed) fabricates one locally so the flow still
+   * demos, the same shape `/portal/profile/domains` falls back to.
+   */
+  const handleCreateDomain = useCallback(
+    async (rowId: string, value: string) => {
+      const domain = value.trim().toLowerCase();
+      if (!isValidDomain(domain)) return;
+
+      setCreatingDomainForRow(rowId);
+
+      if (domainSource === 'fake' || !brandId || !workspaceId) {
+        const created: DeployBrandDomain = {
+          id: fakeDomainId(domain),
+          domain,
+          status: 'pending',
+          verificationToken: fakeVerificationToken(domain),
+          failureReason: null,
+        };
+        setDomains(prev => [created, ...prev]);
+        setBoard(prev => ({
+          ...prev,
+          deployments: setRowDomainId(prev.deployments, rowId, created.id),
+        }));
+        setCreatingDomainForRow(null);
+        toast.success(t('domainAddedFakeToast', { domain }));
+        return;
+      }
+
+      try {
+        const res = await rexerApi.brands.domains.create(brandId, {
+          domain,
+          workspace_id: workspaceId,
+          target_type: 'landing',
+          page_id: null,
+        });
+        const created = mapBrandDomain(res.domain);
+        setDomains(prev => [created, ...prev]);
+        setBoard(prev => ({
+          ...prev,
+          deployments: setRowDomainId(prev.deployments, rowId, created.id),
+        }));
+        toast.success(t('domainAddedToast', { domain: created.domain }));
+      } catch (err) {
+        toast.error(t('domainAddFailedToast'), {
+          description: err instanceof Error ? err.message : String(err),
+        });
+      } finally {
+        setCreatingDomainForRow(null);
+      }
+    },
+    [brandId, workspaceId, domainSource, t]
+  );
+
+  /**
+   * "Verify now". Real path calls `rexerApi.brands.domains.verify` and
+   * writes back whatever the BE found. The fallback has no BE to ask, so a
+   * ~1.1s `setTimeout` stands in for the round trip — the pending timers
+   * live in a ref, bookkeeping for the effect cleanup, never something a
+   * render reads.
+   */
+  const verifyTimers = useRef(new Map<string, TimerId>());
+
+  useEffect(() => {
+    const timers = verifyTimers.current;
+    return () => {
+      timers.forEach(id => clearTimeout(id));
+    };
+  }, []);
+
+  const handleVerifyDomain = useCallback(
+    async (domainId: string) => {
+      setVerifyingDomainId(domainId);
+
+      if (domainSource === 'fake' || !brandId) {
+        const pending = verifyTimers.current.get(domainId);
+        if (pending) clearTimeout(pending);
+
+        const timer: TimerId = setTimeout(() => {
+          verifyTimers.current.delete(domainId);
+          setDomains(prev =>
+            prev.map(d => {
+              if (d.id !== domainId) return d;
+              const outcome = simulateDomainStatus(d.domain);
+              return {
+                ...d,
+                status: outcome,
+                failureReason:
+                  outcome === 'error' ? 'CNAME record not found.' : null,
+              };
+            })
+          );
+          setVerifyingDomainId(null);
+        }, 1100);
+        verifyTimers.current.set(domainId, timer);
+        return;
+      }
+
+      try {
+        const res = await rexerApi.brands.domains.verify(brandId, domainId);
+        const updated = mapBrandDomain(res.domain);
+        setDomains(prev => prev.map(d => (d.id === domainId ? updated : d)));
+      } catch (err) {
+        toast.error(t('domainVerifyFailedToast'), {
+          description: err instanceof Error ? err.message : String(err),
+        });
+      } finally {
+        setVerifyingDomainId(null);
+      }
+    },
+    [brandId, domainSource, t]
+  );
+
   const handleDeploy = useCallback(
     (row: Deployment) => {
-      if (!row.channels.length) return;
+      if (!canDeployRow(row, domains)) return;
 
       /* Clock only inside a handler — a render on this route is pure. */
       const since = new Date().toISOString().slice(0, 10);
       const names = resolveChannels(board.channels, row.channels).map(
         c => c.name
       );
+      const body = t('deployedToastBody', {
+        channels: names.join(', '),
+        campaign: row.campaign.name,
+      });
+      /* `canDeployRow` already required `connected` to get here — the toast
+         only ever names a domain that passed verification. */
+      const rowDomain = row.domainId ? findDomain(domains, row.domainId) : null;
+      const domainNote =
+        rowDomain?.status === 'connected'
+          ? t('deployedToastDomain', { domain: rowDomain.domain })
+          : null;
 
       setBoard(prev => ({
         ...prev,
@@ -113,13 +316,10 @@ export const DeployWorkspace = () => {
       setTab('live');
 
       toast.success(t('deployedToast', { name: row.experience.name }), {
-        description: t('deployedToastBody', {
-          channels: names.join(', '),
-          campaign: row.campaign.name,
-        }),
+        description: domainNote ? `${body} ${domainNote}` : body,
       });
     },
-    [board.channels, t]
+    [board.channels, domains, t]
   );
 
   const handlePause = useCallback(
@@ -206,6 +406,7 @@ export const DeployWorkspace = () => {
             <DeployLivePane
               rows={live}
               channels={board.channels}
+              domains={domains}
               onPause={handlePause}
             />
           ) : null}
@@ -214,7 +415,15 @@ export const DeployWorkspace = () => {
             <DeployReadyPane
               rows={ready}
               channels={board.channels}
+              domains={domains}
+              domainsLoading={domainsLoading}
+              domainSource={domainSource}
               onToggleChannel={handleToggleRowChannel}
+              onSelectDomain={handleSelectDomain}
+              onCreateDomain={handleCreateDomain}
+              creatingDomainForRow={creatingDomainForRow}
+              onVerifyDomain={handleVerifyDomain}
+              verifyingDomainId={verifyingDomainId}
               onDeploy={handleDeploy}
             />
           ) : null}

@@ -1,19 +1,35 @@
 'use client';
 
-import { Rocket } from 'lucide-react';
+import { Rocket, ShieldAlert } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { ChannelToggle } from '@/components/organisms/portal-v2/deploy/ChannelChip';
 import { DeployEmpty } from '@/components/organisms/portal-v2/deploy/DeployEmpty';
 import { DeployNote } from '@/components/organisms/portal-v2/deploy/DeployNote';
+import { DomainField } from '@/components/organisms/portal-v2/deploy/DomainField';
 import { DEPLOY_EXPERIENCE_CATEGORY } from '@/lib/portal-v2/deploy/constants';
-import type { DeployChannel, Deployment } from '@/lib/portal-v2/deploy/types';
+import { canDeployRow, rowNeedsDomain } from '@/lib/portal-v2/deploy/helpers';
+import type {
+  DeployBrandDomain,
+  DeployChannel,
+  Deployment,
+} from '@/lib/portal-v2/deploy/types';
 
 type DeployReadyPaneProps = {
   rows: Deployment[];
   channels: DeployChannel[];
+  domains: DeployBrandDomain[];
+  domainsLoading: boolean;
+  /** `'fake'` once the brand's domain list could not be loaded from the real
+   *  BE — the banner below is the only place that fact surfaces. */
+  domainSource: 'live' | 'fake';
   onToggleChannel: (rowId: string, channelId: string) => void;
+  onSelectDomain: (rowId: string, domainId: string | null) => void;
+  onCreateDomain: (rowId: string, value: string) => void;
+  creatingDomainForRow: string | null;
+  onVerifyDomain: (domainId: string) => void;
+  verifyingDomainId: string | null;
   onDeploy: (row: Deployment) => void;
 };
 
@@ -28,7 +44,15 @@ type DeployReadyPaneProps = {
 export const DeployReadyPane = ({
   rows,
   channels,
+  domains,
+  domainsLoading,
+  domainSource,
   onToggleChannel,
+  onSelectDomain,
+  onCreateDomain,
+  creatingDomainForRow,
+  onVerifyDomain,
+  verifyingDomainId,
   onDeploy,
 }: DeployReadyPaneProps) => {
   const t = useTranslations('portalV2.deploy');
@@ -41,8 +65,27 @@ export const DeployReadyPane = ({
     <div className='space-y-3'>
       <DeployNote>{t('readyNote')}</DeployNote>
 
+      {domainSource === 'fake' ? (
+        <div className='flex items-start gap-2.5 rounded-[var(--pv2-r)] border border-[var(--pv2-warning)]/30 bg-[color-mix(in_srgb,var(--pv2-warning)_10%,transparent)] px-4 py-3 text-[12.5px] leading-relaxed text-[var(--pv2-slate-500)]'>
+          <ShieldAlert
+            className='mt-px size-3.5 shrink-0 text-[var(--pv2-warning)]'
+            strokeWidth={2.2}
+            aria-hidden
+          />
+          <span>{t('domainFakeBanner')}</span>
+        </div>
+      ) : null}
+
       {rows.map(row => {
         const count = row.channels.length;
+        const needsDomain = rowNeedsDomain(row.channels);
+        const deployable = canDeployRow(row, domains);
+        const deployHint =
+          count === 0
+            ? t('deployNeedsChannel')
+            : !deployable
+              ? t('deployNeedsDomain')
+              : undefined;
 
         return (
           <article
@@ -77,8 +120,8 @@ export const DeployReadyPane = ({
               <Button
                 variant='primary'
                 size='sm'
-                disabled={count === 0}
-                title={count === 0 ? t('deployNeedsChannel') : undefined}
+                disabled={!deployable}
+                title={deployHint}
                 onClick={() => onDeploy(row)}
                 aria-label={t('deployAria', { name: row.experience.name })}
               >
@@ -101,6 +144,24 @@ export const DeployReadyPane = ({
                 />
               ))}
             </div>
+
+            {needsDomain ? (
+              <div className='flex flex-wrap items-start gap-2 border-t border-[var(--pv2-hair)] px-4 py-3.5'>
+                <span className='mt-1.5 shrink-0 text-[10.5px] font-bold tracking-[0.06em] text-[var(--pv2-faint)] uppercase'>
+                  {t('domainLabel')}
+                </span>
+                <DomainField
+                  domains={domains}
+                  loading={domainsLoading}
+                  selectedId={row.domainId}
+                  onSelect={id => onSelectDomain(row.id, id)}
+                  onCreate={value => onCreateDomain(row.id, value)}
+                  creating={creatingDomainForRow === row.id}
+                  onVerify={onVerifyDomain}
+                  verifyingId={verifyingDomainId}
+                />
+              </div>
+            ) : null}
           </article>
         );
       })}

@@ -7,24 +7,31 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { ChannelChip } from '@/components/organisms/portal-v2/deploy/ChannelChip';
 import { DeployEmpty } from '@/components/organisms/portal-v2/deploy/DeployEmpty';
+import { DomainStatusPill } from '@/components/organisms/portal-v2/deploy/DomainField';
 import { HealthPill } from '@/components/organisms/portal-v2/deploy/HealthPill';
 import {
   DEPLOY_CAMPAIGN_TYPE,
   DEPLOY_EXPERIENCE_CATEGORY,
 } from '@/lib/portal-v2/deploy/constants';
 import {
+  findDomain,
   formatCount,
   formatDate,
   formatRange,
   groupByCampaign,
   resolveChannels,
 } from '@/lib/portal-v2/deploy/helpers';
-import type { DeployChannel, Deployment } from '@/lib/portal-v2/deploy/types';
+import type {
+  DeployBrandDomain,
+  DeployChannel,
+  Deployment,
+} from '@/lib/portal-v2/deploy/types';
 import { cn } from '@/lib/cn';
 
 type DeployLivePaneProps = {
   rows: Deployment[];
   channels: DeployChannel[];
+  domains: DeployBrandDomain[];
   onPause: (row: Deployment) => void;
 };
 
@@ -39,6 +46,7 @@ const TD = 'px-3 py-2.5 align-middle';
 export const DeployLivePane = ({
   rows,
   channels,
+  domains,
   onPause,
 }: DeployLivePaneProps) => {
   const t = useTranslations('portalV2.deploy');
@@ -105,12 +113,13 @@ export const DeployLivePane = ({
             </header>
 
             <div className='overflow-x-auto'>
-              <table className='w-full min-w-[880px] border-collapse text-[12.5px]'>
+              <table className='w-full min-w-[1000px] border-collapse text-[12.5px]'>
                 <thead className='border-b border-[var(--pv2-hair)] bg-[var(--pv2-canvas)]'>
                   <tr>
                     <th className={TH}>{t('colExperience')}</th>
                     <th className={TH}>{t('colSubject')}</th>
                     <th className={TH}>{t('colChannels')}</th>
+                    <th className={TH}>{t('colDomain')}</th>
                     <th className={TH}>{t('colSince')}</th>
                     <th className={cn(TH, 'text-right')}>{t('colSessions')}</th>
                     <th className={cn(TH, 'text-right')}>{t('colCvr')}</th>
@@ -127,6 +136,9 @@ export const DeployLivePane = ({
                     const up = row.ops.trend >= 0;
                     const Trend = up ? TrendingUp : TrendingDown;
                     const measured = row.ops.sessions > 0;
+                    const domain = row.domainId
+                      ? findDomain(domains, row.domainId)
+                      : null;
 
                     return (
                       <tr key={row.id} className='hover:bg-[var(--pv2-canvas)]'>
@@ -169,6 +181,19 @@ export const DeployLivePane = ({
                               <ChannelChip key={ch.id} channel={ch} />
                             ))}
                           </span>
+                        </td>
+
+                        <td className={TD}>
+                          {domain ? (
+                            <span className='flex flex-col items-start gap-1'>
+                              <span className='block max-w-[150px] truncate text-[var(--pv2-slate-500)]'>
+                                {domain.domain}
+                              </span>
+                              <DomainStatusPill status={domain.status} />
+                            </span>
+                          ) : (
+                            <span className='text-[var(--pv2-faint)]'>—</span>
+                          )}
                         </td>
 
                         <td
