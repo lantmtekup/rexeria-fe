@@ -31,6 +31,7 @@ import {
   parseCanvas,
   type BlockEditorCanvas,
 } from '@/components/modules/block-editor/serialize';
+import type { BlockSignalConfig } from '@/components/modules/block-editor/types';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 
@@ -60,16 +61,29 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 }
 
 export function LegacyTokenView({ id, token }: LegacyTokenViewProps) {
-  // Visitor analytics — page_view + block_view/dwell + click + scroll_depth.
-  // `id` là page UUID của canvas đang xem (canvas instance ≡ page) — ingest
-  // chỉ nhận page_id (be-fe-handoff Q5).
-  useInitTracker(id);
-  useBlockTracking();
   const [canvas, setCanvas] = React.useState<BlockEditorCanvas | null>(null);
   const [status, setStatus] = React.useState<
     'loading' | 'ok' | 'not-published' | 'wrong-token' | 'error'
   >('loading');
   const [errorDetail, setErrorDetail] = React.useState<string | null>(null);
+
+  // `block.signal` (Signal panel config) → visitor tracker, so it can gate
+  // block/element events on opt-in instead of tracking everything blindly.
+  // `canvas` loads async, so this starts empty and updates once it resolves
+  // — `useBlockTracking` reads it through a ref, no re-wiring needed.
+  const signalByBlockId = React.useMemo(() => {
+    const map: Record<string, BlockSignalConfig> = {};
+    for (const block of canvas?.blocks ?? []) {
+      if (block.signal) map[block.id] = block.signal;
+    }
+    return map;
+  }, [canvas]);
+
+  // Visitor analytics — page_view + block_view/dwell + click + scroll_depth.
+  // `id` là page UUID của canvas đang xem (canvas instance ≡ page) — ingest
+  // chỉ nhận page_id (be-fe-handoff Q5).
+  useInitTracker(id);
+  useBlockTracking(signalByBlockId);
 
   React.useEffect(() => {
     let cancelled = false;

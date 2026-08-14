@@ -40,6 +40,7 @@ import {
 } from '@/components/modules/block-editor/transitions/TemplateTransitions';
 import { brandKitToCssVars, type BrandKitData } from '@/lib/brand-kit';
 import { useBlockTracking, useInitTracker } from '@/lib/analytics/use-tracker';
+import type { BlockSignalConfig } from '@/components/modules/block-editor/types';
 import type { MotionKitData, Page } from '@/services/rexer/types';
 
 interface Props {
@@ -116,8 +117,18 @@ export function PublicBlockRender({
     [sitePages, activePageId]
   );
 
+  // `block.signal` (Signal panel config) → visitor tracker, so it can gate
+  // block/element events on opt-in instead of tracking everything blindly.
+  const signalByBlockId = React.useMemo(() => {
+    const map: Record<string, BlockSignalConfig> = {};
+    for (const block of current.blocks) {
+      if (block.signal) map[block.id] = block.signal;
+    }
+    return map;
+  }, [current]);
+
   useInitTracker(page.id, current.isHome ? undefined : current.slug);
-  useBlockTracking();
+  useBlockTracking(signalByBlockId);
   const domainAllowed = useAdDomainAllowed(page);
 
   const linkCtx = React.useMemo(
