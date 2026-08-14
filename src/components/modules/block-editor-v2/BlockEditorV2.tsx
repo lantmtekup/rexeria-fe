@@ -45,6 +45,7 @@ import {
   getContentAt,
   setContentAt,
 } from '@/components/modules/block-editor-v2/contentPath';
+import { writeImageUrl } from '@/components/modules/block-editor-v2/imageField';
 import { DuplicateTemplateDialog } from '@/components/modules/block-editor-v2/DuplicateTemplateDialog';
 import { SaveBlockDialog } from '@/components/modules/block-editor-v2/SaveBlockDialog';
 import { ElementToolbar } from '@/components/modules/block-editor-v2/ElementToolbar';
@@ -1862,6 +1863,18 @@ export function BlockEditorV2({
   }, [blockMode, railTab]);
 
   /**
+   * "Chọn từ thư viện" inside any `ImagePicker` lands here.
+   *
+   * The library is the rail's Media panel rather than a modal on purpose: the
+   * panel stays open while you click through several images, so swapping a few
+   * in a row is one trip instead of one dialog per image.
+   */
+  const openMediaLibrary = React.useCallback(() => {
+    setRailTab('media');
+    setPanelOpen(true);
+  }, []);
+
+  /**
    * Where the Media panel writes. Only an image element is a valid target, so
    * with anything else selected the panel says what to do instead of failing
    * silently on click.
@@ -1880,13 +1893,9 @@ export function BlockEditorV2({
      a useCallback here would be invalidated every render anyway. */
   const handlePickMedia = (url: string) => {
     if (!mediaTarget) return;
-    updateActiveContent(
-      prev =>
-        setContentAt(
-          prev as Record<string, unknown>,
-          mediaTarget.key,
-          url
-        ) as typeof prev
+    const blockType = canvas.activeBlock?.blockType;
+    updateActiveContent(prev =>
+      writeImageUrl(blockType, prev, mediaTarget.key, url)
     );
     toast.success(`Đã gán ảnh vào “${mediaTarget.label}”`);
   };
@@ -2158,6 +2167,7 @@ export function BlockEditorV2({
                 onContentChange={updateBlockContent}
                 onResetElementStyle={handleResetElementStyleFor}
                 onUpdateBackground={handleUpdateBackgroundFor}
+                onBrowseLibrary={openMediaLibrary}
                 blockActions={pageBlockActions}
                 motionMode={motionPreview.previewing ? 'preview' : 'edit'}
                 motionPreviewNonce={motionPreview.nonce}
@@ -2185,6 +2195,7 @@ export function BlockEditorV2({
                 onContentChange={updateBlockContent}
                 onResetElementStyle={handleResetElementStyleFor}
                 onUpdateBackground={handleUpdateBackgroundFor}
+                onBrowseLibrary={openMediaLibrary}
                 motionMode={motionPreview.previewing ? 'preview' : 'edit'}
                 motionPreviewNonce={motionPreview.nonce}
                 motionPreviewElement={motionPreview.previewElement}
@@ -2225,6 +2236,7 @@ export function BlockEditorV2({
               }}
               onUpdateBackground={handleUpdateBackground}
               onSyncVariant={syncVariant}
+              onBrowseLibrary={openMediaLibrary}
               motion={motionForActiveVariant}
               onChangeMotion={handleChangeBlockMotion}
               onOpenMotionEditor={() => setMotionEditorOpen(true)}

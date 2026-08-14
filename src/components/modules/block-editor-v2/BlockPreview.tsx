@@ -85,6 +85,8 @@ interface BlockPreviewProps {
     blockId: string,
     next: BlockBackground | undefined
   ) => void;
+  /** Open the Media tab on the left rail from the image edit chip. */
+  onBrowseLibrary?: () => void;
   /** Editor lifecycle for motion subsystem. Default 'edit' (no-op). */
   motionMode?: EditorMode;
   /**
@@ -209,6 +211,7 @@ export function BlockPreview({
   onContentChange,
   onResetElementStyle,
   onUpdateBackground,
+  onBrowseLibrary,
   selectedExtraElementId = null,
   onSelectExtraElement,
   onCommitExtraElementPosition,
@@ -514,6 +517,7 @@ export function BlockPreview({
     onContentChange,
     onResetElementStyle,
     onUpdateBackground,
+    onBrowseLibrary,
   });
 
   /** True when pointer is on the device frame (any data-element-key). */

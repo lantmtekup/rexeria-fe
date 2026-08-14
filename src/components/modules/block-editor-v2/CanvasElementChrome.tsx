@@ -45,6 +45,7 @@ export function CanvasElementChip({ layer }: { layer: CanvasElementLayer }) {
       onContentChange={chip.onContentChange}
       onChipPointerEnter={chip.onChipPointerEnter}
       onChipPointerLeave={chip.onChipPointerLeave}
+      onBrowseLibrary={chip.onBrowseLibrary}
     />
   );
 }

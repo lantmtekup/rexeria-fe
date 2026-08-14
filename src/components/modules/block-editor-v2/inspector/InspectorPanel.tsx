@@ -47,6 +47,8 @@ export interface InspectorPanelProps {
     from: 'desktop' | 'mobile',
     to: 'desktop' | 'mobile'
   ) => void;
+  /** Open the Media tab on the left rail for the selected image element. */
+  onBrowseLibrary?: () => void;
 }
 
 /**
@@ -66,6 +68,7 @@ export function InspectorPanel({
   onUpdateStyle,
   onUpdateBackground,
   onSyncVariant,
+  onBrowseLibrary,
 }: InspectorPanelProps) {
   if (device === 'tablet') {
     return (
@@ -198,8 +201,10 @@ export function InspectorPanel({
           {kind === 'image' && (
             <ImageSection
               fieldKey={selectedKey}
+              blockType={block.blockType}
               content={content}
               onContentChange={onContentChange}
+              onBrowseLibrary={onBrowseLibrary}
             />
           )}
 

@@ -1,30 +1,11 @@
 'use client';
 
-import { Cormorant_Garamond, Jost } from 'next/font/google';
-
 import * as React from 'react';
 
 import type { TemplateProps } from '../types';
 import { useMaisonMotion } from '../_maison/useMaisonMotion';
 import '../_maison/base.css';
 import './styles.css';
-
-// next/font thay cho <link> Google Fonts render-time — self-host + preload,
-// hết FOUT trên trang public (audit FE 2026-07-04 P7). CSS đọc qua
-// var(--font-*) trong styles.css (--serif/--sans).
-const serifFont = Cormorant_Garamond({
-  subsets: ['latin', 'vietnamese'],
-  weight: ['300', '400', '500'],
-  style: ['normal', 'italic'],
-  display: 'swap',
-  variable: '--font-mz-serif',
-});
-const sansFont = Jost({
-  subsets: ['latin'],
-  weight: ['300', '400', '500'],
-  display: 'swap',
-  variable: '--font-mz-sans',
-});
 
 interface Content {
   brandName?: string;
@@ -65,10 +46,7 @@ export default function MaisonNoir({ page, content }: TemplateProps) {
   const ctaText = c.ctaText ?? 'Book a private viewing';
 
   return (
-    <div
-      className={`mz-root mz-noir ${serifFont.variable} ${sansFont.variable}`}
-      ref={ref}
-    >
+    <div className='mz-root mz-noir' ref={ref}>
       <div className='grain' aria-hidden />
 
       <header className='nav'>

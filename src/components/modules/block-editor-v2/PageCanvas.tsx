@@ -86,6 +86,8 @@ interface PageCanvasProps {
     blockId: string,
     next: BlockBackground | undefined
   ) => void;
+  /** Open the Media tab on the left rail from the image edit chip. */
+  onBrowseLibrary?: () => void;
   blockActions: PageCanvasBlockActions;
   motionMode?: EditorMode;
   motionPreviewNonce?: number;
@@ -129,6 +131,7 @@ export function PageCanvas({
   onContentChange,
   onResetElementStyle,
   onUpdateBackground,
+  onBrowseLibrary,
   blockActions,
   motionMode = 'edit',
   motionPreviewNonce = 0,
@@ -230,6 +233,7 @@ export function PageCanvas({
     onContentChange,
     onResetElementStyle,
     onUpdateBackground,
+    onBrowseLibrary,
   });
 
   // Measure the page so the zoom wrapper can reserve `height × scale` in

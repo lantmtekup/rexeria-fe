@@ -175,6 +175,8 @@ export interface UseCanvasElementLayerOptions {
     blockId: string,
     next: BlockBackground | undefined
   ) => void;
+  /** Open the Media tab on the left rail, targeting the current selection. */
+  onBrowseLibrary?: () => void;
 }
 
 /** Everything `CanvasElementChrome` needs to render the floating edit chip. */
@@ -198,6 +200,7 @@ export interface CanvasChipState {
   ) => void;
   onChipPointerEnter: () => void;
   onChipPointerLeave: () => void;
+  onBrowseLibrary?: () => void;
 }
 
 /** Everything `CanvasElementChrome` needs to render the selection toolbar. */
@@ -897,6 +900,9 @@ export function useCanvasElementLayer(
         chipPointerInsideRef.current = false;
         if (!popoverOpen) clearHover();
       },
+      onBrowseLibrary: opts.onBrowseLibrary
+        ? () => optsRef.current.onBrowseLibrary?.()
+        : undefined,
     };
   }
 

@@ -28,8 +28,20 @@ interface ImagePickerProps {
   onChange: (url: string) => void;
   transform?: ImageTransform;
   onTransformChange?: (next: ImageTransform) => void;
+  /**
+   * Open the Media tab on the left rail, targeting the current selection.
+   *
+   * Absent on the call sites that have no selection to target (list managers
+   * inside `ElementToolbar`, the background picker) — the button then doesn't
+   * render, rather than opening a panel that would refuse the pick.
+   */
+  onBrowseLibrary?: () => void;
   className?: string;
 }
+
+/** Both source buttons share one look so neither reads as the primary one. */
+const ACTION_BTN =
+  'text-2xs flex h-8 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-neutral-200 bg-white px-2 font-medium text-neutral-700 transition-colors hover:border-neutral-900 hover:text-neutral-900 disabled:cursor-wait disabled:opacity-50';
 
 const ROTATION_STEP = 90;
 const SCALE_MIN = 0.5;
@@ -52,6 +64,7 @@ export function ImagePicker({
   onChange,
   transform,
   onTransformChange,
+  onBrowseLibrary,
   className,
 }: ImagePickerProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -148,20 +161,26 @@ export function ImagePicker({
         )}
       </div>
 
+      <Input
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder='https://...'
+        className='h-8 border-neutral-200 bg-white text-xs'
+      />
+
+      {/* The URL field owns its own row so the two sources — upload a new
+          file, or reuse one from the library — sit side by side at equal
+          width instead of competing with the input for space. `flex-1` on
+          both, so "Tải lên" spans the row on the call sites that have no
+          library button. */}
       <div className='flex items-center gap-2'>
-        <Input
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          placeholder='https://...'
-          className='h-8 border-neutral-200 bg-white text-xs'
-        />
         <button
           type='button'
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className='text-2xs flex h-8 shrink-0 cursor-pointer items-center gap-1 rounded-md border border-neutral-200 bg-white px-2 font-medium text-neutral-700 transition-colors hover:border-neutral-900 hover:text-neutral-900 disabled:opacity-50'
+          className={ACTION_BTN}
         >
-          <Upload className='size-3' />
+          <Upload className='size-3 shrink-0' />
           Tải lên
         </button>
         <input
@@ -174,6 +193,16 @@ export function ImagePicker({
             if (f) void handleFile(f);
           }}
         />
+        {onBrowseLibrary && (
+          <button
+            type='button'
+            onClick={onBrowseLibrary}
+            className={ACTION_BTN}
+          >
+            <ImageIcon className='size-3 shrink-0' />
+            Thư viện
+          </button>
+        )}
       </div>
 
       {supportsTransform && (

@@ -9,8 +9,7 @@ import { cn } from '@/lib/cn';
 import { FLOATING, R_FLOATING } from './chrome';
 
 import { ImagePicker } from './ImagePicker';
-import { getContentAt, setContentAt } from './contentPath';
-import { resolveAlturaOlympusImages } from '@/components/modules/block-editor/blocks/_registry/defs/alturaOlympus';
+import { readImageUrl, writeImageUrl } from './imageField';
 import { LinkControls } from '@/components/modules/block-editor-v2/links/LinkControls';
 import {
   canvasEditActionLabel,
@@ -18,7 +17,6 @@ import {
   type ResolvedElementMeta,
 } from './resolveElementKind';
 import type {
-  AlturaOlympusContent,
   BlockContent,
   BlockType,
   ImageTransform,
@@ -50,6 +48,8 @@ export interface CanvasElementEditChipProps {
   /** Keep hover alive while pointer is over the chip / popover. */
   onChipPointerEnter: () => void;
   onChipPointerLeave: () => void;
+  /** Open the Media tab on the left rail for the current selection. */
+  onBrowseLibrary?: () => void;
   onContentChange: (
     next: BlockContent | ((prev: BlockContent) => BlockContent)
   ) => void;
@@ -145,6 +145,7 @@ export function CanvasElementEditChip({
   onChipPointerEnter,
   onChipPointerLeave,
   onContentChange,
+  onBrowseLibrary,
 }: CanvasElementEditChipProps) {
   // The chip is absolutely positioned inside the surface, so its coordinates
   // are CONTENT coordinates. The scroll offset has to be added back: on the
@@ -179,38 +180,25 @@ export function CanvasElementEditChip({
   };
 
   const c = content as Record<string, unknown>;
-  const alturaImgMatch =
-    blockType === 'altura_olympus'
-      ? elementKey.match(/^images\[(\d+)\]$/)
-      : null;
-  const alturaImgIndex = alturaImgMatch ? Number(alturaImgMatch[1]) : -1;
-  const alturaImages =
-    alturaImgIndex >= 0
-      ? resolveAlturaOlympusImages(content as AlturaOlympusContent)
-      : null;
 
-  const imageUrl =
-    alturaImages && alturaImgIndex >= 0
-      ? (alturaImages[alturaImgIndex] ?? '')
-      : ((getContentAt(c, elementKey) as string) ?? '');
+  const imageUrl = readImageUrl(blockType, content, elementKey);
   const transformKey = isImageAction ? imageTransformKey(elementKey) : null;
   const transform = transformKey
     ? (c[transformKey] as ImageTransform | undefined)
     : undefined;
 
   const setImageUrl = (next: string) => {
-    if (alturaImages && alturaImgIndex >= 0) {
-      const list = [...alturaImages];
-      while (list.length <= alturaImgIndex) list.push('');
-      list[alturaImgIndex] = next;
-      onContentChange(prev => {
-        const cur = prev as AlturaOlympusContent;
-        return { ...cur, images: list } as BlockContent;
-      });
-      return;
-    }
-    onContentChange(setContentAt(c, elementKey, next) as BlockContent);
+    onContentChange(prev => writeImageUrl(blockType, prev, elementKey, next));
   };
+
+  /* Close the popover first — it is 420px wide and would sit right on top of
+     the Media panel the button is about to open. */
+  const handleBrowseLibrary = onBrowseLibrary
+    ? () => {
+        onImageOpenChange(false);
+        onBrowseLibrary();
+      }
+    : undefined;
 
   const setTransform = (next: ImageTransform) => {
     if (!transformKey) return;
@@ -329,6 +317,7 @@ export function CanvasElementEditChip({
                   onChange={setImageUrl}
                   transform={transform}
                   onTransformChange={transformKey ? setTransform : undefined}
+                  onBrowseLibrary={handleBrowseLibrary}
                 />
               </Popover.Content>
             </Popover.Portal>
