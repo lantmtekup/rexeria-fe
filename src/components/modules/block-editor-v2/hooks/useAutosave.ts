@@ -25,6 +25,18 @@ export type AutosaveState =
 
 interface UseAutosaveArgs {
   templateId: string;
+  /**
+   * When set, autosave writes to THIS PAGE's own draft buffer
+   * (`PATCH /pages/:id/draft-canvas-blueprint`) instead of the template's.
+   * The editor is opened against a page/experience in every case except the
+   * rare raw-template-id fallback (see `useResolvedCanvasTarget`), where
+   * `pageId` stays undefined and autosave falls back to the template — same
+   * as before this buffer existed. `handleSaveVersion` in `BlockEditorV2`
+   * mirrors the latest canvas into the template's own draft right before
+   * `createVersion`, since BE ignores that call's body and always snapshots
+   * from `Template.draft_canvas_blueprint`.
+   */
+  pageId?: string;
   /** Returns the latest blocks payload (snake-cased wire shape). */
   buildPayload: () => Record<string, unknown>;
   /** Latest known canvas version (etag). */
@@ -75,6 +87,7 @@ function classifyError(err: unknown): AutosaveError {
 
 export function useAutosave({
   templateId,
+  pageId,
   buildPayload,
   version,
   enabled,
@@ -138,10 +151,11 @@ export function useAutosave({
 
       setState({ kind: 'saving' });
       const payload = buildPayloadRef.current();
+      const target = pageId ? `page:${pageId}` : `template:${templateId}`;
       // eslint-disable-next-line no-console
       console.log(
-        '[rexer-autosave] PATCH draft → template:',
-        templateId,
+        '[rexer-autosave] PATCH draft →',
+        target,
         'blocks:',
         Array.isArray((payload as { blocks?: unknown[] }).blocks)
           ? (payload as { blocks: unknown[] }).blocks.length
@@ -156,25 +170,29 @@ export function useAutosave({
         // buffer. Không tạo version mới mỗi save → autosave debounce 1.5s OK.
         // Commit thành immutable version qua POST /templates/:id/versions
         // (explicit Save button, không phải auto).
-        const beTpl = await rexerApi.templates.patchDraftBlueprint(
-          templateId,
-          payload
-        );
+        //
+        // Page-owned draft (migration 000091): once opened against a page,
+        // autosave writes to the PAGE's own buffer, not the template's — the
+        // template is a shared design a page was cloned from, editing one
+        // experience's draft must not bleed into every other page built off
+        // the same template. `handleSaveVersion` mirrors into the template
+        // draft right before committing an immutable version, since BE reads
+        // the canvas to snapshot from there, not from this call.
+        const beDraft = pageId
+          ? (await rexerApi.pages.patchDraftBlueprint(pageId, payload))
+              .draft_canvas_blueprint
+          : (await rexerApi.templates.patchDraftBlueprint(templateId, payload))
+              .draft_canvas_blueprint;
         // eslint-disable-next-line no-console
         console.log(
           '[rexer-autosave] PATCH OK — BE confirmed draft blocks:',
-          Array.isArray(
-            (beTpl.draft_canvas_blueprint as { blocks?: unknown[] } | undefined)
-              ?.blocks
-          )
-            ? (beTpl.draft_canvas_blueprint as { blocks: unknown[] }).blocks
-                .length
+          Array.isArray((beDraft as { blocks?: unknown[] } | undefined)?.blocks)
+            ? (beDraft as { blocks: unknown[] }).blocks.length
             : 0,
           // If this ever reads '—' while the editor shows several pages, BE is
           // dropping the key and multi-page edits are being silently lost.
           'pages:',
-          (beTpl.draft_canvas_blueprint as { pages?: unknown[] } | undefined)
-            ?.pages?.length ?? '—'
+          (beDraft as { pages?: unknown[] } | undefined)?.pages?.length ?? '—'
         );
         if (token.cancelled) return; // a newer save superseded us
         dirtyRef.current = false;
@@ -222,7 +240,7 @@ export function useAutosave({
           'color:#dc2626;font-weight:600'
         );
         // eslint-disable-next-line no-console
-        console.log('template_id:', templateId);
+        console.log('save target:', target);
         // eslint-disable-next-line no-console
         console.log('version (etag):', versionRef.current);
         // eslint-disable-next-line no-console
@@ -235,15 +253,15 @@ export function useAutosave({
         if (inflightRef.current === token) inflightRef.current = null;
       }
     },
-    [templateId]
+    [templateId, pageId]
   );
 
   const markDirty = React.useCallback(() => {
     dirtyRef.current = true;
     // eslint-disable-next-line no-console
     console.log(
-      '[rexer-autosave] markDirty — template:',
-      templateId,
+      '[rexer-autosave] markDirty — target:',
+      pageId ? `page:${pageId}` : `template:${templateId}`,
       'enabled:',
       enabledRef.current,
       'debounce(ms):',
@@ -255,7 +273,7 @@ export function useAutosave({
     debounceRef.current = setTimeout(() => {
       void doSave({ silent: true });
     }, AUTOSAVE_DELAY_MS);
-  }, [doSave, templateId]);
+  }, [doSave, templateId, pageId]);
 
   const flush = React.useCallback(
     async (opts?: { silent?: boolean; force?: boolean }) => {
@@ -287,17 +305,17 @@ export function useAutosave({
         const payload = buildPayloadRef.current();
         const body = JSON.stringify({ canvas_blueprint: payload });
         const blob = new Blob([body], { type: 'application/json' });
-        navigator.sendBeacon(
-          `/api/rexer/templates/${templateId}/draft-canvas-blueprint`,
-          blob
-        );
+        const url = pageId
+          ? `/api/rexer/pages/${pageId}/draft-canvas-blueprint`
+          : `/api/rexer/templates/${templateId}/draft-canvas-blueprint`;
+        navigator.sendBeacon(url, blob);
       } catch {
         // best-effort
       }
     };
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
-  }, [templateId]);
+  }, [templateId, pageId]);
 
   // Auto-retry the moment connectivity returns.
   React.useEffect(() => {
@@ -332,6 +350,7 @@ export function useAutosave({
         dirty: dirtyRef.current,
         enabled: enabledRef.current,
         templateId,
+        pageId,
         version: versionRef.current,
         debounceArmed: !!debounceRef.current,
       }),
@@ -346,7 +365,7 @@ export function useAutosave({
         /* ignore */
       }
     };
-  }, [state, templateId, doSave]);
+  }, [state, templateId, pageId, doSave]);
 
   return { state, markDirty, flush, reset };
 }
