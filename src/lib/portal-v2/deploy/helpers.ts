@@ -11,15 +11,19 @@
  * render identically in both.
  */
 
+import { DEPLOY_DOMAIN_CHANNEL_ID } from '@/lib/portal-v2/deploy/constants';
 import type {
   DeployBoard,
+  DeployBrandDomain,
   DeployCampaignGroup,
   DeployChannel,
   DeployChannelStats,
+  DeployDomainStatus,
   DeployStatus,
   DeployTotals,
   Deployment,
 } from '@/lib/portal-v2/deploy/types';
+import type { BrandDomain } from '@/services/rexer/types';
 
 /* ── formatting ─────────────────────────────────────────────────────────── */
 
@@ -88,6 +92,86 @@ export const resolveChannels = (
     const found = findChannel(channels, id);
     return found ? [found] : [];
   });
+
+/* ── domain ─────────────────────────────────────────────────────────────── */
+
+/**
+ * RFC-1035-ish — enough to catch a typo without becoming its own bug. Ported
+ * from the legacy `/portal/profile/domains` validator so the two routes agree
+ * on what a domain looks like, and so a bad domain never reaches
+ * `rexerApi.brands.domains.create`.
+ */
+const DOMAIN_RE = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
+
+export const isValidDomain = (value: string): boolean =>
+  DOMAIN_RE.test(value.trim());
+
+/**
+ * `BrandDomain` → what this route reads — the same job `beDomainToLocal` does
+ * for `/portal/profile/domains`. `tls_status` is deliberately not read here:
+ * `DeployDomainStatus` only distinguishes what this route gates on, and TLS
+ * finishing is not something Deploy blocks on (see `types.ts`).
+ */
+export const mapBrandDomain = (d: BrandDomain): DeployBrandDomain => {
+  const status: DeployDomainStatus =
+    d.status === 'verifying'
+      ? 'verifying'
+      : d.status === 'verified'
+        ? 'connected'
+        : d.status === 'failed'
+          ? 'error'
+          : 'pending';
+
+  return {
+    id: d.id,
+    domain: d.domain,
+    status,
+    verificationToken: d.verification_token,
+    failureReason: d.failure_reason,
+  };
+};
+
+export const findDomain = (
+  domains: DeployBrandDomain[],
+  id: string
+): DeployBrandDomain | null => domains.find(d => d.id === id) ?? null;
+
+/**
+ * Only `ch1` (Web microsite) is hosted on a domain of its own — the other
+ * five pipes serve through a platform that already has one.
+ */
+export const rowNeedsDomain = (channelIds: string[]): boolean =>
+  channelIds.includes(DEPLOY_DOMAIN_CHANNEL_ID);
+
+/* ── domain, fallback-only ──────────────────────────────────────────────────
+   Everything below this line exists for exactly one situation: brandId could
+   not be resolved, or `rexerApi.brands.domains.*` is unreachable (no BE in
+   local dev, network down). `DeployWorkspace` is the only caller, and only on
+   that branch — the live path never touches this. */
+
+/** A short, stable string — never re-derived from the typed domain. */
+const seed = (input: string): number => {
+  let h = 0;
+  for (const ch of input) h = (h * 31 + ch.charCodeAt(0)) % 9973;
+  return h;
+};
+
+/** A fake but stable id/token pair for a domain created while offline. */
+export const fakeDomainId = (domain: string): string =>
+  `fake-${seed(domain.trim().toLowerCase()).toString(16)}`;
+
+export const fakeVerificationToken = (domain: string): string =>
+  `rxr_verify_${seed(domain.trim().toLowerCase()).toString(16).padStart(4, '0')}`;
+
+/**
+ * Stands in for the DNS check when there is no BE to ask. Deterministic so it
+ * never flips on a re-render or after hydration — it exists to demo the two
+ * outcomes a real check would return, not to check anything.
+ */
+export const simulateDomainStatus = (value: string): 'connected' | 'error' => {
+  const s = seed(value.trim().toLowerCase());
+  return s % 6 === 0 ? 'error' : 'connected';
+};
 
 /* ── roll-ups ───────────────────────────────────────────────────────────── */
 
@@ -193,6 +277,35 @@ export const toggleRowChannel = (
         : [...row.channels, channelId],
     };
   });
+
+/**
+ * Point a ready row at one of the brand's domains — or clear the selection.
+ * The domain itself is not copied onto the row; only its id is, the same way
+ * `channels` holds ids rather than `DeployChannel` records.
+ */
+export const setRowDomainId = (
+  deployments: Deployment[],
+  rowId: string,
+  domainId: string | null
+): Deployment[] =>
+  deployments.map(row => (row.id === rowId ? { ...row, domainId } : row));
+
+/**
+ * The Deploy button's gate. A channel is always required; `ch1` additionally
+ * needs its selected domain to have actually cleared verification —
+ * `pending`, `verifying` and `error` all block. A domain that has never been
+ * checked, or was checked and failed, is not a fact this route gets to
+ * publish as if it were.
+ */
+export const canDeployRow = (
+  row: Deployment,
+  domains: DeployBrandDomain[]
+): boolean => {
+  if (!row.channels.length) return false;
+  if (!rowNeedsDomain(row.channels)) return true;
+  const domain = row.domainId ? findDomain(domains, row.domainId) : null;
+  return domain?.status === 'connected';
+};
 
 /**
  * Ready → Live. `since` is stamped by the caller: this route runs the clock
