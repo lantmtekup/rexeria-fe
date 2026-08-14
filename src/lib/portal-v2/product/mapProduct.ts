@@ -219,9 +219,19 @@ export const mapBeProductToPortal = (
   handle: p.slug || slugifyHandle(p.name),
   title: p.name,
   body: p.description ?? '',
-  brand: ctx.brandName ?? '',
-  type: ctx.typeName ?? '',
-  category: ctx.typeName ?? '',
+  // `p.brand_name`/`p.type`/`p.category` are the product's OWN free-text
+  // fields — what the Organization panel edits and `toBeProduct.ts` writes
+  // back (`brand_name`, `type`, distinct from the `brand_id`/`category_id`
+  // relations). Reading `ctx.brandName`/`ctx.typeName` here instead (a
+  // catalog-load-time lookup BY id, only ever populated for the list fetch —
+  // every other caller of this mapper passes `{now}` alone) meant a save
+  // always came back through this same function and had its own edit
+  // overwritten with the empty ctx fallback. `ctx` stays as the fallback for
+  // a product whose `brand_id`/`category_id` is linked but has no free-text
+  // label typed in yet.
+  brand: p.brand_name ?? ctx.brandName ?? '',
+  type: p.type ?? ctx.typeName ?? '',
+  category: p.category ?? '',
   tags: p.template_tags ?? [],
   /* Both unions are `active | draft | archived` — no translation needed. */
   status: p.status ?? 'draft',
