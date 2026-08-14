@@ -164,26 +164,39 @@ const layerName = (l: RxExperienceLayer): string => {
 /**
  * `GET /experiences/{id}` → các block để vẽ.
  *
- * Đọc CẢ HAI hình dạng canvas (xem `RxExperienceLayer`): `block_type ??
- * blockType`.
+ * Đọc CẢ BA hình dạng canvas (xem `RxExperienceLayer`): `block_type ??
+ * blockType`, và tracking đọc `block_signal` (hình A) hoặc `signal` (hình C —
+ * canvas mới, `components` ở đó là map theo field-path chứ không phải mảng).
  */
 export const v2DetailToLayers = (d: RxExperienceDetail): ExperienceLayer[] =>
   (d.layers ?? []).map(l => {
     const comps = l.components ?? [];
+    const mapComps = Object.entries(l.signal?.components ?? {});
     return {
       name: layerName(l),
       blockType: l.block_type ?? l.blockType ?? null,
       // Hình A không mang `isVisible`; vắng ⇒ đang hiện.
       visible: l.isVisible !== false,
-      tracked: l.block_signal?.track === true,
-      blockSignals: Object.entries(l.block_signal?.signals ?? {})
+      tracked: l.block_signal?.track === true || l.signal?.track === true,
+      blockSignals: Object.entries(
+        l.block_signal?.signals ?? l.signal?.signals ?? {}
+      )
         .filter(([, on]) => on)
         .map(([name]) => name),
-      components: comps.map(c => ({
-        key: c.key,
-        kind: c.component_kind,
-        tracked: c.signal?.track === true,
-        event: c.signal?.event ?? null,
-      })),
+      components:
+        comps.length > 0
+          ? comps.map(c => ({
+              key: c.key,
+              kind: c.component_kind,
+              tracked: c.signal?.track === true,
+              event: c.signal?.event ?? null,
+            }))
+          : mapComps.map(([key, sig]) => ({
+              key,
+              // Hình C không có `component_kind`; tên field là nhãn tốt nhất có.
+              kind: key,
+              tracked: sig?.track === true,
+              event: sig?.event ?? null,
+            })),
     };
   });
