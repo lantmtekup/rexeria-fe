@@ -168,9 +168,11 @@ const PageCanvasEditor = ({
     <div className='flex h-full min-h-0 flex-1 flex-col overflow-hidden'>
       <BlockEditorV2
         templateId={target.templateId}
+        initialTemplate={target.template ?? undefined}
         autoApplyProductId={autoApplyProductId}
         pageSlug={target.pageSlug}
         pageId={target.pageId}
+        pageDraftCanvasBlueprint={target.page?.draft_canvas_blueprint}
         pageName={target.pageName}
         pageStatus={target.pageStatus}
         pinnedVersionId={target.pinnedVersionId}

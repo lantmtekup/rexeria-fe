@@ -11,6 +11,7 @@ import { rexerApi } from '@/services/rexer/endpoints';
 import { ALL_BLOCK_SURFACES } from '@/services/rexer/types';
 import type {
   CanvasTemplate,
+  Template,
   TemplateVersion as TemplateVersionType,
 } from '@/services/rexer/types';
 
@@ -122,6 +123,15 @@ interface BlockEditorV2Props {
    *  mode (sửa 1 saved block trực tiếp — xem `savedBlockDirectId`). */
   templateId?: string;
   /**
+   * The `Template` `useResolvedCanvasTarget` already resolved to get
+   * `templateId` in the first place (it always fetches the full object en
+   * route, whether via a page's `template_version_id` or a raw template id).
+   * When present, the load effect uses this directly instead of an extra
+   * `templates.get(templateId)` round trip — Experiences/pages have no
+   * business re-fetching a system resource the caller already has in hand.
+   */
+  initialTemplate?: Template;
+  /**
    * BLOCK-DIRECT mode: id của 1 saved block. Khi set (và không có templateId),
    * editor load thẳng `blocks.get(id).settings` làm canvas, KHÔNG tạo template
    * tạm, KHÔNG autosave-template. Lưu qua nút 🔖 (SaveBlockDialog overwrite →
@@ -145,6 +155,15 @@ interface BlockEditorV2Props {
    *  ở context của 1 page cụ thể. Cho PublishDialog set slug trực tiếp khi
    *  page chưa có. */
   pageId?: string;
+  /**
+   * `page.draft_canvas_blueprint` — this page's own autosave buffer
+   * (migration 000091). Present ⇒ editor resumes from here instead of the
+   * template's draft, and further autosaves target the page, not the
+   * template (see `useAutosave`'s `pageId`). Undefined on a page that has
+   * never been autosaved yet (BE omits the key) — load falls through to the
+   * template flow below exactly as before this buffer existed.
+   */
+  pageDraftCanvasBlueprint?: Record<string, unknown>;
   /** Optional Page name — dùng auto-suggest slug khi user chưa đặt. */
   pageName?: string;
   /** Optional Page.status từ BE — source of truth cho "đã xuất bản hay
@@ -232,10 +251,12 @@ function rxErrorMessage(err: unknown): string {
 
 export function BlockEditorV2({
   templateId,
+  initialTemplate,
   savedBlockDirectId,
   autoApplyProductId,
   pageSlug,
   pageId,
+  pageDraftCanvasBlueprint,
   pageName,
   pageStatus,
   pinnedVersionId,
@@ -278,6 +299,10 @@ export function BlockEditorV2({
   // Autosave — payload built from latest canvas + publish state at save time.
   const autosave = useAutosave({
     templateId: templateId ?? '',
+    // Only in page-owned mode when there's a page context — the rare
+    // raw-template-id fallback (no page resolved) keeps autosaving the
+    // template directly, same as before this buffer existed.
+    pageId: blockMode ? undefined : pageId,
     version: template?.version,
     // Block mode lưu qua nút 🔖 (blocks.update), KHÔNG autosave-template.
     enabled: !blockMode && !!template,
@@ -425,12 +450,21 @@ export function BlockEditorV2({
           return;
         }
 
-        const tplRes = await withTimeout(
-          rexerApi.templates.get(templateId as string),
-          LOAD_TIMEOUT_MS
-        );
+        // `initialTemplate` — the caller (`useResolvedCanvasTarget`) always
+        // resolves the full Template en route to `templateId`, whether via a
+        // page's `template_version_id` or a raw template id fallback. Reuse
+        // it instead of a second `templates.get()` round trip; only pages
+        // opened before this prop existed (there are none left, but keep the
+        // fallback cheap) hit the network here.
+        const tpl =
+          initialTemplate ??
+          (
+            await withTimeout(
+              rexerApi.templates.get(templateId as string),
+              LOAD_TIMEOUT_MS
+            )
+          ).template;
         if (cancelled) return;
-        const tpl = tplRes.template;
         const currentVerId = tpl.current_version_id;
 
         // Priority order: draft buffer (autosave) → HEAD committed version.
@@ -447,10 +481,43 @@ export function BlockEditorV2({
         // HEAD. (Public /p/{slug} render vẫn dùng page.template_version_id
         // nên cần BE fix riêng — log warning.)
         let canvasData: Record<string, unknown> | undefined;
-        let loadSource: 'draft' | 'version-head' | 'version-current' | 'empty' =
-          'empty';
+        let loadSource:
+          | 'draft-page'
+          | 'revision-page'
+          | 'draft'
+          | 'version-head'
+          | 'version-current'
+          | 'empty' = 'empty';
         let loadedVersionId: string | undefined;
-        if (tpl.draft_canvas_blueprint) {
+        if (pageId) {
+          // Page-owned (migration 000091): a page cloned off this template
+          // has its own in-progress edits + publish history — content comes
+          // ONLY from the page's own state, never the shared Template's
+          // draft/versions (which could belong to someone editing the
+          // template itself, or a different page forked from it later).
+          // Draft buffer first (autosave resume), else the latest committed
+          // `page_revisions` row — seeded from the template at fork time, so
+          // it always exists by the time a page is opened here.
+          if (pageDraftCanvasBlueprint) {
+            canvasData = adaptCanvasBlueprint(pageDraftCanvasBlueprint);
+            loadSource = 'draft-page';
+          } else {
+            try {
+              const revs = await withTimeout(
+                rexerApi.pages.revisions(pageId, { limit: 1 }),
+                LOAD_TIMEOUT_MS
+              );
+              const latest = revs.items?.[0];
+              if (latest?.canvas_blueprint) {
+                canvasData = adaptCanvasBlueprint(latest.canvas_blueprint);
+                loadSource = 'revision-page';
+              }
+            } catch {
+              /* revision fetch failed — canvasData stays undefined, falls
+                 to the empty/seed precedence below. */
+            }
+          }
+        } else if (tpl.draft_canvas_blueprint) {
           canvasData = adaptCanvasBlueprint(tpl.draft_canvas_blueprint);
           loadSource = 'draft';
         } else {
@@ -527,10 +594,14 @@ export function BlockEditorV2({
             '[rexer-editor] HEAD diverges from template.current_version_id (by design — BE chỉ set current_version_id ở version đầu, contract 2026-06-04 §2a). Render công khai dùng page.template_version_id + release snapshot, KHÔNG dùng current_version_id.'
           );
         }
-        // Also stash HEAD version when canvas loaded from draft — Save
-        // Version inherits schema fields from currentVersion, dùng HEAD
-        // schema để tránh nhánh schema bị regress.
-        if (tpl.draft_canvas_blueprint) {
+        // Also stash HEAD version when canvas loaded from the template's own
+        // draft — Save Version (template-owned fallback only, no `pageId`)
+        // inherits schema fields from currentVersion, dùng HEAD schema để
+        // tránh nhánh schema bị regress. Page-owned Save Version doesn't
+        // mint template versions at all (see `handleSaveVersion`), so this
+        // stash — and the template call it makes — is skipped entirely
+        // whenever there's a page context.
+        if (!pageId && tpl.draft_canvas_blueprint) {
           rexerApi.templates
             .versions(templateId!)
             .then(list => {
@@ -593,7 +664,10 @@ export function BlockEditorV2({
         // page the user hasn't filled in yet, never a reason to seed mocks.
         const hasServerCanvas = canvasData !== undefined;
         const isFreshTemplate =
-          currentVerId === null && !tpl.draft_canvas_blueprint;
+          currentVerId === null &&
+          !tpl.draft_canvas_blueprint &&
+          loadSource !== 'draft-page' &&
+          loadSource !== 'revision-page';
         const initial = parsed?.blocks.length
           ? parsed.blocks
           : hasServerCanvas || isFreshTemplate
@@ -677,7 +751,13 @@ export function BlockEditorV2({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateId, savedBlockDirectId, blockMode]);
+  }, [
+    templateId,
+    savedBlockDirectId,
+    blockMode,
+    pageId,
+    pageDraftCanvasBlueprint,
+  ]);
 
   // Auto-apply product when launched from campaign detail link (`?apply_product=<id>`).
   const autoAppliedRef = React.useRef(false);
@@ -1150,23 +1230,32 @@ export function BlockEditorV2({
   };
 
   // ── Save Version ────────────────────────────────────────────────────────
-  // Commit current draft canvas_blueprint as a new immutable version.
-  // Bump LUÔN từ max(version_no) trong template — chứ ko phải từ
-  // `currentVersion` (page.template_version_id có thể trỏ version cũ trong
-  // khi BE đã có version mới hơn, dẫn đến 409 "already exists"). Inherits
-  // schema fields from currentVersion / HEAD; nếu template chưa có version
-  // nào (vừa created qua CreateTemplateDialog) thì dùng default + v1.0.0.
-  const handleSaveVersion = async (): Promise<TemplateVersionType | null> => {
+  // Commit the current canvas as durable history.
+  //
+  // Page-owned (has `pageId` — every Experience/portal-v2 page): commits
+  // straight to this PAGE's own `page_revisions` via `pages.saveConfig`.
+  // No Template version is minted — BE's Publish() already reads content
+  // from `page_revisions`, not from a template version's blueprint (the old
+  // flow only minted one to have a valid id to pin
+  // `page.template_version_id` to). Pages belong to the portal; templates
+  // are a shared system resource a page was cloned from once — editing an
+  // experience has no business writing into that catalog.
+  //
+  // Template-owned fallback (rare raw-template-id route, no page resolved —
+  // see `useResolvedCanvasTarget`): unchanged, commits an immutable
+  // Template version. Bump LUÔN từ max(version_no) trong template — chứ ko
+  // phải từ `currentVersion` (có thể trỏ version cũ, dẫn đến 409 "already
+  // exists"). Inherits schema fields from currentVersion / HEAD; nếu
+  // template chưa có version nào thì dùng default + v1.0.0.
+  const handleSaveVersion = async (): Promise<{
+    templateVersionId?: string;
+  } | null> => {
     if (!template) {
       toast.error('Chưa load template — đợi 1 giây rồi thử lại.');
       return null;
     }
     setSavingVersion(true);
     try {
-      // BE createVersion BỎ QUA canvas_blueprint trong body — luôn snapshot từ
-      // templates.draft_canvas_blueprint (be-spec-interactive-ad §0.1). Phải
-      // force-sync draft từ canvas.blocks hiện tại trước khi POST /versions,
-      // kể cả khi autosave chưa dirty (flush thường skip nếu dirty=false).
       await autosave.flush({ silent: true, force: true });
 
       const payload = serializeCanvasPages({
@@ -1177,7 +1266,7 @@ export function BlockEditorV2({
 
       // BE's canvas_blueprint_validator only walks root `blocks[]` (= the home
       // page), so an unknown block type on a sub-page sails through both
-      // autosave and createVersion and only surfaces as a "chưa có renderer"
+      // autosave and this commit and only surfaces as a "chưa có renderer"
       // placeholder on the published page. Pre-flight what FE can actually
       // check — that every type is renderable — and name the page.
       const unknown = canvas.pages.flatMap(p =>
@@ -1191,6 +1280,25 @@ export function BlockEditorV2({
           { duration: 10000 }
         );
         return null;
+      }
+
+      if (pageId) {
+        try {
+          const revs = await rexerApi.pages.revisions(pageId, { limit: 1 });
+          const latestRev = revs.items?.[0];
+          await rexerApi.pages.saveConfig(pageId, {
+            config_json: latestRev?.config_json ?? {},
+            canvas_blueprint: payload,
+            base_revision_no: latestRev?.revision_no ?? 0,
+          });
+        } catch (err) {
+          toast.error(`Lưu thất bại: ${rxErrorMessage(err)}`, {
+            duration: 8000,
+          });
+          return null;
+        }
+        toast.success('Đã lưu bản mới nhất');
+        return {};
       }
 
       // Resolve next version string từ HEAD của template (max version_no).
@@ -1233,35 +1341,8 @@ export function BlockEditorV2({
       });
       setCurrentVersion(next);
 
-      // Mirror the just-committed canvas into page_revisions. BE Publish()
-      // always prefers the page's own `latest` page_revision over the
-      // repointed template version, whenever that revision already has
-      // blocks — which it always does, since it's seeded from the
-      // template at page-create time and no FE flow ever called
-      // `pages.saveConfig` to replace it. Without this mirror, Publish
-      // keeps re-publishing that page-create-time snapshot forever, no
-      // matter how many "Save Version" commits happen afterward. If this
-      // fails, publish falls back to that same stale snapshot — surface it
-      // loudly rather than letting it fail silently.
-      if (pageId) {
-        try {
-          const revs = await rexerApi.pages.revisions(pageId, { limit: 1 });
-          const latestRev = revs.items?.[0];
-          await rexerApi.pages.saveConfig(pageId, {
-            config_json: latestRev?.config_json ?? {},
-            canvas_blueprint: payload,
-            base_revision_no: latestRev?.revision_no ?? 0,
-          });
-        } catch (err) {
-          toast.error(
-            `Đồng bộ page revision thất bại — publish có thể vẫn hiển thị bản cũ: ${rxErrorMessage(err)}`,
-            { duration: 8000 }
-          );
-        }
-      }
-
       toast.success(`Đã commit version "${next.version}"`);
-      return next;
+      return { templateVersionId: next.id };
     } catch (err) {
       toast.error(`Save version thất bại: ${rxErrorMessage(err)}`);
       return null;
@@ -1286,9 +1367,10 @@ export function BlockEditorV2({
     if (pageId && next) {
       try {
         if (next.published) {
-          // Commit canvas hiện tại → version mới TRƯỚC khi publish, để trang
-          // public luôn nhận đúng bản mới nhất (tránh publish version cũ khi
-          // user sửa nhưng quên "Save Version").
+          // Commit canvas hiện tại TRƯỚC khi publish, để trang public luôn
+          // nhận đúng bản mới nhất (tránh publish bản cũ khi user sửa nhưng
+          // quên lưu). Page-owned: commits to page_revisions directly, no
+          // template_version_id to pass — publish keeps whatever's pinned.
           const committed = await handleSaveVersion();
           // Commit thất bại (vd BE từ chối block_type "unknown block type") →
           // KHÔNG fallback publish version cũ. Trước đây fallback
@@ -1299,14 +1381,16 @@ export function BlockEditorV2({
             autosave.markDirty();
             await autosave.flush({ silent: true });
             toast.error(
-              'Chưa publish được: commit version mới thất bại (xem lỗi phía trên). Sửa rồi thử lại — KHÔNG publish bản cũ.',
+              'Chưa publish được: lưu bản mới thất bại (xem lỗi phía trên). Sửa rồi thử lại — KHÔNG publish bản cũ.',
               { duration: 8000 }
             );
             return;
           }
           await rexerApi.pages.publish(
             pageId,
-            { template_version_id: committed.id },
+            committed.templateVersionId
+              ? { template_version_id: committed.templateVersionId }
+              : {},
             { slug: pageSlug }
           );
         } else {
@@ -1340,13 +1424,13 @@ export function BlockEditorV2({
   const handleRepublish = async () => {
     if (!template || !pageId || !publishState.publish?.published) return;
 
-    // Luôn commit canvas hiện tại → version mới trước khi republish (giống
-    // publish lần đầu). Nếu chỉ repoint HEAD cũ mà editor còn draft chưa
-    // commit → public vẫn render snapshot cũ.
+    // Luôn commit canvas hiện tại trước khi republish (giống publish lần
+    // đầu). Nếu chỉ repoint HEAD cũ mà editor còn draft chưa commit → public
+    // vẫn render snapshot cũ.
     const committed = await handleSaveVersion();
     if (!committed) {
       toast.error(
-        'Chưa xuất bản lại được: commit version mới thất bại (xem lỗi phía trên).',
+        'Chưa xuất bản lại được: lưu bản mới thất bại (xem lỗi phía trên).',
         { duration: 8000 }
       );
       return;
@@ -1355,14 +1439,18 @@ export function BlockEditorV2({
     try {
       await rexerApi.pages.publish(
         pageId,
-        { template_version_id: committed.id },
+        committed.templateVersionId
+          ? { template_version_id: committed.templateVersionId }
+          : {},
         { slug: pageSlug }
       );
       publishState.setPublish({
         ...publishState.publish,
         publishedAt: new Date().toISOString(),
       });
-      onPinnedVersionChange?.(committed.id);
+      if (committed.templateVersionId) {
+        onPinnedVersionChange?.(committed.templateVersionId);
+      }
       toast.success('Đã xuất bản lại — trang public hiển thị bản mới nhất');
     } catch (err) {
       if (

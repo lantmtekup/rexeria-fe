@@ -1773,6 +1773,20 @@ export const rexerApi = {
         { method: 'POST' }
       ),
 
+    /** Overwrite this page's own mutable canvas draft (autosave). Mirrors
+     *  `templates.patchDraftBlueprint` — used when the editor is scoped to a
+     *  page/experience rather than the backing template directly. */
+    patchDraftBlueprint: async (
+      id: string,
+      blueprint: Record<string, unknown>
+    ): Promise<Page> => {
+      const r = await rx<PageResponse>(`/pages/${id}/draft-canvas-blueprint`, {
+        method: 'PATCH',
+        body: { canvas_blueprint: blueprint },
+      });
+      return r.page;
+    },
+
     publishValidate: (id: string) =>
       rx<PublishPageValidateResponse>(`/pages/${id}/publish/validate`, {
         method: 'POST',
