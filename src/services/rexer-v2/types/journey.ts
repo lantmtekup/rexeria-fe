@@ -53,6 +53,10 @@ export type RxJourney = {
   nodes: RxJourneyNode[];
   /** Vắng ⇒ chưa từng đặt, dùng bộ chặng mặc định của hệ thống. */
   stages?: RxJourneyStage[];
+  /** Tỉ lệ chuyển đổi mục tiêu (0..1) của chặng convert. Vắng ⇒ chưa lập kế hoạch. */
+  target?: number | null;
+  /** id chặng → % lượt tới mục tiêu. Vắng ⇒ chưa lập kế hoạch. */
+  stage_targets?: Record<string, number> | null;
   created_at: string;
   updated_at: string;
 };
@@ -69,6 +73,9 @@ export type RxCreateJourneyRequest = {
   summary?: string;
   nodes: RxJourneyNode[];
   stages?: RxJourneyStage[];
+  /** Vắng/`null` ⇒ giữ nguyên bản đã lưu (PUT không xoá ngầm kế hoạch). */
+  target?: number | null;
+  stage_targets?: Record<string, number> | null;
 };
 
 /** PUT thay TOÀN BỘ, và `version` là bắt buộc. */
@@ -99,4 +106,59 @@ export type RxJourneyStats = {
   completion_rate: number;
   leaks: { node_key?: string; lost?: number }[];
   confidence_tier: string;
+};
+
+/**
+ * `GET /v1/journeys/{id}/review` — điểm "Architect": hợp đồng đồ thị + bằng
+ * chứng đo được + cấu trúc, cộng gợi ý stage kế tiếp nên thêm/thay. BE chấm
+ * toàn bộ (`core.JourneyReviewScore`/`core.DecideNextBest`), FE chỉ vẽ lại.
+ */
+export type RxJourneyReviewParts = {
+  contract: number;
+  evidence: number;
+  structure: number;
+};
+
+export type RxJourneyStageRead = {
+  node_key: string;
+  role: string;
+  sessions: number;
+  lift: number | null;
+  tier: string;
+};
+
+export type RxJourneyNextBestDetail = {
+  role: string;
+  experience?: { id: string; name: string } & Record<string, unknown>;
+  reason: string;
+  node_key?: string;
+};
+
+export type RxJourneyNextBest = {
+  mode: string;
+  detail?: RxJourneyNextBestDetail;
+  none_reason?: string;
+};
+
+export type RxJourneyReview = {
+  score: number;
+  parts: RxJourneyReviewParts;
+  weights: RxJourneyReviewParts;
+  confidence_tier: string;
+  stage_reads: RxJourneyStageRead[];
+  next_best: RxJourneyNextBest;
+};
+
+/** `GET /v1/journeys/compare?a=&b=` — hai hành trình đo được, xếp cạnh nhau. */
+export type RxJourneyStageDelta = {
+  key: string;
+  a_sessions: number;
+  b_sessions: number;
+  delta: number;
+};
+
+export type RxJourneyCompareResponse = {
+  a: RxJourneyStats;
+  b: RxJourneyStats;
+  stages: RxJourneyStageDelta[];
 };

@@ -1,10 +1,12 @@
 'use client';
 
-import { Copy, GitFork, PenLine } from 'lucide-react';
+import { Copy, GitFork, PenLine, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import {
+  fetchJourneyBenchmark,
   fetchJourneyReadiness,
+  fetchJourneyReview,
   fetchJourneyStats,
 } from '@/services/portal-v2/journeyMeasured';
 
@@ -19,6 +21,7 @@ import { JourneyCanvasPane } from '@/components/organisms/portal-v2/journeys/Jou
 import { JourneyOverviewPane } from '@/components/organisms/portal-v2/journeys/JourneyOverviewPane';
 import { JourneyReadinessPane } from '@/components/organisms/portal-v2/journeys/JourneyReadinessPane';
 import { JourneySimulatePane } from '@/components/organisms/portal-v2/journeys/JourneySimulatePane';
+import { JourneyVerdictBanner } from '@/components/organisms/portal-v2/journeys/JourneyVerdictBanner';
 import { formatCount, formatLift } from '@/lib/portal-v2/experiences/helpers';
 import { JOURNEY_DETAIL_TABS } from '@/lib/portal-v2/journeys/constants';
 import {
@@ -30,8 +33,11 @@ import {
 } from '@/lib/portal-v2/journeys/helpers';
 import type {
   Journey,
+  JourneyBenchmark,
   JourneyDetailTab,
+  JourneyEditorPendingAction,
   JourneyReadiness,
+  JourneyReview,
   JourneyStats,
 } from '@/lib/portal-v2/journeys/types';
 import { cn } from '@/lib/cn';
@@ -42,10 +48,14 @@ type JourneyDetailModalProps = {
   journey: Journey;
   journeys: Journey[];
   onClose: () => void;
-  onEdit: (journey: Journey) => void;
+  onEdit: (
+    journey: Journey,
+    pendingAction?: JourneyEditorPendingAction
+  ) => void;
   onFork: (journey: Journey) => void;
   onDuplicate: (journey: Journey) => void;
   onOpenJourney: (id: string) => void;
+  onPromote: (journey: Journey) => void;
 };
 
 export const JourneyDetailModal = ({
@@ -58,6 +68,7 @@ export const JourneyDetailModal = ({
   onFork,
   onDuplicate,
   onOpenJourney,
+  onPromote,
 }: JourneyDetailModalProps) => {
   const t = useTranslations('portalV2.journeys');
   /* A fresh journey gets a fresh window — `key` on the modal resets this. */
@@ -78,22 +89,46 @@ export const JourneyDetailModal = ({
     completed: number;
     rate: number;
   } | null>(null);
+  const [review, setReview] = useState<JourneyReview | null>(null);
+  const [benchmark, setBenchmark] = useState<JourneyBenchmark | null>(null);
+
+  const copies = useMemo(
+    () => copiesOfJourney(journeys, journey),
+    [journeys, journey]
+  );
+  const origin = findJourney(journeys, journey.origin);
+
+  /** Blueprint: chuẩn từ chính copies của nó. Copy: chuẩn của blueprint gốc, trừ chính nó. */
+  const benchmarkCopyIds = useMemo(() => {
+    if (journey.template) return copies.map(c => c.id);
+    if (!origin) return [];
+    return copiesOfJourney(journeys, origin)
+      .filter(c => c.id !== journey.id)
+      .map(c => c.id);
+  }, [journey.template, journey.id, journeys, copies, origin]);
 
   useEffect(() => {
     let alive = true;
     setRemote(null);
     setMeasured(null);
+    setReview(null);
+    setBenchmark(null);
     void Promise.allSettled([
       fetchJourneyReadiness(journey.id),
       fetchJourneyStats(journey.id),
-    ]).then(([r, s]) => {
+      fetchJourneyReview(journey.id),
+      fetchJourneyBenchmark(benchmarkCopyIds),
+    ]).then(([r, s, rv, b]) => {
       if (!alive) return;
       if (r.status === 'fulfilled') setRemote(r.value);
       if (s.status === 'fulfilled') setMeasured(s.value);
+      if (rv.status === 'fulfilled') setReview(rv.value);
+      if (b.status === 'fulfilled') setBenchmark(b.value);
     });
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [journey.id]);
 
   const readiness = remote ?? local;
@@ -114,21 +149,19 @@ export const JourneyDetailModal = ({
     : localStats;
   /** Server đo được phiên nhưng KHÔNG trả lift — đừng vẽ một số 0 thay nó. */
   const hasLift = localStats !== null;
-  const copies = useMemo(
-    () => copiesOfJourney(journeys, journey),
-    [journeys, journey]
-  );
-  const origin = findJourney(journeys, journey.origin);
 
   const tabItems = useMemo(
     () =>
       JOURNEY_DETAIL_TABS.map(item => ({
         id: item.id,
         label: t(item.labelKey),
-        count: item.id === 'ready' ? `${readiness.score}%` : undefined,
+        count: item.id === 'insights' ? `${readiness.score}%` : undefined,
       })),
     [t, readiness.score]
   );
+
+  const handleApplyArchitect = (action: JourneyEditorPendingAction) =>
+    onEdit(journey, action);
 
   const subtitle = `${
     journey.template
@@ -210,6 +243,20 @@ export const JourneyDetailModal = ({
                 {t('openBlueprint')}
               </Button>
             ) : null}
+            {/*
+              Chỉ hiện khi đã có phiên đo — "chưa chứng minh gì thì chưa có
+              chuẩn nào để đưa vào thư viện" (toast lỗi nói y vậy nếu bấm sớm).
+            */}
+            {(stats?.sessions ?? 0) > 0 ? (
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => onPromote(journey)}
+              >
+                <Sparkles className='size-3.5' strokeWidth={2.2} aria-hidden />
+                {t('promoteToBlueprint')}
+              </Button>
+            ) : null}
             <Button size='sm' onClick={() => onEdit(journey)}>
               <PenLine className='size-3.5' strokeWidth={2.2} aria-hidden />
               {t('editCanvas')}
@@ -269,17 +316,36 @@ export const JourneyDetailModal = ({
 
       <div className='pt-4' role='tabpanel'>
         {tab === 'over' ? (
-          <JourneyOverviewPane journey={journey} personas={personas} />
-        ) : null}
-        {tab === 'canvas' ? <JourneyCanvasPane journey={journey} /> : null}
-        {tab === 'walk' ? (
-          <JourneySimulatePane
+          <JourneyOverviewPane
             journey={journey}
             journeys={journeys}
-            segments={segments}
+            personas={personas}
+            benchmark={benchmark}
+            onOpenJourney={onOpenJourney}
           />
         ) : null}
-        {tab === 'ready' ? <JourneyReadinessPane journey={journey} /> : null}
+        {tab === 'plan' ? <JourneyCanvasPane journey={journey} /> : null}
+        {tab === 'pulse' ? (
+          <>
+            <JourneyVerdictBanner
+              journey={journey}
+              stats={measured}
+              benchmark={benchmark}
+            />
+            <JourneySimulatePane
+              journey={journey}
+              journeys={journeys}
+              segments={segments}
+            />
+          </>
+        ) : null}
+        {tab === 'insights' ? (
+          <JourneyReadinessPane
+            journey={journey}
+            review={review}
+            onApplyArchitect={handleApplyArchitect}
+          />
+        ) : null}
       </div>
     </Modal>
   );

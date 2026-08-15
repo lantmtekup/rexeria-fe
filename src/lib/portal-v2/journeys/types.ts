@@ -34,8 +34,12 @@ export type JourneyState = 'blueprint' | 'copy';
 /** The list's tab rail: ownership, plus All. */
 export type JourneyStateFilter = JourneyState | 'all';
 
-/** Detail modal tabs. The prototype's Architect (AI) tab is phase 2. */
-export type JourneyDetailTab = 'over' | 'canvas' | 'walk' | 'ready';
+/**
+ * Detail modal tabs. `plan` is the canvas editor's own tab (renamed from
+ * `canvas`); `pulse` is the walk-through + verdict ("Performance"); `insights`
+ * merges readiness with the Architect read (renamed from `ready`).
+ */
+export type JourneyDetailTab = 'over' | 'plan' | 'pulse' | 'insights';
 
 /** What one experience node measured, in its own campaign. */
 export type JourneyNodeStats = {
@@ -152,6 +156,13 @@ export type Journey = {
    */
   stages?: JourneyStage[];
   nodes: JourneyNode[];
+  /**
+   * Tỉ lệ chuyển đổi mục tiêu (0..1) cho chặng convert — kế hoạch của tác giả,
+   * không phải số đo được. Vắng ⇒ chưa lập kế hoạch, khác 0.
+   */
+  target?: number;
+  /** id chặng (không phải chặng convert) → % lượt tới mục tiêu. */
+  stageTargets?: Record<string, number>;
 };
 
 /** One node placed on the layered canvas — `jOrder` (~L19249). */
@@ -182,6 +193,83 @@ export type JourneyWalkStage = {
   stats: JourneyNodeStats | null;
   /** Min-chained against what arrived. `null` ⇒ this stage never ran. */
   reached: number | null;
+};
+
+/**
+ * The Architect read — `GET /journeys/{id}/review`. BE scores it
+ * (`core.JourneyReviewScore`/`core.DecideNextBest`); this is a pure display
+ * shape, nothing here is computed on the client.
+ */
+export type JourneyReviewParts = {
+  contract: number;
+  evidence: number;
+  structure: number;
+};
+
+export type JourneyStageRead = {
+  nodeKey: string;
+  role: string;
+  sessions: number;
+  lift: number | null;
+  tier: string;
+};
+
+export type JourneyNextBestDetail = {
+  role: string;
+  experienceId?: string;
+  experienceName?: string;
+  /** 0..100. Vắng ⇒ BE không trả mức phủ tín hiệu cho trải nghiệm này. */
+  experienceCoverage?: number;
+  reason: string;
+  nodeKey?: string;
+};
+
+export type JourneyNextBestMode = 'add' | 'strengthen' | 'none';
+
+export type JourneyNextBest = {
+  mode: JourneyNextBestMode;
+  detail: JourneyNextBestDetail | null;
+  noneReason: string | null;
+};
+
+export type JourneyReview = {
+  score: number;
+  parts: JourneyReviewParts;
+  weights: JourneyReviewParts;
+  confidenceTier: string;
+  stageReads: JourneyStageRead[];
+  nextBest: JourneyNextBest;
+};
+
+/** One side of a `GET /journeys/compare` result. */
+export type JourneyCompareSide = {
+  measured: boolean;
+  reason: string | null;
+  sessions: number;
+  completed: number;
+  completionRate: number;
+  confidenceTier: string;
+};
+
+export type JourneyStageDelta = {
+  key: string;
+  aSessions: number;
+  bSessions: number;
+  delta: number;
+};
+
+export type JourneyCompareResult = {
+  a: JourneyCompareSide;
+  b: JourneyCompareSide;
+  stages: JourneyStageDelta[];
+};
+
+/** Real-stats rollup across a blueprint's campaign copies — `jBenchmark`. */
+export type JourneyBenchmark = {
+  cvr: number;
+  sessions: number;
+  runs: number;
+  maturity: 'established' | 'early';
 };
 
 export type JourneyFilters = {
@@ -229,3 +317,11 @@ export type JourneyEditorSelection =
   | { kind: 'node'; id: string }
   | { kind: 'edge'; from: string; to: string }
   | null;
+
+/**
+ * The Architect card's Apply action, carried from the detail modal's
+ * Insights tab through to the editor — applied once on mount there.
+ */
+export type JourneyEditorPendingAction =
+  | { type: 'add'; link: JourneyExperienceLink }
+  | { type: 'swap'; nodeId: string; link: JourneyExperienceLink };

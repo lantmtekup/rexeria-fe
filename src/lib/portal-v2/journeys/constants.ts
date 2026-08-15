@@ -258,10 +258,23 @@ export const JOURNEY_DETAIL_TABS: {
   labelKey: string;
 }[] = [
   { id: 'over', labelKey: 'tabOver' },
-  { id: 'canvas', labelKey: 'tabCanvas' },
-  { id: 'walk', labelKey: 'tabWalk' },
-  { id: 'ready', labelKey: 'tabReady' },
+  { id: 'plan', labelKey: 'tabPlan' },
+  { id: 'pulse', labelKey: 'tabPulse' },
+  { id: 'insights', labelKey: 'tabInsights' },
 ];
+
+/**
+ * Vai trò phễu mà Architect chấm (`core.taxonomy.FunnelRoles` ở BE — độc lập
+ * với vai trò trải nghiệm đã bỏ hiển thị ở Experiences, xem `roleStyles.ts`).
+ * Chỉ dùng để dịch id `stage_reads[].role`/`next_best.detail.role` thành nhãn.
+ */
+export const ARCHITECT_ROLE_LABEL: Record<string, string> = {
+  ATT: 'Attention',
+  EDU: 'Educate',
+  EXP: 'Explore',
+  TRU: 'Trust',
+  CON: 'Convert',
+};
 
 export const JOURNEY_DEFAULT_FILTERS = { state: 'all' as const, q: '' };
 
