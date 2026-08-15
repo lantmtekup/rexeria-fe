@@ -4,6 +4,7 @@ import { CampaignCard } from '@/components/organisms/portal-v2/campaigns/Campaig
 import type {
   CampaignExperience,
   CampaignTeamMember,
+  CampaignVerdict,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
 
@@ -16,6 +17,8 @@ type CampaignGridProps = {
   journeys: Journey[];
   team: CampaignTeamMember[];
   today: string;
+  verdicts: Record<string, CampaignVerdict | null>;
+  earnedBar: number | null;
   selected: string[];
   onToggleSelect: (id: string) => void;
   onOpen: (id: string) => void;
@@ -31,6 +34,8 @@ export const CampaignGrid = ({
   journeys,
   team,
   today,
+  verdicts,
+  earnedBar,
   selected,
   onToggleSelect,
   onOpen,
@@ -47,6 +52,8 @@ export const CampaignGrid = ({
         journeys={journeys}
         team={team}
         today={today}
+        verdict={verdicts[campaign.id] ?? null}
+        earnedBar={earnedBar}
         selected={selected.includes(campaign.id)}
         onToggleSelect={onToggleSelect}
         onOpen={onOpen}

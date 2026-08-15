@@ -27,6 +27,7 @@ import {
 import type {
   CampaignExperience,
   CampaignTeamMember,
+  CampaignVerdict,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
 import { campHealth } from '@/lib/portal-v2/campaigns/verdict';
@@ -40,6 +41,10 @@ type CampaignCardProps = {
   journeys: Journey[];
   team: CampaignTeamMember[];
   today: string;
+  /** Real `/intel/campaigns` rollup for this campaign, from the board fetch. */
+  verdict: CampaignVerdict | null;
+  /** Brand-wide average lift — null while `/intel/overview` hasn't resolved. */
+  earnedBar: number | null;
   selected: boolean;
   onToggleSelect: (id: string) => void;
   onOpen: (id: string) => void;
@@ -62,6 +67,8 @@ export const CampaignCard = ({
   journeys,
   team,
   today,
+  verdict,
+  earnedBar,
   selected,
   onToggleSelect,
   onOpen,
@@ -72,7 +79,14 @@ export const CampaignCard = ({
 
   const stage = deriveStage(campaign);
   const owner = ownerName(campaign.owner, team);
-  const health = campHealth(campaign, experiences, today, journeys);
+  const health = campHealth(
+    campaign,
+    verdict,
+    experiences,
+    today,
+    journeys,
+    earnedBar
+  );
   const progress = campProgress(campaign);
   const expCount = campExpCount(campaign);
   const unassigned = unassignedCount(campaign);

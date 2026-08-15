@@ -57,7 +57,9 @@ export const RunPhase = ({
     );
   }
 
-  const untrusted = verdict.trust < TRUST_FLOOR;
+  const trustPct =
+    verdict.trust !== null ? Math.round(verdict.trust * 100) : null;
+  const untrusted = trustPct !== null && trustPct < TRUST_FLOOR * 100;
 
   return (
     <div className='flex flex-col gap-5'>
@@ -74,7 +76,7 @@ export const RunPhase = ({
 
         {untrusted ? (
           <p className='mt-4 rounded-[var(--pv2-r-sm)] bg-[color-mix(in_srgb,var(--pv2-warning)_10%,transparent)] px-4 py-3 text-[12.5px] leading-relaxed text-[var(--pv2-ink)]'>
-            {t('runUntrusted', { pct: Math.round(verdict.trust * 100) })}
+            {t('runUntrusted', { pct: trustPct })}
           </p>
         ) : null}
       </section>

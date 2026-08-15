@@ -11,7 +11,6 @@ import {
   fmtMoney,
 } from '@/components/organisms/portal-v2/campaigns/detail/VerdictStats';
 import { cn } from '@/lib/cn';
-import { earnedBar } from '@/lib/portal-v2/campaigns/verdict';
 import type {
   CampaignVerdict,
   CampaignView,
@@ -21,6 +20,8 @@ import type { Journey } from '@/lib/portal-v2/journeys/types';
 type LearnPhaseProps = {
   campaign: CampaignView;
   verdict: CampaignVerdict | null;
+  /** Brand-wide average lift — null while `/intel/overview` hasn't resolved. */
+  earnedBar: number | null;
   journey: Journey | null;
   onPromoteJourney: () => void;
 };
@@ -35,6 +36,7 @@ type LearnPhaseProps = {
 export const LearnPhase = ({
   campaign,
   verdict,
+  earnedBar,
   journey,
   onPromoteJourney,
 }: LearnPhaseProps) => {
@@ -51,8 +53,8 @@ export const LearnPhase = ({
     );
   }
 
-  const bar = earnedBar();
-  const beatBar = verdict.lift >= bar;
+  const bar = earnedBar;
+  const beatBar = bar !== null && verdict.lift >= bar;
   const earned = verdict.revenue - verdict.spend;
 
   return (
@@ -84,30 +86,34 @@ export const LearnPhase = ({
             </p>
           </div>
 
-          <div
-            className='mt-2.5 flex h-2 overflow-hidden rounded-full bg-[var(--pv2-hair)]'
-            role='img'
-            aria-label={t('learnBarAria', {
-              lift: Math.round(verdict.lift * 100),
-              bar: Math.round(bar * 100),
-            })}
-          >
-            <span
-              className='h-full rounded-full'
-              style={{
-                width: `${Math.min(Math.max(verdict.lift, 0) * 100, 100)}%`,
-                background: beatBar
-                  ? 'var(--pv2-success)'
-                  : 'var(--pv2-warning)',
-              }}
-            />
-          </div>
-          <p className='mt-2 text-[11.5px] text-[var(--pv2-faint)]'>
-            {t('learnBarNote', {
-              lift: Math.round(verdict.lift * 100),
-              bar: Math.round(bar * 100),
-            })}
-          </p>
+          {bar !== null ? (
+            <>
+              <div
+                className='mt-2.5 flex h-2 overflow-hidden rounded-full bg-[var(--pv2-hair)]'
+                role='img'
+                aria-label={t('learnBarAria', {
+                  lift: Math.round(verdict.lift * 100),
+                  bar: Math.round(bar * 100),
+                })}
+              >
+                <span
+                  className='h-full rounded-full'
+                  style={{
+                    width: `${Math.min(Math.max(verdict.lift, 0) * 100, 100)}%`,
+                    background: beatBar
+                      ? 'var(--pv2-success)'
+                      : 'var(--pv2-warning)',
+                  }}
+                />
+              </div>
+              <p className='mt-2 text-[11.5px] text-[var(--pv2-faint)]'>
+                {t('learnBarNote', {
+                  lift: Math.round(verdict.lift * 100),
+                  bar: Math.round(bar * 100),
+                })}
+              </p>
+            </>
+          ) : null}
         </div>
       </section>
 

@@ -88,7 +88,7 @@ export const VerdictStats = ({ verdict }: { verdict: CampaignVerdict }) => {
       />
       <Stat
         label={t('metTrust')}
-        value={fmtPct(verdict.trust)}
+        value={verdict.trust !== null ? fmtPct(verdict.trust) : '—'}
         hint={t('metTrustHint')}
       />
     </div>

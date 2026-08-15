@@ -51,7 +51,6 @@ import {
   blueprintJourneys,
   journeyForCampaign,
 } from '@/lib/portal-v2/campaigns/journeyLink';
-import {} from '@/lib/portal-v2/campaigns/mock';
 import { campPhase } from '@/lib/portal-v2/campaigns/phases';
 import { campReadiness } from '@/lib/portal-v2/campaigns/readiness';
 import type {
@@ -62,9 +61,10 @@ import type {
   CampaignItemStatus,
   CampaignPhase,
   CampaignTeamMember,
+  CampaignVerdict,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
-import { campHealth, campVerdict } from '@/lib/portal-v2/campaigns/verdict';
+import { campHealth } from '@/lib/portal-v2/campaigns/verdict';
 import type { DeployChannel } from '@/lib/portal-v2/deploy/types';
 import type { Journey } from '@/lib/portal-v2/journeys/types';
 
@@ -78,6 +78,11 @@ type CampaignDetailProps = {
   /** The brand's deploy channels — for `CampaignItemModal`'s real Deploy
    *  action, the same list the Deploy screen reads. */
   channels: DeployChannel[];
+  /** Real `/intel/*` rollup — board-level summary until the per-campaign
+   *  detail fetch (leads/CAC/trust/best-worst) resolves, see `CampaignsWorkspace`. */
+  verdict: CampaignVerdict | null;
+  /** Brand-wide average lift — null while `/intel/overview` hasn't resolved. */
+  earnedBar: number | null;
   today: string;
   onChange: (next: CampaignView) => void;
   onBack: () => void;
@@ -105,6 +110,8 @@ export const CampaignDetail = ({
   productNames,
   team,
   channels,
+  verdict,
+  earnedBar,
   today,
   onChange,
   onBack,
@@ -137,13 +144,10 @@ export const CampaignDetail = ({
     () => campReadiness(campaign, experiences, journeys),
     [campaign, experiences, journeys]
   );
-  const verdict = useMemo(
-    () => campVerdict(campaign, experiences),
-    [campaign, experiences]
-  );
   const health = useMemo(
-    () => campHealth(campaign, experiences, today, journeys),
-    [campaign, experiences, today, journeys]
+    () =>
+      campHealth(campaign, verdict, experiences, today, journeys, earnedBar),
+    [campaign, verdict, experiences, today, journeys, earnedBar]
   );
 
   const journey = journeyForCampaign(journeys, campaign);
@@ -584,6 +588,7 @@ export const CampaignDetail = ({
           <LearnPhase
             campaign={campaign}
             verdict={verdict}
+            earnedBar={earnedBar}
             journey={journey}
             onPromoteJourney={onPromoteJourney}
           />
