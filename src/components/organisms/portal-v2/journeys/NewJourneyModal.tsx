@@ -74,11 +74,7 @@ export const NewJourneyModal = ({
     >
       <Callout>
         <Sparkles className='mt-0.5 size-3.5 shrink-0 text-[var(--pv2-electric)]' />
-        <span>
-          A new journey is never an empty canvas. The objective decides the
-          result it already ends in — you design the middle, which is the only
-          part that is actually yours to decide.
-        </span>
+        <span>{t('newCallout')}</span>
       </Callout>
 
       <Field label={t('fieldName')}>
@@ -118,7 +114,7 @@ export const NewJourneyModal = ({
         </TextSelect>
       </Field>
 
-      <Field label={t('overDescription')}>
+      <Field label={t('fieldTagline')}>
         <TextInput
           value={tagline}
           onChange={e => setTagline(e.target.value)}

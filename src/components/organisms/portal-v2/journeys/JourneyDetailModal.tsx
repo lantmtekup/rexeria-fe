@@ -74,7 +74,7 @@ export const JourneyDetailModal = ({
   /* A fresh journey gets a fresh window — `key` on the modal resets this. */
   const [tab, setTab] = useState<JourneyDetailTab>('over');
 
-  const local = useMemo(() => journeyReadiness(journey), [journey]);
+  const local = useMemo(() => journeyReadiness(journey, t), [journey, t]);
 
   /**
    * Điểm sẵn sàng do SERVER chấm — `GET /journeys/{id}/readiness`.

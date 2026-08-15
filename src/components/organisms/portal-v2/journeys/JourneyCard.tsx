@@ -52,7 +52,7 @@ export const JourneyCard = ({
 }: JourneyCardProps) => {
   const t = useTranslations('portalV2.journeys');
   const pill = objectivePillStyle(journey.obj);
-  const readiness = journeyReadiness(journey);
+  const readiness = journeyReadiness(journey, t);
 
   const handleClick = (e: MouseEvent<HTMLElement>) => {
     /* The hover actions live inside the card's click target. */

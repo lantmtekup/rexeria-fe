@@ -31,8 +31,8 @@ type EditorChecksProps = {
  */
 export const EditorChecks = ({ draft, onSelectNode }: EditorChecksProps) => {
   const t = useTranslations('portalV2.journeys');
-  const readiness = useMemo(() => journeyReadiness(draft), [draft]);
-  const gaps = useMemo(() => journeyGaps(draft), [draft]);
+  const readiness = useMemo(() => journeyReadiness(draft, t), [draft, t]);
+  const gaps = useMemo(() => journeyGaps(draft, t), [draft, t]);
   const [open, setOpen] = useState(true);
 
   const failing = readiness.checks.filter(c => !c.ok);

@@ -105,13 +105,24 @@ export const orderedLayout = (j: Journey): JourneyLayoutNode[] =>
 
 /* ── validation ────────────────────────────────────────────────────────── */
 
+/** A `next-intl` `useTranslations('portalV2.journeys')` instance — every
+ *  caller already has one in scope, so the check/gap prose lives in i18n
+ *  instead of hardcoded here. */
+export type Translate = (
+  key: string,
+  values?: Record<string, string | number>
+) => string;
+
 /**
  * The journey contract, as checks you can see. Each one is a rule the plan
  * names: entry to outcome, purposeful nodes, connected, acyclic, no dead ends,
  * real links, named systems. A broken journey says so on screen, in the same
  * breath as showing you the break.
  */
-export const validateJourney = (j: Journey): JourneyCheck[] => {
+export const validateJourney = (
+  j: Journey,
+  translate: Translate
+): JourneyCheck[] => {
   const ids = new Set(j.nodes.map(n => n.id));
   const entries = j.nodes.filter(n => n.kind === 'entry');
   const outcomes = j.nodes.filter(n => n.kind === 'outcome');
@@ -119,12 +130,15 @@ export const validateJourney = (j: Journey): JourneyCheck[] => {
 
   checks.push({
     ok: entries.length >= 1,
-    msg: 'Starts from a defined entry source',
+    msg: translate('checkHasEntry'),
   });
-  checks.push({ ok: outcomes.length >= 1, msg: 'Ends in a business outcome' });
+  checks.push({
+    ok: outcomes.length >= 1,
+    msg: translate('checkHasOutcome'),
+  });
   checks.push({
     ok: j.nodes.every(n => n.to.every(t => ids.has(t))),
-    msg: 'Every route points at a real node',
+    msg: translate('checkValidLinks'),
   });
 
   const seen = new Set<string>();
@@ -137,7 +151,7 @@ export const validateJourney = (j: Journey): JourneyCheck[] => {
   }
   checks.push({
     ok: j.nodes.every(n => seen.has(n.id)),
-    msg: 'No node is unreachable from the entry',
+    msg: translate('checkReachable'),
   });
 
   const reachesOutcome = (start: string): boolean => {
@@ -153,7 +167,7 @@ export const validateJourney = (j: Journey): JourneyCheck[] => {
   };
   checks.push({
     ok: j.nodes.every(n => n.kind === 'outcome' || reachesOutcome(n.id)),
-    msg: 'Every path reaches an outcome — no dead ends',
+    msg: translate('checkNoDeadEnds'),
   });
 
   /* Three-colour DFS: grey (1) means we met a node still on the stack. */
@@ -170,23 +184,23 @@ export const validateJourney = (j: Journey): JourneyCheck[] => {
     colour[id] = 2;
   };
   j.nodes.forEach(n => dfs(n.id));
-  checks.push({ ok: !cyclic, msg: 'No circular routing' });
+  checks.push({ ok: !cyclic, msg: translate('checkNoCycles') });
 
   checks.push({
     // BE kiểm `experience_id` (`node.x`), KHÔNG kiểm nhãn: một node có tên
     // hiển thị mà chưa có id vẫn trượt `experience_ref` ở server.
     ok: j.nodes.every(n => n.kind !== 'experience' || Boolean(n.x)),
-    msg: 'Every experience node links a real experience',
+    msg: translate('checkExperienceLinked'),
   });
   checks.push({
     ok: j.nodes.every(n => Boolean(n.d)),
-    msg: 'Every node states its customer purpose',
+    msg: translate('checkStatesPurpose'),
   });
   checks.push({
     ok: j.nodes.every(
       n => !['entry', 'action', 'outcome'].includes(n.kind) || Boolean(n.via)
     ),
-    msg: 'Entries, actions and outcomes name their system',
+    msg: translate('checkNamesSystem'),
   });
 
   /*
@@ -198,15 +212,15 @@ export const validateJourney = (j: Journey): JourneyCheck[] => {
    */
   checks.push({
     ok: j.nodes.every(n => n.kind !== 'entry' || isEntrySource(n.src)),
-    msg: 'Every entry names a known source',
+    msg: translate('checkKnownSource'),
   });
   checks.push({
     ok: j.nodes.every(n => n.kind !== 'decision' || n.to.length >= 2),
-    msg: 'Every decision has at least two branches',
+    msg: translate('checkDecisionBranches'),
   });
   checks.push({
     ok: j.nodes.every(n => n.kind !== 'outcome' || n.to.length === 0),
-    msg: 'An outcome ends the journey — no routes out of it',
+    msg: translate('checkOutcomeNoRoutes'),
   });
 
   return checks;
@@ -226,14 +240,17 @@ export const nodeNamesOf = (
 ): Record<string, string> =>
   Object.fromEntries((j?.nodes ?? []).map(n => [n.id, n.name]));
 
-export const journeyReadiness = (j: Journey): JourneyReadiness => {
+export const journeyReadiness = (
+  j: Journey,
+  translate: Translate
+): JourneyReadiness => {
   const checks: JourneyCheck[] = [
-    ...validateJourney(j),
+    ...validateJourney(j, translate),
     {
       ok: j.nodes
         .filter(n => n.kind === 'experience')
         .every(n => Boolean(n.xName) && (n.xCoverage ?? 0) > 0),
-      msg: 'Every linked experience has tracking points',
+      msg: translate('checkTracked'),
     },
   ];
 
@@ -247,21 +264,21 @@ export const journeyReadiness = (j: Journey): JourneyReadiness => {
 
 /** What each node still needs before the journey can run — the work list. */
 export const journeyGaps = (
-  j: Journey
+  j: Journey,
+  translate: Translate
 ): { node: JourneyNode; need: string }[] =>
   j.nodes.flatMap(node => {
-    if (!node.d)
-      return [{ node, need: 'State what this does for the shopper' }];
+    if (!node.d) return [{ node, need: translate('gapPurpose') }];
     if (node.kind === 'experience' && !node.xName)
-      return [{ node, need: 'Link an experience' }];
+      return [{ node, need: translate('gapLinkExperience') }];
     if (node.kind === 'experience' && (node.xCoverage ?? 0) === 0)
-      return [{ node, need: 'The linked experience measures nothing yet' }];
+      return [{ node, need: translate('gapMeasureNothing') }];
     if (['entry', 'action', 'outcome'].includes(node.kind) && !node.via)
-      return [{ node, need: 'Name the system it hands to' }];
+      return [{ node, need: translate('gapNameSystem') }];
     if (node.kind === 'decision' && node.to.length < 2)
-      return [{ node, need: 'A decision needs at least two branches' }];
+      return [{ node, need: translate('gapDecisionBranches') }];
     if (node.kind !== 'outcome' && node.to.length === 0)
-      return [{ node, need: 'Route it onward — this path ends nowhere' }];
+      return [{ node, need: translate('gapRouteOnward') }];
     return [];
   });
 
@@ -493,17 +510,36 @@ export const deleteJourney = (list: Journey[], journeyId: string): Journey[] =>
   list.filter(j => j.id !== journeyId);
 
 /**
+ * Placeholder copy for the fields an author left blank — NOT the vocabulary
+ * tables (`STAGE_HOUSE`, `JOURNEY_KINDS`, `ENTRY_SOURCES`, `OUTCOME_FOR_OBJECTIVE`
+ * in constants.ts, which stay English by design, spec-vocabulary style). These
+ * are free-text fields a brand types into; the caller resolves them via `t()`.
+ * The outcome node (n2) intentionally still reads `OUTCOME_FOR_OBJECTIVE`
+ * directly — it is the same vocabulary a manually-added outcome node would show.
+ */
+export type JourneyDraftDefaults = {
+  untitledName: string;
+  tagline: string;
+  summary: string;
+  entryName: string;
+  entryDesc: string;
+};
+
+/**
  * A new journey is never an empty canvas: it opens with the front door and the
  * business result already stated, so the first thing the author does is design
  * the middle — which is the only part that is actually theirs to decide.
  */
-export const createJourney = (input: JourneyDraftInput): Journey => {
+export const createJourney = (
+  input: JourneyDraftInput,
+  defaults: JourneyDraftDefaults
+): Journey => {
   const outcome = OUTCOME_FOR_OBJECTIVE[input.obj];
   const id = `j-new-${Date.now().toString(36)}`;
 
   return {
     id,
-    name: input.name.trim() || 'Untitled journey',
+    name: input.name.trim() || defaults.untitledName,
     template: true,
     campaign: null,
     campaignName: null,
@@ -511,16 +547,14 @@ export const createJourney = (input: JourneyDraftInput): Journey => {
     obj: input.obj,
     personaId: input.personaId,
     updated: 'just now',
-    tagline: input.tagline?.trim() || 'A route from a front door to a result.',
-    summary:
-      input.summary?.trim() ||
-      'Drafted from the objective. Add the experiences the shopper moves through, then the decision that splits them.',
+    tagline: input.tagline?.trim() || defaults.tagline,
+    summary: input.summary?.trim() || defaults.summary,
     nodes: [
       {
         id: 'n1',
         kind: 'entry',
-        name: 'Paid advertising',
-        d: 'Where this journey’s traffic comes from.',
+        name: defaults.entryName,
+        d: defaults.entryDesc,
         src: 'paid',
         via: 'Meta · Google',
         to: ['n2'],
