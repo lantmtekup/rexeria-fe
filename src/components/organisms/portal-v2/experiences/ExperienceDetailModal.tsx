@@ -1,6 +1,13 @@
 'use client';
 
-import { BadgeCheck, Eye, PenLine, PlusCircle } from 'lucide-react';
+import {
+  BadgeCheck,
+  Eye,
+  ImageIcon,
+  PenLine,
+  PlusCircle,
+  X,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -10,8 +17,11 @@ import {
   fetchExperienceStats,
 } from '@/services/portal-v2/experienceMeasured';
 import { Button } from '@/components/molecules/portal-v2/Button';
+import { Input } from '@/components/atoms/input';
 import { Modal } from '@/components/molecules/portal-v2/Modal';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
+import { ImagePicker } from '@/components/modules/block-editor-v2/ImagePicker';
+import { ExperienceCover } from '@/components/organisms/portal-v2/experiences/ExperienceCover';
 import { ExperienceDetailsPane } from '@/components/organisms/portal-v2/experiences/ExperienceDetailsPane';
 import { ExperiencePerfPane } from '@/components/organisms/portal-v2/experiences/ExperiencePerfPane';
 import { ExperienceSignalsPane } from '@/components/organisms/portal-v2/experiences/ExperienceSignalsPane';
@@ -57,6 +67,12 @@ type ExperienceDetailModalProps = {
    * dưới lưới thẻ — tức là sau lưng lớp phủ, không ai thấy.
    */
   provenError?: string | null;
+  /** Lưu tên + cover mới xuống server — `thumbnailUrl` rỗng xoá về ảnh kế thừa. */
+  onUpdateDetails: (patch: { name: string; thumbnailUrl: string }) => void;
+  /** Đang ghi xuống server — khoá form để không bấm Lưu kép. */
+  detailsPending?: boolean;
+  /** Lý do lần lưu tên/cover vừa rồi trượt. */
+  detailsError?: string | null;
 };
 
 const CATEGORY_LABEL_KEY = {
@@ -134,9 +150,31 @@ export const ExperienceDetailModal = ({
   onToggleProven,
   provenPending = false,
   provenError = null,
+  onUpdateDetails,
+  detailsPending = false,
+  detailsError = null,
 }: ExperienceDetailModalProps) => {
   const t = useTranslations('portalV2.experiences');
   const [tab, setTab] = useState<ExperienceDetailTab>('details');
+
+  /** Bật/tắt form đổi tên + cover — đóng lại (không nạp lại) sau mỗi lần mở
+   *  modal cho một experience khác, nên khoá theo `experience.id`. */
+  const [editingDetails, setEditingDetails] = useState(false);
+  const [nameDraft, setNameDraft] = useState(experience.name);
+  const [thumbDraft, setThumbDraft] = useState(experience.thumbnailUrl ?? '');
+
+  useEffect(() => {
+    setEditingDetails(false);
+    setNameDraft(experience.name);
+    setThumbDraft(experience.thumbnailUrl ?? '');
+  }, [experience.id, experience.name, experience.thumbnailUrl]);
+
+  const handleSaveDetails = () => {
+    const trimmed = nameDraft.trim();
+    if (!trimmed) return;
+    onUpdateDetails({ name: trimmed, thumbnailUrl: thumbDraft.trim() });
+    setEditingDetails(false);
+  };
 
   /**
    * Block + số đo, nạp KHI MỞ chứ không ở danh sách.
@@ -306,6 +344,90 @@ export const ExperienceDetailModal = ({
           {provenError}
         </p>
       ) : null}
+
+      {detailsError ? (
+        <p
+          role='alert'
+          className='mb-3 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-[var(--pv2-warning)]'
+        >
+          {detailsError}
+        </p>
+      ) : null}
+
+      {/* Tên + cover — chỉnh tại chỗ, không phải một modal riêng: cả hai đổi
+          cùng lúc trong một lần Lưu (`PATCH /v1/pages/{id}`). */}
+      <div className='mb-4 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-3.5'>
+        {editingDetails ? (
+          <div className='flex flex-col gap-3 sm:flex-row'>
+            <ImagePicker
+              value={thumbDraft}
+              onChange={setThumbDraft}
+              className='sm:w-[180px] sm:shrink-0'
+            />
+            <div className='flex min-w-0 flex-1 flex-col gap-2'>
+              <label
+                htmlFor='experience-name-draft'
+                className='text-[11px] font-semibold tracking-[0.03em] text-[var(--pv2-faint)] uppercase'
+              >
+                {t('nameFieldLabel')}
+              </label>
+              <Input
+                id='experience-name-draft'
+                value={nameDraft}
+                onChange={e => setNameDraft(e.target.value)}
+                maxLength={200}
+                autoFocus
+              />
+              <div className='mt-auto flex items-center gap-2 pt-1'>
+                <Button
+                  size='sm'
+                  disabled={detailsPending || !nameDraft.trim()}
+                  onClick={handleSaveDetails}
+                >
+                  {detailsPending ? t('saving') : t('saveDetails')}
+                </Button>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  disabled={detailsPending}
+                  onClick={() => {
+                    setEditingDetails(false);
+                    setNameDraft(experience.name);
+                    setThumbDraft(experience.thumbnailUrl ?? '');
+                  }}
+                >
+                  <X className='size-3.5' strokeWidth={2.2} aria-hidden />
+                  {t('cancel')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className='flex items-center gap-3'>
+            <ExperienceCover
+              experience={experience}
+              height={56}
+              className='w-[88px] shrink-0 rounded-[8px] border border-[var(--pv2-hair)]'
+            />
+            <div className='min-w-0 flex-1'>
+              <p className='truncate text-[13.5px] font-semibold text-[var(--pv2-ink)]'>
+                {experience.name}
+              </p>
+              <p className='text-[11.5px] text-[var(--pv2-faint)]'>
+                {t('editDetailsHint')}
+              </p>
+            </div>
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => setEditingDetails(true)}
+            >
+              <ImageIcon className='size-3.5' strokeWidth={2.2} aria-hidden />
+              {t('editDetails')}
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* THE IDENTITY STRIP — the verdict at the door, above every tab. */}
       <div className='mb-4 flex flex-wrap items-center gap-x-6 gap-y-3 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-4 py-3'>

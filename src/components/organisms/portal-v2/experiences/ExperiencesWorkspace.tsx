@@ -35,6 +35,7 @@ import {
   type ForkTarget,
 } from '@/services/portal-v2/experienceUse';
 import { setExperienceProven } from '@/services/portal-v2/experienceProven';
+import { updateExperienceDetails } from '@/services/portal-v2/experienceDetailsUpdate';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { ExchangeLiveCanvasPreview } from '@/components/organisms/portal-v2/exchange/ExchangeLiveCanvasPreview';
@@ -175,6 +176,34 @@ export const ExperiencesWorkspace = ({
       setProvenPendingId(null);
     }
   };
+
+  /** id đang lưu tên/cover xuống server — khoá form để không bấm Lưu kép. */
+  const [detailsPendingId, setDetailsPendingId] = useState<string | null>(null);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
+
+  const handleUpdateDetails = async (
+    experience: ExperienceView,
+    patch: { name: string; thumbnailUrl: string }
+  ) => {
+    setDetailsPendingId(experience.id);
+    setDetailsError(null);
+    try {
+      const saved = await updateExperienceDetails(experience.id, patch);
+      setItems(prev =>
+        prev.map(x =>
+          x.id === experience.id
+            ? { ...x, name: saved.name, thumbnailUrl: saved.thumbnailUrl }
+            : x
+        )
+      );
+      toast.success(t('detailsSaved'));
+    } catch (err) {
+      setDetailsError(errorMessage(err, t('detailsSaveFailed')));
+    } finally {
+      setDetailsPendingId(null);
+    }
+  };
+
   /** Trải nghiệm đang chờ chọn đích để fork; null = hộp đóng. */
   const [useTarget, setUseTarget] = useState<ExperienceView | null>(null);
 
@@ -904,6 +933,9 @@ export const ExperiencesWorkspace = ({
           onToggleProven={handleToggleProven}
           provenPending={provenPendingId === active.id}
           provenError={provenError}
+          onUpdateDetails={patch => handleUpdateDetails(active, patch)}
+          detailsPending={detailsPendingId === active.id}
+          detailsError={detailsError}
         />
       ) : null}
 
