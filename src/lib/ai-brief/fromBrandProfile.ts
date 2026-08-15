@@ -11,6 +11,10 @@ export const buildBrandBrief = (profile: RxBrandProfile): AiBrandBrief => {
   const { identity, visual } = profile;
   const { category, against, because } = identity.positioning;
   const positioning = [category, against, because].filter(Boolean).join(' — ');
+  // BE trả `null` (không phải `[]`) cho field mảng chưa từng lưu — hồ sơ mới
+  // toanh, chưa ai đụng tới. Cùng quy ước phòng thủ mà `mapProfile.ts` đã dùng.
+  const tones = identity.tones ?? [];
+  const colors = visual.colors ?? [];
 
   const fonts =
     visual.type.display || visual.type.body
@@ -23,9 +27,9 @@ export const buildBrandBrief = (profile: RxBrandProfile): AiBrandBrief => {
   return {
     ...(identity.name ? { name: identity.name } : {}),
     ...(identity.value_prop ? { tagline: identity.value_prop } : {}),
-    ...(identity.tones.length ? { tone: identity.tones } : {}),
+    ...(tones.length ? { tone: tones } : {}),
     ...(positioning ? { positioning } : {}),
-    ...(visual.colors.length ? { colors: visual.colors } : {}),
+    ...(colors.length ? { colors } : {}),
     ...(fonts ? { fonts } : {}),
   };
 };
@@ -38,7 +42,7 @@ export const buildBrandBrief = (profile: RxBrandProfile): AiBrandBrief => {
 export const resolveBrandLogoUrl = async (
   profile: RxBrandProfile
 ): Promise<string | undefined> => {
-  const mediaId = profile.visual.logos[0]?.media_id;
+  const mediaId = profile.visual.logos?.[0]?.media_id;
   if (!mediaId) return undefined;
   const resolved = await fetchMediaByIds([mediaId]);
   return resolved[mediaId]?.url;
