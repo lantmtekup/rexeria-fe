@@ -240,8 +240,8 @@ export type CampaignVerdict = {
   roas: number;
   roi: number;
   cac: number;
-  /** Session-weighted signal coverage, 0–1. */
-  trust: number;
+  /** Session-weighted signal coverage, 0–1. null = not measured (`/intel/trust` unavailable at this grain), distinct from 0%. */
+  trust: number | null;
   best: { name: string; lift: number } | null;
   worst: { name: string; lift: number } | null;
 };

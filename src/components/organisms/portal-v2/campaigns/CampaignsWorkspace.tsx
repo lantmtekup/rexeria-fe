@@ -17,6 +17,7 @@ import {
   fetchCampaignDetail,
   saveCampaign,
 } from '@/services/portal-v2/campaignBoardV2';
+import { fetchCampaignFactDetail } from '@/services/portal-v2/campaignFacts';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
@@ -51,6 +52,7 @@ import {
   ensureCampaignJourneys,
   withJourneyLinks,
 } from '@/lib/portal-v2/campaigns/journeyLink';
+import { campVerdict } from '@/lib/portal-v2/campaigns/verdict';
 
 import type {
   CampaignExperience,
@@ -63,6 +65,10 @@ import type {
 import { wizardDraft } from '@/lib/portal-v2/campaigns/wizard';
 import type { DeployChannel } from '@/lib/portal-v2/deploy/types';
 import type { Journey } from '@/lib/portal-v2/journeys/types';
+import type {
+  PulseCampaignCard,
+  PulseSubjectRow,
+} from '@/lib/portal-v2/analytics/pulseView';
 
 type CampaignsWorkspaceProps = {
   /** `?id=` — the campaign to open on arrival, so the screen is shareable. */
@@ -82,6 +88,11 @@ type CampaignsWorkspaceProps = {
   /** Kênh deploy THẬT của brand — `GET /v1/channels`. Cho nút Deploy thật
    *  trong `CampaignItemModal`, cùng danh sách màn Deploy đang đọc. */
   channels: DeployChannel[];
+  /** `campaign_id → rollup` THẬT — `GET /v1/intel/campaigns`, một lần cho cả
+   *  bảng. Thay `MOCK_FACT_ROWS`, bảng fact giả lọc theo id thật ⇒ luôn rỗng. */
+  initialFacts: Record<string, PulseCampaignCard>;
+  /** Lift trung bình toàn brand — `GET /v1/intel/overview`. null = chưa đo được. */
+  earnedBar: number | null;
   /** Nạp hỏng ⇒ nói ra, đừng để đọc như "chưa có chiến dịch nào". */
   initialError?: string | null;
 };
@@ -105,6 +116,8 @@ export const CampaignsWorkspace = ({
   initialExperiences,
   team,
   channels,
+  initialFacts,
+  earnedBar,
   initialError = null,
 }: CampaignsWorkspaceProps) => {
   const t = useTranslations('portalV2.campaigns');
@@ -161,6 +174,35 @@ export const CampaignsWorkspace = ({
   const [deleteIds, setDeleteIds] = useState<string[] | null>(null);
 
   const today = useMemo(todayString, []);
+
+  /**
+   * Board-level verdict cho mỗi chiến dịch — suy từ `initialFacts` (bulk
+   * `/intel/campaigns`, không `expand`). Không có leads/CAC/trust/best-worst
+   * ở tầng này — `campVerdict` để chúng ở giá trị mặc định/`null` cho tới khi
+   * chiến dịch được mở và tầng chi tiết (`factDetail` dưới) nạp về.
+   */
+  const verdicts = useMemo(
+    () =>
+      Object.fromEntries(
+        campaigns.map(c => [c.id, campVerdict(initialFacts[c.id])])
+      ),
+    [campaigns, initialFacts]
+  );
+
+  /**
+   * Tầng chi tiết — leads/CAC/hạng mục tốt-kém nhất — chỉ nạp khi một chiến
+   * dịch được mở, cùng nhịp với `fetchCampaignDetail` bên dưới. `subjects` ở
+   * đây, KHÔNG phải một `card` — lift cấp chiến dịch của lời gọi lọc
+   * `campaign_id` luôn `null` (xem `campaignFacts.ts`), nên `card` thật vẫn
+   * lấy từ `initialFacts` (bulk, không lọc) qua `verdicts`/`openVerdict`.
+   */
+  const [factDetail, setFactDetail] = useState<{
+    campaignId: string;
+    subjects: PulseSubjectRow[];
+    leads: number;
+    cac: number;
+    trust: number | null;
+  } | null>(null);
 
   /* Keep the address bar in step without re-running the server page. */
   useEffect(() => {
@@ -225,6 +267,51 @@ export const CampaignsWorkspace = ({
       alive = false;
     };
   }, [openId, journeys]);
+
+  /**
+   * Cùng nhịp mở chiến dịch — nạp tầng chi tiết của verdict (leads/CAC/độ phủ
+   * tín hiệu/hạng mục tốt-kém nhất), ba thứ `initialFacts` (bulk, không
+   * `expand`) không có. Đặt `null` ngay khi đổi `openId` để không hiện verdict
+   * chi tiết của chiến dịch VỪA đóng trong lúc chờ chiến dịch mới nạp xong.
+   */
+  useEffect(() => {
+    setFactDetail(null);
+    if (!openId) return;
+    let alive = true;
+    void fetchCampaignFactDetail(openId, brandId).then(detail => {
+      if (!alive) return;
+      setFactDetail({
+        campaignId: openId,
+        subjects: detail.subjects,
+        leads: detail.leads,
+        cac: detail.cac,
+        trust: detail.trust,
+      });
+    });
+    return () => {
+      alive = false;
+    };
+  }, [openId, brandId]);
+
+  /**
+   * Verdict của chiến dịch đang mở. `card` LUÔN từ `initialFacts` (bulk) — có
+   * sibling thật để tính lift, không lấy từ lời gọi lọc `campaign_id`. Trong
+   * lúc chờ tầng chi tiết nạp xong, verdict vẫn hiện đầy đủ sessions/lift/roi,
+   * chỉ thiếu leads/CAC/trust/best-worst (mặc định của `campVerdict`).
+   */
+  const openVerdict = useMemo(() => {
+    if (!openId) return null;
+    const card = initialFacts[openId];
+    if (factDetail && factDetail.campaignId === openId) {
+      return campVerdict(card, {
+        leads: factDetail.leads,
+        cac: factDetail.cac,
+        trust: factDetail.trust,
+        subjects: factDetail.subjects,
+      });
+    }
+    return campVerdict(card);
+  }, [openId, factDetail, initialFacts]);
 
   /**
    * Sửa brief/ngân sách/kênh — ghi lạc quan rồi PUT. Hỏng thì trả về bản cũ,
@@ -460,6 +547,8 @@ export const CampaignsWorkspace = ({
           productNames={productNames}
           team={team}
           channels={channels}
+          verdict={openVerdict}
+          earnedBar={earnedBar}
           today={today}
           onChange={handleChange}
           onBack={() => setOpenId(null)}
@@ -567,6 +656,8 @@ export const CampaignsWorkspace = ({
             journeys={journeys}
             team={team}
             today={today}
+            verdicts={verdicts}
+            earnedBar={earnedBar}
             selected={selected}
             onToggleSelect={id =>
               setSelected(prev =>
@@ -584,6 +675,8 @@ export const CampaignsWorkspace = ({
             journeys={journeys}
             team={team}
             today={today}
+            verdicts={verdicts}
+            earnedBar={earnedBar}
             selected={selected}
             onToggleSelect={id =>
               setSelected(prev =>

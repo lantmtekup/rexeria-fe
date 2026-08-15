@@ -23,6 +23,7 @@ import {
 import type {
   CampaignExperience,
   CampaignTeamMember,
+  CampaignVerdict,
   CampaignView,
 } from '@/lib/portal-v2/campaigns/types';
 import { campHealth } from '@/lib/portal-v2/campaigns/verdict';
@@ -35,6 +36,10 @@ type CampaignTableProps = {
   journeys: Journey[];
   team: CampaignTeamMember[];
   today: string;
+  /** `campaign.id → verdict` — real `/intel/campaigns` rollup, board fetch. */
+  verdicts: Record<string, CampaignVerdict | null>;
+  /** Brand-wide average lift — null while `/intel/overview` hasn't resolved. */
+  earnedBar: number | null;
   selected: string[];
   onToggleSelect: (id: string) => void;
   onToggleAll: () => void;
@@ -61,6 +66,8 @@ export const CampaignTable = ({
   journeys,
   team,
   today,
+  verdicts,
+  earnedBar,
   selected,
   onToggleSelect,
   onToggleAll,
@@ -203,7 +210,14 @@ export const CampaignTable = ({
 
                 <td className={cellClass}>
                   <HealthBadge
-                    health={campHealth(campaign, experiences, today, journeys)}
+                    health={campHealth(
+                      campaign,
+                      verdicts[campaign.id] ?? null,
+                      experiences,
+                      today,
+                      journeys,
+                      earnedBar
+                    )}
                   />
                 </td>
 
