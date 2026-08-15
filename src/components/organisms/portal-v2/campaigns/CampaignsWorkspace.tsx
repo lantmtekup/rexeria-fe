@@ -481,7 +481,14 @@ export const CampaignsWorkspace = ({
     );
     setExperiences(bound.experiences);
     handleChange(bound.campaign);
-    toast.success(t('toastRouted', { name: bound.campaign.name }));
+    toast.success(
+      res.autoForked > 0
+        ? t('toastRoutedStaged', {
+            name: bound.campaign.name,
+            count: res.autoForked,
+          })
+        : t('toastRouted', { name: bound.campaign.name })
+    );
   };
 
   const handleCarryRoute = () => {

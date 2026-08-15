@@ -291,7 +291,14 @@ export const JourneysWorkspace = ({
         { ...res.journey, campaignName },
         ...prev.filter(j => j.id !== res.journey.id),
       ]);
-      toast.success(t('toastForked', { campaign: campaignName }));
+      toast.success(
+        res.autoForked > 0
+          ? t('toastForkedStaged', {
+              campaign: campaignName,
+              count: res.autoForked,
+            })
+          : t('toastForked', { campaign: campaignName })
+      );
       setFilters(prev => ({ ...prev, state: 'copy', q: '' }));
       setOverlay({ kind: 'detail', id: res.journey.id });
     },

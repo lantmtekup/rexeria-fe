@@ -63,6 +63,14 @@ export type RxJourney = {
 
 export type RxJourneyListResponse = { items: RxJourney[]; total: number };
 
+/**
+ * `POST /journeys/{id}/use` — bản copy vừa fork (hoặc bản cũ nếu gọi lại,
+ * idempotent) cộng số node experience vừa được tự động gắn vào các hạng mục
+ * sẵn có của chiến dịch trong cùng lần gọi này (auto-stage — không cần màn
+ * "Stage Candidates" riêng).
+ */
+export type RxJourneyUseResponse = RxJourney & { auto_forked: number };
+
 export type RxCreateJourneyRequest = {
   /** Chỉ platform admin dùng được; principal khác bị ép về brand của họ. */
   brand_id?: string;

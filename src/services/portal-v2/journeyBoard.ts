@@ -99,13 +99,22 @@ export const saveJourney = async (
   return { journey: v2ToJourney(saved), version: saved.version };
 };
 
-/** Fork blueprint lên chiến dịch — một chiến dịch, một hành trình. */
+/**
+ * Fork blueprint lên chiến dịch — một chiến dịch, một hành trình.
+ * `autoForked`: số node experience BE tự gắn vào các hạng mục sẵn có của
+ * chiến dịch trong cùng lần gọi (auto-stage) — dùng để báo cho người dùng
+ * biết việc gì vừa xảy ra thay vì để họ tự đoán.
+ */
 export const useJourney = async (
   journeyId: string,
   campaignId: string
-): Promise<{ journey: Journey; version: number }> => {
+): Promise<{ journey: Journey; version: number; autoForked: number }> => {
   const fork = await rexerV2Api.journeys.use(journeyId, campaignId);
-  return { journey: v2ToJourney(fork), version: fork.version };
+  return {
+    journey: v2ToJourney(fork),
+    version: fork.version,
+    autoForked: fork.auto_forked,
+  };
 };
 
 export const promoteJourney = async (
