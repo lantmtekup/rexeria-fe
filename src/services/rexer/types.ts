@@ -2710,6 +2710,8 @@ export interface UpdatePageRequest {
   type_metadata?: PageTypeMetadata;
   freeze_products?: boolean;
   thumbnail_asset_id?: string;
+  /** Cover riêng của page — chuỗi rỗng xoá về ảnh kế thừa từ template gốc. */
+  thumbnail_url?: string;
   /** Đổi/clear URL của external landing. */
   external_url?: string | null;
 }
