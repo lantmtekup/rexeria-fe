@@ -1,7 +1,9 @@
 import type {
   Journey,
+  JourneyCompareResult,
   JourneyNode,
   JourneyNodeKind,
+  JourneyReview,
   JourneyStage,
 } from '@/lib/portal-v2/journeys/types';
 import { formatUpdated } from '@/lib/portal-v2/experiences/helpers';
@@ -9,8 +11,11 @@ import type { ExperienceObjective } from '@/lib/portal-v2/experiences/types';
 import type {
   RxCreateJourneyRequest,
   RxJourney,
+  RxJourneyCompareResponse,
   RxJourneyNode,
+  RxJourneyReview,
   RxJourneyStage,
+  RxJourneyStats,
 } from '@/services/rexer-v2/types/journey';
 
 /**
@@ -99,6 +104,9 @@ export const v2ToJourney = (
   // "đã xoá hết chặng", một câu khác hẳn.
   ...(x.stages ? { stages: x.stages.map(stageFromV2) } : {}),
   nodes: (x.nodes ?? []).map(nodeFromV2),
+  // `0` là một target hợp lệ — không dùng truthy check.
+  ...(typeof x.target === 'number' ? { target: x.target } : {}),
+  ...(x.stage_targets ? { stageTargets: x.stage_targets } : {}),
 });
 
 /** Chiều ngược — thân của `POST /journeys` và `PUT /journeys/{id}`. */
@@ -123,4 +131,75 @@ export const journeyToV2 = (
         })),
       }
     : {}),
+  ...(typeof j.target === 'number' ? { target: j.target } : {}),
+  ...(j.stageTargets ? { stage_targets: j.stageTargets } : {}),
+});
+
+/** `GET /journeys/{id}/review` ↔ shape hiển thị của tab Insights. */
+export const journeyReviewFromV2 = (x: RxJourneyReview): JourneyReview => ({
+  score: x.score,
+  parts: x.parts,
+  weights: x.weights,
+  confidenceTier: x.confidence_tier,
+  stageReads: (x.stage_reads ?? []).map(r => ({
+    nodeKey: r.node_key,
+    role: r.role,
+    sessions: r.sessions,
+    lift: r.lift,
+    tier: r.tier,
+  })),
+  nextBest: {
+    mode:
+      x.next_best.mode === 'add' || x.next_best.mode === 'strengthen'
+        ? x.next_best.mode
+        : 'none',
+    detail: x.next_best.detail
+      ? {
+          role: x.next_best.detail.role,
+          ...(x.next_best.detail.experience
+            ? {
+                experienceId: x.next_best.detail.experience.id,
+                experienceName: x.next_best.detail.experience.name,
+                ...(typeof x.next_best.detail.experience.signal_coverage ===
+                'number'
+                  ? {
+                      experienceCoverage: Math.round(
+                        (x.next_best.detail.experience
+                          .signal_coverage as number) * 100
+                      ),
+                    }
+                  : {}),
+              }
+            : {}),
+          reason: x.next_best.detail.reason,
+          ...(x.next_best.detail.node_key
+            ? { nodeKey: x.next_best.detail.node_key }
+            : {}),
+        }
+      : null,
+    noneReason: x.next_best.none_reason ?? null,
+  },
+});
+
+const compareSideFromV2 = (s: RxJourneyStats) => ({
+  measured: s.measured,
+  reason: s.reason ?? null,
+  sessions: s.sessions,
+  completed: s.completed,
+  completionRate: s.completion_rate,
+  confidenceTier: s.confidence_tier,
+});
+
+/** `GET /journeys/compare` ↔ shape của `CompareJourneysModal`. */
+export const journeyCompareFromV2 = (
+  x: RxJourneyCompareResponse
+): JourneyCompareResult => ({
+  a: compareSideFromV2(x.a),
+  b: compareSideFromV2(x.b),
+  stages: (x.stages ?? []).map(s => ({
+    key: s.key,
+    aSessions: s.a_sessions,
+    bSessions: s.b_sessions,
+    delta: s.delta,
+  })),
 });

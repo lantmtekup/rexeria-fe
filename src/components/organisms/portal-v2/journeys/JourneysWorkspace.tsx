@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Search } from 'lucide-react';
+import { Plus, Scale, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -15,12 +15,14 @@ import {
   createJourney as createJourneyApi,
   deleteJourneys as deleteJourneysApi,
   duplicateJourney as duplicateJourneyApi,
+  promoteJourney as promoteJourneyApi,
   saveJourney as saveJourneyApi,
   useJourney as forkJourneyOntoCampaign,
 } from '@/services/portal-v2/journeyBoard';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
+import { CompareJourneysModal } from '@/components/organisms/portal-v2/journeys/CompareJourneysModal';
 import { DeleteJourneyModal } from '@/components/organisms/portal-v2/journeys/DeleteJourneyModal';
 import { ForkJourneyModal } from '@/components/organisms/portal-v2/journeys/ForkJourneyModal';
 import { JourneyCard } from '@/components/organisms/portal-v2/journeys/JourneyCard';
@@ -47,6 +49,7 @@ import {
 import type {
   Journey,
   JourneyDraftInput,
+  JourneyEditorPendingAction,
   JourneyFilters,
   JourneyStateFilter,
 } from '@/lib/portal-v2/journeys/types';
@@ -54,10 +57,11 @@ import type {
 /** Which overlay owns the screen. Only one at a time, by construction. */
 type Overlay =
   | { kind: 'detail'; id: string }
-  | { kind: 'edit'; id: string }
+  | { kind: 'edit'; id: string; pendingAction?: JourneyEditorPendingAction }
   | { kind: 'fork'; id: string }
   | { kind: 'delete'; id: string }
   | { kind: 'new' }
+  | { kind: 'compare' }
   | null;
 
 type JourneysWorkspaceProps = {
@@ -331,6 +335,29 @@ export const JourneysWorkspace = ({
     [handlePersistEdit, t]
   );
 
+  /**
+   * Copy → blueprint mới — cùng endpoint đã dùng ở Campaigns
+   * (`journeyBoard.promoteJourney`), giờ ráp thêm vào modal chi tiết Journeys.
+   */
+  const handlePromote = useCallback(
+    async (journey: Journey) => {
+      const res = await promoteJourneyApi(
+        journey.id,
+        `${journey.name} — ${t('promotedSuffix')}`
+      ).catch((err: unknown) => {
+        toast.error(errorMessage(err, t('toastPromoteFailed')));
+        return null;
+      });
+      if (!res) return;
+      versionsRef.current[res.journey.id] = res.version;
+      setJourneys(prev => [res.journey, ...prev]);
+      setFilters(prev => ({ ...prev, state: 'blueprint', q: '' }));
+      setOverlay({ kind: 'detail', id: res.journey.id });
+      toast.success(t('toastPromoted', { name: res.journey.name }));
+    },
+    [t]
+  );
+
   const handleConfirmDelete = useCallback(async () => {
     if (!activeId) return;
     const target = findJourney(journeys, activeId);
@@ -358,6 +385,15 @@ export const JourneysWorkspace = ({
           </div>
 
           <div className='flex shrink-0 items-center gap-2 pb-0.5'>
+            {journeys.filter(j => !j.template).length >= 2 ? (
+              <Button
+                variant='ghost'
+                onClick={() => setOverlay({ kind: 'compare' })}
+              >
+                <Scale className='size-[15px]' strokeWidth={2.2} aria-hidden />
+                {t('compareJourneys')}
+              </Button>
+            ) : null}
             <Button
               variant='primary'
               onClick={() => setOverlay({ kind: 'new' })}
@@ -452,10 +488,17 @@ export const JourneysWorkspace = ({
           personas={personas}
           segments={segments}
           onClose={handleClose}
-          onEdit={j => setOverlay({ kind: 'edit', id: j.id })}
+          onEdit={(j, pendingAction) =>
+            setOverlay({
+              kind: 'edit',
+              id: j.id,
+              ...(pendingAction ? { pendingAction } : {}),
+            })
+          }
           onFork={j => setOverlay({ kind: 'fork', id: j.id })}
           onDuplicate={handleDuplicate}
           onOpenJourney={id => setOverlay({ kind: 'detail', id })}
+          onPromote={handlePromote}
         />
       ) : null}
 
@@ -465,9 +508,18 @@ export const JourneysWorkspace = ({
           journey={active}
           journeys={journeys}
           personas={personas}
+          pendingAction={overlay.pendingAction ?? null}
           onCancel={() => setOverlay({ kind: 'detail', id: active.id })}
           onPersist={handlePersistEdit}
           onSave={handleSaveEdit}
+        />
+      ) : null}
+
+      {overlay?.kind === 'compare' ? (
+        <CompareJourneysModal
+          journeys={journeys}
+          onClose={handleClose}
+          onOpenJourney={id => setOverlay({ kind: 'detail', id })}
         />
       ) : null}
 

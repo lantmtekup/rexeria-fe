@@ -1,8 +1,9 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
+import { JourneyArchitectCard } from '@/components/organisms/portal-v2/journeys/JourneyArchitectCard';
 import { JourneyCheckRow } from '@/components/organisms/portal-v2/journeys/JourneyCheckRow';
 import { cn } from '@/lib/cn';
 import {
@@ -13,10 +14,16 @@ import {
   journeyGaps,
   journeyReadiness,
 } from '@/lib/portal-v2/journeys/helpers';
-import type { Journey } from '@/lib/portal-v2/journeys/types';
+import type {
+  Journey,
+  JourneyEditorPendingAction,
+  JourneyReview,
+} from '@/lib/portal-v2/journeys/types';
 
 type JourneyReadinessPaneProps = {
   journey: Journey;
+  review: JourneyReview | null;
+  onApplyArchitect: (action: JourneyEditorPendingAction) => void;
 };
 
 const bandColour = (score: number) => {
@@ -27,10 +34,15 @@ const bandColour = (score: number) => {
 
 export const JourneyReadinessPane = ({
   journey,
+  review,
+  onApplyArchitect,
 }: JourneyReadinessPaneProps) => {
   const t = useTranslations('portalV2.journeys');
   const readiness = useMemo(() => journeyReadiness(journey), [journey]);
   const gaps = useMemo(() => journeyGaps(journey), [journey]);
+  const isReady = readiness.missing.length === 0;
+  /* Đã sẵn sàng thì checklist đóng mặc định — không cần đọc lại thứ đã qua. */
+  const [showChecklist, setShowChecklist] = useState(!isReady);
 
   return (
     <div>
@@ -59,11 +71,23 @@ export const JourneyReadinessPane = ({
         </div>
       </div>
 
-      <div className='mt-5 flex flex-col gap-1.5 border-t border-[var(--pv2-hair)] pt-4'>
-        {readiness.checks.map(check => (
-          <JourneyCheckRow key={check.msg} check={check} />
-        ))}
-      </div>
+      {isReady ? (
+        <button
+          type='button'
+          onClick={() => setShowChecklist(v => !v)}
+          className='mt-4 cursor-pointer text-[12px] font-semibold text-[var(--pv2-violet)] hover:underline'
+        >
+          {showChecklist ? t('hideChecklist') : t('showChecklist')}
+        </button>
+      ) : null}
+
+      {showChecklist ? (
+        <div className='mt-3 flex flex-col gap-1.5 border-t border-[var(--pv2-hair)] pt-4'>
+          {readiness.checks.map(check => (
+            <JourneyCheckRow key={check.msg} check={check} />
+          ))}
+        </div>
+      ) : null}
 
       <h3 className='mt-6 font-[family-name:var(--pv2-disp)] text-[15px] font-semibold text-[var(--pv2-ink)]'>
         {t('readyNeedsTitle')}
@@ -94,6 +118,8 @@ export const JourneyReadinessPane = ({
           {t('readyNeedsNone')}
         </p>
       )}
+
+      <JourneyArchitectCard review={review} onApply={onApplyArchitect} />
     </div>
   );
 };

@@ -12,7 +12,7 @@ import {
 import { useTranslations } from 'next-intl';
 
 import type { PersonaOption } from '@/services/portal-v2/journeyAudience';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
@@ -63,6 +63,7 @@ import {
 } from '@/lib/portal-v2/journeys/helpers';
 import type {
   Journey,
+  JourneyEditorPendingAction,
   JourneyEditorSelection,
   JourneyExperienceLink,
   JourneyNode,
@@ -106,6 +107,11 @@ type JourneyEditorProps = {
   lens?: CampaignSubjectLens;
   /** Pre-select a node when the lens opens (from a jcell dot). */
   initialNodeId?: string | null;
+  /**
+   * Applied ONCE on mount — the Architect card's "Place it" / "Swap it"
+   * action, arriving pre-composed so the editor doesn't need to know why.
+   */
+  pendingAction?: JourneyEditorPendingAction | null;
   returnLabel?: string;
   onLensNodeActivate?: (nodeId: string) => void;
   /**
@@ -152,6 +158,7 @@ export const JourneyEditor = ({
   onSave,
   lens,
   initialNodeId = null,
+  pendingAction = null,
   returnLabel,
   onLensNodeActivate,
   onEditJourney,
@@ -186,6 +193,32 @@ export const JourneyEditor = ({
   const [discardOpen, setDiscardOpen] = useState(false);
   const [framesOpen, setFramesOpen] = useState(false);
   const [autosaveStatus, setAutosaveStatus] = useState<AutosaveStatus>('idle');
+
+  /**
+   * Architect's Apply action — composed from `addNodeToStage` + `linkExperience`,
+   * the same functions the palette/picker already call by hand. Runs once: a
+   * ref guard, not a dependency array, because `draft` changes on every apply
+   * and would otherwise fire this again.
+   */
+  const pendingActionApplied = useRef(false);
+  useEffect(() => {
+    if (pendingActionApplied.current || !pendingAction) return;
+    pendingActionApplied.current = true;
+    if (pendingAction.type === 'add') {
+      const maxStage = draft.nodes.reduce(
+        (m, n) => Math.max(m, n.stage ?? 0),
+        0
+      );
+      const stage = Math.max(0, maxStage - 1);
+      const result = addNodeToStage(draft, 'experience', stage, null);
+      apply(linkExperience(result.journey, result.nodeId, pendingAction.link));
+      setSelection({ kind: 'node', id: result.nodeId });
+    } else {
+      apply(linkExperience(draft, pendingAction.nodeId, pendingAction.link));
+      setSelection({ kind: 'node', id: pendingAction.nodeId });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingAction]);
 
   /* ── the shopper view ──────────────────────────────────────────────────
      An experience node names a page; it never showed one. The same shell the

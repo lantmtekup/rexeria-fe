@@ -49,8 +49,10 @@ import type {
 import type {
   RxCreateJourneyRequest,
   RxJourney,
+  RxJourneyCompareResponse,
   RxJourneyListResponse,
   RxJourneyReadiness,
+  RxJourneyReview,
   RxJourneyStats,
   RxUpdateJourneyRequest,
 } from './types/journey';
@@ -363,6 +365,19 @@ export const rexerV2Api = {
     /** `GET /v1/journeys/{id}/stats` — số ĐO ĐƯỢC của hành trình. */
     stats: (journeyId: string) =>
       rxV2<RxJourneyStats>(`/journeys/${journeyId}/stats`),
+
+    /**
+     * `GET /v1/journeys/{id}/review` — điểm "Architect" (contract · evidence ·
+     * structure) và gợi ý stage kế tiếp. BE chấm toàn bộ, không phải mock.
+     */
+    review: (journeyId: string) =>
+      rxV2<RxJourneyReview>(`/journeys/${journeyId}/review`),
+
+    /** `GET /v1/journeys/compare?a=&b=` — so hai hành trình cạnh nhau. */
+    compare: (a: string, b: string) =>
+      rxV2<RxJourneyCompareResponse>(
+        `/journeys/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`
+      ),
 
     remove: (journeyId: string) =>
       rxV2<void>(`/journeys/${journeyId}`, { method: 'DELETE' }),

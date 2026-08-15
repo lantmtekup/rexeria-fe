@@ -1,4 +1,13 @@
-import type { JourneyReadiness } from '@/lib/portal-v2/journeys/types';
+import {
+  journeyCompareFromV2,
+  journeyReviewFromV2,
+} from '@/lib/portal-v2/journeys/fromV2';
+import type {
+  JourneyBenchmark,
+  JourneyCompareResult,
+  JourneyReadiness,
+  JourneyReview,
+} from '@/lib/portal-v2/journeys/types';
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 
 /**
@@ -53,6 +62,58 @@ export const fetchJourneyStats = async (
   } catch {
     return null;
   }
+};
+
+/**
+ * Điểm "Architect" — `GET /journeys/{id}/review`. BE chấm toàn bộ
+ * (contract/evidence/structure + gợi ý stage kế tiếp); FE chỉ vẽ lại.
+ */
+export const fetchJourneyReview = async (
+  journeyId: string
+): Promise<JourneyReview | null> => {
+  try {
+    return journeyReviewFromV2(await rexerV2Api.journeys.review(journeyId));
+  } catch {
+    return null;
+  }
+};
+
+/** So hai hành trình — `GET /journeys/compare`. */
+export const fetchJourneyCompare = async (
+  aId: string,
+  bId: string
+): Promise<JourneyCompareResult | null> => {
+  try {
+    return journeyCompareFromV2(await rexerV2Api.journeys.compare(aId, bId));
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * "The standard" một blueprint đã đạt được — gộp số ĐO ĐƯỢC (`/stats`) từ
+ * các bản copy của nó, theo trọng số phiên. Không có cột `proven` nào ở BE:
+ * đây là một con số phái sinh, tính lại mỗi lần mở, không lưu trữ.
+ *
+ * `null` khi chưa bản copy nào chạy — "chưa có chuẩn", không phải chuẩn 0%.
+ */
+export const fetchJourneyBenchmark = async (
+  copyIds: string[]
+): Promise<JourneyBenchmark | null> => {
+  if (copyIds.length === 0) return null;
+  const results = await Promise.allSettled(copyIds.map(fetchJourneyStats));
+  const measured = results.flatMap(r =>
+    r.status === 'fulfilled' && r.value && r.value.sessions > 0 ? [r.value] : []
+  );
+  if (measured.length === 0) return null;
+  const sessions = measured.reduce((sum, s) => sum + s.sessions, 0);
+  const completed = measured.reduce((sum, s) => sum + s.completed, 0);
+  return {
+    cvr: sessions ? (completed / sessions) * 100 : 0,
+    sessions,
+    runs: measured.length,
+    maturity: measured.length >= 3 ? 'established' : 'early',
+  };
 };
 
 /**
