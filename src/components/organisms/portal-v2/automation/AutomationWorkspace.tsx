@@ -42,6 +42,7 @@ import type {
   RxAutomation,
   RxAutomationBriefPayload,
   RxAutomationRunItem,
+  RxAutomationRunSkip,
 } from '@/services/rexer-v2/types/automation';
 
 /** Trần mỗi lượt — gương `automationMaxRun` bên BE (`usecase/automation.go`). */
@@ -129,6 +130,7 @@ export const AutomationWorkspace = ({
     null
   );
   const [queued, setQueued] = useState<RxAutomationRunItem[] | null>(null);
+  const [skipped, setSkipped] = useState<RxAutomationRunSkip[] | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [candidatesBusy, setCandidatesBusy] = useState(false);
@@ -319,6 +321,7 @@ export const AutomationWorkspace = ({
     setRunning(true);
     setRunError(null);
     setQueued(null);
+    setSkipped(null);
 
     const assetItems = [
       ...(brandBrief?.logo_url ? [brandBrief.logo_url] : []),
@@ -332,13 +335,13 @@ export const AutomationWorkspace = ({
     };
 
     try {
-      setQueued(
-        await runAutomationV2(
-          auto.id,
-          selected.slice(0, AUTOMATION_BATCH_CAP),
-          inputs
-        )
+      const res = await runAutomationV2(
+        auto.id,
+        selected.slice(0, AUTOMATION_BATCH_CAP),
+        inputs
       );
+      setQueued(res.created);
+      setSkipped(res.skipped);
     } catch (err) {
       setRunError(err instanceof Error ? err.message : t('runFailed'));
     } finally {
@@ -472,6 +475,7 @@ export const AutomationWorkspace = ({
             onRun={handleRun}
             cap={AUTOMATION_BATCH_CAP}
             queued={queued}
+            skipped={skipped}
             runError={runError}
             running={running}
           />

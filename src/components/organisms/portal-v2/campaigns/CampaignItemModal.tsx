@@ -182,19 +182,21 @@ export const CampaignItemModal = ({
     [draft, experiences]
   );
 
-  const candidates = useMemo(() => {
-    const q = pickerQuery.trim().toLowerCase();
+  const ownTemplates = useMemo(() => {
     const carried = new Set(
       draft.expIds
         .map(id => experiences.find(e => e.id === id)?.origin)
         .filter((origin): origin is string => Boolean(origin))
     );
-    return experiences
-      .filter(e => e.template && !carried.has(e.id))
-      .filter(
-        e => !q || `${e.name} ${e.summary} ${e.slug}`.toLowerCase().includes(q)
-      );
-  }, [experiences, draft.expIds, pickerQuery]);
+    return experiences.filter(e => e.template && !carried.has(e.id));
+  }, [experiences, draft.expIds]);
+
+  const candidates = useMemo(() => {
+    const q = pickerQuery.trim().toLowerCase();
+    return ownTemplates.filter(
+      e => !q || `${e.name} ${e.summary} ${e.slug}`.toLowerCase().includes(q)
+    );
+  }, [ownTemplates, pickerQuery]);
 
   /**
    * Gỡ = XOÁ bản copy ở server (spec §5.4: một copy rời khỏi hạng mục thì
@@ -556,7 +558,9 @@ export const CampaignItemModal = ({
             </div>
           ) : (
             <p className='py-4 text-center text-[12.5px] text-[var(--pv2-faint)]'>
-              {t('noExperienceMatch')}
+              {ownTemplates.length === 0
+                ? t('noOwnTemplatesYet')
+                : t('noExperienceMatch')}
             </p>
           )}
         </div>

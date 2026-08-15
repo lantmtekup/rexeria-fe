@@ -4,6 +4,7 @@ import type {
   RxAutomationCandidate,
   RxAutomationHubResponse,
   RxAutomationRunItem,
+  RxAutomationRunSkip,
   RxCreateAutomationResponse,
 } from '@/services/rexer-v2/types/automation';
 
@@ -108,12 +109,15 @@ export const runAutomationV2 = async (
   automationId: string,
   productIds: string[],
   inputs?: RxAutomationBriefPayload
-): Promise<RxAutomationRunItem[]> => {
+): Promise<{
+  created: RxAutomationRunItem[];
+  skipped: RxAutomationRunSkip[];
+}> => {
   const res = await rexerV2Api.automations.run(automationId, {
     product_ids: productIds,
     ...(inputs ? { inputs } : {}),
   });
-  return res.created ?? [];
+  return { created: res.created ?? [], skipped: res.skipped ?? [] };
 };
 
 /** Canvas mở master theo id page mà BE trả về khi tạo automation. */

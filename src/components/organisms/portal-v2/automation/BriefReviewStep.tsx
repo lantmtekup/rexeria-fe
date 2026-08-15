@@ -8,7 +8,10 @@ import { Button } from '@/components/molecules/portal-v2/Button';
 import { cn } from '@/lib/cn';
 import type { AiBrandBrief } from '@/lib/ai-brief/types';
 import type { AutomationProduct } from '@/lib/portal-v2/automation/types';
-import type { RxAutomationRunItem } from '@/services/rexer-v2/types/automation';
+import type {
+  RxAutomationRunItem,
+  RxAutomationRunSkip,
+} from '@/services/rexer-v2/types/automation';
 
 /**
  * Bước 3 — review "brief cho AI" trước khi chạy thật.
@@ -29,6 +32,7 @@ export const BriefReviewStep = ({
   onRun,
   cap,
   queued,
+  skipped,
   runError,
   running,
 }: {
@@ -41,6 +45,7 @@ export const BriefReviewStep = ({
   onRun: () => void;
   cap: number;
   queued: RxAutomationRunItem[] | null;
+  skipped: RxAutomationRunSkip[] | null;
   runError: string | null;
   running: boolean;
 }) => {
@@ -211,6 +216,28 @@ export const BriefReviewStep = ({
                 {t('openDraft')}
                 <ExternalLink className='size-3' aria-hidden />
               </Link>
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {skipped && skipped.length > 0 ? (
+        <div className='flex flex-col gap-1.5 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-3.5 py-3'>
+          <span className='text-[13px] font-semibold text-[var(--pv2-error)]'>
+            {t('runSkipped', { total: skipped.length })}
+          </span>
+          <span className='text-[12px] text-[var(--pv2-mut)]'>
+            {t('runSkippedNote')}
+          </span>
+          {skipped.map(item => (
+            <span
+              key={item.product_id}
+              className='text-[12px] text-[var(--pv2-mut)]'
+            >
+              {item.product_id} ·{' '}
+              {item.reason === 'no_product_image'
+                ? t('runSkipReasonNoProductImage')
+                : item.reason}
             </span>
           ))}
         </div>

@@ -80,8 +80,16 @@ export type RxAutomationRunItem = {
   auto_gaps: string[];
 };
 
+/** Sản phẩm bị bỏ qua khi Run — không fork, không tạo ai_job. */
+export type RxAutomationRunSkip = {
+  product_id: string;
+  reason: string;
+  auto_gaps: string[];
+};
+
 export type RxRunAutomationResponse = {
   created: RxAutomationRunItem[];
+  skipped: RxAutomationRunSkip[];
 };
 
 export type RxAutomationCandidatesResponse = {
