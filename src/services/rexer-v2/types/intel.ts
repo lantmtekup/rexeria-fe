@@ -169,6 +169,71 @@ export type RxIntelCampaignsResponse = {
   total: number;
 };
 
+/* ── §8.4 mục 1.3/1.4 — library rankings ─────────────────────────────────── */
+
+export type RxIntelBestChannel = { channel: string; cvr: number };
+export type RxIntelBestExperience = {
+  page_id: string;
+  name: string;
+  cvr: number;
+};
+
+export type RxIntelLibrarySplit = {
+  campaign_id: string;
+  campaign_name: string;
+  sessions: number;
+  cvr: number;
+  lift: number | null;
+};
+
+/** `GET /v1/intel/experiences` (spec §8.4 mục 1.4). No spend_cents/cac_cents —
+ *  ad spend has no page/item dimension to divide by (§3.1). */
+export type RxIntelExperienceLibraryRow = {
+  experience_id: string;
+  name: string;
+  role: string | null;
+  sessions: number;
+  cvr: number;
+  lift: number | null;
+  revenue_cents: number | null;
+  engagement_depth: number | null;
+  signal_coverage: number | null;
+  campaigns: number;
+  confidence_tier: string;
+  best_channel: RxIntelBestChannel | null;
+  funnel: RxFunnelStage[];
+  /** Only when `?expand=splits`. */
+  splits?: RxIntelLibrarySplit[];
+};
+
+export type RxIntelExperiencesResponse = {
+  items: RxIntelExperienceLibraryRow[];
+  total: number;
+};
+
+/** `GET /v1/intel/subjects` (spec §8.4 mục 1.3). Same no-cost-fields note. */
+export type RxIntelSubjectLibraryRow = {
+  item_id: string;
+  subject: { kind: string; product_id?: string; name: string } | null;
+  sessions: number;
+  converted: number;
+  cvr: number;
+  lift: number | null;
+  revenue_cents: number | null;
+  aov_cents: number | null;
+  leads: number;
+  campaigns: number;
+  confidence_tier: string;
+  best_experience: RxIntelBestExperience | null;
+  best_channel: RxIntelBestChannel | null;
+  splits?: RxIntelLibrarySplit[];
+};
+
+export type RxIntelSubjectsResponse = {
+  items: RxIntelSubjectLibraryRow[];
+  total: number;
+};
+
 /* ── §8.5 block ───────────────────────────────────────────────────────────── */
 
 export type RxIntelTopComponent = {

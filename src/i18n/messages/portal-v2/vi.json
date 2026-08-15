@@ -601,7 +601,8 @@
         "noEndpoint": "Kênh là một chiều của dữ liệu thô nhưng chưa endpoint nào gộp theo kênh — chờ BE bổ sung.",
         "layersPending": "Xếp hạng Trải nghiệm · Sản phẩm · Hành trình chưa có API theo brand — chờ BE bổ sung.",
         "componentDrill": "Khoan xuống từng component chưa có endpoint — server mới trả một component mạnh nhất mỗi loại khối.",
-        "mockNotice": "Tab này còn chạy dữ liệu mẫu — chưa nối API. Đừng đọc các số ở đây như phép đo."
+        "mockNotice": "Tab này còn chạy dữ liệu mẫu — chưa nối API. Đừng đọc các số ở đây như phép đo.",
+        "rankingsError": "Không đọc được xếp hạng — thử tải lại trang."
       },
       "loading": "Đang đọc số đo…",
       "tier": {

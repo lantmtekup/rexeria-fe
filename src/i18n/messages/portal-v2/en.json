@@ -601,7 +601,8 @@
         "noEndpoint": "Channel is a dimension of the raw data but no endpoint groups by it yet \u2014 waiting on BE.",
         "layersPending": "Experience \u00b7 Product \u00b7 Journey rankings have no brand-wide API yet \u2014 waiting on BE.",
         "componentDrill": "Per-component drill has no endpoint \u2014 the server returns only the top component per block type.",
-        "mockNotice": "This tab still runs on sample data \u2014 not wired to the API. Do not read these numbers as measurements."
+        "mockNotice": "This tab still runs on sample data \u2014 not wired to the API. Do not read these numbers as measurements.",
+        "rankingsError": "Couldn\u2019t read the rankings \u2014 try reloading the page."
       },
       "loading": "Reading measurements\u2026",
       "tier": {

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { PulseRow } from '@/components/organisms/portal-v2/analytics/PulseRow';
@@ -17,6 +18,7 @@ import type {
   BlockInsightItem,
   ExperienceInsightItem,
   InsightItem,
+  InsightType,
   JourneyInsightItem,
   ProductInsightItem,
   PulseViewState,
@@ -29,21 +31,61 @@ import {
   fmtPct,
 } from '@/lib/portal-v2/analytics/helpers';
 import { cn } from '@/lib/cn';
+import {
+  fetchExperienceRankings,
+  fetchProductRankings,
+} from '@/services/portal-v2/rankingsFacts';
 
 import { RankingCareer } from '@/components/organisms/portal-v2/analytics/RankingCareer';
 
 type RankingsPanelProps = {
   state: PulseViewState;
   onStateChange: (state: PulseViewState) => void;
+  brandId: string | null;
 };
 
-export const RankingsPanel = ({ state, onStateChange }: RankingsPanelProps) => {
+/** `experiences`/`products` read `/intel/experiences`/`/intel/subjects` —
+ *  real. `journeys`/`blocks` still run `insItems()`'s mock — see insights.ts. */
+const REAL_TYPES: ReadonlySet<InsightType> = new Set([
+  'experiences',
+  'products',
+]);
+
+export const RankingsPanel = ({
+  state,
+  onStateChange,
+  brandId,
+}: RankingsPanelProps) => {
   const t = useTranslations('portalV2.analytics');
   const type = state.insightType;
-  const items = sortInsightItems(type, insItems(type));
+  const real = REAL_TYPES.has(type);
+
+  const [realItems, setRealItems] = useState<InsightItem[]>([]);
+  const [loading, setLoading] = useState(real);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!real) return;
+    let alive = true;
+    setLoading(true);
+    setError(null);
+    const fetcher =
+      type === 'experiences' ? fetchExperienceRankings : fetchProductRankings;
+    void fetcher(brandId).then(res => {
+      if (!alive) return;
+      setRealItems(res.items);
+      setError(res.error);
+      setLoading(false);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [type, real, brandId]);
+
+  const items = sortInsightItems(type, real ? realItems : insItems(type));
 
   if (state.insightObjectId) {
-    const selected = findInsightItem(type, state.insightObjectId);
+    const selected = findInsightItem(type, state.insightObjectId, items);
     if (selected) {
       return (
         <RankingCareer
@@ -57,15 +99,15 @@ export const RankingsPanel = ({ state, onStateChange }: RankingsPanelProps) => {
   return (
     <div className='flex flex-col gap-4'>
       {/*
-        Tab này CHƯA nối API: bảng xếp hạng theo brand cho trải nghiệm/sản
-        phẩm/hành trình chưa có endpoint nào trả (xem docs/be-analytics-gaps).
-        Số bên dưới do `insights.ts` băm từ id — ổn định nên trông hệt phép đo,
-        và nó đứng ngay cạnh hai tab đã là số thật. Nói thẳng ra còn hơn để
-        người đọc tự đoán tab nào tin được.
+        `journeys`/`blocks` CHƯA nối API: chưa endpoint nào gộp theo cả thư
+        viện (xem docs/be-analytics-gaps). `experiences`/`products` đã ráp
+        `/intel/experiences`/`/intel/subjects` thật — không cần cảnh báo nữa.
       */}
-      <p className='rounded-[var(--pv2-r-sm)] border border-[var(--pv2-warning)] bg-[color-mix(in_srgb,var(--pv2-warning)_10%,transparent)] px-3 py-2 text-[12.5px] text-[var(--pv2-ink)]'>
-        {t('empty.mockNotice')}
-      </p>
+      {!real ? (
+        <p className='rounded-[var(--pv2-r-sm)] border border-[var(--pv2-warning)] bg-[color-mix(in_srgb,var(--pv2-warning)_10%,transparent)] px-3 py-2 text-[12.5px] text-[var(--pv2-ink)]'>
+          {t('empty.mockNotice')}
+        </p>
+      ) : null}
 
       <div className='flex flex-wrap gap-2'>
         {INSIGHT_TYPES.map(option => (
@@ -95,7 +137,15 @@ export const RankingsPanel = ({ state, onStateChange }: RankingsPanelProps) => {
         {t(`rankings.intro.${type}`)}
       </p>
 
-      {!items.length ? (
+      {real && loading ? (
+        <p className='rounded-[var(--pv2-r)] border border-dashed border-[var(--pv2-hair)] px-4 py-8 text-center text-[13px] text-[var(--pv2-faint)]'>
+          {t('loading')}
+        </p>
+      ) : real && error ? (
+        <p className='rounded-[var(--pv2-r-sm)] border border-[var(--pv2-error)] px-3 py-2 text-[12.5px] text-[var(--pv2-error)]'>
+          {t('empty.rankingsError')}
+        </p>
+      ) : !items.length ? (
         <p className='rounded-[var(--pv2-r)] border border-dashed border-[var(--pv2-hair)] px-4 py-8 text-center text-[13px] text-[var(--pv2-faint)]'>
           {t('empty.rankings')}
         </p>

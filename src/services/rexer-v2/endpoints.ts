@@ -59,10 +59,12 @@ import type {
 import type {
   RxIntelBlocksResponse,
   RxIntelCampaignsResponse,
+  RxIntelExperiencesResponse,
   RxIntelFunnel,
   RxIntelOverview,
   RxIntelQuery,
   RxIntelSegmentsResponse,
+  RxIntelSubjectsResponse,
   RxIntelTrust,
 } from './types/intel';
 import type {
@@ -282,6 +284,30 @@ export const rexerV2Api = {
         query: {
           ...intelQuery(query),
           ...(expandSubjects ? { expand: 'subjects' } : {}),
+        },
+      }),
+
+    /**
+     * `GET /v1/intel/experiences` — xếp hạng thư viện trải nghiệm (concept =
+     * template + mọi bản copy đang sống, gộp) theo toàn bộ chiến dịch của brand.
+     */
+    experiences: (query: RxIntelQuery = {}, expandSplits = false) =>
+      rxV2<RxIntelExperiencesResponse>('/intel/experiences', {
+        query: {
+          ...intelQuery(query),
+          ...(expandSplits ? { expand: 'splits' } : {}),
+        },
+      }),
+
+    /**
+     * `GET /v1/intel/subjects` — xếp hạng hạng mục (sản phẩm/chủ đề) theo toàn
+     * bộ chiến dịch đã chạy nó, gộp.
+     */
+    subjects: (query: RxIntelQuery = {}, expandSplits = false) =>
+      rxV2<RxIntelSubjectsResponse>('/intel/subjects', {
+        query: {
+          ...intelQuery(query),
+          ...(expandSplits ? { expand: 'splits' } : {}),
         },
       }),
 
