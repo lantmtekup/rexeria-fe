@@ -47,6 +47,10 @@ export const ExperiencePickerModal = ({
   onPick,
 }: ExperiencePickerModalProps) => {
   const t = useTranslations('portalV2.journeys');
+  // `coverageUnmeasured` is an experience-coverage string, not a journey one —
+  // reused from its real home instead of duplicating the copy (same pattern
+  // as JourneyEditor.tsx's `tCamp`).
+  const tExp = useTranslations('portalV2.experiences');
 
   const [query, setQuery] = useState('');
   const [objective, setObjective] = useState<ExperienceObjective | 'all'>(
@@ -276,7 +280,7 @@ export const ExperiencePickerModal = ({
                     >
                       {experience.coveragePct !== null
                         ? t('pickerTracked', { pct: experience.coveragePct })
-                        : t('coverageUnmeasured')}
+                        : tExp('coverageUnmeasured')}
                     </span>
                   </span>
                 </span>

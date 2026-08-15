@@ -14,6 +14,7 @@
     "confirmPassword": "Confirm password",
     "confirmPasswordPlaceholder": "Confirm password",
     "passwordMismatch": "Passwords don't match",
+    "forgotPassword": "Forgot password?",
     "submit": "Sign in",
     "signIn": "Sign in",
     "signUp": "Sign up",
