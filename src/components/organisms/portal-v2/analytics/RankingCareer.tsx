@@ -26,6 +26,29 @@ type RankingCareerProps = {
   onBack: () => void;
 };
 
+/**
+ * `experiences` reports a real, session-weighted coverage aggregate from the
+ * BE (`/intel/experiences`) — used directly. `products` is real too but the
+ * BE doesn't compute a per-subject coverage aggregate (§2.2-style gap), so it
+ * has none yet — `null`, not a rows-based guess. `journeys` still runs on
+ * mock `PulseFactRow[]` (see `insights.ts`) and keeps the old per-row calc
+ * until it, too, is wired to a real endpoint.
+ */
+const coveragePctOf = (
+  item: ExperienceInsightItem | ProductInsightItem | JourneyInsightItem
+): number | null => {
+  if (item.type === 'experiences') {
+    return item.coveragePct != null ? Math.round(item.coveragePct * 100) : null;
+  }
+  if (item.type === 'products') return null;
+  if (!item.rows.length) return null;
+  return Math.round(
+    (item.rows.reduce((sum, row) => sum + row.coveragePct * row.sessions, 0) /
+      Math.max(item.rollup.sessions, 1)) *
+      100
+  );
+};
+
 export const RankingCareer = ({ item, onBack }: RankingCareerProps) => {
   const t = useTranslations('portalV2.analytics');
 
@@ -69,14 +92,7 @@ export const RankingCareer = ({ item, onBack }: RankingCareerProps) => {
 
       <PulseMetricHead
         rollup={base.rollup}
-        coveragePct={Math.round(
-          (base.rows.reduce(
-            (sum, row) => sum + row.coveragePct * row.sessions,
-            0
-          ) /
-            Math.max(base.rollup.sessions, 1)) *
-            100
-        )}
+        coveragePct={coveragePctOf(base)}
         labels={{
           sessions: t('metrics.sessions'),
           conversion: t('metrics.conversion'),

@@ -1,17 +1,11 @@
-import { ROLE_OF } from '@/lib/portal-v2/analytics/constants';
 import {
   buildPulseFacts,
   experienceRows,
   trackingCoverage,
 } from '@/lib/portal-v2/analytics/facts';
-import {
-  retentionFunnel,
-  rollup,
-  shortExperienceName,
-} from '@/lib/portal-v2/analytics/helpers';
+import { retentionFunnel, rollup } from '@/lib/portal-v2/analytics/helpers';
 import type {
   BlockInsightItem,
-  ExperienceInsightItem,
   InsightFunnel,
   InsightItem,
   InsightSplit,
@@ -21,7 +15,17 @@ import type {
 } from '@/lib/portal-v2/analytics/types';
 import { MOCK_CAMPAIGN_EXPERIENCES } from '@/lib/portal-v2/campaigns/mock';
 import { MOCK_JOURNEYS } from '@/lib/portal-v2/journeys/mock';
-import { MOCK_PRODUCTS } from '@/lib/portal-v2/product/mock';
+
+/**
+ * Rankings tab — bảng xếp hạng toàn thư viện brand.
+ *
+ * `experiences`/`products` ráp thật rồi — xem `services/portal-v2/rankingsFacts.ts`
+ * (`/intel/experiences`, `/intel/subjects`). `journeys`/`blocks` VẪN dùng mock
+ * dưới đây: BE chưa có `/intel/journeys` (docs/be-analytics-gaps-2026-08-13.md
+ * mục 1.4) và chưa có endpoint gộp block theo cả thư viện. `RankingsPanel.tsx`
+ * chỉ gọi `insItems()` cho hai loại này — đường experiences/products bị bỏ
+ * khỏi hàm để không còn ai gọi nhầm về mock nữa.
+ */
 
 const insSplit = (rows: PulseFactRow[]): InsightSplit[] => {
   const groups = new Map<string, PulseFactRow[]>();
@@ -36,7 +40,9 @@ const insSplit = (rows: PulseFactRow[]): InsightSplit[] => {
   }));
 };
 
-const insVar = (splits: InsightSplit[]): number | null => {
+/** Exported for `rankingsFacts.ts` — the real experiences/products path needs
+ *  the exact same cross-campaign-variance formula the mock path uses. */
+export const insVar = (splits: InsightSplit[]): number | null => {
   const lifts = splits
     .map(split => split.rollup.lift)
     .filter(value => Number.isFinite(value));
@@ -60,45 +66,6 @@ const insFunnel = (total: ReturnType<typeof rollup>): InsightFunnel => {
       ? valid.reduce((a, b) => (b.rate! > a.rate! ? b : a))
       : null,
   };
-};
-
-const bestChannel = (rows: PulseFactRow[]) => {
-  const groups = new Map<string, PulseFactRow[]>();
-  for (const row of rows) {
-    groups.set(row.channel, [...(groups.get(row.channel) ?? []), row]);
-  }
-  const candidates = [...groups.entries()]
-    .map(([channel, group]) => ({ channel, rollup: rollup(group) }))
-    .filter(item => item.rollup.sessions >= 150);
-  return candidates.length
-    ? candidates.reduce((a, b) => (b.rollup.lift > a.rollup.lift ? b : a))
-    : null;
-};
-
-const bestExpForProduct = (rows: PulseFactRow[]) => {
-  const groups = new Map<string, PulseFactRow[]>();
-  for (const row of rows) {
-    const name = shortExperienceName(row.experienceName);
-    groups.set(name, [...(groups.get(name) ?? []), row]);
-  }
-  const candidates = [...groups.entries()]
-    .map(([name, group]) => ({ name, rollup: rollup(group) }))
-    .filter(item => item.rollup.sessions >= 150);
-  return candidates.length
-    ? candidates.reduce((a, b) => (b.rollup.cvr > a.rollup.cvr ? b : a))
-    : null;
-};
-
-const engageDepth = (rows: PulseFactRow[]): number | null => {
-  let inter = 0;
-  let views = 0;
-  for (const row of rows) {
-    for (const block of row.blocks) {
-      inter += block.inter;
-      views += block.views;
-    }
-  }
-  return views ? inter / views : null;
 };
 
 const insBlocks = (): BlockInsightItem[] => {
@@ -154,36 +121,9 @@ const insBlocks = (): BlockInsightItem[] => {
   return output;
 };
 
+/** `journeys` + `blocks` only — `experiences`/`products` come from real API now. */
 export const insItems = (type: InsightItem['type']): InsightItem[] => {
   if (type === 'blocks') return insBlocks();
-
-  if (type === 'products') {
-    return MOCK_PRODUCTS.map(product => {
-      const rows = buildPulseFacts().filter(
-        row =>
-          row.subjectKind === 'product' &&
-          row.subjectName.toLowerCase() === product.title.toLowerCase()
-      );
-      if (!rows.length) return null;
-      const total = rollup(rows);
-      const splits = insSplit(rows);
-      const item: ProductInsightItem = {
-        type: 'products',
-        id: product.id,
-        name: product.title,
-        rows,
-        rollup: total,
-        splits,
-        campaigns: splits.length,
-        variance: insVar(splits),
-        aov: total.aov,
-        cac: total.converted ? total.spend / total.converted : null,
-        bestExp: bestExpForProduct(rows),
-        bestChan: bestChannel(rows),
-      };
-      return item;
-    }).filter((item): item is ProductInsightItem => item !== null);
-  }
 
   if (type === 'journeys') {
     return MOCK_JOURNEYS.filter(journey => journey.template)
@@ -215,38 +155,15 @@ export const insItems = (type: InsightItem['type']): InsightItem[] => {
       .filter((item): item is JourneyInsightItem => item !== null);
   }
 
-  return MOCK_CAMPAIGN_EXPERIENCES.filter(item => item.template)
-    .map(template => {
-      const rows = experienceRows(template.id);
-      if (!rows.length) return null;
-      const total = rollup(rows);
-      const splits = insSplit(rows);
-      const funnel = insFunnel(total);
-      const item: ExperienceInsightItem = {
-        type: 'experiences',
-        id: template.id,
-        name: template.name,
-        rows,
-        rollup: total,
-        splits,
-        campaigns: splits.length,
-        variance: insVar(splits),
-        funnel,
-        role: funnel.strongest
-          ? (ROLE_OF[funnel.strongest.name] ?? null)
-          : null,
-        bestChannel: bestChannel(rows),
-        depth: engageDepth(rows),
-      };
-      return item;
-    })
-    .filter((item): item is ExperienceInsightItem => item !== null);
+  return [];
 };
 
 export const findInsightItem = (
   type: InsightItem['type'],
-  id: string
-): InsightItem | null => insItems(type).find(item => item.id === id) ?? null;
+  id: string,
+  items?: InsightItem[]
+): InsightItem | null =>
+  (items ?? insItems(type)).find(item => item.id === id) ?? null;
 
 export const sortInsightItems = (
   type: InsightItem['type'],
@@ -270,8 +187,8 @@ export const sortInsightItems = (
     });
   }
   return copy.sort((a, b) => {
-    const baseA = a as ExperienceInsightItem | JourneyInsightItem;
-    const baseB = b as ExperienceInsightItem | JourneyInsightItem;
+    const baseA = a as { rollup: { lift: number; sessions: number } };
+    const baseB = b as { rollup: { lift: number; sessions: number } };
     return (
       baseB.rollup.lift - baseA.rollup.lift ||
       baseB.rollup.sessions - baseA.rollup.sessions

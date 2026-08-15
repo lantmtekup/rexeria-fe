@@ -124,7 +124,11 @@ export const AnalyticsWorkspace = ({
           />
         ) : null}
         {state.lens === 'insights' ? (
-          <RankingsPanel state={state} onStateChange={handleStateChange} />
+          <RankingsPanel
+            state={state}
+            onStateChange={handleStateChange}
+            brandId={brandId}
+          />
         ) : null}
       </div>
     </div>

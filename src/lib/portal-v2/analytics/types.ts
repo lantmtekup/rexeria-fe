@@ -128,6 +128,12 @@ export type InsightFunnel = {
 export type InsightItemBase = {
   id: string;
   name: string;
+  /**
+   * Block-grain drill rows — populated for `type: 'blocks'` (still mock, see
+   * `insights.ts`) only. `experiences`/`products` come from
+   * `/intel/experiences`/`/intel/subjects`, which report at the concept/subject
+   * grain, not per-block — always `[]` for those two types.
+   */
   rows: PulseFactRow[];
   rollup: PulseRollup;
   splits: InsightSplit[];
@@ -139,16 +145,17 @@ export type ExperienceInsightItem = InsightItemBase & {
   type: 'experiences';
   funnel: InsightFunnel;
   role: string | null;
-  bestChannel: { channel: string; rollup: PulseRollup } | null;
+  bestChannel: { channel: string; cvr: number } | null;
   depth: number | null;
+  /** 0..1 signal coverage, session-weighted across the concept's live copies. null = no active release to measure. */
+  coveragePct: number | null;
 };
 
 export type ProductInsightItem = InsightItemBase & {
   type: 'products';
   aov: number;
   cac: number | null;
-  bestExp: { name: string; rollup: PulseRollup } | null;
-  bestChan: { channel: string; rollup: PulseRollup } | null;
+  bestExp: { name: string; cvr: number } | null;
 };
 
 export type JourneyInsightItem = InsightItemBase & {
