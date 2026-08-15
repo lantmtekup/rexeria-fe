@@ -17,7 +17,7 @@ export const JourneyCanvasPane = ({ journey }: JourneyCanvasPaneProps) => {
   const t = useTranslations('portalV2.journeys');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const checks = useMemo(() => validateJourney(journey), [journey]);
+  const checks = useMemo(() => validateJourney(journey, t), [journey, t]);
   const failing = checks.filter(c => !c.ok);
   const selected = selectedId ? nodeById(journey, selectedId) : null;
 

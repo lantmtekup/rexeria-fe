@@ -648,7 +648,7 @@ export const JourneyEditor = ({
 
   /* Derived every render from the draft, like everywhere else in the module: the
      score in the bar cannot lag behind the graph on screen. */
-  const readiness = useMemo(() => journeyReadiness(draft), [draft]);
+  const readiness = useMemo(() => journeyReadiness(draft, t), [draft, t]);
   const stages = useMemo(() => stagesOf(draft), [draft]);
   /* One walk, read by the band headers and the badges on the cards under them,
      so the two can never disagree. */

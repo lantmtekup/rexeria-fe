@@ -232,14 +232,20 @@ export const JourneysWorkspace = ({
       if (!res) return;
       versionsRef.current[res.journey.id] = res.version;
       setJourneys(prev => [res.journey, ...prev]);
-      toast.success(`Duplicated — ${res.journey.name}`);
+      toast.success(t('toastDuplicated', { name: res.journey.name }));
     },
     [t]
   );
 
   const handleCreate = useCallback(
     async (input: JourneyDraftInput) => {
-      const draft = createJourney(input);
+      const draft = createJourney(input, {
+        untitledName: t('defaultUntitled'),
+        tagline: t('defaultTagline'),
+        summary: t('defaultSummary'),
+        entryName: t('defaultEntryName'),
+        entryDesc: t('defaultEntryDesc'),
+      });
       // Nhánh `catch` TRƯỚC ĐÂY nuốt trọn lỗi thật, nút New journey đọc như
       // "bấm không ăn" dù BE đã từ chối có lý do (từng là 403 client-portal
       // trước PORTAL-WRITE-2, cũng có thể là 400 persona_id sai hay 500) —
@@ -257,7 +263,7 @@ export const JourneysWorkspace = ({
       /* Rule 10 — never create into a filter that would hide the result. */
       setFilters(prev => ({ ...prev, state: 'all', q: '' }));
       setOverlay({ kind: 'detail', id: res.journey.id });
-      toast.success(`Created — ${res.journey.name}`);
+      toast.success(t('toastCreated', { name: res.journey.name }));
     },
     [brandId, t]
   );
@@ -285,7 +291,7 @@ export const JourneysWorkspace = ({
         { ...res.journey, campaignName },
         ...prev.filter(j => j.id !== res.journey.id),
       ]);
-      toast.success(`Forked into ${campaignName} — the blueprint is untouched`);
+      toast.success(t('toastForked', { campaign: campaignName }));
       setFilters(prev => ({ ...prev, state: 'copy', q: '' }));
       setOverlay({ kind: 'detail', id: res.journey.id });
     },
@@ -328,8 +334,8 @@ export const JourneysWorkspace = ({
       setOverlay({ kind: 'detail', id: res.journey.id });
       toast.success(
         res.journey.template
-          ? 'Blueprint saved — existing campaign copies are untouched'
-          : `Saved to ${journeyHome(res.journey)}'s copy — the blueprint is untouched`
+          ? t('toastSavedBlueprint')
+          : t('toastSavedCopy', { home: journeyHome(res.journey) })
       );
     },
     [handlePersistEdit, t]
@@ -368,7 +374,7 @@ export const JourneysWorkspace = ({
     }
     setJourneys(prev => deleteJourney(prev, activeId));
     setOverlay(null);
-    if (target) toast.success(`Deleted — ${target.name}`);
+    if (target) toast.success(t('toastDeleted', { name: target.name }));
   }, [activeId, journeys, t]);
 
   return (

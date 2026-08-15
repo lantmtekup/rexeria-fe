@@ -158,7 +158,7 @@ export const EditorInspector = ({
           {t('inspectorEmpty')}
         </p>
 
-        <Field label={t('overDescription')}>
+        <Field label={t('fieldTagline')}>
           <TextInput
             value={draft.tagline}
             onChange={e => onMetaPatch({ tagline: e.target.value })}

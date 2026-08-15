@@ -38,8 +38,8 @@ export const JourneyReadinessPane = ({
   onApplyArchitect,
 }: JourneyReadinessPaneProps) => {
   const t = useTranslations('portalV2.journeys');
-  const readiness = useMemo(() => journeyReadiness(journey), [journey]);
-  const gaps = useMemo(() => journeyGaps(journey), [journey]);
+  const readiness = useMemo(() => journeyReadiness(journey, t), [journey, t]);
+  const gaps = useMemo(() => journeyGaps(journey, t), [journey, t]);
   const isReady = readiness.missing.length === 0;
   /* Đã sẵn sàng thì checklist đóng mặc định — không cần đọc lại thứ đã qua. */
   const [showChecklist, setShowChecklist] = useState(!isReady);
