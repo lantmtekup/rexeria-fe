@@ -22,6 +22,16 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '10mb',
     },
+    // Router Cache phía CLIENT (per-browser, không chia sẻ giữa user) — rời
+    // trang rồi quay lại trong 30s dùng lại RSC payload đã fetch thay vì gọi
+    // lại BE. KHÔNG dùng `fetch({next:{revalidate}})` cho các call có cookie ở
+    // `rxCore`: đó là cache CHUNG trên server, và `resolvePortalScope`
+    // (`services/portal-v2/scope.ts`) hiện không xác minh user thường có
+    // thực sự thuộc `?brand=` họ tự truyền hay không — cache chung sẽ khuếch
+    // đại lỗ hổng đó thành rò rỉ dữ liệu chéo brand.
+    staleTimes: {
+      dynamic: 30,
+    },
     // Rewrite `/api/rexer/*` → BE đi qua proxy của Next, mà proxy này mặc định
     // ngắt sau 30 GIÂY. Handoff của AI-Insights viết lại từng block bằng LLM
     // (6 block ≈ 60–90s, có retry thì hơn) nên luôn vượt ngưỡng đó.

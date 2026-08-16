@@ -68,9 +68,13 @@ export const fetchCampaignExperienceLibrary = async (
 ): Promise<CampaignExperience[]> => {
   try {
     const common = brandId ? { brand_id: brandId } : {};
-    const ownIds = await fetchOwnTemplateIds();
 
+    // `ownIds` chỉ nhánh lọc template cần — 3 nhánh COPY_STATES bên dưới
+    // không đụng tới nó. `await` ở TRONG closure này (thay vì ở ngoài, chặn cả
+    // `Promise.all`) để 3 nhánh kia không phải chờ xong lookup template mới
+    // được bắt đầu tải song song.
     const fetchOwnTemplates = async (): Promise<RxExperience[]> => {
+      const ownIds = await fetchOwnTemplateIds();
       if (!ownIds || ownIds.size === 0) return [];
       const all = await fetchExperienceState(common, 'templates');
       return all.filter(x => ownIds.has(x.id));

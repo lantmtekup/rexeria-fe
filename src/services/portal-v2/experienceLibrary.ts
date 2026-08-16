@@ -157,7 +157,11 @@ export const fetchExperienceLibrary = async (
    * thấy được thì 76 là hệ thống, 3 là của brand — nên chỗ này thêm 3 mục, chứ
    * không phải kéo cả kho về như hồi còn tab template cũ.
    */
-  const fetchOwnTemplates = async (ownIds: Set<string> | null) => {
+  // `ownIds` chỉ hai nhánh dưới đây cần — `await` NGAY TRONG closure (không
+  // phải một biến chờ sẵn ở ngoài) để lookup template không chặn nhánh
+  // COPY_STATES độc lập trong `Promise.all` bên dưới.
+  const fetchOwnTemplates = async (): Promise<RxExperience[]> => {
+    const ownIds = await fetchOwnTemplateIds();
     if (!ownIds || ownIds.size === 0) return [];
     const all = await fetchState('templates');
     return all.filter(x => ownIds.has(x.id));
@@ -175,22 +179,25 @@ export const fetchExperienceLibrary = async (
    * nên phải lọc lại: giữ bản copy, cộng template của chính brand. Lọc GIỮ
    * NGUYÊN thứ tự, nên hạng chung vẫn đúng sau khi lọc.
    */
-  const fetchRanked = async (ownIds: Set<string> | null) => {
-    const all = await fetchState('all', 'shelf_rank');
+  const fetchRanked = async (): Promise<RxExperience[]> => {
+    // `fetchState('all', ...)` cũng không cần `ownIds` — chạy song song, chỉ
+    // lọc kết quả cuối cần đợi cả hai.
+    const [ownIds, all] = await Promise.all([
+      fetchOwnTemplateIds(),
+      fetchState('all', 'shelf_rank'),
+    ]);
     return all.filter(x => x.kind === 'copy' || ownIds?.has(x.id));
   };
 
   try {
-    const ownIds = await fetchOwnTemplateIds();
-
     if (query.rank) {
-      const ranked = await fetchRanked(ownIds);
+      const ranked = await fetchRanked();
       return { items: ranked.map(v2ToExperienceView), error: null };
     }
 
     const chunks = await Promise.all([
       ...COPY_STATES.map(s => fetchState(s)),
-      fetchOwnTemplates(ownIds),
+      fetchOwnTemplates(),
     ]);
 
     // Khử trùng theo id: các state đáng lẽ rời nhau, nhưng dựa vào điều đó là
