@@ -67,9 +67,13 @@ export type RxJourneyListResponse = { items: RxJourney[]; total: number };
  * `POST /journeys/{id}/use` — bản copy vừa fork (hoặc bản cũ nếu gọi lại,
  * idempotent) cộng số node experience vừa được tự động gắn vào các hạng mục
  * sẵn có của chiến dịch trong cùng lần gọi này (auto-stage — không cần màn
- * "Stage Candidates" riêng).
+ * "Stage Candidates" riêng). `replaced_id`: một chiến dịch chỉ chạy một
+ * hành trình — id bản copy của blueprint KHÁC vừa bị BE thay thế, nếu có.
  */
-export type RxJourneyUseResponse = RxJourney & { auto_forked: number };
+export type RxJourneyUseResponse = RxJourney & {
+  auto_forked: number;
+  replaced_id: string | null;
+};
 
 export type RxCreateJourneyRequest = {
   /** Chỉ platform admin dùng được; principal khác bị ép về brand của họ. */

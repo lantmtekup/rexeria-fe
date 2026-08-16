@@ -471,7 +471,12 @@ export const CampaignsWorkspace = ({
     }
 
     const fork = { ...res.journey, campaignName: open.name };
-    setJourneys(prev => [fork, ...prev.filter(j => j.id !== fork.id)]);
+    // Một chiến dịch chỉ chạy một hành trình — bỏ bản cũ (blueprint khác) mà
+    // BE vừa thay, không chỉ thêm bản mới vào.
+    setJourneys(prev => [
+      fork,
+      ...prev.filter(j => j.id !== fork.id && j.id !== res.replacedId),
+    ]);
 
     const bound = bindRouteToItems(
       { ...open, journeyId: fork.id },
