@@ -54,6 +54,7 @@ import type {
   RxJourneyReadiness,
   RxJourneyReview,
   RxJourneyStats,
+  RxJourneyUseResponse,
   RxUpdateJourneyRequest,
 } from './types/journey';
 import type {
@@ -363,9 +364,13 @@ export const rexerV2Api = {
     update: (journeyId: string, body: RxUpdateJourneyRequest) =>
       rxV2<RxJourney>(`/journeys/${journeyId}`, { method: 'PUT', body }),
 
-    /** Fork blueprint lên một chiến dịch — một chiến dịch, một hành trình. */
+    /**
+     * Fork blueprint lên một chiến dịch — một chiến dịch, một hành trình.
+     * Auto-stage: BE tự gắn mọi node experience còn trống vào các hạng mục
+     * sẵn có của chiến dịch trong cùng lần gọi (`auto_forked` đếm số đó).
+     */
     use: (journeyId: string, campaignId: string) =>
-      rxV2<RxJourney>(`/journeys/${journeyId}/use`, {
+      rxV2<RxJourneyUseResponse>(`/journeys/${journeyId}/use`, {
         method: 'POST',
         body: { campaign_id: campaignId },
       }),

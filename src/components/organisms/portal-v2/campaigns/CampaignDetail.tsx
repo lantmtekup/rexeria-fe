@@ -284,7 +284,14 @@ export const CampaignDetail = ({
       return;
     }
     onChange({ ...campaign, items: [...campaign.items, item] });
-    toast.success(t('toastItemAdded'));
+    // `expIds` trên hạng mục vừa tạo phản ánh đúng số trải nghiệm BE vừa tự
+    // gắn (auto-stage, nếu chiến dịch đã có journey) — hạng mục mới nên
+    // không có gì khác lẫn vào con số này.
+    toast.success(
+      item.expIds.length > 0
+        ? t('toastItemAddedStaged', { count: item.expIds.length })
+        : t('toastItemAdded')
+    );
   };
 
   /**

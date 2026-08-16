@@ -99,13 +99,32 @@ export const saveJourney = async (
   return { journey: v2ToJourney(saved), version: saved.version };
 };
 
-/** Fork blueprint lên chiến dịch — một chiến dịch, một hành trình. */
+/**
+ * Fork blueprint lên chiến dịch — một chiến dịch, một hành trình. BE giờ tự
+ * đảm bảo đúng một bản copy cho mỗi chiến dịch (thay bản cũ nếu khác blueprint).
+ * `autoForked`: số node experience BE tự gắn vào các hạng mục sẵn có của
+ * chiến dịch trong cùng lần gọi (auto-stage) — dùng để báo cho người dùng
+ * biết việc gì vừa xảy ra thay vì để họ tự đoán.
+ * `replacedId`: id bản copy CŨ (blueprint khác) vừa bị thay — khác `null` thì
+ * caller phải loại nó khỏi state cục bộ, không chỉ thêm bản mới vào, kẻo màn
+ * hình vẫn hiện cả hai trong khi server chỉ còn giữ một.
+ */
 export const useJourney = async (
   journeyId: string,
   campaignId: string
-): Promise<{ journey: Journey; version: number }> => {
+): Promise<{
+  journey: Journey;
+  version: number;
+  autoForked: number;
+  replacedId: string | null;
+}> => {
   const fork = await rexerV2Api.journeys.use(journeyId, campaignId);
-  return { journey: v2ToJourney(fork), version: fork.version };
+  return {
+    journey: v2ToJourney(fork),
+    version: fork.version,
+    autoForked: fork.auto_forked,
+    replacedId: fork.replaced_id,
+  };
 };
 
 export const promoteJourney = async (

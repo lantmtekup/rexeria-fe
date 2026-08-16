@@ -287,11 +287,20 @@ export const JourneysWorkspace = ({
       );
       if (!res) return;
       versionsRef.current[res.journey.id] = res.version;
+      // Một chiến dịch chỉ chạy một hành trình — BE đã xoá bản cũ (khác
+      // blueprint) nếu có, `replacedId` nói cho biết bản nào để bỏ khỏi state.
       setJourneys(prev => [
         { ...res.journey, campaignName },
-        ...prev.filter(j => j.id !== res.journey.id),
+        ...prev.filter(j => j.id !== res.journey.id && j.id !== res.replacedId),
       ]);
-      toast.success(t('toastForked', { campaign: campaignName }));
+      toast.success(
+        res.autoForked > 0
+          ? t('toastForkedStaged', {
+              campaign: campaignName,
+              count: res.autoForked,
+            })
+          : t('toastForked', { campaign: campaignName })
+      );
       setFilters(prev => ({ ...prev, state: 'copy', q: '' }));
       setOverlay({ kind: 'detail', id: res.journey.id });
     },
