@@ -1,0 +1,177 @@
+'use client';
+
+import Image from 'next/image';
+
+const BADGE_LABEL = 'Overview';
+
+const HEADING_LINES = ['Elevated', 'Living'];
+
+const LEFT_BODY =
+  'Oversized windows frame an array of captivating views stretching from the treetops of Verdi Square over the romantic prewar façades of surrounding buildings to the great crowns of the Manhattan skyline.';
+
+const QUOTE =
+  'Glimpses of Central Park, Riverside Park, and the Hudson River are reminders that the city’s finest green spaces are just moments away.';
+
+const VERTICAL_LABEL = 'Modern • Minimalist • Elegant';
+
+const BADGE_TYPE =
+  'font-display text-xs leading-none font-medium uppercase tracking-[0.02em] text-white md:text-[13px] xl:text-sm';
+
+const HEADING_TYPE =
+  'font-display text-[34px] leading-[31px] font-medium uppercase text-[#763718] md:text-[46px] md:leading-[42px] xl:text-6xl xl:leading-[55px]';
+
+const LEFT_BODY_TYPE =
+  'font-display text-base leading-6 font-medium uppercase text-black md:text-lg md:leading-[25px] xl:text-lg xl:leading-7';
+
+const QUOTE_TYPE =
+  'font-display text-lg leading-[26px] font-medium uppercase text-black md:text-2xl md:leading-7 xl:text-[min(1.667vw,24px)] xl:leading-[min(2.222vw,32px)]';
+
+const LABEL_TYPE =
+  'font-display text-[9px] leading-[13px] font-medium uppercase tracking-[0.08em] text-[#763718] md:text-[10px] md:leading-[14px] xl:text-xs xl:leading-4';
+
+const SLAT_BASE = 'pointer-events-none absolute inset-y-0 z-10 w-1/3 bg-white';
+
+const BAND_BASE =
+  'pointer-events-none absolute inset-x-0 h-[35.2%] scale-x-0 bg-white';
+
+const RULE_BASE = 'pointer-events-none absolute bg-[#763718]';
+
+const RULE_LINE = 'pointer-events-none w-px bg-[#763718]';
+
+const ARTWORK_CROP =
+  'absolute top-[-4.65%] left-[-20.77%] h-[109.6%] w-[139.03%]';
+
+const CONTENT_LEFT = 'xl:mx-0 xl:left-[round(calc(50%-min(32.91%,233px)),1px)]';
+
+const RULE_RIGHT = 'xl:right-[round(calc(50%-min(32.91%,233px)-64px),1px)]';
+
+const RULE_LEFT = 'xl:left-[round(calc(50%-min(32.91%,233px)-64px),1px)]';
+
+const RULE_RIGHT_MD = 'md:right-[calc(50%-min(32.91%,233px)-48px)]';
+
+const RULE_LEFT_MD = 'md:left-[calc(50%-min(32.91%,233px)-48px)]';
+
+const GROUP_BOTTOM = 'xl:bottom-[round(7.28%,1px)]';
+
+export default function ElevatedLiving() {
+  return (
+    <section
+      id='elevated-living'
+      data-panel
+      className='relative z-30 w-full overflow-hidden bg-white'
+    >
+      <div
+        data-panel-content
+        className='flex w-full flex-col xl:h-svh xl:flex-row'
+      >
+        <div
+          data-frame
+          className='relative w-full overflow-hidden xl:h-full xl:w-[round(50.833%,1px)] xl:shrink-0'
+        >
+          <div data-media className='absolute inset-0'>
+            <Image
+              src='/assets/background-elevated-living.png'
+              alt='Sunlit dining room with skyline views at 212 West 72nd'
+              fill
+              sizes='(min-width: 1280px) 51vw, 100vw'
+              className='object-cover object-left'
+            />
+          </div>
+
+          <div data-slat className={`left-0 -translate-y-full ${SLAT_BASE}`} />
+          <div data-slat className={`left-1/3 translate-y-full ${SLAT_BASE}`} />
+          <div
+            data-slat
+            className={`left-2/3 -translate-y-full ${SLAT_BASE}`}
+          />
+
+          <div className='relative z-20 px-6 pt-14 pb-16 xl:pt-21.5 xl:pb-0'>
+            <span
+              data-badge
+              className={`inline-flex w-fit items-center bg-[#763718] p-3 ${BADGE_TYPE}`}
+            >
+              {BADGE_LABEL}
+            </span>
+
+            <h2 data-heading className={`mt-3 ${HEADING_TYPE}`}>
+              {HEADING_LINES.map(line => (
+                <span key={line} className='block'>
+                  {line}
+                </span>
+              ))}
+            </h2>
+
+            <p
+              data-copy
+              className={`mt-4.75 max-w-1/2 md:max-w-1/4 xl:w-52.75 xl:max-w-none ${LEFT_BODY_TYPE}`}
+            >
+              {LEFT_BODY}
+            </p>
+          </div>
+        </div>
+
+        <div className='relative w-full bg-white pb-16 xl:h-full xl:flex-1 xl:pb-0'>
+          <div>
+            <div
+              data-media
+              className={`relative mx-11 mt-12 aspect-466/449 overflow-hidden bg-[#0F0F0E]/5 md:mx-auto md:w-[min(65.82%,466px)] xl:absolute xl:top-[round(7.28%,1px)] xl:mt-0 xl:aspect-auto xl:h-[53.45%] xl:w-[min(65.82%,466px)] ${CONTENT_LEFT}`}
+            >
+              <div className={ARTWORK_CROP}>
+                <Image
+                  src='/assets/picture.png'
+                  alt='Framed abstract painting inside a 212 West 72nd residence'
+                  fill
+                  sizes='(min-width: 1280px) 33vw, 140vw'
+                  className='object-cover'
+                />
+              </div>
+
+              <div data-band className={`top-0 origin-right ${BAND_BASE}`} />
+              <div
+                data-band
+                className={`top-[32.4%] origin-left ${BAND_BASE}`}
+              />
+              <div
+                data-band
+                className={`top-[64.8%] origin-right ${BAND_BASE}`}
+              />
+            </div>
+
+            <div
+              className={`relative mt-10 mr-11 ml-6 pb-10 pl-6 md:mx-auto md:w-[min(65.82%,466px)] md:pl-0 xl:absolute xl:top-[round(60.73%,1px)] ${GROUP_BOTTOM} xl:mt-0 xl:flex xl:w-[min(63.28%,444px)] xl:flex-col xl:justify-center xl:pb-0 xl:pl-0 ${CONTENT_LEFT}`}
+            >
+              <span
+                data-rule
+                className={`inset-y-0 left-0 w-px origin-bottom md:-left-12 xl:-left-16 ${RULE_BASE}`}
+              />
+
+              <p data-copy className={QUOTE_TYPE}>
+                {QUOTE}
+              </p>
+            </div>
+          </div>
+
+          <div
+            className={`pointer-events-none absolute top-0 right-6 bottom-16 flex w-px flex-col items-center ${RULE_RIGHT_MD} ${RULE_RIGHT} ${GROUP_BOTTOM}`}
+          >
+            <span data-rule className={`flex-370 origin-top ${RULE_LINE}`} />
+
+            <span
+              data-vertical
+              className={`mt-4 mb-4 whitespace-nowrap [writing-mode:vertical-rl] ${LABEL_TYPE}`}
+            >
+              {VERTICAL_LABEL}
+            </span>
+
+            <span data-rule className={`flex-251 origin-bottom ${RULE_LINE}`} />
+          </div>
+
+          <span
+            data-rule
+            className={`right-6 bottom-16 left-6 h-px origin-right ${RULE_RIGHT_MD} ${RULE_LEFT_MD} ${RULE_RIGHT} ${RULE_LEFT} ${GROUP_BOTTOM} ${RULE_BASE}`}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
