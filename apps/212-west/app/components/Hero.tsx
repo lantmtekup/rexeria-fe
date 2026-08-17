@@ -33,11 +33,11 @@ export default function Hero() {
       const tl = gsap.timeline({
         defaults: {
           ease: 'power3.out',
-          duration: reduce ? 0 : 1.4,
+          duration: reduce ? 0 : 1.5,
         },
         scrollTrigger: {
           trigger: section,
-          start: 'top 85%',
+          start: 'top 90%',
           once: true,
         },
       });
@@ -54,7 +54,7 @@ export default function Hero() {
     <section
       ref={sectionRef}
       id='hero'
-      className='relative h-[80svh] max-h-170 min-h-110 w-full overflow-hidden bg-[#0F0F0E] md:h-[90svh] md:max-h-220 lg:h-svh lg:max-h-none'
+      className='relative h-svh max-h-none w-full overflow-hidden bg-[#0F0F0E]'
     >
       <Header />
 

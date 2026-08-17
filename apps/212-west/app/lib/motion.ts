@@ -2,9 +2,10 @@
 
 import gsap from 'gsap';
 
+import { Observer } from 'gsap/Observer';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(Observer, ScrollTrigger);
 
 ScrollTrigger.config({ ignoreMobileResize: true });
 
@@ -26,4 +27,4 @@ export type MotionConditions = {
   reduce: boolean;
 };
 
-export { gsap, ScrollTrigger };
+export { gsap, Observer, ScrollTrigger };

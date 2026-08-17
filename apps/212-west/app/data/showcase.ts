@@ -7,6 +7,31 @@ export type ShowcaseHotspot = {
   labelSide: 'top' | 'bottom';
 };
 
+export type ShowcaseCurtainPanel = {
+  top: number;
+  height: number;
+  exit: 'up' | 'down';
+  isCardColumn?: boolean;
+};
+
+export type ShowcaseTextReveal =
+  | {
+      mode: 'split';
+      headingShiftX: number;
+      copyShiftX: number;
+      copyScaleFrom: number;
+    }
+  | {
+      mode: 'combined';
+      groupShiftX: number;
+      copyScaleFrom: number;
+    };
+
+export type ShowcaseReveal = {
+  panels: ShowcaseCurtainPanel[];
+  text: ShowcaseTextReveal;
+};
+
 export type ShowcaseSection = {
   key: string;
   chip: string;
@@ -20,6 +45,7 @@ export type ShowcaseSection = {
   align: 'left' | 'right';
   fullHeight?: boolean;
   hotspots: ShowcaseHotspot[];
+  reveal?: ShowcaseReveal;
 };
 
 export const SHOWCASE_FRAME_RATIO = 12 / 7;
@@ -96,7 +122,7 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
     chip: 'LOCATION VIEW',
     titleLines: ['Landmark', 'Views'],
     desc: 'Windows with high-performance, sound-attenuating glass welcome abundant light while both buffering city noise and protecting against glare, ultraviolet exposure, and solar heat gain.',
-    image: '/assets/background-elevated-living.png',
+    image: '/assets/designed-for-new-yorkers.jpg',
     imageAlt:
       'Dining room at 212 West 72nd looking out over neighbouring landmark buildings',
     imageWidth: 1535,
@@ -105,6 +131,20 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
     align: 'left',
     fullHeight: true,
     hotspots: [],
+    reveal: {
+      panels: [
+        { top: 0, height: 100, exit: 'down' },
+        { top: 0, height: 100, exit: 'up' },
+        { top: 0, height: 100, exit: 'down' },
+        { top: 0, height: 100, exit: 'up', isCardColumn: true },
+      ],
+      text: {
+        mode: 'split',
+        headingShiftX: 88,
+        copyShiftX: 40,
+        copyScaleFrom: 1.357,
+      },
+    },
   },
   {
     key: 'custom-designed-kitchens',
@@ -185,6 +225,19 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
         labelSide: 'bottom',
       },
     ],
+    reveal: {
+      panels: [
+        { top: 0, height: 100, exit: 'down', isCardColumn: true },
+        { top: 0, height: 100, exit: 'up' },
+        { top: 0, height: 100, exit: 'down' },
+        { top: 0, height: 100, exit: 'up' },
+      ],
+      text: {
+        mode: 'combined',
+        groupShiftX: -16,
+        copyScaleFrom: 1.25,
+      },
+    },
   },
   {
     key: 'your-private-sanctuary',

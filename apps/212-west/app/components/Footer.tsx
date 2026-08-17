@@ -1,5 +1,12 @@
 'use client';
 
+import { useLayoutEffect, useRef } from 'react';
+import {
+  gsap,
+  MOTION_CONDITIONS,
+  type MotionConditions,
+} from '@/app/lib/motion';
+
 const WORDMARK = '212west72';
 
 const ADDRESS = '212 West 72nd Street New York, NY 10023';
@@ -43,10 +50,61 @@ function InstagramIcon() {
   );
 }
 
+const CURTAIN_PANELS = [0, 1, 2, 3];
+
+const CURTAIN_DURATION = 1.8;
+
 export default function Footer() {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const panels = section.querySelectorAll<HTMLElement>('[data-footer-panel]');
+    const content = section.querySelector<HTMLElement>('[data-footer-content]');
+    if (!panels.length || !content) return;
+
+    const mm = gsap.matchMedia(section);
+
+    mm.add(MOTION_CONDITIONS, ctx => {
+      const { isDesktop, reduce } = ctx.conditions as MotionConditions;
+      if (!isDesktop) return;
+
+      gsap.set(panels, { yPercent: 0, y: 0 });
+      gsap.set(content, { autoAlpha: 0 });
+
+      const tl = gsap.timeline({
+        defaults: {
+          duration: reduce ? 0 : CURTAIN_DURATION,
+          ease: 'power3.out',
+        },
+        scrollTrigger: {
+          trigger: section,
+          start: 'top 75%',
+          once: true,
+        },
+      });
+
+      tl.to(
+        panels,
+        {
+          yPercent: (index: number) => (index % 2 === 0 ? -100 : 100),
+          y: (index: number) => (index % 2 === 0 ? -2 : 2),
+        },
+        0
+      ).to(content, { autoAlpha: 1 }, 0);
+    });
+
+    return () => mm.revert();
+  }, []);
+
   return (
-    <footer className='relative z-30 w-full bg-[#763718] pt-14 pb-10 lg:pt-[85.5px]'>
-      <div className='mx-auto w-full max-w-360'>
+    <footer
+      ref={sectionRef}
+      className='relative z-30 w-full overflow-hidden bg-[#763718] px-5 pt-14 pb-10 md:px-10 lg:pt-[85.5px] 2xl:px-0'
+    >
+      <div data-footer-content className='mx-auto w-full max-w-360'>
         <div className='relative border border-white px-5 pt-9 pb-11 lg:px-0 lg:pt-[35.5px] lg:pb-[44.25px]'>
           <span
             className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#763718] px-4 whitespace-nowrap lg:px-16 ${WORDMARK_TYPE}`}
@@ -85,6 +143,24 @@ export default function Footer() {
         </div>
 
         <p className={`mt-6 text-center ${COPYRIGHT_TYPE}`}>{COPYRIGHT}</p>
+      </div>
+
+      <div
+        aria-hidden='true'
+        className='pointer-events-none absolute inset-0 z-40 hidden md:block'
+      >
+        {CURTAIN_PANELS.map(index => (
+          <div
+            key={index}
+            data-footer-panel
+            className='absolute inset-y-0 bg-white will-change-transform'
+            style={{
+              left: `${index * 25}%`,
+              width: 'calc(25% + 1px)',
+              transform: 'translateY(0)',
+            }}
+          />
+        ))}
       </div>
     </footer>
   );

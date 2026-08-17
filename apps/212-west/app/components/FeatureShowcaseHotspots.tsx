@@ -1,7 +1,19 @@
+import { useLayoutEffect, useRef } from 'react';
+
 import {
   narrowMarkerPositions,
   type ShowcaseHotspot,
 } from '@/app/data/showcase';
+import {
+  gsap,
+  MOTION_CONDITIONS,
+  ScrollTrigger,
+  type MotionConditions,
+} from '@/app/lib/motion';
+
+const LEGEND_FADE_DISTANCE = 20;
+
+const LEGEND_FADE_DURATION = 0.8;
 
 const CAPSULE_TYPE =
   'font-sans font-medium uppercase whitespace-nowrap text-xs';
@@ -112,11 +124,58 @@ export function ShowcaseRail({ hotspots }: { hotspots: ShowcaseHotspot[] }) {
   );
 }
 
-export function ShowcaseLegend({ hotspots }: { hotspots: ShowcaseHotspot[] }) {
+export function ShowcaseLegend({
+  hotspots,
+  animated = true,
+}: {
+  hotspots: ShowcaseHotspot[];
+  animated?: boolean;
+}) {
+  const listRef = useRef<HTMLOListElement>(null);
   const detailed = hotspots.some(hotspot => hotspot.desc);
+
+  useLayoutEffect(() => {
+    if (!animated) return;
+
+    const list = listRef.current;
+    if (!list) return;
+
+    const items = gsap.utils.toArray<HTMLElement>('[data-legend-item]', list);
+    if (!items.length) return;
+
+    const mm = gsap.matchMedia(list);
+
+    mm.add({ ...MOTION_CONDITIONS, isXl: '(min-width: 1280px)' }, context => {
+      const { reduce, isXl } = context.conditions as MotionConditions & {
+        isXl: boolean;
+      };
+      if (reduce || isXl) return;
+
+      gsap.set(items, { opacity: 0, y: LEGEND_FADE_DISTANCE });
+
+      const timeline = gsap
+        .timeline({
+          paused: true,
+          defaults: { duration: LEGEND_FADE_DURATION, ease: 'power2.out' },
+        })
+        .to(items, { opacity: 1, y: 0, stagger: 0.08 }, 0);
+
+      const trigger = ScrollTrigger.create({
+        trigger: list,
+        start: 'top 85%',
+        once: true,
+        onEnter: () => timeline.play(),
+      });
+
+      return () => trigger.kill();
+    });
+
+    return () => mm.revert();
+  }, [animated]);
 
   return (
     <ol
+      ref={listRef}
       data-legend
       className={`grid gap-x-6 gap-y-6 border-t border-black/10 px-5 py-10 xl:hidden ${
         detailed ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-2 md:grid-cols-3'

@@ -1,4 +1,7 @@
+'use client';
+
 import Image from 'next/image';
+import { useLayoutEffect, useRef } from 'react';
 
 import {
   ShowcaseDots,
@@ -6,7 +9,27 @@ import {
   ShowcaseMarkers,
   ShowcaseRail,
 } from '@/app/components/FeatureShowcaseHotspots';
-import { SHOWCASE_CARD_WIDTH, type ShowcaseSection } from '@/app/data/showcase';
+import {
+  gsap,
+  MOTION_CONDITIONS,
+  ScrollTrigger,
+  type MotionConditions,
+} from '@/app/lib/motion';
+import {
+  SHOWCASE_CARD_WIDTH,
+  type ShowcaseReveal,
+  type ShowcaseSection,
+} from '@/app/data/showcase';
+
+const REVEAL_BEAT_DURATION = 1.6;
+
+const REVEAL_DESIGN_WIDTH = 1440;
+
+const IMAGE_ROTATION = 15;
+
+const IMAGE_ROTATE_SCALE = 1.2;
+
+const CURTAIN_MASK = 'pointer-events-none hidden bg-white xl:block xl:flex-1';
 
 const CHIP_TYPE =
   'font-display font-medium uppercase text-white text-xs leading-none md:text-[13px] xl:text-sm';
@@ -24,11 +47,178 @@ const CARD_ANCHOR: Record<ShowcaseSection['cardAnchor'], string> = {
 };
 
 function ShowcasePanel({ section }: { section: ShowcaseSection }) {
+  const sectionRef = useRef<HTMLElement>(null);
   const right = section.align === 'right';
+  const cardOnRight =
+    section.cardAnchor === 'top-right' || section.cardAnchor === 'bottom-right';
   const hasHotspots = section.hotspots.length > 0;
+  const reveal = section.reveal;
+
+  useLayoutEffect(() => {
+    const root = sectionRef.current;
+    if (!root || !reveal) return;
+
+    const frame = root.querySelector<HTMLElement>('[data-media]');
+    const image = root.querySelector<HTMLElement>('[data-media-image]');
+    const panels = gsap.utils.toArray<HTMLElement>(
+      '[data-curtain-panel]',
+      root
+    );
+    const copy = root.querySelector<HTMLElement>('[data-intro-copy]');
+    const hasCardColumn = reveal.panels.some(panel => panel.isCardColumn);
+    const expectedPanelCount = reveal.panels.length + (hasCardColumn ? 1 : 0);
+    if (!frame || !image || !copy || panels.length !== expectedPanelCount) {
+      return;
+    }
+
+    const mm = gsap.matchMedia(root);
+
+    mm.add(MOTION_CONDITIONS, context => {
+      const { reduce } = context.conditions as MotionConditions;
+
+      const duration = reduce ? 0 : REVEAL_BEAT_DURATION;
+      const factor = frame.offsetWidth / REVEAL_DESIGN_WIDTH;
+
+      gsap.set(image, {
+        rotate: IMAGE_ROTATION,
+        scale: IMAGE_ROTATE_SCALE,
+        transformOrigin: 'center',
+      });
+      gsap.set(copy, {
+        scale: reveal.text.copyScaleFrom,
+        transformOrigin: cardOnRight ? 'top left' : 'top right',
+      });
+
+      const timeline = gsap
+        .timeline({ paused: true, defaults: { duration, ease: 'power2.out' } })
+        .to(image, { rotate: 0, scale: 1 }, 0)
+        .to(copy, { scale: 1 }, 0);
+
+      panels.forEach(panel => {
+        const panelIndex = Number(panel.dataset.panelIndex);
+        timeline.to(
+          panel,
+          {
+            yPercent: reveal.panels[panelIndex].exit === 'down' ? 100 : -100,
+          },
+          0
+        );
+      });
+
+      if (reveal.text.mode === 'split') {
+        const heading = root.querySelector<HTMLElement>('[data-intro-heading]');
+        if (heading) {
+          gsap.set(heading, {
+            x: reveal.text.headingShiftX * factor,
+            autoAlpha: 0,
+          });
+          gsap.set(copy, { x: reveal.text.copyShiftX * factor, autoAlpha: 0 });
+          timeline
+            .to(heading, { x: 0, autoAlpha: 1 }, 0)
+            .to(copy, { x: 0, autoAlpha: 1 }, 0);
+        }
+      } else {
+        const group = root.querySelector<HTMLElement>('[data-intro-group]');
+        if (group) {
+          gsap.set(group, {
+            x: reveal.text.groupShiftX * factor,
+            autoAlpha: 0,
+          });
+          timeline.to(group, { x: 0, autoAlpha: 1 }, 0);
+        }
+      }
+
+      const trigger = ScrollTrigger.create({
+        trigger: root,
+        start: 'top 20%',
+        once: true,
+        onEnter: () => timeline.play(),
+      });
+
+      return () => trigger.kill();
+    });
+
+    return () => mm.revert();
+  }, [reveal, cardOnRight]);
+
+  const chipAndHeading = (
+    <>
+      <span className={`w-fit bg-[#763718] px-3 py-3 ${CHIP_TYPE}`}>
+        {section.chip}
+      </span>
+
+      <h2 className={`mt-6 w-fit ${HEADING_TYPE}`}>
+        {section.titleLines.map(line => (
+          <div key={line} className='w-fit'>
+            {line}
+          </div>
+        ))}
+      </h2>
+    </>
+  );
+
+  const copy = (
+    <p data-intro-copy className={`mt-8 xl:max-w-[22.15vw] ${BODY_TYPE}`}>
+      {section.desc}
+    </p>
+  );
+
+  const bandCount = reveal
+    ? reveal.panels.filter(panel => !panel.isCardColumn).length
+    : 0;
+  const bandWidth = bandCount ? (100 - SHOWCASE_CARD_WIDTH) / bandCount : 0;
+  const mobileWidth = reveal ? 100 / reveal.panels.length : 0;
+  let cursor = 0;
+  const allPanels: Array<
+    ShowcaseReveal['panels'][number] & {
+      index: number;
+      mobileLeft: number;
+      mobileWidth: number;
+      xlLeft: number;
+      xlWidth: number;
+    }
+  > = [];
+  reveal?.panels.forEach((panel, index) => {
+    const xlWidth = panel.isCardColumn ? SHOWCASE_CARD_WIDTH : bandWidth;
+    const xlLeft = cursor;
+    cursor += xlWidth;
+    allPanels.push({
+      ...panel,
+      index,
+      mobileLeft: index * mobileWidth,
+      mobileWidth,
+      xlLeft,
+      xlWidth,
+    });
+  });
+  const cardColumnIndex =
+    reveal?.panels.findIndex(panel => panel.isCardColumn) ?? -1;
+  const cardColumnPanel =
+    cardColumnIndex >= 0 ? reveal!.panels[cardColumnIndex] : undefined;
+  const cardAtBottom = section.cardAnchor === 'bottom-right';
+
+  const cardBody = !reveal ? (
+    <>
+      {chipAndHeading}
+      {copy}
+    </>
+  ) : reveal.text.mode === 'combined' ? (
+    <div data-intro-group className='flex w-fit flex-col'>
+      {chipAndHeading}
+      {copy}
+    </div>
+  ) : (
+    <>
+      <div data-intro-heading className='flex w-fit flex-col'>
+        {chipAndHeading}
+      </div>
+      {copy}
+    </>
+  );
 
   return (
     <section
+      ref={sectionRef}
       id={section.key}
       data-panel
       data-showcase
@@ -38,15 +228,16 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
     >
       <div
         data-media
-        className='relative w-full bg-[#0F0F0E]/5 xl:absolute xl:inset-0 xl:h-full'
+        className='relative w-full overflow-hidden bg-[#0F0F0E]/5 xl:absolute xl:inset-0 xl:h-full'
       >
         <Image
+          data-media-image=''
           src={section.image}
           alt={section.imageAlt}
           width={section.imageWidth}
           height={section.imageHeight}
           sizes='100vw'
-          className='h-auto w-full object-contain xl:absolute xl:inset-0 xl:h-full xl:object-cover'
+          className='h-auto w-full object-contain will-change-transform xl:absolute xl:inset-0 xl:h-full xl:object-cover'
         />
         {hasHotspots && (
           <>
@@ -59,31 +250,69 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
             <ShowcaseRail hotspots={section.hotspots} />
           </>
         )}
+
+        {allPanels.map(panel => (
+          <div
+            key={panel.index}
+            data-curtain-panel
+            data-panel-index={panel.index}
+            className={`pointer-events-none absolute z-10 bg-white left-(--pl-m) w-(--pw-m) ${
+              panel.isCardColumn
+                ? 'xl:hidden'
+                : 'xl:left-(--pl-x) xl:w-(--pw-x)'
+            }`}
+            style={{
+              top: `calc(${panel.top}% - 1px)`,
+              height: `calc(${panel.height}% + 2px)`,
+              ['--pl-m' as string]: `calc(${panel.mobileLeft}% - 1px)`,
+              ['--pw-m' as string]: `calc(${panel.mobileWidth}% + 2px)`,
+              ...(panel.isCardColumn
+                ? {}
+                : {
+                    ['--pl-x' as string]: `calc(${panel.xlLeft}% - 1px)`,
+                    ['--pw-x' as string]: `calc(${panel.xlWidth}% + 2px)`,
+                  }),
+            }}
+          />
+        ))}
       </div>
 
-      <div
-        data-card
-        style={{ ['--card-w' as string]: `${SHOWCASE_CARD_WIDTH}%` }}
-        className={`relative z-20 flex w-full flex-col bg-white px-5 py-10 xl:absolute xl:w-(--card-w) xl:p-[max(2.78vw,28px)] ${
-          CARD_ANCHOR[section.cardAnchor]
-        } ${right ? 'xl:items-end xl:text-right' : ''}`}
-      >
-        <span className={`w-fit bg-[#763718] px-3 py-3 ${CHIP_TYPE}`}>
-          {section.chip}
-        </span>
+      {cardColumnPanel ? (
+        <div
+          style={{ ['--card-w' as string]: `${SHOWCASE_CARD_WIDTH}%` }}
+          className={`relative z-20 flex w-full flex-col xl:absolute xl:top-0 xl:h-full xl:w-(--card-w) ${
+            cardOnRight ? 'xl:right-0' : 'xl:left-0'
+          } ${cardAtBottom ? 'xl:flex-col-reverse' : ''}`}
+        >
+          <div
+            data-card
+            className={`relative flex w-full flex-col bg-white px-5 py-10 xl:p-[max(2.78vw,28px)] ${
+              right ? 'xl:items-end xl:text-right' : ''
+            }`}
+          >
+            {cardBody}
+          </div>
+          <div
+            data-curtain-panel
+            data-panel-index={cardColumnIndex}
+            className={CURTAIN_MASK}
+          />
+        </div>
+      ) : (
+        <div
+          data-card
+          style={{ ['--card-w' as string]: `${SHOWCASE_CARD_WIDTH}%` }}
+          className={`relative z-20 flex w-full flex-col bg-white px-5 py-10 xl:absolute xl:w-(--card-w) xl:p-[max(2.78vw,28px)] ${
+            CARD_ANCHOR[section.cardAnchor]
+          } ${right ? 'xl:items-end xl:text-right' : ''}`}
+        >
+          {cardBody}
+        </div>
+      )}
 
-        <h2 className={`mt-6 w-fit ${HEADING_TYPE}`}>
-          {section.titleLines.map(line => (
-            <div key={line} className='w-fit'>
-              {line}
-            </div>
-          ))}
-        </h2>
-
-        <p className={`mt-8 xl:max-w-[22.15vw] ${BODY_TYPE}`}>{section.desc}</p>
-      </div>
-
-      {hasHotspots && <ShowcaseLegend hotspots={section.hotspots} />}
+      {hasHotspots && (
+        <ShowcaseLegend hotspots={section.hotspots} animated={Boolean(reveal)} />
+      )}
     </section>
   );
 }
