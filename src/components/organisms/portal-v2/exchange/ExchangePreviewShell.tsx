@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Monitor,
+  PenLine,
   Smartphone,
   X,
 } from 'lucide-react';
@@ -45,6 +46,12 @@ type ExchangePreviewShellProps = {
   renderStage?: (device: Device) => ReactNode;
   /** Device the shell opens with. Defaults to desktop. */
   initialDevice?: Device;
+  /**
+   * Opens the canvas editor for this item. Optional and Experiences-only —
+   * Exchange listings aren't live-canvas editable, so the button only
+   * renders when a caller passes this.
+   */
+  onEdit?: () => void;
 };
 
 export const ExchangePreviewShell = ({
@@ -55,6 +62,7 @@ export const ExchangePreviewShell = ({
   onNavigate,
   renderStage,
   initialDevice = 'desktop',
+  onEdit,
 }: ExchangePreviewShellProps) => {
   const t = useTranslations('portalV2.preview');
   const [device, setDevice] = useState<Device>(initialDevice);
@@ -266,6 +274,29 @@ export const ExchangePreviewShell = ({
             <Monitor className='size-3.5' strokeWidth={2} aria-hidden />
           </button>
         </div>
+
+        {onEdit ? (
+          <button
+            type='button'
+            aria-label={t('previewEdit')}
+            title={t('previewEdit')}
+            tabIndex={0}
+            onClick={onEdit}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onEdit();
+              }
+            }}
+            className={cn(
+              'grid size-8 shrink-0 place-items-center rounded-[var(--pv2-r)]',
+              'text-[var(--pv2-mut)] hover:bg-[var(--pv2-canvas)] hover:text-[var(--pv2-ink)]',
+              'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2'
+            )}
+          >
+            <PenLine className='size-3.5' strokeWidth={2.2} aria-hidden />
+          </button>
+        ) : null}
 
         <button
           type='button'

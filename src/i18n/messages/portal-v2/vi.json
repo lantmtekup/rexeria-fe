@@ -193,6 +193,7 @@
       "previewDeviceMobile": "Mobile",
       "previewDeviceDesktop": "Desktop",
       "previewClose": "Đóng xem trước",
+      "previewEdit": "Chỉnh sửa",
       "previewMissingSlug": "Landing này chưa có slug công khai để xem trước.",
       "previewMissingBlockId": "Listing này chưa có block id để xem trước.",
       "previewUnavailable": "Không thể xem trước listing này.",
