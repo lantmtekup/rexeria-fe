@@ -13,6 +13,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 
@@ -106,6 +107,61 @@ const Eyebrow = ({ children }: { children: ReactNode }) => (
   </p>
 );
 
+const parseNumber = (raw: string) => {
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const formatNumber = (n: number) => (n ? String(n) : '');
+
+/**
+ * A plain `value={formatNumber(n)}` input erases whatever the user is mid-
+ * typing on every keystroke: "6." parses to the number 6, which reformats
+ * back to the string "6" — the "." the user just typed never makes it to the
+ * screen, so "6.2" collapses into "62". This keeps the raw text as local
+ * state and only reformats from the outside (cancel/reset, switching rows)
+ * when `value` changes for a reason other than this field's own `onCommit`.
+ */
+const NumberField = ({
+  value,
+  onCommit,
+  inputMode,
+  placeholder,
+  className,
+}: {
+  value: number;
+  onCommit: (n: number) => void;
+  inputMode?: 'decimal' | 'numeric';
+  placeholder?: string;
+  className?: string;
+}) => {
+  const [text, setText] = useState(() => formatNumber(value));
+  const lastCommitted = useRef(value);
+
+  useEffect(() => {
+    if (value !== lastCommitted.current) {
+      lastCommitted.current = value;
+      setText(formatNumber(value));
+    }
+  }, [value]);
+
+  return (
+    <TextInput
+      inputMode={inputMode}
+      value={text}
+      placeholder={placeholder}
+      className={className}
+      onChange={e => {
+        const raw = e.target.value;
+        setText(raw);
+        const n = parseNumber(raw);
+        lastCommitted.current = n;
+        onCommit(n);
+      }}
+    />
+  );
+};
+
 export const ProductDetailsPanel = ({
   product: p,
   assets,
@@ -180,11 +236,6 @@ export const ProductDetailsPanel = ({
   };
 
   const optionName = p.options[0]?.name ?? '';
-  const numberValue = (n: number) => (n ? String(n) : '');
-  const toNumber = (raw: string) => {
-    const n = Number(raw);
-    return Number.isFinite(n) ? n : 0;
-  };
 
   return (
     <div className='grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_268px]'>
@@ -546,42 +597,30 @@ export const ProductDetailsPanel = ({
                           />
                         </td>
                         <td className='border-b border-[var(--pv2-hair)] p-1.5'>
-                          <TextInput
+                          <NumberField
                             inputMode='decimal'
-                            value={numberValue(v.price)}
+                            value={v.price}
                             placeholder='52'
                             className='px-2 py-1 text-right text-[12px]'
-                            onChange={e =>
-                              patchVariant(vi, {
-                                price: toNumber(e.target.value),
-                              })
-                            }
+                            onCommit={price => patchVariant(vi, { price })}
                           />
                         </td>
                         <td className='border-b border-[var(--pv2-hair)] p-1.5'>
-                          <TextInput
+                          <NumberField
                             inputMode='decimal'
-                            value={numberValue(v.cost)}
+                            value={v.cost}
                             placeholder='14.20'
                             className='px-2 py-1 text-right text-[12px]'
-                            onChange={e =>
-                              patchVariant(vi, {
-                                cost: toNumber(e.target.value),
-                              })
-                            }
+                            onCommit={cost => patchVariant(vi, { cost })}
                           />
                         </td>
                         <td className='border-b border-[var(--pv2-hair)] p-1.5'>
-                          <TextInput
+                          <NumberField
                             inputMode='numeric'
-                            value={numberValue(v.qty)}
+                            value={v.qty}
                             placeholder='0'
                             className='px-2 py-1 text-right text-[12px]'
-                            onChange={e =>
-                              patchVariant(vi, {
-                                qty: toNumber(e.target.value),
-                              })
-                            }
+                            onCommit={qty => patchVariant(vi, { qty })}
                           />
                         </td>
                         <td className='border-b border-[var(--pv2-hair)] p-1.5'>
@@ -654,13 +693,11 @@ export const ProductDetailsPanel = ({
           {editing && first ? (
             <div className='grid gap-x-3.5 sm:grid-cols-2'>
               <Field label={t('fieldPrice')}>
-                <TextInput
+                <NumberField
                   inputMode='decimal'
-                  value={numberValue(first.price)}
+                  value={first.price}
                   placeholder='52.00'
-                  onChange={e =>
-                    patchFirstVariant({ price: toNumber(e.target.value) })
-                  }
+                  onCommit={price => patchFirstVariant({ price })}
                 />
                 {/* The catalogue price arrives as text on a feature, not as a
                     number this field can hold — say where the read view's
@@ -671,23 +708,19 @@ export const ProductDetailsPanel = ({
                 ) : null}
               </Field>
               <Field label={t('fieldCompareAt')}>
-                <TextInput
+                <NumberField
                   inputMode='decimal'
-                  value={numberValue(first.compareAt)}
+                  value={first.compareAt}
                   placeholder={t('optional')}
-                  onChange={e =>
-                    patchFirstVariant({ compareAt: toNumber(e.target.value) })
-                  }
+                  onCommit={compareAt => patchFirstVariant({ compareAt })}
                 />
               </Field>
               <Field label={t('fieldCost')}>
-                <TextInput
+                <NumberField
                   inputMode='decimal'
-                  value={numberValue(first.cost)}
+                  value={first.cost}
                   placeholder='14.20'
-                  onChange={e =>
-                    patchFirstVariant({ cost: toNumber(e.target.value) })
-                  }
+                  onCommit={cost => patchFirstVariant({ cost })}
                 />
               </Field>
               <Field label={t('fieldChargeTax')}>
@@ -751,13 +784,11 @@ export const ProductDetailsPanel = ({
                 </TextSelect>
               </Field>
               <Field label={t('fieldWeight')}>
-                <TextInput
+                <NumberField
                   inputMode='numeric'
-                  value={numberValue(first.grams)}
+                  value={first.grams}
                   placeholder='30'
-                  onChange={e =>
-                    patchFirstVariant({ grams: toNumber(e.target.value) })
-                  }
+                  onCommit={grams => patchFirstVariant({ grams })}
                 />
               </Field>
               <Field label={t('fieldRequiresShipping')}>
