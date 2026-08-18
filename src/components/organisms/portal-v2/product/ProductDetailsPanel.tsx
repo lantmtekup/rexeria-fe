@@ -146,6 +146,31 @@ export const ProductDetailsPanel = ({
     });
   };
 
+  const addVariant = () => {
+    patch({
+      variants: [
+        ...p.variants,
+        {
+          sku: '',
+          opt1: '',
+          barcode: '',
+          price: 0,
+          compareAt: 0,
+          cost: 0,
+          qty: 0,
+          policy: 'deny',
+          grams: 0,
+        },
+      ],
+    });
+    toast.message(t('toastVariantAdded'));
+  };
+
+  const removeVariant = (index: number) => {
+    patch({ variants: p.variants.filter((_, i) => i !== index) });
+    toast.message(t('toastVariantRemoved'));
+  };
+
   const toggleChannel = (channel: string) => {
     patch({
       channels: p.channels.includes(channel)
@@ -435,11 +460,7 @@ export const ProductDetailsPanel = ({
           title={t('boxVariants')}
           action={
             editing ? (
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={() => toast.message(t('toastVariantAdded'))}
-              >
+              <Button variant='ghost' size='sm' onClick={addVariant}>
                 <Plus className='size-3' strokeWidth={2.6} aria-hidden />
                 {t('addVariant')}
               </Button>
@@ -568,9 +589,7 @@ export const ProductDetailsPanel = ({
                             type='button'
                             title={t('removeVariant')}
                             aria-label={t('removeVariant')}
-                            onClick={() =>
-                              toast.message(t('toastVariantRemoved'))
-                            }
+                            onClick={() => removeVariant(vi)}
                             className='grid size-7 cursor-pointer place-items-center rounded-[7px] text-[var(--pv2-mut)] hover:bg-[color-mix(in_srgb,var(--pv2-error)_10%,transparent)] hover:text-[var(--pv2-error)]'
                           >
                             <Trash2
