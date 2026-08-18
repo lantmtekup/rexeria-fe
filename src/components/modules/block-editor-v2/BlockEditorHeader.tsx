@@ -6,14 +6,12 @@ import * as Popover from '@radix-ui/react-popover';
 import {
   ArrowLeft,
   Bookmark,
-  Clapperboard,
   Copy,
   Eye,
   Globe2,
   ImagePlus,
   MoreHorizontal,
   Package,
-  Play,
   Redo2,
   Save,
   Undo2,
@@ -63,6 +61,9 @@ interface BlockEditorHeaderProps {
   /** Commit draft → immutable version (template mode). */
   onSaveVersion?: () => void;
   savingVersion?: boolean;
+  /** Không còn nút trong header (đã dời hẳn vào sidebar motion panel) — vẫn
+   *  giữ trong props vì cả hai caller (`BlockEditorV2`, `CanvasTemplate`)
+   *  đang truyền vào, xoá khỏi type sẽ đổi luôn API của cả hai chỗ đó. */
   onPlayMotionPreview: () => void;
   onOpenMotionEditor: () => void;
   canUndo: boolean;
@@ -106,11 +107,14 @@ export function BlockEditorHeader({
   committedVersion,
   onSaveVersion,
   savingVersion,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onPlayMotionPreview,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onOpenMotionEditor,
   canUndo,
   canRedo,
   isPublished,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isMotionPreviewing,
   backHref = '/canvas-templates',
   onBack,
@@ -201,24 +205,6 @@ export function BlockEditorHeader({
             AI
           </SegmentedButton>
         </SegmentedGroup>
-
-        <Divider />
-
-        <IconBtn
-          onClick={onOpenMotionEditor}
-          label='Mở trình chỉnh motion'
-          data-testid='header-motion-editor'
-        >
-          <Clapperboard className='size-3.5' />
-        </IconBtn>
-        <IconBtn
-          onClick={onPlayMotionPreview}
-          label='Phát thử motion (Space)'
-          data-testid='header-motion-preview'
-          className={cn(isMotionPreviewing && 'bg-indigo-100 text-indigo-700')}
-        >
-          <Play className='size-3.5' />
-        </IconBtn>
 
         <Divider />
 
