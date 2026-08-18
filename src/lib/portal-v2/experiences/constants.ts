@@ -30,8 +30,10 @@ export const EXPERIENCE_STATES: {
   // thống. Nay `experienceLibrary` lọc theo `brand_id` trước khi trả về, nên ở
   // đây chỉ còn hàng của brand — đo thật: 3, không phải 79.
   { id: 'template', labelKey: 'stateTemplate' },
-  // KHÔNG có tab `block`: màn này không nạp block, nên tab đó vĩnh viễn đếm 0.
-  // Một tab luôn rỗng không nói "bạn chưa có gì" — nó nói "chỗ này hỏng".
+  // Block CỦA CHÍNH BRAND — bản fork qua Exchange (`exchange.add`) sống ở đây.
+  // `experienceLibrary` lọc theo brand giống hệt nhánh template ở trên, nên tab
+  // này chỉ đếm block của brand, không kéo theo ~146 block hệ thống.
+  { id: 'block', labelKey: 'stateBlock' },
 ];
 
 /** `DATA.expCategories` (~L5480) — what KIND of artifact this is. */

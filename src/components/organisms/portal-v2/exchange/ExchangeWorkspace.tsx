@@ -316,7 +316,22 @@ export const ExchangeWorkspace = ({
 
       setInstalling(true);
       try {
-        if (listing.source === 'block') {
+        if (listing.exchangeItemId) {
+          // Món trên CHỢ (kể cả kind='block') — hợp đồng Exchange cố ý không
+          // trả source id (doc của RxExchangeItemDetail), nên không dựng được
+          // block/page từ nó trực tiếp; phải đi qua endpoint sinh ra đúng cho
+          // việc này. Nó luôn fork thành một Experience mới sang brand của
+          // người gọi, kể cả khi nguồn là block — đây PHẢI check trước nhánh
+          // `source === 'block'` bên dưới, vì item block trên chợ cũng mang
+          // `source: 'block'` nhưng không có `blockId`.
+          const exp = await rexerV2Api.exchange.add(listing.exchangeItemId);
+          setSession(prev => ({
+            ...prev,
+            added: { ...prev.added, [listing.id]: exp.id },
+          }));
+        } else if (listing.source === 'block') {
+          // Block của chính kho nền tảng (`GET /v1/blocks`), không qua chợ —
+          // clone thẳng thành một Block mới trong thư viện block của brand.
           if (!listing.blockId) {
             throw new Error('Missing block id');
           }
@@ -326,16 +341,6 @@ export const ExchangeWorkspace = ({
           setSession(prev => ({
             ...prev,
             added: { ...prev.added, [listing.id]: block.id },
-          }));
-        } else if (listing.exchangeItemId) {
-          // Món trên CHỢ. Hợp đồng Exchange cố ý không trả source id (doc của
-          // RxExchangeItemDetail), nên không dựng được page từ nó — phải đi
-          // qua endpoint sinh ra đúng cho việc này, và nó tự fork sang brand
-          // của người gọi.
-          const exp = await rexerV2Api.exchange.add(listing.exchangeItemId);
-          setSession(prev => ({
-            ...prev,
-            added: { ...prev.added, [listing.id]: exp.id },
           }));
         } else {
           // Template hệ thống. BE nhận `template_id`, KHÔNG nhận

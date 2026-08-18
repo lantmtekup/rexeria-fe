@@ -83,13 +83,18 @@ export const findById = (
 ): ExperienceView | null => (id ? (list.find(e => e.id === id) ?? null) : null);
 
 /**
- * Where the canvas editor lives for this page.
+ * Where the canvas editor lives for this row.
  *
  * `slug || id` because a page created without a slug still has to be openable,
- * and the editor route resolves both shapes.
+ * and the editor route resolves both shapes. A `block`-state row has no page
+ * behind it at all — `?kind=block` tells `CanvasEditor` to load
+ * `blocks.get(id)` instead of resolving a page/template (see
+ * `CanvasEditor.tsx`'s two-mode contract).
  */
-export const canvasEditorHref = (experience: ExperienceView): string =>
-  `/portal-v2/${encodeURIComponent(experience.slug || experience.id)}/canvas`;
+export const canvasEditorHref = (experience: ExperienceView): string => {
+  const base = `/portal-v2/${encodeURIComponent(experience.slug || experience.id)}/canvas`;
+  return experience.state === 'block' ? `${base}?kind=block` : base;
+};
 
 /** An external landing has no canvas of ours to open. */
 export const canEditCanvas = (experience: ExperienceView): boolean =>

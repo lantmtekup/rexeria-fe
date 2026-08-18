@@ -48,6 +48,9 @@ export const COPY_STATES = [
 /** `GET /v1/templates` — 79 bản ghi thật, một trang là đủ. */
 const TEMPLATE_LOOKUP_LIMIT = 200;
 
+/** `GET /v1/blocks` — đo thật ~146 bản ghi (brand + hệ thống gộp), một trang là đủ. */
+const BLOCK_LOOKUP_LIMIT = 200;
+
 /**
  * Id của những template DO CHÍNH BRAND NÀY sở hữu.
  *
@@ -78,22 +81,41 @@ export const fetchOwnTemplateIds = async (): Promise<Set<string> | null> => {
 };
 
 /**
- * Một `state`, lặp hết trang của nó.
+ * Id của những block DO CHÍNH BRAND NÀY sở hữu — cùng lý do với
+ * `fetchOwnTemplateIds`: `GET /v1/blocks` (v1) có `scope`/`brand_id`, còn
+ * `RxExperience` (v2) thì không, nên phải tra chéo sang v1 để tách hàng của
+ * brand khỏi hàng hệ thống (`scope: 'system'`).
+ *
+ * Hỏng thì trả `null` (KHÔNG phải set rỗng) — cùng lý do: rỗng đọc như "brand
+ * không sở hữu block nào" và ẩn luôn cả block người dùng vừa fork từ Exchange.
+ */
+export const fetchOwnBlockIds = async (): Promise<Set<string> | null> => {
+  try {
+    const res = await rexerApi.blocks.list({
+      page: 1,
+      limit: BLOCK_LOOKUP_LIMIT,
+    });
+    return new Set(
+      (res.items ?? []).filter(b => b.scope !== 'system').map(b => b.id)
+    );
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Một truy vấn `/v1/experiences`, lặp hết trang của nó.
  *
  * Export ra module-scope (thay vì closure riêng trong `fetchExperienceLibrary`)
  * để `fetchCampaignExperienceLibrary` dùng chung đúng một đường lấy dữ liệu
  * brand-scoped — tránh lặp lại (và lệch) cùng một logic phân trang ở hai nơi.
  */
-export const fetchExperienceState = async (
-  common: { q?: string; brand_id?: string },
-  state: string,
-  sort?: string
+const fetchExperiencePages = async (
+  query: Record<string, string | number | undefined>
 ): Promise<RxExperience[]> => {
   const page = (n: number) =>
     rexerV2Api.experiences.list({
-      ...common,
-      state,
-      ...(sort ? { sort } : {}),
+      ...query,
       page: n,
       page_size: SERVER_PAGE_MAX,
     });
@@ -113,6 +135,24 @@ export const fetchExperienceState = async (
   }
   return items;
 };
+
+export const fetchExperienceState = (
+  common: { q?: string; brand_id?: string },
+  state: string,
+  sort?: string
+): Promise<RxExperience[]> =>
+  fetchExperiencePages({ ...common, state, ...(sort ? { sort } : {}) });
+
+/**
+ * `category: 'blocks'` — chỉ nạp khi caller đã tự lọc lại theo `ownIds`
+ * (`fetchOwnBlockIds`): BE trả brand + hệ thống gộp (`ListBlocks`,
+ * `brand_id = ? OR scope = system`), và `RxExperience` không mang `brand_id`
+ * để tách ở đây.
+ */
+const fetchExperienceCategory = (
+  common: { q?: string; brand_id?: string },
+  category: string
+): Promise<RxExperience[]> => fetchExperiencePages({ ...common, category });
 
 /**
  * Thư viện trải nghiệm ← `GET /v1/experiences`.
@@ -168,6 +208,20 @@ export const fetchExperienceLibrary = async (
   };
 
   /**
+   * Block CỦA CHÍNH BRAND — nơi bản fork từ Exchange (`exchange.add` trên một
+   * item `kind: 'block'`, xem `ExchangeWorkspace.installListing`) sống sau khi
+   * thêm. Cùng khuôn với `fetchOwnTemplates`: tra `ownIds` trước ở v1, rồi lọc
+   * lại nhánh `category: 'blocks'` của v2 — vì `RxExperience` không mang
+   * `brand_id` để tự tách brand khỏi hệ thống.
+   */
+  const fetchOwnBlocks = async (): Promise<RxExperience[]> => {
+    const ownIds = await fetchOwnBlockIds();
+    if (!ownIds || ownIds.size === 0) return [];
+    const all = await fetchExperienceCategory(common, 'blocks');
+    return all.filter(x => ownIds.has(x.id));
+  };
+
+  /**
    * Chế độ xếp hạng — MỘT lời gọi `state: 'all'` rồi lọc ở FE.
    *
    * Không thể giữ nhiều lời gọi rồi nối lại: BE xếp hạng TRONG từng phản hồi,
@@ -176,17 +230,18 @@ export const fetchExperienceLibrary = async (
    * ngược với điều cái nút hứa.
    *
    * `state: 'all'` gộp cả template hệ thống và block (đo thật: 320 bản ghi),
-   * nên phải lọc lại: giữ bản copy, cộng template của chính brand. Lọc GIỮ
-   * NGUYÊN thứ tự, nên hạng chung vẫn đúng sau khi lọc.
+   * nên phải lọc lại: giữ bản copy, cộng template + block của chính brand. Lọc
+   * GIỮ NGUYÊN thứ tự, nên hạng chung vẫn đúng sau khi lọc.
    */
   const fetchRanked = async (): Promise<RxExperience[]> => {
-    // `fetchState('all', ...)` cũng không cần `ownIds` — chạy song song, chỉ
-    // lọc kết quả cuối cần đợi cả hai.
-    const [ownIds, all] = await Promise.all([
+    // Ba lookup này độc lập — chạy song song, chỉ lọc kết quả cuối cần đợi cả ba.
+    const [ownTemplateIds, ownBlockIds, all] = await Promise.all([
       fetchOwnTemplateIds(),
+      fetchOwnBlockIds(),
       fetchState('all', 'shelf_rank'),
     ]);
-    return all.filter(x => x.kind === 'copy' || ownIds?.has(x.id));
+    const ownIds = new Set([...(ownTemplateIds ?? []), ...(ownBlockIds ?? [])]);
+    return all.filter(x => x.kind === 'copy' || ownIds.has(x.id));
   };
 
   try {
@@ -198,6 +253,7 @@ export const fetchExperienceLibrary = async (
     const chunks = await Promise.all([
       ...COPY_STATES.map(s => fetchState(s)),
       fetchOwnTemplates(),
+      fetchOwnBlocks(),
     ]);
 
     // Khử trùng theo id: các state đáng lẽ rời nhau, nhưng dựa vào điều đó là
