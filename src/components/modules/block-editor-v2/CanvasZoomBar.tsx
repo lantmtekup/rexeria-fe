@@ -10,7 +10,7 @@ import {
   clampCanvasZoom,
 } from './canvasZoom';
 
-// import { DeviceSwitcher } from './DeviceSwitcher';
+import { DeviceSwitcher } from './DeviceSwitcher';
 import type { Device } from '@/components/modules/block-editor/types';
 
 const ZOOM_STEP = 5;
@@ -47,9 +47,7 @@ export function CanvasZoomBar({
   onChange,
   onFitToFrame,
   align = 'right',
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   device,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onDeviceChange,
   mode,
   onModeChange,
@@ -65,7 +63,7 @@ export function CanvasZoomBar({
         {mode && onModeChange && (
           <ModeSwitch mode={mode} onChange={onModeChange} />
         )}
-        {/* {device && onDeviceChange && (
+        {device && onDeviceChange && (
           <div className='flex shrink-0 items-center rounded-lg bg-[var(--pv2-paper)] px-1.5 py-1.5 shadow-[var(--pv2-sh-soft)]'>
             <DeviceSwitcher
               device={device}
@@ -73,7 +71,7 @@ export function CanvasZoomBar({
               variant='editor'
             />
           </div>
-        )} */}
+        )}
         <ZoomControls
           zoom={zoom}
           onChange={onChange}
