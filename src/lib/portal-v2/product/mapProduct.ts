@@ -66,12 +66,23 @@ export const relativeUpdated = (
   return new Date(then).toISOString().slice(0, 10);
 };
 
-/** `assetsOfProduct()` is what feeds media — a cover has to exist as an asset. */
+/**
+ * `assetsOfProduct()` is what feeds media — a cover has to exist as an asset.
+ *
+ * `id` phải khớp CHÍNH XÁC với `p.cover` mà `mapBeProductToPortal` tính ở
+ * dưới (`p.cover_media_id ?? coverAssetId(p.id)`). Trước đây hàm này luôn
+ * gắn id tổng hợp `coverAssetId(p.id)` bất kể `cover_media_id` có hay
+ * không — sản phẩm nào đã có ảnh bìa thật (chọn qua Cover Picker) thì
+ * `productCover()` tìm id thật trong `assets` list và không thấy, ảnh biến
+ * mất khỏi lưới/bảng ngay sau khi tải trang. Mở modal sản phẩm ra lại thì
+ * hiện vì `fetchProductMedia` (gọi khi mở modal) trả về asset đúng id thật,
+ * ghi đè state `assets` dùng chung — nhưng reload trang thì mất lại từ đầu.
+ */
 export const productAssetsFromBe = (products: BEProduct[]): ProductAsset[] =>
   products
     .filter(p => !!p.thumbnail_url)
     .map(p => ({
-      id: coverAssetId(p.id),
+      id: p.cover_media_id ?? coverAssetId(p.id),
       name: `${p.name} cover`,
       kind: 'IMG' as const,
       grad: gradientForId(p.id),
@@ -270,8 +281,7 @@ export const mapBeProductToPortal = (
   cover: p.cover_media_id ?? (p.thumbnail_url ? coverAssetId(p.id) : null),
   grad: gradientForId(p.id),
   priceText: priceTextFromBe(p),
-  /* No BE counterpart: sales channels, benefits, competitors, disclaimers, SEO. */
-  channels: [],
+  channels: p.channels ?? [],
   // `p.options` là nguồn v2 (`toBeProduct.ts` ghi ngược từ đây); `p.sizes` chỉ
   // còn là fallback cho sản phẩm chưa có `options` v2 nào trên BE.
   options: p.options?.length
@@ -281,7 +291,10 @@ export const mapBeProductToPortal = (
       : [],
   variants: variantsFromBe(p),
   value: valueFromBe(p),
-  seo: { title: '', desc: '' },
+  seo: {
+    title: p.seo?.title ?? '',
+    desc: p.seo?.description ?? '',
+  },
 });
 
 /* `p.ingredients` and `p.colors` are deliberately unmapped: this module has no
