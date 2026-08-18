@@ -1007,6 +1007,9 @@ export const ExperiencesWorkspace = ({
         neighbors={previewNeighborItems}
         onClose={handleClosePreview}
         onNavigate={handlePreviewNavigate}
+        onEdit={
+          active && canEditCanvas(active) ? () => handleEdit(active) : undefined
+        }
         renderStage={device =>
           previewEmpty ? (
             <div className='grid h-full place-items-center px-8 text-center text-[13px] text-[var(--pv2-mut)]'>

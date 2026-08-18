@@ -193,6 +193,7 @@
       "previewDeviceMobile": "Mobile",
       "previewDeviceDesktop": "Desktop",
       "previewClose": "Close preview",
+      "previewEdit": "Edit",
       "previewMissingSlug": "This landing has no public slug to preview.",
       "previewMissingBlockId": "This listing has no block id to preview.",
       "previewUnavailable": "Preview is unavailable for this listing.",
