@@ -35,6 +35,19 @@ export const AssetThumb = ({
     );
   }
 
+  if (asset.kind === 'VID' && asset.url && !errored) {
+    return (
+      <video
+        src={asset.url}
+        muted
+        playsInline
+        preload='metadata'
+        onError={() => setErrored(true)}
+        className={cn('object-cover', className)}
+      />
+    );
+  }
+
   return (
     <div
       className={cn('flex items-center justify-center text-white', className)}
