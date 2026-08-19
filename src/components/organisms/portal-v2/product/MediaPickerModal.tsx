@@ -9,7 +9,12 @@ import { Modal } from '@/components/molecules/portal-v2/Modal';
 import { cn } from '@/lib/cn';
 import { listLibraryImages } from '@/services/portal-v2/productMediaUpload';
 
-type LibraryImage = { id: string; name: string; url?: string };
+type LibraryImage = {
+  id: string;
+  name: string;
+  url?: string;
+  kind: 'image' | 'video';
+};
 
 /**
  * Chọn ảnh CÓ SẴN trong thư viện để gắn vào sản phẩm.
@@ -114,7 +119,15 @@ export const MediaPickerModal = ({
                     : 'border-[var(--pv2-hair)] hover:border-[var(--pv2-slate-300)]'
                 )}
               >
-                {m.url ? (
+                {m.url && m.kind === 'video' ? (
+                  <video
+                    src={m.url}
+                    muted
+                    playsInline
+                    preload='metadata'
+                    className='size-full object-cover'
+                  />
+                ) : m.url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={m.url}

@@ -4,6 +4,9 @@ import { type ReactNode, useState } from 'react';
 
 import { cn } from '@/lib/cn';
 
+/** Không có `kind` tới tận đây — đoán qua đuôi file thay vì đổi prop mọi nơi gọi. */
+const isVideoSrc = (url: string) => /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(url);
+
 type ProductImageProps = {
   src?: string | null;
   /** Empty by default — every call site sits next to the product's title. */
@@ -36,6 +39,20 @@ export const ProductImage = ({
   const [broken, setBroken] = useState<string | null>(null);
 
   if (!src || broken === src) return <>{children}</>;
+
+  if (isVideoSrc(src)) {
+    return (
+      <video
+        src={src}
+        muted
+        loop
+        playsInline
+        autoPlay
+        className={cn('absolute inset-0 size-full', className)}
+        onError={() => setBroken(src)}
+      />
+    );
+  }
 
   return (
     // eslint-disable-next-line @next/next/no-img-element -- open-ended host list, see above

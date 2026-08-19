@@ -144,17 +144,18 @@ export const attachExistingMedia = async (
   });
 };
 
-/** Ảnh trong thư viện chưa gắn vào sản phẩm đang mở — để chọn. */
+/** Ảnh/video trong thư viện chưa gắn vào sản phẩm đang mở — để chọn. */
 export const listLibraryImages = async (): Promise<
-  { id: string; name: string; url?: string }[]
+  { id: string; name: string; url?: string; kind: 'image' | 'video' }[]
 > => {
   const res = await rexerApi.media.list({ limit: 100 });
   return (res.items ?? [])
-    .filter(a => a.media_type === 'image')
+    .filter(a => a.media_type === 'image' || a.media_type === 'video')
     .map(a => ({
       id: a.id,
       name: a.original_filename,
       url: a.public_url,
+      kind: a.media_type === 'video' ? ('video' as const) : ('image' as const),
     }));
 };
 
