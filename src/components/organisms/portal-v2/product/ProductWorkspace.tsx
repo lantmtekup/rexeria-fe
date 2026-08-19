@@ -2,7 +2,7 @@
 
 import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { CoverPickerModal } from '@/components/organisms/portal-v2/product/CoverPickerModal';
@@ -141,6 +141,12 @@ export const ProductWorkspace = ({
   const [modal, setModal] = useState<ModalState>(null);
   const [draft, setDraft] = useState<Product | null>(null);
   const [modalTab, setModalTab] = useState<ProductModalTab>('details');
+  /**
+   * Id sản phẩm nháp tạo NGẦM khi người dùng bấm Media lúc còn đang ở form
+   * Tạo mới (`ensureDraftProduct`). Còn set nghĩa là chưa ai bấm Lưu — Huỷ
+   * form thì xoá luôn bản này, không để lại nháp mồ côi trong danh sách.
+   */
+  const autoCreatedDraftIdRef = useRef<string | null>(null);
 
   /**
    * Asset của catalogue. Là STATE chứ không phải prop thuần: tải ảnh mới xong
@@ -175,9 +181,17 @@ export const ProductWorkspace = ({
   };
 
   const closeModal = () => {
+    // Huỷ form mà chưa bấm Lưu: bản nháp `ensureDraftProduct` tạo ngầm lúc
+    // bấm Media chưa được ai xác nhận giữ lại — xoá đi, đừng để mồ côi.
+    const orphanId = autoCreatedDraftIdRef.current;
+    autoCreatedDraftIdRef.current = null;
     setModal(null);
     setDraft(null);
     setModalTab('details');
+    if (orphanId) {
+      setProducts(prev => prev.filter(p => p.id !== orphanId));
+      void deleteProducts([orphanId]);
+    }
   };
 
   /* ── Index actions ─────────────────────────────────────────────────── */
@@ -223,15 +237,60 @@ export const ProductWorkspace = ({
   };
 
   /**
+   * Tạo ngầm sản phẩm nháp để có id thật cho Media, khi form còn ở chế độ
+   * Tạo mới (`draft.id === 'new'` chưa tồn tại ở BE nên chưa bind media
+   * được). Dùng LUÔN tên đã gõ trong form — không hỏi lại qua form nào khác,
+   * bấm Media coi như xác nhận đã đủ để lưu nháp.
+   *
+   * Đã có id thật (đang sửa, hoặc đã tự tạo từ lần bấm Media trước) thì trả
+   * về ngay, không tạo lần hai. Nhớ id vào `autoCreatedDraftIdRef` để Huỷ
+   * form (`closeModal`) biết cần xoá đúng bản ngầm này nếu không ai Lưu.
+   */
+  const ensureDraftProduct = async (): Promise<string | null> => {
+    if (modal?.kind !== 'product') return null;
+    if (modal.mode !== 'new') return modal.id;
+    if (!draft || saving) return null;
+
+    const cleaned = normalizeProductDraft(draft);
+    if (!cleaned.title) {
+      toast.error(t('toastNeedsTitle'));
+      return null;
+    }
+    cleaned.handle =
+      cleaned.handle || uniqueHandle(slugifyHandle(cleaned.title), products);
+    cleaned.status = 'draft';
+
+    setSaving(true);
+    try {
+      const created = await createProduct(cleaned, {
+        ctx: mapCtx,
+        ...(brandId ? { brandId } : {}),
+      });
+      autoCreatedDraftIdRef.current = created.id;
+      setProducts(prev => [created, ...prev]);
+      setDraft(cloneProduct(created));
+      setModal({ kind: 'product', id: created.id, mode: 'edit' });
+      return created.id;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('toastSaveFailed'));
+      return null;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /**
    * Tải ảnh lên rồi gắn vào sản phẩm đang mở.
    *
-   * Chỉ mở cho sản phẩm ĐÃ LƯU: chưa có id thì không có gì để gắn media vào.
+   * Sản phẩm còn ở form Tạo mới thì `ensureDraftProduct` tự lưu nháp trước
+   * để có id thật rồi mới gắn media — người dùng không còn phải bấm Lưu tay.
    * Xong thì nạp lại catalogue — asset mới phải xuất hiện ở lưới ảnh, và
    * `readiness` (ATT/EXP) chấm theo số binding nên cũng đổi theo.
    */
   const handleUploadMedia = async (files: File[]) => {
-    if (modal?.kind !== 'product' || modal.mode === 'new' || uploading) return;
-    const productId = modal.id;
+    if (modal?.kind !== 'product' || uploading) return;
+    const productId = await ensureDraftProduct();
+    if (!productId) return;
 
     setUploading(true);
     const results = await uploadProductMedia({
@@ -300,8 +359,9 @@ export const ProductWorkspace = ({
   };
 
   const handleAttachExisting = async (mediaIds: string[]) => {
-    if (modal?.kind !== 'product' || modal.mode === 'new' || uploading) return;
-    const productId = modal.id;
+    if (modal?.kind !== 'product' || uploading) return;
+    const productId = await ensureDraftProduct();
+    if (!productId) return;
     setUploading(true);
     try {
       await attachExistingMedia(
@@ -410,6 +470,14 @@ export const ProductWorkspace = ({
     const { deleted, failed } = await deleteProducts(targets);
     setSaving(false);
 
+    // Đã xoá thật rồi — đừng để `closeModal` xoá lại lần nữa bản nháp ngầm.
+    if (
+      autoCreatedDraftIdRef.current &&
+      deleted.includes(autoCreatedDraftIdRef.current)
+    ) {
+      autoCreatedDraftIdRef.current = null;
+    }
+
     // Chỉ bỏ khỏi lưới những cái BE xác nhận đã xoá — bỏ cả những cái hỏng thì
     // màn hình nói dối, tải lại trang là chúng hiện về.
     const gone = new Set(deleted);
@@ -445,6 +513,9 @@ export const ProductWorkspace = ({
       // tính `claims[].ok`, hiển thị bản gửi đi sẽ lệch với bản trong CSDL.
       const saved = await updateProduct(cleaned, { ctx: mapCtx });
       setProducts(prev => prev.map(p => (p.id === saved.id ? saved : p)));
+      // Đã bấm Lưu thật — bản nháp ngầm (nếu có) giờ là bản chính thức, đừng
+      // để `closeModal` xoá nó nữa.
+      autoCreatedDraftIdRef.current = null;
       closeModal();
       toast.success(t('toastSaved', { name: saved.title }));
     } catch (err) {
@@ -653,13 +724,9 @@ export const ProductWorkspace = ({
           onChange={setDraft}
           onClose={closeModal}
           onRequestEdit={() => openEdit(activeProduct.id)}
-          onUploadMedia={modal?.mode === 'new' ? undefined : handleUploadMedia}
-          onPickFromLibrary={
-            modal?.mode === 'new' ? undefined : () => setPicking(true)
-          }
-          onPickCover={
-            modal?.mode === 'new' ? undefined : () => setPickingCover(true)
-          }
+          onUploadMedia={handleUploadMedia}
+          onPickFromLibrary={() => setPicking(true)}
+          onPickCover={() => setPickingCover(true)}
           uploading={uploading}
           onSave={handleSave}
           onCreate={handleCreate}
@@ -672,7 +739,7 @@ export const ProductWorkspace = ({
           z-index (--pv2-z-top + 10), nên cái nào đứng sau trong DOM mới nằm
           trên. Đặt trước thì bảng chọn vẫn mở nhưng bị modal sản phẩm che
           kín — nhìn hệt như bấm không ăn. */}
-      {picking && modal?.kind === 'product' && modal.mode !== 'new' ? (
+      {picking && modal?.kind === 'product' ? (
         <MediaPickerModal
           attachedIds={assets
             .filter(a => a.home.ref === modal.id)
@@ -683,7 +750,7 @@ export const ProductWorkspace = ({
         />
       ) : null}
 
-      {pickingCover && modal?.kind === 'product' && modal.mode !== 'new' ? (
+      {pickingCover && modal?.kind === 'product' ? (
         <CoverPickerModal
           media={assets.filter(a => a.home.ref === modal.id)}
           current={activeProduct?.cover ?? null}
