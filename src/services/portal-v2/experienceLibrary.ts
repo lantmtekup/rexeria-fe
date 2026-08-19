@@ -52,6 +52,33 @@ const TEMPLATE_LOOKUP_LIMIT = 200;
 const BLOCK_LOOKUP_LIMIT = 200;
 
 /**
+ * Id của những master draft do Automation dựng (`POST /automations` →
+ * `master_page_id`, xem `AutomationWorkspace.tsx`).
+ *
+ * `POST /automations/{id}/run` fork THÊM một bản riêng cho mỗi sản phẩm đã
+ * chọn — bản đó mới là kết quả thật. Master draft là bản nháp làm việc, chỉ
+ * nên mở qua "Chỉnh master" ở Automation hub, nhưng nó vẫn là một `RxExperience`
+ * hợp lệ (kind: 'copy') nên rơi thẳng vào `COPY_STATES` như mọi bản copy khác.
+ * Không lọc thì một lượt Nhân bản cho 1 sản phẩm hiện ra 2 mục giống hệt nhau
+ * trong thư viện — người dùng đọc thành "tạo đôi".
+ *
+ * Hỏng (403 CAPABILITY_REQUIRED khi gói chưa mở Automation, hoặc lỗi khác)
+ * thì trả set rỗng — KHÔNG chặn cả trang Experiences chỉ vì tra cứu phụ này lỗi.
+ */
+const fetchMasterDraftIds = async (brandId?: string): Promise<Set<string>> => {
+  try {
+    const res = await rexerV2Api.automations.hub(brandId);
+    return new Set(
+      (res.automations ?? [])
+        .map(a => a.master_page_id)
+        .filter((id): id is string => Boolean(id))
+    );
+  } catch {
+    return new Set();
+  }
+};
+
+/**
  * Id của những template DO CHÍNH BRAND NÀY sở hữu.
  *
  * Phải hỏi `GET /v1/templates` (v1) chứ không hỏi `/experiences`: repository
@@ -246,20 +273,32 @@ export const fetchExperienceLibrary = async (
 
   try {
     if (query.rank) {
-      const ranked = await fetchRanked();
-      return { items: ranked.map(v2ToExperienceView), error: null };
+      const [ranked, masterDraftIds] = await Promise.all([
+        fetchRanked(),
+        fetchMasterDraftIds(query.brandId ?? undefined),
+      ]);
+      return {
+        items: ranked
+          .filter(x => !masterDraftIds.has(x.id))
+          .map(v2ToExperienceView),
+        error: null,
+      };
     }
 
-    const chunks = await Promise.all([
-      ...COPY_STATES.map(s => fetchState(s)),
-      fetchOwnTemplates(),
-      fetchOwnBlocks(),
+    const [chunks, masterDraftIds] = await Promise.all([
+      Promise.all([
+        ...COPY_STATES.map(s => fetchState(s)),
+        fetchOwnTemplates(),
+        fetchOwnBlocks(),
+      ]),
+      fetchMasterDraftIds(query.brandId ?? undefined),
     ]);
 
     // Khử trùng theo id: các state đáng lẽ rời nhau, nhưng dựa vào điều đó là
     // đặt cược vào một chi tiết BE có thể đổi. Trùng thì giữ bản gặp trước.
     const seen = new Set<string>();
     const items = chunks.flat().filter(x => {
+      if (masterDraftIds.has(x.id)) return false;
       if (seen.has(x.id)) return false;
       seen.add(x.id);
       return true;
