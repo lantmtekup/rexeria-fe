@@ -87,12 +87,24 @@ export const ExperiencePickerModal = ({
     };
   }, [query]);
 
+  /**
+   * CHỈ template — một node journey là "route master", được Campaign tự fork
+   * riêng cho từng hạng mục (`journeyLink.ts` `bindRouteToItems`). Cho chọn cả
+   * bản copy đã gắn sẵn cho một sản phẩm thì `master()` bên đó không nhận diện
+   * được id đó là template, forking lặng lẽ không chạy — node coi như chưa có
+   * trải nghiệm, dù người dùng đã chọn một cái.
+   */
+  const templates = useMemo(
+    () => items.filter(item => item.state === 'template'),
+    [items]
+  );
+
   const visible = useMemo(
     () =>
       objective === 'all'
-        ? items
-        : items.filter(item => item.objective === objective),
-    [items, objective]
+        ? templates
+        : templates.filter(item => item.objective === objective),
+    [templates, objective]
   );
 
   /** The journey module's own objective labels — one vocabulary, one namespace. */
