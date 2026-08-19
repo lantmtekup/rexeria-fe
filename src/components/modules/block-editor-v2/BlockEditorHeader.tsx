@@ -19,8 +19,9 @@ import {
 import { cn } from '@/lib/cn';
 
 import { FLOATING, R_FLOATING, SEGMENT_ACTIVE } from './chrome';
+import { DeviceSwitcher } from './DeviceSwitcher';
 
-import type { Lang } from '@/components/modules/block-editor/types';
+import type { Device, Lang } from '@/components/modules/block-editor/types';
 
 export type HeaderTab = Lang | 'ai';
 
@@ -63,14 +64,18 @@ interface BlockEditorHeaderProps {
   onSaveVersion?: () => void;
   savingVersion?: boolean;
   /** Không còn nút trong header (đã dời hẳn vào sidebar motion panel) — vẫn
-   *  giữ trong props vì cả hai caller (`BlockEditorV2`, `CanvasTemplate`)
-   *  đang truyền vào, xoá khỏi type sẽ đổi luôn API của cả hai chỗ đó. */
+   *  giữ trong props vì `BlockEditorV2` vẫn truyền vào (Space-key preview
+   *  vẫn cần `isMotionPreviewing` ở nơi khác), xoá hẳn cần dọn call site. */
   onPlayMotionPreview: () => void;
   onOpenMotionEditor: () => void;
   canUndo: boolean;
   canRedo: boolean;
   isPublished: boolean;
   isMotionPreviewing: boolean;
+  /** Thiết bị xem trước (desktop/tablet/mobile). Optional — chỉ truyền khi
+   *  route có state device (vd BlockEditorV2); bỏ qua thì không render. */
+  device?: Device;
+  onDeviceChange?: (next: Device) => void;
   backHref?: string;
   /** Nếu set → nút back gọi hàm này (vd router.back về màn trước) thay vì đi
    *  `backHref`. Ưu tiên hơn backHref. */
@@ -116,6 +121,8 @@ export function BlockEditorHeader({
   isPublished,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isMotionPreviewing,
+  device,
+  onDeviceChange,
   backHref = '/canvas-templates',
   onBack,
   headerActions,
@@ -181,6 +188,17 @@ export function BlockEditorHeader({
         </IconBtn>
 
         <Divider />
+
+        {device && onDeviceChange ? (
+          <>
+            <DeviceSwitcher
+              device={device}
+              onChange={onDeviceChange}
+              variant='editor'
+            />
+            <Divider />
+          </>
+        ) : null}
 
         <SegmentedGroup ariaLabel='Chế độ chỉnh sửa'>
           <SegmentedButton
