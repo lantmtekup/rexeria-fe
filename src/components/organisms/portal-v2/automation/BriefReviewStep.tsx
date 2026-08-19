@@ -257,11 +257,7 @@ export const BriefReviewStep = ({
           {selectedProducts.length > cap ? ` · ${t('capNote', { cap })}` : ''}
         </span>
         <span className='flex-1' />
-        <Button
-          variant='primary'
-          disabled={running || selectedProducts.length === 0}
-          onClick={onRun}
-        >
+        <Button variant='primary' disabled={running} onClick={onRun}>
           {running ? (
             <Loader2 className={cn('animate-spin')} aria-hidden />
           ) : (

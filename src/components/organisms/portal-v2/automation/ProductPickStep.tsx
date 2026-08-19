@@ -201,11 +201,7 @@ export const ProductPickStep = ({
           {selected.length > cap ? ` · ${t('capNote', { cap })}` : ''}
         </span>
         <span className='flex-1' />
-        <Button
-          variant='primary'
-          disabled={selected.length === 0}
-          onClick={onNext}
-        >
+        <Button variant='primary' onClick={onNext}>
           {t('next')}
           <ArrowRight aria-hidden />
         </Button>
