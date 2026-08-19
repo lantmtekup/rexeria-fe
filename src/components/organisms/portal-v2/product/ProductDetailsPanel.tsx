@@ -11,6 +11,7 @@ import {
   Plus,
   RotateCw,
   Trash2,
+  X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
@@ -186,6 +187,22 @@ export const ProductDetailsPanel = ({
   const first = p.variants[0];
 
   const patch = (partial: Partial<Product>) => onChange({ ...p, ...partial });
+
+  const [tagDraft, setTagDraft] = useState('');
+  // Đổi sang sản phẩm khác trong khi panel này vẫn còn mounted (view → edit
+  // rồi mở sản phẩm khác) không được để lại chữ đang gõ dở của sản phẩm cũ.
+  useEffect(() => setTagDraft(''), [p.id]);
+
+  const commitTagDraft = () => {
+    const value = tagDraft.trim();
+    setTagDraft('');
+    if (!value || p.tags.includes(value)) return;
+    patch({ tags: [...p.tags, value] });
+    toast.success(t('toastTagAdded'));
+  };
+
+  const removeTag = (tag: string) =>
+    patch({ tags: p.tags.filter(x => x !== tag) });
 
   const patchFirstVariant = (partial: Partial<ProductVariant>) => {
     if (!p.variants.length) return;
@@ -947,23 +964,47 @@ export const ProductDetailsPanel = ({
             />
           </Field>
           <Field label={t('fieldTags')}>
-            <span className='flex flex-wrap gap-1.5'>
+            <span className='flex flex-wrap items-center gap-1.5'>
               {p.tags.map(tag => (
                 <span
                   key={tag}
-                  className='rounded-full bg-[var(--pv2-canvas)] px-2.5 py-1 text-[11.5px] font-medium text-[var(--pv2-mut)]'
+                  className='flex items-center gap-1 rounded-full bg-[var(--pv2-canvas)] px-2.5 py-1 text-[11.5px] font-medium text-[var(--pv2-mut)]'
                 >
                   {tag}
+                  {editing ? (
+                    <button
+                      type='button'
+                      onClick={() => removeTag(tag)}
+                      aria-label={t('removeTag', { tag })}
+                      className='cursor-pointer text-[var(--pv2-faint)] hover:text-[var(--pv2-error)]'
+                    >
+                      <X className='size-3' strokeWidth={2.4} aria-hidden />
+                    </button>
+                  ) : null}
                 </span>
               ))}
               {editing ? (
-                <button
-                  type='button'
-                  onClick={() => toast.message(t('toastTagAdded'))}
-                  className='cursor-pointer rounded-full border border-dashed border-[var(--pv2-hair)] px-2.5 py-1 text-[11.5px] font-medium text-[var(--pv2-electric)] hover:bg-[var(--pv2-electric-soft)]'
-                >
-                  {t('addTag')}
-                </button>
+                <span className='flex items-center gap-1'>
+                  <input
+                    value={tagDraft}
+                    onChange={e => setTagDraft(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key !== 'Enter') return;
+                      e.preventDefault();
+                      commitTagDraft();
+                    }}
+                    placeholder={t('addTagPlaceholder')}
+                    className='w-[104px] rounded-full border border-dashed border-[var(--pv2-hair)] bg-transparent px-2.5 py-1 text-[11.5px] font-medium text-[var(--pv2-ink)] outline-none placeholder:text-[var(--pv2-faint)] focus:border-[var(--pv2-electric)]'
+                  />
+                  <button
+                    type='button'
+                    onClick={commitTagDraft}
+                    disabled={!tagDraft.trim()}
+                    className='cursor-pointer rounded-full border border-dashed border-[var(--pv2-hair)] px-2.5 py-1 text-[11.5px] font-medium text-[var(--pv2-electric)] hover:bg-[var(--pv2-electric-soft)] disabled:cursor-not-allowed disabled:opacity-50'
+                  >
+                    {t('addTag')}
+                  </button>
+                </span>
               ) : null}
               {!p.tags.length && !editing ? (
                 <span className='text-[12px] text-[var(--pv2-faint)]'>

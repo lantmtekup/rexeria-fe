@@ -1398,6 +1398,8 @@
       "fieldCategory": "Category",
       "fieldTags": "Tags",
       "addTag": "+ Add",
+      "addTagPlaceholder": "Type a tag…",
+      "removeTag": "Remove tag {tag}",
       "noTags": "No tags",
       "readinessHint": "How much of what a post-click experience needs is on file for this product.",
       "readinessNewHint": "Fills in as you add media, claims, and copy. A product cannot carry an experience until this clears 60%.",

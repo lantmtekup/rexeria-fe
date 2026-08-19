@@ -1398,6 +1398,8 @@
       "fieldCategory": "Danh mục",
       "fieldTags": "Tag",
       "addTag": "+ Thêm",
+      "addTagPlaceholder": "Nhập tag…",
+      "removeTag": "Bỏ tag {tag}",
       "noTags": "Chưa có tag",
       "readinessHint": "Bao nhiêu phần trong những gì một trải nghiệm sau click cần đã có sẵn cho sản phẩm này.",
       "readinessNewHint": "Tăng dần khi bạn thêm media, tuyên bố và nội dung. Một sản phẩm chưa thể mang trải nghiệm cho tới khi vượt 60%.",
