@@ -7,12 +7,14 @@ import { toast } from 'sonner';
 
 import { CoverPickerModal } from '@/components/organisms/portal-v2/product/CoverPickerModal';
 import { MediaPickerModal } from '@/components/organisms/portal-v2/product/MediaPickerModal';
+import { fetchCampaignOptions } from '@/services/portal-v2/campaignOptions';
 import { fetchProductCatalog } from '@/services/portal-v2/productCatalog';
 import {
   attachExistingMedia,
   fetchProductMedia,
   uploadProductMedia,
 } from '@/services/portal-v2/productMediaUpload';
+import { fetchProductExperienceLinks } from '@/services/portal-v2/productRelations';
 import type { WriteFailure } from '@/services/portal-v2/productWrite';
 import {
   addProductTags,
@@ -47,13 +49,13 @@ import {
 } from '@/lib/portal-v2/product/helpers';
 import {
   MOCK_PRODUCT_CAMPAIGN_LINKS,
-  MOCK_PRODUCT_EXPERIENCE_LINKS,
   blankProduct,
   cloneProduct,
 } from '@/lib/portal-v2/product/mock';
 import type {
   Product,
   ProductAsset,
+  ProductExperienceLink,
   ProductFilters,
   ProductModalMode,
   ProductModalTab,
@@ -148,6 +150,10 @@ export const ProductWorkspace = ({
    * mới đổi theo, không bắt người dùng F5.
    */
   const [assets, setAssets] = useState<ProductAsset[]>(initialAssets);
+  /** Trải nghiệm THẬT của sản phẩm đang mở — xem effect nạp bên dưới. */
+  const [experienceLinks, setExperienceLinks] = useState<
+    ProductExperienceLink[]
+  >([]);
   const list = useMemo(
     () => visibleProducts(products, filters),
     [products, filters]
@@ -283,6 +289,55 @@ export const ProductWorkspace = ({
       cancelled = true;
     };
   }, [modal]);
+
+  /**
+   * Trải nghiệm THẬT của sản phẩm đang mở, cho tab Trải nghiệm.
+   *
+   * Trước đây đọc `MOCK_PRODUCT_EXPERIENCE_LINKS` — hằng số RỖNG — nên tab
+   * luôn trống dù sản phẩm đã có bản copy thật gắn vào. Tra thêm tên chiến
+   * dịch qua `fetchCampaignOptions` để hiện "home" đúng như bản mock từng
+   * làm, thay vì chỉ hiện id.
+   */
+  useEffect(() => {
+    if (modal?.kind !== 'product' || modal.mode === 'new') {
+      setExperienceLinks([]);
+      return;
+    }
+    const id = modal.id;
+    let cancelled = false;
+    void Promise.all([
+      fetchProductExperienceLinks(id, brandId),
+      fetchCampaignOptions({ brandId }),
+    ])
+      .then(([rows, campaigns]) => {
+        if (cancelled) return;
+        const nameOfCampaign = new Map(
+          campaigns.items.map(c => [c.id, c.name])
+        );
+        setExperienceLinks(
+          rows.map(r => ({
+            productId: id,
+            id: r.id,
+            name: r.name,
+            grad: 'linear-gradient(135deg,#6C4CF1,#9B7DF8)',
+            catName:
+              r.category === 'blocks' ? t('catBlocks') : t('catCollection'),
+            home: r.campaignId
+              ? (nameOfCampaign.get(r.campaignId) ?? r.campaignId.slice(0, 8))
+              : t('notAssignedToCampaign'),
+            proven: r.proven,
+            sessions: null,
+            lift: null,
+          }))
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setExperienceLinks([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [modal, brandId, t]);
 
   /** Nạp lại catalogue sau khi media đổi — readiness chấm theo số binding. */
   const refreshCatalog = async (productId?: string) => {
@@ -643,9 +698,7 @@ export const ProductWorkspace = ({
           mode={modal.mode}
           tab={modalTab}
           assets={assets}
-          experiences={MOCK_PRODUCT_EXPERIENCE_LINKS.filter(
-            e => e.productId === activeProduct.id
-          )}
+          experiences={experienceLinks}
           campaigns={MOCK_PRODUCT_CAMPAIGN_LINKS.filter(
             c => c.productId === activeProduct.id
           )}
