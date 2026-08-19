@@ -3,10 +3,7 @@
 import { useTranslations } from 'next-intl';
 
 import { LayerStack } from '@/components/organisms/portal-v2/experiences/LayerStack';
-import {
-  BLOCK_SIGNAL_LABEL_KEY,
-  EXPERIENCE_INTERACTIONS,
-} from '@/lib/portal-v2/experiences/constants';
+import { EXPERIENCE_INTERACTIONS } from '@/lib/portal-v2/experiences/constants';
 import {
   COVERAGE_TONE_STYLE,
   coverageTone,
@@ -162,80 +159,6 @@ export const ExperienceDetailsPane = ({
               {experience.summary || <NotSet />}
             </ReadField>
           </div>
-        </Box>
-
-        <Box
-          title={t('sectionLayers')}
-          aside={
-            layers?.length ? t('layersHint', { count: layers.length }) : null
-          }
-        >
-          {layers === null ? (
-            <p className='text-[12.5px] text-[var(--pv2-faint)]'>
-              {t('layersLoading')}
-            </p>
-          ) : layers.length ? (
-            <ol className='flex flex-col gap-2'>
-              {layers.map((layer, i) => {
-                const tracked = layer.components.filter(c => c.tracked).length;
-                return (
-                  <li
-                    key={`${layer.blockType ?? layer.name}-${i}`}
-                    className='flex gap-3 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] px-3 py-2.5'
-                  >
-                    <span className='mt-0.5 grid size-5 shrink-0 place-items-center rounded-md bg-[var(--pv2-canvas)] text-[10px] font-bold text-[var(--pv2-mut)] tabular-nums'>
-                      {i + 1}
-                    </span>
-                    <div className='min-w-0 flex-1'>
-                      <div className='flex flex-wrap items-center gap-2'>
-                        <span className='text-[13px] font-semibold text-[var(--pv2-ink)]'>
-                          {layer.name}
-                        </span>
-                        {!layer.visible ? (
-                          <span className='inline-flex rounded-full border border-dashed border-[var(--pv2-hair)] px-1.5 py-px text-[9px] font-bold tracking-[0.05em] text-[var(--pv2-faint)] uppercase'>
-                            {t('layerHidden')}
-                          </span>
-                        ) : null}
-                        <span
-                          className={cn(
-                            'ml-auto shrink-0 text-[10.5px] font-semibold',
-                            tracked
-                              ? 'text-[var(--pv2-mut)]'
-                              : 'text-[var(--pv2-faint)]'
-                          )}
-                        >
-                          {tracked
-                            ? t('layerSignals', { count: tracked })
-                            : t('layerNotTracked')}
-                        </span>
-                      </div>
-                      <div className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1'>
-                        {layer.blockType ? (
-                          <code className='font-mono text-[11px] text-[var(--pv2-faint)]'>
-                            {layer.blockType}
-                          </code>
-                        ) : null}
-                        {layer.blockSignals.map(sig => (
-                          <span
-                            key={sig}
-                            className='rounded-full bg-[var(--pv2-canvas)] px-1.5 py-px text-[10px] text-[var(--pv2-mut)]'
-                          >
-                            {BLOCK_SIGNAL_LABEL_KEY[sig]
-                              ? t(BLOCK_SIGNAL_LABEL_KEY[sig])
-                              : sig}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          ) : (
-            <p className='text-[12.5px] text-[var(--pv2-faint)]'>
-              {t('layersEmpty')}
-            </p>
-          )}
         </Box>
       </div>
 
