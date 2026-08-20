@@ -29,7 +29,6 @@ import { EXPERIENCE_DETAIL_TABS } from '@/lib/portal-v2/experiences/constants';
 import {
   canEditCanvas,
   canPreview,
-  canUseExperience,
   formatCount,
   formatLift,
 } from '@/lib/portal-v2/experiences/helpers';
@@ -251,7 +250,6 @@ export const ExperienceDetailModal = ({
   const tierStyle = EVIDENCE_TIER_STYLE[evidence.tier];
   const previewable = canPreview(experience);
   const editable = canEditCanvas(experience);
-  const usable = canUseExperience(experience);
 
   const subtitleParts = [
     t(CATEGORY_LABEL_KEY[experience.category]),
@@ -316,26 +314,17 @@ export const ExperienceDetailModal = ({
             {t('editExperience')}
           </Button>
           {/* Nút CHÍNH, theo prototype (`xuse` là `btn-primary`): thứ người ta
-              mở thư viện ra để làm là mang một trải nghiệm vào chiến dịch. */}
-          <Button
-            size='sm'
-            disabled={!usable}
-            onClick={() => onUse(experience)}
-          >
+              mở thư viện ra để làm là mang một trải nghiệm vào chiến dịch.
+              Luôn bật — nếu BE từ chối (vd bản đã là copy), lỗi hiện ngay
+              trong UseExperienceModal (xem handleConfirm ở đó), không âm
+              thầm nuốt. */}
+          <Button size='sm' onClick={() => onUse(experience)}>
             <PlusCircle className='size-3.5' strokeWidth={2.2} aria-hidden />
             {t('useLabel')}
           </Button>
         </>
       }
     >
-      {/* Nút xám phải TỰ NÓI vì sao nó xám. Giấu lý do trong `title` nghĩa là
-          người dùng đọc nó thành "hỏng" — chuyện đã xảy ra một lần ở màn này. */}
-      {!usable ? (
-        <p className='mb-3 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-[var(--pv2-mut)]'>
-          {t('useIsCopyHint')}
-        </p>
-      ) : null}
-
       {provenError ? (
         <p
           role='alert'
