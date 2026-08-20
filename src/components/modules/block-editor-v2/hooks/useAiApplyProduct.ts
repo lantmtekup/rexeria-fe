@@ -3,9 +3,10 @@
 import * as React from 'react';
 import { toast } from 'sonner';
 
+import { pollAiJob } from '@/components/modules/AiAutomation/pollAiJob';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
-import type { Product } from '@/services/rexer/types';
+import type { AIApplyProductOutput, Product } from '@/services/rexer/types';
 
 import { applyProductToBlocks } from '../applyProduct';
 import { diffCanvas, type CanvasDiff } from '../diffCanvas';
@@ -17,16 +18,32 @@ import {
 import type { Block, Lang } from '@/components/modules/block-editor/types';
 
 /**
- * AI apply-product flow:
- *   1. Snapshot original blocks (for diff baseline).
- *   2. POST /v1/ai/canvas-templates/:id/apply-product.
- *   3. Diff AI output vs original → open ReviewChangesDialog.
- *   4. On user accept → merge selected (block, group) pairs → update blocks.
- *   5. On AI failure → fall back to deterministic client mapping so user
- *      still gets something.
+ * AI apply-product flow — dùng pipeline THẬT của Automation
+ * (`POST /ai/apply-product`, `target_mode: 'rewrite'`), KHÔNG phải
+ * `/ai/canvas-templates/:id/apply-product` — endpoint đó đã bị xoá khỏi BE
+ * (be-ReXeR.ai commit `2e7a3fa`, bảng `canvas_templates` đã DROP ở migration
+ * 000143). Gọi nó chỉ nhận 403 "Internal-only endpoint" rồi rơi về fallback,
+ * không hề chạy AI thật — xác nhận bằng test trực tiếp trên production.
  *
- * The hook owns the per-product loading state and the review dialog state.
- * Callers wire `setBlocks` + `markDirty` so the merge step lands in canvas.
+ *   1. `commitDraftAsRevision()` — chốt draft hiện tại thành 1 page revision
+ *      mới. BE đọc canvas từ REVISION MỚI NHẤT của page (không phải
+ *      `draft_canvas_blueprint` — hai cột hoàn toàn tách biệt), nên bỏ qua
+ *      bước này thì AI có thể viết đè lên bản cũ hơn những gì đang hiện trên
+ *      canvas.
+ *   2. Enqueue `POST /ai/apply-product` (cùng usecase Automation dùng để
+ *      điền nội dung AI cho từng sản phẩm — `internal/usecase/apply_product.go`,
+ *      nhánh `target_mode: 'rewrite'`).
+ *   3. Poll `GET /ai/jobs/:id` bằng `pollAiJob` (helper Automation module
+ *      đang dùng) tới khi xong.
+ *   4. Job KHÔNG trả nội dung canvas trong `output_payload` — chỉ
+ *      `{page_id, revision_no, ...}` — nên gọi thêm `GET /pages/:id/revisions`
+ *      để lấy `canvas_blueprint` của đúng revision AI vừa ghi.
+ *   5. Diff vs bản gốc → mở ReviewChangesDialog như luồng cũ.
+ *   6. Lỗi/timeout → fallback mapping cố định phía client (như luồng cũ).
+ *
+ * Không còn giới hạn "chỉ chạy trên trang Home": endpoint cũ luôn đọc/ghi
+ * đúng trang Home của template (không nhận `page_id`); pipeline này nhận
+ * thẳng `page_id` của trang đang mở, nên chạy đúng trên bất kỳ trang nào.
  */
 
 export interface ReviewState {
@@ -37,30 +54,24 @@ export interface ReviewState {
 }
 
 interface UseAiApplyProductArgs {
-  templateId: string;
+  pageId: string;
   lang: Lang;
   /** Current blocks snapshot for the diff baseline + fallback merge. */
   getBlocks: () => Block[];
-  /** ETag the BE expects for concurrency. */
-  getCanvasEtag: () => string | undefined;
   /** Current active block id — used in the debug payload when AI fails. */
   getActiveId: () => string | null;
   /** Current publish meta — used in the debug payload. */
   getPublish: () => unknown;
   /** Push to history then replace the ACTIVE PAGE's blocks. */
   applyBlocks: (next: Block[], nextActiveId?: string | null) => void;
-  /**
-   * Whether the active page is the home page.
-   *
-   * The BE endpoint takes only `product_id` + etag and reads its own stored
-   * canvas, which under the multi-page mirror is the home page's blocks. So it
-   * would silently diff the AI result against whichever page the user is on
-   * and overwrite it with home's content. Block the flow until BE accepts a
-   * `page_id`.
-   */
-  isHomePage?: () => boolean;
   /** Trigger autosave after blocks change. */
   markDirty: () => void;
+  /**
+   * Chốt draft hiện tại thành 1 page revision mới, trả về `revisionNo` vừa
+   * tạo. Xem docstring đầu file — BE apply-product (rewrite) đọc canvas từ
+   * revision mới nhất, một cột tách biệt khỏi `draft_canvas_blueprint`.
+   */
+  commitDraftAsRevision: () => Promise<{ revisionNo: number }>;
 }
 
 export interface UseAiApplyProductApi {
@@ -75,15 +86,14 @@ export interface UseAiApplyProductApi {
 }
 
 export function useAiApplyProduct({
-  templateId,
+  pageId,
   lang,
   getBlocks,
-  getCanvasEtag,
   getActiveId,
   getPublish,
   applyBlocks,
-  isHomePage,
   markDirty,
+  commitDraftAsRevision,
 }: UseAiApplyProductArgs): UseAiApplyProductApi {
   const [applying, setApplying] = React.useState(false);
   const [reviewState, setReviewState] = React.useState<ReviewState | null>(
@@ -93,30 +103,55 @@ export function useAiApplyProduct({
   const applyProduct = React.useCallback(
     async (product: Product) => {
       if (applying) return;
-      if (isHomePage && !isHomePage()) {
-        toast.error(
-          'AI áp sản phẩm hiện chỉ chạy trên trang chủ — chuyển về trang chủ rồi thử lại.'
-        );
-        return;
-      }
       setApplying(true);
       const toastId = toast.loading(`AI đang phân tích "${product.name}"…`);
-      const requestBody = {
-        product_id: product.id,
-        lang,
-        preserve_user_overrides: true,
-        expected_canvas_etag: getCanvasEtag(),
-      };
       const originalBlocks = structuredClone(getBlocks());
+      let jobId: string | undefined;
+
       try {
-        const res = await rexerApi.ai.canvasApplyProduct(
-          templateId,
-          requestBody
-        );
-        const parsed = parseCanvas(res.canvas_data);
-        if (!parsed?.blocks.length) {
-          throw new Error('BE returned empty canvas_data');
+        await commitDraftAsRevision();
+
+        const job = await rexerApi.aiJobs.applyProduct({
+          product_id: product.id,
+          target_mode: 'rewrite',
+          page_id: pageId,
+          lang,
+        });
+        jobId = job.id;
+
+        const done = await pollAiJob(job.id, {
+          onTick: j => {
+            if (j.status === 'running') {
+              toast.loading(`AI đang viết lại nội dung "${product.name}"…`, {
+                id: toastId,
+              });
+            }
+          },
+        });
+
+        if (done.status !== 'succeeded') {
+          throw new Error(done.error_message || 'AI job failed');
         }
+
+        const output = done.output_payload as unknown as
+          | AIApplyProductOutput
+          | undefined;
+        if (!output?.revision_no) {
+          throw new Error('AI job succeeded but returned no revision_no');
+        }
+
+        // Job không trả canvas_blueprint — đọc lại revision nó vừa ghi.
+        const revs = await rexerApi.pages.revisions(pageId, { limit: 1 });
+        const latest = revs.items?.[0];
+        if (!latest || latest.revision_no !== output.revision_no) {
+          throw new Error('Không đọc lại được revision AI vừa tạo');
+        }
+
+        const parsed = parseCanvas(latest.canvas_blueprint);
+        if (!parsed?.blocks.length) {
+          throw new Error('Revision AI trả về rỗng');
+        }
+
         const diff = diffCanvas(originalBlocks, parsed.blocks, lang);
         if (diff.totalChanges === 0) {
           toast.info('AI không đề xuất thay đổi nào — canvas giữ nguyên.', {
@@ -136,8 +171,9 @@ export function useAiApplyProduct({
         // ticket without DevTools gymnastics.
         const isRx = err instanceof RxApiError;
         const debugPayload = {
-          endpoint: `POST /v1/ai/canvas-templates/${templateId}/apply-product`,
-          request: requestBody,
+          endpoint: "POST /v1/ai/apply-product (target_mode: 'rewrite')",
+          jobId,
+          request: { product_id: product.id, page_id: pageId, lang },
           response: isRx
             ? {
                 status: err.status,
@@ -148,8 +184,7 @@ export function useAiApplyProduct({
               }
             : { error: err instanceof Error ? err.message : String(err) },
           context: {
-            template_id: templateId,
-            canvas_etag: getCanvasEtag(),
+            page_id: pageId,
             blocks_in_memory: getBlocks().length,
             active_block_id: getActiveId(),
             product: { id: product.id, name: product.name },
@@ -209,15 +244,14 @@ export function useAiApplyProduct({
     },
     [
       applying,
-      templateId,
+      pageId,
       lang,
       getBlocks,
-      getCanvasEtag,
       getActiveId,
       getPublish,
       applyBlocks,
-      isHomePage,
       markDirty,
+      commitDraftAsRevision,
     ]
   );
 
