@@ -380,10 +380,16 @@ export const MediaWorkspace = ({
 
   return (
     <div className='flex min-h-0 flex-col'>
+      {/*
+        "Tự động gắn thẻ" (header + bulk-bar) và "Link to product" (bulk-bar)
+        không có endpoint BE nào phía sau — trước đây báo thành công kèm số
+        giả ("AI đã gắn thẻ 4 tài nguyên · thêm 31 thẻ") mà không hề gọi gì
+        cả. Nói thật cho tới khi có endpoint thật.
+      */}
       <MediaHeader
         assetCount={assets.length}
         uploading={uploading}
-        onAutoTag={() => toast.message(t('autoTagToast'))}
+        onAutoTag={() => toast.message(t('autoTagNotSupportedToast'))}
         onFiles={files => void handleFiles(files)}
       />
 
@@ -440,8 +446,8 @@ export const MediaWorkspace = ({
           <MediaBulkBar
             count={selected.length}
             deleting={deleting}
-            onAutoTag={() => toast.message(t('autoTagSelectionToast'))}
-            onLink={() => toast.message(t('linkToProductToast'))}
+            onAutoTag={() => toast.message(t('autoTagNotSupportedToast'))}
+            onLink={() => toast.message(t('linkToProductNotSupportedToast'))}
             onArchive={bulkArchive}
             onDelete={requestBulkDelete}
             onClear={clearSelection}
