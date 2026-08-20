@@ -149,7 +149,7 @@ export function MintV2Process({
               const bodyKey = `steps[${i}].body`;
               return (
                 <li
-                  key={s.key || i}
+                  key={`${s.key || 'step'}-${i}`}
                   data-motion-group=''
                   data-motion-start='top 80%'
                   className='process-step relative grid grid-cols-1 gap-4 py-12 pl-8 first:pt-0 last:pb-0 @2xl:grid-cols-2 @2xl:gap-16 @2xl:py-24 @2xl:pl-0'
