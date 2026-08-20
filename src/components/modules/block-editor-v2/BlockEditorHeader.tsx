@@ -11,7 +11,6 @@ import {
   Globe2,
   ImagePlus,
   MoreHorizontal,
-  Package,
   Redo2,
   Save,
   Undo2,
@@ -32,8 +31,10 @@ interface BlockEditorHeaderProps {
   dirty: boolean;
   duplicating?: boolean;
   onLangChange: (lang: Lang) => void;
+  /** Mở popup chọn sản phẩm — AI viết lại nội dung trang hiện tại theo sản
+   *  phẩm đã chọn (`POST /ai/canvas-templates/:id/apply-product`, xem
+   *  `useAiApplyProduct`). */
   onAi: () => void;
-  onApplyProduct: () => void;
   onImportFromImage: () => void;
   /** Optional — ẩn nút Duplicate khi không khả dụng (vd block-direct mode). */
   onDuplicate?: () => void;
@@ -91,7 +92,6 @@ export function BlockEditorHeader({
   duplicating,
   onLangChange,
   onAi,
-  onApplyProduct,
   onImportFromImage,
   onDuplicate,
   onPreview,
@@ -221,11 +221,6 @@ export function BlockEditorHeader({
               label: 'Tạo block từ ảnh / Figma',
               onClick: onImportFromImage,
               testId: 'header-import-block',
-            },
-            {
-              icon: Package,
-              label: 'Áp dụng sản phẩm vào canvas',
-              onClick: onApplyProduct,
             },
             ...(onDuplicate
               ? [

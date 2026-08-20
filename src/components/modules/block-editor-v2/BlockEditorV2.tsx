@@ -1937,10 +1937,7 @@ export function BlockEditorV2({
           dirty={dirty}
           duplicating={duplicating}
           onLangChange={deviceState.setLang}
-          onAi={() =>
-            toast.info('Click 1 element trên canvas để mở popup AI riêng')
-          }
-          onApplyProduct={() => setProductPickerOpen(true)}
+          onAi={() => setProductPickerOpen(true)}
           onImportFromImage={() => setImportOpen(true)}
           onDuplicate={blockMode ? undefined : () => setDuplicateOpen(true)}
           onSaveBlock={
