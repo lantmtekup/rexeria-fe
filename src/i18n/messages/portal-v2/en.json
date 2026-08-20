@@ -163,7 +163,7 @@
       "empty": "No template matches \u2014 try a different objective, or clear the search.",
       "installing": "Adding to workspace\u2026",
       "addedToast": "\u201c{name}\u201d added to your library",
-      "purchasedToast": "Purchased \u201c{name}\u201d \u2014 it's yours",
+      "buyNotAvailableToast": "Buying premium templates isn't supported yet \u2014 no payment flow behind it",
       "detailSub": "by {author} \u00b7 {kind} \u00b7 {objective}",
       "evidenceHeading": "Evidence",
       "evidenceNote": "A track record, not a promise. Added to your workspace it starts fresh \u2014 a copy inherits the design, never the numbers.",

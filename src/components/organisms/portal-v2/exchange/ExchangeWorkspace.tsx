@@ -400,17 +400,16 @@ export const ExchangeWorkspace = ({
     [session, t, installListing]
   );
 
-  const handleConfirmBuy = useCallback(
-    (listing: ExchangeListingView) => {
-      setSession(prev => ({
-        ...prev,
-        owned: { ...prev.owned, [listing.id]: true },
-      }));
-      setModalMode('detail');
-      toast.success(t('purchasedToast', { name: listing.name }));
-    },
-    [t]
-  );
+  /**
+   * `POST /exchange/items/{id}/add` (endpoints.ts) chỉ nhận item MIỄN PHÍ —
+   * `price_cents > 0` bị BE từ chối 400. Đánh dấu `owned` ở đây rồi báo "đã
+   * mua" là nói dối: không có đường thanh toán thật nào phía sau, và item vẫn
+   * chưa hề thuộc về brand. Nói thật cho tới khi có luồng thanh toán.
+   */
+  const handleConfirmBuy = useCallback(() => {
+    setModalMode('detail');
+    toast.message(t('buyNotAvailableToast'));
+  }, [t]);
 
   const handleKindChange = (id: string) => {
     const kind = id as ExchangeFilters['kind'];
