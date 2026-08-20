@@ -30,20 +30,17 @@ export const DataPanel = ({ data }: DataPanelProps) => {
   const rows = MOCK_FACT_ROWS;
   const sessions = totalSessions();
 
+  /**
+   * `rows` là `MOCK_FACT_ROWS` — cùng hằng số tĩnh cho MỌI brand, không đọc từ
+   * `/intel/*`. Tải nó xuống thành file tên `rexer-ground-truth.json` rồi báo
+   * "sự thật gốc là của bạn" là nói dối trên một file người dùng có thể mang
+   * đi dùng thật (báo cáo, chia sẻ) — nguy hiểm hơn hẳn một dòng chữ sai trên
+   * màn hình. Chặn xuất cho tới khi có nguồn thật, nói rõ đây là dữ liệu minh
+   * hoạ (`Campaigns` đã có `campaignFacts.ts` nối `/intel/*` thật — panel này
+   * chưa dùng lại).
+   */
   const handleExport = () => {
-    if (typeof document === 'undefined') {
-      toast.message(t('toastExportReady', { count: formatCount(rows.length) }));
-      return;
-    }
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(
-      new Blob([JSON.stringify(rows, null, 2)], { type: 'application/json' })
-    );
-    link.href = url;
-    link.download = 'rexer-ground-truth.json';
-    link.click();
-    URL.revokeObjectURL(url);
-    toast.success(t('toastExported', { count: formatCount(rows.length) }));
+    toast.message(t('toastExportUnavailable'));
   };
 
   return (
