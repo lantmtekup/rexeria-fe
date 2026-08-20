@@ -163,7 +163,7 @@
       "empty": "Không có mẫu phù hợp — thử mục tiêu khác hoặc xóa tìm kiếm.",
       "installing": "Đang thêm vào workspace…",
       "addedToast": "Đã thêm “{name}” vào thư viện",
-      "purchasedToast": "Đã mua “{name}” — thuộc về bạn",
+      "buyNotAvailableToast": "Mua mẫu premium chưa được hỗ trợ — chưa có đường thanh toán",
       "detailSub": "bởi {author} · {kind} · {objective}",
       "evidenceHeading": "Bằng chứng",
       "evidenceNote": "Là track record, không phải lời hứa. Thêm vào workspace sẽ bắt đầu từ đầu — bản copy kế thừa thiết kế, không kế thừa số liệu.",
