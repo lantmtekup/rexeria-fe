@@ -2015,6 +2015,8 @@ export function BlockEditorV2({
           isMotionPreviewing={motionPreview.previewing}
           device={deviceState.device}
           onDeviceChange={deviceState.setDevice}
+          mode={blockMode ? undefined : canvasMode}
+          onModeChange={blockMode ? undefined : setCanvasMode}
           headerActions={headerActions}
           // Back = quay lại màn làm việc trước đó (vd campaign editor) thay vì
           // đẩy về /canvas-templates mặc định. Route override được khi
@@ -2244,8 +2246,6 @@ export function BlockEditorV2({
               zoom={deviceState.zoom}
               onChange={deviceState.setZoom}
               onFitToFrame={() => setFitRequestKey(k => k + 1)}
-              mode={blockMode ? undefined : canvasMode}
-              onModeChange={blockMode ? undefined : setCanvasMode}
             />
           </div>
 

@@ -18,6 +18,7 @@ import {
 
 import { cn } from '@/lib/cn';
 
+import { type CanvasMode, ModeSwitch } from './CanvasZoomBar';
 import { FLOATING, R_FLOATING, SEGMENT_ACTIVE } from './chrome';
 import { DeviceSwitcher } from './DeviceSwitcher';
 
@@ -76,6 +77,10 @@ interface BlockEditorHeaderProps {
    *  route có state device (vd BlockEditorV2); bỏ qua thì không render. */
   device?: Device;
   onDeviceChange?: (next: Device) => void;
+  /** Trang ↔ block artboard. Optional — bỏ qua khi editor chỉ có 1 block
+   *  (saved-block mode), giống quy ước của `device`/`onDeviceChange`. */
+  mode?: CanvasMode;
+  onModeChange?: (next: CanvasMode) => void;
   backHref?: string;
   /** Nếu set → nút back gọi hàm này (vd router.back về màn trước) thay vì đi
    *  `backHref`. Ưu tiên hơn backHref. */
@@ -123,6 +128,8 @@ export function BlockEditorHeader({
   isMotionPreviewing,
   device,
   onDeviceChange,
+  mode,
+  onModeChange,
   backHref = '/canvas-templates',
   onBack,
   headerActions,
@@ -196,6 +203,13 @@ export function BlockEditorHeader({
               onChange={onDeviceChange}
               variant='editor'
             />
+            <Divider />
+          </>
+        ) : null}
+
+        {mode && onModeChange ? (
+          <>
+            <ModeSwitch mode={mode} onChange={onModeChange} />
             <Divider />
           </>
         ) : null}

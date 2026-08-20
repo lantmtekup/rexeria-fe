@@ -21,9 +21,6 @@ interface CanvasZoomBarProps {
   onFitToFrame?: () => void;
   /** `right` — góc phải đáy (mặc định, như BlockTabBar cũ). `center` — giữa đáy. */
   align?: 'right' | 'center';
-  /** Omitted when the editor has a single block (saved-block mode). */
-  mode?: CanvasMode;
-  onModeChange?: (next: CanvasMode) => void;
 }
 
 /**
@@ -33,18 +30,16 @@ interface CanvasZoomBarProps {
  * reflows when it appears. `BlockPreview`'s `pb-20` and `SURFACE_PAD_BOTTOM`
  * exist to reserve room for it — grow this pill and those must grow too.
  *
- * Device switcher moved to the header (see `BlockEditorHeader`) — floating
- * over an arbitrary block background made it hard to read against light
- * covers/canvas colours; the header's fixed paper background doesn't have
- * that problem.
+ * Device switcher + page/block mode moved to the header (see
+ * `BlockEditorHeader`) — floating over an arbitrary block background made
+ * them hard to read against light covers/canvas colours; the header's fixed
+ * paper background doesn't have that problem.
  */
 export function CanvasZoomBar({
   zoom,
   onChange,
   onFitToFrame,
   align = 'right',
-  mode,
-  onModeChange,
 }: CanvasZoomBarProps) {
   return (
     <div
@@ -54,9 +49,6 @@ export function CanvasZoomBar({
       )}
     >
       <div className='pointer-events-auto flex items-center gap-1.5'>
-        {mode && onModeChange && (
-          <ModeSwitch mode={mode} onChange={onModeChange} />
-        )}
         <ZoomControls
           zoom={zoom}
           onChange={onChange}
@@ -72,7 +64,7 @@ export function CanvasZoomBar({
  * is the one viewport control users pick deliberately, and an icon pair here
  * reads as another zoom affordance.
  */
-function ModeSwitch({
+export function ModeSwitch({
   mode,
   onChange,
 }: {
