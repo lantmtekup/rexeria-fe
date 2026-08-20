@@ -14,7 +14,6 @@ import {
   TextTextarea,
 } from '@/components/molecules/portal-v2/brand-form';
 import { Modal } from '@/components/molecules/portal-v2/Modal';
-import { cn } from '@/lib/cn';
 import type {
   BrandColor,
   BrandData,
@@ -51,9 +50,11 @@ export const VisualPanel = ({ data, editing, onChange }: VisualPanelProps) => {
   } | null>(null);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const assetIds = V.logos
-    .map(l => l.asset)
-    .filter((id): id is string => Boolean(id));
+  const assetIds = [
+    ...V.logos.map(l => l.asset),
+    ...V.type.files,
+    ...V.imagery.refs,
+  ].filter((id): id is string => Boolean(id));
   const unresolvedIds = assetIds.filter(id => !(id in previews));
   // Re-run when the SET of unresolved ids changes, not on every `previews`
   // write from this same effect — a plain [assetIds] dep re-fires each
@@ -117,6 +118,61 @@ export const VisualPanel = ({ data, editing, onChange }: VisualPanelProps) => {
       toast.error(errorMessage(err, 'Upload failed'));
     } finally {
       setUploadingId(null);
+    }
+  };
+
+  /**
+   * `type.files` (font files) và `imagery.refs` (ảnh tham chiếu) — trước đây
+   * chỉ vẽ ra một badge "N attached"/"none attached" ĐỌC, không có input nào
+   * để đính kèm: `BrandData` đã có chỗ lưu, chỉ thiếu đường vào. Cùng luồng
+   * upload với logo (`uploadMediaFile`), khác ở chỗ đây là DANH SÁCH id, không
+   * phải một slot.
+   */
+  const [uploadingList, setUploadingList] = useState<'files' | 'refs' | null>(
+    null
+  );
+  const fontFilesInput = useRef<HTMLInputElement | null>(null);
+  const refImagesInput = useRef<HTMLInputElement | null>(null);
+
+  const handleAttachListFiles = async (
+    list: 'files' | 'refs',
+    files: FileList
+  ) => {
+    if (!files.length) return;
+    setUploadingList(list);
+    try {
+      const uploaded = await Promise.all(
+        Array.from(files).map(f => uploadMediaFile(f))
+      );
+      setPreviews(prev => {
+        const next = { ...prev };
+        for (const a of uploaded) next[a.id] = { name: a.name, url: a.url };
+        return next;
+      });
+      const ids = uploaded.map(a => a.id);
+      if (list === 'files') {
+        patchVisual({ type: { ...V.type, files: [...V.type.files, ...ids] } });
+      } else {
+        patchVisual({
+          imagery: { ...V.imagery, refs: [...V.imagery.refs, ...ids] },
+        });
+      }
+    } catch (err) {
+      toast.error(errorMessage(err, 'Upload failed'));
+    } finally {
+      setUploadingList(null);
+    }
+  };
+
+  const handleRemoveListFile = (list: 'files' | 'refs', id: string) => {
+    if (list === 'files') {
+      patchVisual({
+        type: { ...V.type, files: V.type.files.filter(x => x !== id) },
+      });
+    } else {
+      patchVisual({
+        imagery: { ...V.imagery, refs: V.imagery.refs.filter(x => x !== id) },
+      });
     }
   };
 
@@ -478,15 +534,58 @@ export const VisualPanel = ({ data, editing, onChange }: VisualPanelProps) => {
           <span className='mb-1.5 block text-[11.5px] font-semibold tracking-[0.02em] text-[var(--pv2-mut)] uppercase'>
             Font files
           </span>
-          <span
-            className={cn(
-              'inline-flex items-center rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 py-1.5 text-[11.5px] text-[var(--pv2-faint)]'
-            )}
-          >
-            {V.type.files.length
-              ? `${V.type.files.length} attached`
-              : 'none attached'}
-          </span>
+          <input
+            ref={fontFilesInput}
+            type='file'
+            accept='.ttf,.otf,.woff,.woff2'
+            multiple
+            className='hidden'
+            onChange={e => {
+              const files = e.target.files;
+              e.target.value = '';
+              if (files?.length) void handleAttachListFiles('files', files);
+            }}
+          />
+          <div className='flex flex-wrap items-center gap-1.5'>
+            {V.type.files.map(id => (
+              <span
+                key={id}
+                className='inline-flex items-center gap-1.5 rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 py-1.5 text-[11.5px] text-[var(--pv2-mut)]'
+              >
+                {previews[id]?.name ?? 'Attached'}
+                {editing ? (
+                  <button
+                    type='button'
+                    aria-label='Remove font file'
+                    onClick={() => handleRemoveListFile('files', id)}
+                    className='text-[var(--pv2-faint)] hover:text-[var(--pv2-error)]'
+                  >
+                    <Trash2 className='size-3' aria-hidden />
+                  </button>
+                ) : null}
+              </span>
+            ))}
+            {!V.type.files.length && !editing ? (
+              <span className='inline-flex items-center rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 py-1.5 text-[11.5px] text-[var(--pv2-faint)]'>
+                none attached
+              </span>
+            ) : null}
+            {editing ? (
+              <Button
+                variant='dashed'
+                size='sm'
+                disabled={uploadingList === 'files'}
+                onClick={() => fontFilesInput.current?.click()}
+              >
+                {uploadingList === 'files' ? (
+                  <Loader2 className='size-3 animate-spin' aria-hidden />
+                ) : (
+                  <Upload className='size-3' aria-hidden />
+                )}
+                Attach font file
+              </Button>
+            ) : null}
+          </div>
         </div>
       </BrandCard>
 
@@ -527,11 +626,84 @@ export const VisualPanel = ({ data, editing, onChange }: VisualPanelProps) => {
           <span className='mb-1.5 block text-[11.5px] font-semibold tracking-[0.02em] text-[var(--pv2-mut)] uppercase'>
             Reference images
           </span>
-          <span className='inline-flex items-center rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 py-1.5 text-[11.5px] text-[var(--pv2-faint)]'>
-            {V.imagery.refs.length
-              ? `${V.imagery.refs.length} attached`
-              : 'none attached'}
-          </span>
+          <input
+            ref={refImagesInput}
+            type='file'
+            accept='image/*'
+            multiple
+            className='hidden'
+            onChange={e => {
+              const files = e.target.files;
+              e.target.value = '';
+              if (files?.length) void handleAttachListFiles('refs', files);
+            }}
+          />
+          <div className='flex flex-wrap items-center gap-1.5'>
+            {V.imagery.refs.map(id => {
+              const preview = previews[id];
+              return (
+                <span
+                  key={id}
+                  className='group relative size-14 shrink-0 overflow-hidden rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'
+                >
+                  {preview?.url ? (
+                    <button
+                      type='button'
+                      onClick={() =>
+                        setLightbox({
+                          url: preview.url!,
+                          name: preview.name || 'Reference image',
+                        })
+                      }
+                      className='block size-full cursor-zoom-in'
+                      aria-label={`View full size — ${preview.name}`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={preview.url}
+                        alt={preview.name}
+                        className='size-full object-cover'
+                      />
+                    </button>
+                  ) : (
+                    <span className='flex size-full items-center justify-center px-1 text-center text-[9.5px] text-[var(--pv2-faint)]'>
+                      {preview?.name ?? 'Attached'}
+                    </span>
+                  )}
+                  {editing ? (
+                    <button
+                      type='button'
+                      aria-label='Remove reference image'
+                      onClick={() => handleRemoveListFile('refs', id)}
+                      className='absolute top-0.5 right-0.5 flex size-4 items-center justify-center rounded-full bg-[var(--pv2-ink)]/70 text-[var(--pv2-paper)] opacity-0 transition-opacity group-hover:opacity-100'
+                    >
+                      <Trash2 className='size-2.5' aria-hidden />
+                    </button>
+                  ) : null}
+                </span>
+              );
+            })}
+            {!V.imagery.refs.length && !editing ? (
+              <span className='inline-flex items-center rounded border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2 py-1.5 text-[11.5px] text-[var(--pv2-faint)]'>
+                none attached
+              </span>
+            ) : null}
+            {editing ? (
+              <button
+                type='button'
+                disabled={uploadingList === 'refs'}
+                onClick={() => refImagesInput.current?.click()}
+                className='flex size-14 shrink-0 items-center justify-center rounded border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-[var(--pv2-faint)] transition-colors hover:border-[var(--pv2-electric)] hover:text-[var(--pv2-electric)] disabled:opacity-60'
+                aria-label='Attach reference image'
+              >
+                {uploadingList === 'refs' ? (
+                  <Loader2 className='size-3.5 animate-spin' aria-hidden />
+                ) : (
+                  <Plus className='size-3.5' aria-hidden />
+                )}
+              </button>
+            ) : null}
+          </div>
         </div>
       </BrandCard>
 
