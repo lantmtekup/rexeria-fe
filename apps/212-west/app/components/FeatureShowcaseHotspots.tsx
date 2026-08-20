@@ -26,12 +26,39 @@ const LEGEND_NAME_TYPE =
 const LEGEND_DESC_TYPE =
   'font-sans text-xs leading-[18px] text-black/65 md:text-[13px] md:leading-5';
 
+const PILL_STYLE =
+  'border-transparent bg-white/50 text-black backdrop-blur-[10px]';
+
+const DOT_HALO = 'absolute inset-0 rounded-full bg-white blur-[8.1px]';
+
+const DOT_CORE = 'absolute inset-1.5 rounded-full bg-white';
+
+const DETAIL_BOX =
+  'w-[max(16.88vw,180px)] p-7 rounded-xl border border-white bg-white/50 backdrop-blur-[10px]';
+
+const DETAIL_TITLE_TYPE =
+  'block font-sans font-medium uppercase text-black text-lg leading-7';
+
+const DETAIL_DESC_TYPE = 'font-sans font-medium text-black text-sm leading-4';
+
 function PlusMark() {
   return (
-    <span className='relative block size-1.5'>
-      <span className='absolute top-0 left-1/2 h-full w-px -translate-x-1/2 bg-black' />
-      <span className='absolute top-1/2 left-0 h-px w-full -translate-y-1/2 bg-black' />
-    </span>
+    <svg
+      width='7'
+      height='7'
+      viewBox='0 0 7 7'
+      fill='none'
+      xmlns='http://www.w3.org/2000/svg'
+      className='block'
+    >
+      <path
+        data-plus-stem
+        d='M3.5 0.5V6.5'
+        stroke='black'
+        strokeLinecap='round'
+      />
+      <path d='M6.5 3.5L0.5 3.5' stroke='black' strokeLinecap='round' />
+    </svg>
   );
 }
 
@@ -69,30 +96,75 @@ export function ShowcaseMarkers({
   );
 }
 
-export function ShowcaseDots({ hotspots }: { hotspots: ShowcaseHotspot[] }) {
+export function ShowcaseDots({
+  hotspots,
+  activeKey,
+  stackedKey,
+  onSelect,
+}: {
+  hotspots: ShowcaseHotspot[];
+  activeKey: string | null;
+  stackedKey: string | null;
+  onSelect: (key: string) => void;
+}) {
   return (
-    <ul
-      data-hotspots
-      aria-hidden
-      className='pointer-events-none absolute inset-0 z-10 hidden xl:block'
-    >
-      {hotspots.map(hotspot => (
-        <li
-          key={hotspot.key}
-          data-hotspot
-          className='absolute grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.95)_0%,rgba(255,255,255,0.45)_45%,rgba(255,255,255,0)_72%)]'
-          style={{ left: `${hotspot.dotX}%`, top: `${hotspot.dotY}%` }}
-        >
-          <PlusMark />
-          <span
-            className={`absolute left-1/2 -translate-x-1/2 rounded-full bg-white/60 px-4 py-3 text-black backdrop-blur-sm ${CAPSULE_TYPE} ${
-              hotspot.labelSide === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'
-            }`}
+    <ul data-hotspots className='absolute inset-0 z-10 hidden xl:block'>
+      {hotspots.map(hotspot => {
+        const active = activeKey === hotspot.key;
+
+        return (
+          <li
+            key={hotspot.key}
+            data-hotspot
+            data-hotspot-key={hotspot.key}
+            className={`absolute size-7 -translate-x-1/2 -translate-y-1/2 ${
+              stackedKey === hotspot.key ? 'z-10' : ''
+            } ${activeKey && !active ? 'pointer-events-none' : ''}`}
+            style={{ left: `${hotspot.dotX}%`, top: `${hotspot.dotY}%` }}
           >
-            {hotspot.label}
-          </span>
-        </li>
-      ))}
+            <div
+              data-hotspot-move
+              className='relative size-full will-change-transform'
+            >
+              <button
+                data-hotspot-fade
+                type='button'
+                onClick={() => onSelect(hotspot.key)}
+                aria-expanded={active}
+                aria-label={hotspot.label}
+                className='relative grid size-full cursor-pointer place-items-center will-change-[opacity]'
+              >
+                <span className={DOT_HALO} />
+                <span className={DOT_CORE} />
+                <span className='relative'>
+                  <PlusMark />
+                </span>
+              </button>
+              <span
+                data-capsule
+                className={`absolute left-1/2 -translate-x-1/2 rounded-full bg-white/50 px-4 py-3 text-black backdrop-blur-[10px] ${CAPSULE_TYPE} ${
+                  hotspot.labelSide === 'top'
+                    ? 'bottom-full mb-2'
+                    : 'top-full mt-2'
+                }`}
+              >
+                {hotspot.label}
+              </span>
+              <div
+                data-detail-card
+                className={`invisible absolute top-full left-1/2 mt-2.25 -translate-x-1/2 opacity-0 ${DETAIL_BOX}`}
+              >
+                <span className={DETAIL_TITLE_TYPE}>{hotspot.label}</span>
+                {hotspot.desc && (
+                  <p className={`mt-1.75 ${DETAIL_DESC_TYPE}`}>
+                    {hotspot.desc}
+                  </p>
+                )}
+              </div>
+            </div>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -105,16 +177,11 @@ export function ShowcaseRail({ hotspots }: { hotspots: ShowcaseHotspot[] }) {
       className='absolute inset-x-0 bottom-[4.76%] z-10 hidden xl:block'
     >
       <ul className='mx-auto flex w-max items-center gap-[max(0.83vw,10px)]'>
-        {hotspots.map((hotspot, index) => (
+        {hotspots.map(hotspot => (
           <li
             key={hotspot.key}
             data-pill
-            data-active={index === 0 ? 'true' : 'false'}
-            className={`rounded-full border px-4 py-3 ${CAPSULE_TYPE} ${
-              index === 0
-                ? 'border-transparent bg-white/60 text-black backdrop-blur-sm'
-                : 'border-white/80 text-white'
-            }`}
+            className={`rounded-full border px-4 py-3 ${CAPSULE_TYPE} ${PILL_STYLE}`}
           >
             {hotspot.label}
           </li>

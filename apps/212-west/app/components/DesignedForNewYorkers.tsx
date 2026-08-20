@@ -35,8 +35,8 @@ const IMAGE_SCALE = 1.4;
 const COPY_SCALE = 1.3;
 const COPY_ORIGIN = '81.75% 34.01%';
 
-const IMAGE_BEAT_DURATION = 1.2;
-const BEAT_DURATION = 1.2;
+const IMAGE_BEAT_DURATION = 1;
+const BEAT_DURATION = 1;
 const BEAT_EASE = 'power3.out';
 
 const SLATS = [
@@ -133,7 +133,7 @@ export default function DesignedForNewYorkers() {
 
       const trigger = ScrollTrigger.create({
         trigger: section,
-        start: 'top 20%',
+        start: 'top 80%',
         once: true,
         onEnter: () => master.play(),
       });

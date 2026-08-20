@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import {
   ShowcaseDots,
@@ -12,6 +12,7 @@ import {
 import {
   gsap,
   MOTION_CONDITIONS,
+  MQ,
   ScrollTrigger,
   type MotionConditions,
 } from '@/app/lib/motion';
@@ -28,6 +29,20 @@ const REVEAL_DESIGN_WIDTH = 1440;
 const IMAGE_ROTATION = 15;
 
 const IMAGE_ROTATE_SCALE = 1.2;
+
+const RAIL_SHIFT_Y = 32;
+
+const HOTSPOTS_SHIFT_Y = 16;
+
+const HOTSPOT_MQ = '(min-width: 1280px)';
+
+const HOTSPOT_SCALE = 1.684;
+
+const HOTSPOT_SLOT_X = 74.72;
+
+const HOTSPOT_SLOT_Y = 26.05;
+
+const HOTSPOT_CLOSE_SPEEDUP = 1.35;
 
 const CURTAIN_MASK = 'pointer-events-none hidden bg-white xl:block xl:flex-1';
 
@@ -46,8 +61,18 @@ const CARD_ANCHOR: Record<ShowcaseSection['cardAnchor'], string> = {
   'bottom-right': 'xl:right-0 xl:bottom-0',
 };
 
+function collect(items: HTMLElement[], selector: string) {
+  return items.flatMap(item => [
+    ...item.querySelectorAll<HTMLElement>(selector),
+  ]);
+}
+
 function ShowcasePanel({ section }: { section: ShowcaseSection }) {
   const sectionRef = useRef<HTMLElement>(null);
+  const hotspotTimeline = useRef<gsap.core.Timeline | null>(null);
+  const openedHotspot = useRef(false);
+  const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
+  const [stackedHotspot, setStackedHotspot] = useState<string | null>(null);
   const right = section.align === 'right';
   const cardOnRight =
     section.cardAnchor === 'top-right' || section.cardAnchor === 'bottom-right';
@@ -93,6 +118,19 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
         .timeline({ paused: true, defaults: { duration, ease: 'power2.out' } })
         .to(image, { rotate: 0, scale: 1 }, 0)
         .to(copy, { scale: 1 }, 0);
+
+      const rail = root.querySelector<HTMLElement>('[data-rail]');
+      const dots = root.querySelector<HTMLElement>('[data-hotspots]');
+
+      if (rail) {
+        gsap.set(rail, { y: RAIL_SHIFT_Y * factor });
+        timeline.to(rail, { y: 0 }, 0);
+      }
+
+      if (dots) {
+        gsap.set(dots, { y: HOTSPOTS_SHIFT_Y * factor });
+        timeline.to(dots, { y: 0, clearProps: 'transform' }, 0);
+      }
 
       panels.forEach(panel => {
         const panelIndex = Number(panel.dataset.panelIndex);
@@ -140,6 +178,135 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
 
     return () => mm.revert();
   }, [reveal, cardOnRight]);
+
+  useEffect(() => {
+    const root = sectionRef.current;
+    if (!root || !hasHotspots) return;
+
+    if (
+      window.matchMedia(MQ.reduce).matches ||
+      !window.matchMedia(HOTSPOT_MQ).matches
+    ) {
+      return;
+    }
+
+    const frame = root.querySelector<HTMLElement>('[data-media]');
+    const image = root.querySelector<HTMLElement>('[data-media-image]');
+    const card = root.querySelector<HTMLElement>('[data-card]');
+    if (!frame || !image || !card) return;
+
+    hotspotTimeline.current?.kill();
+
+    if (!activeHotspot) {
+      if (!openedHotspot.current) return;
+      openedHotspot.current = false;
+      hotspotTimeline.current = gsap
+        .timeline({
+          defaults: {
+            duration: REVEAL_BEAT_DURATION / HOTSPOT_CLOSE_SPEEDUP,
+            ease: 'power2.out',
+            force3D: true,
+          },
+          onComplete: () => setStackedHotspot(null),
+        })
+        .to(card, { xPercent: 0 }, 0)
+        .to(image, { scale: 1, x: 0, y: 0 }, 0)
+        .to(root.querySelectorAll('[data-hotspot-move]'), { x: 0, y: 0 }, 0)
+        .to(root.querySelectorAll('[data-hotspot-fade]'), { opacity: 1 }, 0)
+        .to(root.querySelectorAll('[data-capsule]'), { autoAlpha: 1 }, 0)
+        .to(root.querySelectorAll('[data-plus-stem]'), { autoAlpha: 1 }, 0)
+        .to(root.querySelectorAll('[data-detail-card]'), { autoAlpha: 0 }, 0);
+      return;
+    }
+
+    const spot = section.hotspots.find(item => item.key === activeHotspot);
+    const target = root.querySelector<HTMLElement>(
+      `[data-hotspot-key="${activeHotspot}"]`
+    );
+    if (!spot || !target) return;
+
+    const move = target.querySelector<HTMLElement>('[data-hotspot-move]');
+    const fade = target.querySelector<HTMLElement>('[data-hotspot-fade]');
+    const stem = target.querySelector<HTMLElement>('[data-plus-stem]');
+    const detail = target.querySelector<HTMLElement>('[data-detail-card]');
+    if (!move || !fade || !stem || !detail) return;
+
+    const width = frame.offsetWidth;
+    const height = frame.offsetHeight;
+    const slotX = cardOnRight ? 100 - HOTSPOT_SLOT_X : HOTSPOT_SLOT_X;
+    const dotLeft = (spot.dotX / 100) * width;
+    const dotTop = (spot.dotY / 100) * height;
+    const panX = gsap.utils.clamp(
+      0,
+      width - width / HOTSPOT_SCALE,
+      dotLeft - ((slotX / 100) * width) / HOTSPOT_SCALE
+    );
+    const panY = gsap.utils.clamp(
+      0,
+      height - height / HOTSPOT_SCALE,
+      dotTop - ((HOTSPOT_SLOT_Y / 100) * height) / HOTSPOT_SCALE
+    );
+
+    const others = gsap.utils
+      .toArray<HTMLElement>('[data-hotspot]', root)
+      .filter(item => item !== target);
+
+    openedHotspot.current = true;
+
+    const timeline = gsap
+      .timeline({
+        defaults: {
+          duration: REVEAL_BEAT_DURATION,
+          ease: 'power2.out',
+          force3D: true,
+        },
+      })
+      .to(card, { xPercent: cardOnRight ? 100 : -100 }, 0)
+      .to(
+        image,
+        {
+          scale: HOTSPOT_SCALE,
+          x: -panX * HOTSPOT_SCALE,
+          y: -panY * HOTSPOT_SCALE,
+          transformOrigin: '0 0',
+        },
+        0
+      )
+      .to(
+        move,
+        {
+          x: (dotLeft - panX) * HOTSPOT_SCALE - dotLeft,
+          y: (dotTop - panY) * HOTSPOT_SCALE - dotTop,
+        },
+        0
+      )
+      .to(root.querySelectorAll('[data-capsule]'), { autoAlpha: 0 }, 0)
+      .to(stem, { autoAlpha: 0 }, 0)
+      .to(detail, { autoAlpha: 1 }, 0)
+      .to(fade, { opacity: 1 }, 0);
+
+    if (others.length) {
+      timeline
+        .to(collect(others, '[data-hotspot-fade]'), { opacity: 0 }, 0)
+        .to(collect(others, '[data-detail-card]'), { autoAlpha: 0 }, 0);
+    }
+
+    hotspotTimeline.current = timeline;
+  }, [activeHotspot, cardOnRight, hasHotspots, section.hotspots]);
+
+  useEffect(
+    () => () => {
+      hotspotTimeline.current?.kill();
+      hotspotTimeline.current = null;
+    },
+    []
+  );
+
+  const selectHotspot = (key: string) => {
+    const next = activeHotspot === key ? null : key;
+    setActiveHotspot(next);
+    if (next) setStackedHotspot(next);
+  };
 
   const chipAndHeading = (
     <>
@@ -246,7 +413,12 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
               imageWidth={section.imageWidth}
               imageHeight={section.imageHeight}
             />
-            <ShowcaseDots hotspots={section.hotspots} />
+            <ShowcaseDots
+              hotspots={section.hotspots}
+              activeKey={activeHotspot}
+              stackedKey={stackedHotspot}
+              onSelect={selectHotspot}
+            />
             <ShowcaseRail hotspots={section.hotspots} />
           </>
         )}
@@ -256,7 +428,7 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
             key={panel.index}
             data-curtain-panel
             data-panel-index={panel.index}
-            className={`pointer-events-none absolute z-10 bg-white left-(--pl-m) w-(--pw-m) ${
+            className={`pointer-events-none absolute left-(--pl-m) z-10 w-(--pw-m) bg-white ${
               panel.isCardColumn
                 ? 'xl:hidden'
                 : 'xl:left-(--pl-x) xl:w-(--pw-x)'
@@ -311,7 +483,10 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
       )}
 
       {hasHotspots && (
-        <ShowcaseLegend hotspots={section.hotspots} animated={Boolean(reveal)} />
+        <ShowcaseLegend
+          hotspots={section.hotspots}
+          animated={Boolean(reveal)}
+        />
       )}
     </section>
   );
