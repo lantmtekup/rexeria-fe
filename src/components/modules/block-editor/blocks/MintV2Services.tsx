@@ -193,7 +193,7 @@ export function MintV2Services({
               const labelKey = `items[${i}].label`;
               return (
                 <li
-                  key={item.key}
+                  key={`${item.key}-${i}`}
                   className='border-b border-[#c79119]/20 last:border-b-0'
                 >
                   <button

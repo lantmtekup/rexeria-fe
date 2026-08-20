@@ -827,7 +827,7 @@ export function MintV2Works({
         >
           {cards.map((card, idx) => (
             <CanvasCard
-              key={card.key || idx}
+              key={`${card.key || 'card'}-${idx}`}
               card={card}
               index={idx}
               activeKey={activeKey}
@@ -873,7 +873,7 @@ export function MintV2Works({
       >
         {cards.map((card, idx) => (
           <LiveCard
-            key={card.key || idx}
+            key={`${card.key || 'card'}-${idx}`}
             card={card}
             index={idx}
             mirrored={idx % 2 === 1}
