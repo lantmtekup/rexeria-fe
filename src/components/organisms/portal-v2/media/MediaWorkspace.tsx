@@ -304,11 +304,15 @@ export const MediaWorkspace = ({
     setReloadToken(x => x + 1);
   };
 
-  const archiveAsset = (asset: MediaAsset) => {
-    setAssets(prev =>
-      prev.map(a => (a.id === asset.id ? { ...a, status: 'archived' } : a))
-    );
-    toast.success(t('archivedToast', { name: asset.name }));
+  /**
+   * `UpdateMediaRequest` (BE) chỉ nhận `original_filename | tags | folder_id`
+   * — không có `status`. Đổi state ở đây rồi báo "đã lưu trữ" là nói dối:
+   * refetch kế tiếp (search/upload/xoá) đọc thẳng từ server, và asset lại hiện
+   * ra như chưa từng lưu trữ, không một lỗi nào báo lại. Nói thật cho tới khi
+   * BE có cột này.
+   */
+  const archiveAsset = () => {
+    toast.message(t('archiveNotSupportedToast'));
   };
 
   const toggleSelect = (id: string) =>
@@ -323,14 +327,9 @@ export const MediaWorkspace = ({
 
   const clearSelection = () => setSelected([]);
 
+  /** Cùng lý do với `archiveAsset` — BE chưa có cột `status` để ghi. */
   const bulkArchive = () => {
-    setAssets(prev =>
-      prev.map(a =>
-        selected.includes(a.id) ? { ...a, status: 'archived' } : a
-      )
-    );
-    toast.success(t('bulkArchivedToast', { count: selected.length }));
-    clearSelection();
+    toast.message(t('archiveNotSupportedToast'));
   };
 
   return (
