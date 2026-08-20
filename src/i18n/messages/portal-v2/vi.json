@@ -1238,7 +1238,6 @@
       "useConfirmOwn": "Lấy một bản",
       "useDone": "Đã tạo bản copy \"{name}\".",
       "useFailed": "Không tạo được bản copy.",
-      "useIsCopyHint": "Đây đã là một bản copy nên không fork tiếp được — chỉ template và khối mới dùng lại được. Muốn dùng lại thiết kế này thì \"Đưa vào thư viện\" để tạo template trước.",
       "useItemsCount": "{count} hạng mục",
       "useKindProduct": "Sản phẩm",
       "useKindTopic": "Chủ đề",

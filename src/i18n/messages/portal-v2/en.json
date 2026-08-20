@@ -1238,7 +1238,6 @@
       "useConfirmOwn": "Take a copy",
       "useDone": "Created the copy \"{name}\".",
       "useFailed": "Could not create the copy.",
-      "useIsCopyHint": "This is already a copy, so it cannot be forked again \u2014 only templates and blocks can be reused. To reuse this design, send it to the library as a template first.",
       "useItemsCount": "{count} items",
       "useKindProduct": "Product",
       "useKindTopic": "Topic",
