@@ -138,32 +138,45 @@ const carryMasterToItem = (
  * Attach every experience the campaign's route asks for onto every subject that
  * does not already carry it. Nothing is removed: a subject can hold work the
  * route never mentioned.
+ *
+ * `attach` gọi thẳng `POST /campaigns/{id}/items/{itemId}/experiences` (BE tự
+ * fork template thành bản copy thật, xem `campaignExperiences.ts`) — bản trước
+ * tự dựng bản copy giả ở FE (`carryMasterToItem`/`forkExperience`), hiện toast
+ * "đã gắn" nhưng chưa hề chạm BE, nên tải lại trang là mất sạch và ship gate lại
+ * báo thiếu. Một hạng mục lỗi (BE từ chối) không chặn các hạng mục còn lại.
  */
-export const bindRouteToItems = (
+export const bindRouteToItems = async (
   campaign: CampaignView,
   experiences: CampaignExperience[],
-  productNames: Record<string, string>,
-  journeys: Journey[]
-): { campaign: CampaignView; experiences: CampaignExperience[] } => {
+  journeys: Journey[],
+  attach: (itemId: string, masterId: string) => Promise<CampaignExperience>
+): Promise<{ campaign: CampaignView; experiences: CampaignExperience[] }> => {
   const wanted = routeMastersForCampaign(campaign, journeys);
   if (!wanted.length) return { campaign, experiences };
 
   let nextExperiences = experiences;
-  const items = campaign.items.map(item => {
-    const expIds = [...item.expIds];
+  const items: CampaignItem[] = [];
+  for (const item of campaign.items) {
+    let expIds = [...item.expIds];
     for (const masterId of wanted) {
-      const carried = carryMasterToItem(
-        campaign,
-        item,
-        masterId,
-        nextExperiences,
-        productNames
+      const already = expIds.some(
+        id => nextExperiences.find(e => e.id === id)?.origin === masterId
       );
-      nextExperiences = carried.experiences;
-      if (!expIds.includes(carried.id)) expIds.push(carried.id);
+      if (already) continue;
+      try {
+        const copy = await attach(item.id, masterId);
+        nextExperiences = [
+          ...nextExperiences.filter(e => e.id !== copy.id),
+          copy,
+        ];
+        expIds = [...expIds, copy.id];
+      } catch {
+        /* BE từ chối một hạng mục (hết quyền, item vừa bị xoá…) — bỏ qua nó,
+           đừng để một hạng mục hỏng chặn cả loạt còn lại. */
+      }
     }
-    return syncItemStage({ ...item, expIds });
-  });
+    items.push(syncItemStage({ ...item, expIds }));
+  }
 
   return { campaign: { ...campaign, items }, experiences: nextExperiences };
 };
