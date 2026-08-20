@@ -81,7 +81,7 @@ export function ShowcaseMarkers({
     >
       {hotspots.map((hotspot, index) => (
         <li
-          key={hotspot.key}
+          key={index}
           data-marker
           className='absolute grid size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/75 shadow-[0_1px_6px_rgba(0,0,0,0.18)] backdrop-blur-sm'
           style={{
@@ -98,28 +98,28 @@ export function ShowcaseMarkers({
 
 export function ShowcaseDots({
   hotspots,
-  activeKey,
-  stackedKey,
+  activeIndex,
+  stackedIndex,
   onSelect,
 }: {
   hotspots: ShowcaseHotspot[];
-  activeKey: string | null;
-  stackedKey: string | null;
-  onSelect: (key: string) => void;
+  activeIndex: number | null;
+  stackedIndex: number | null;
+  onSelect: (index: number) => void;
 }) {
   return (
     <ul data-hotspots className='absolute inset-0 z-10 hidden xl:block'>
-      {hotspots.map(hotspot => {
-        const active = activeKey === hotspot.key;
+      {hotspots.map((hotspot, index) => {
+        const active = activeIndex === index;
 
         return (
           <li
-            key={hotspot.key}
+            key={index}
             data-hotspot
-            data-hotspot-key={hotspot.key}
+            data-hotspot-index={index}
             className={`absolute size-7 -translate-x-1/2 -translate-y-1/2 ${
-              stackedKey === hotspot.key ? 'z-10' : ''
-            } ${activeKey && !active ? 'pointer-events-none' : ''}`}
+              stackedIndex === index ? 'z-10' : ''
+            } ${activeIndex !== null && !active ? 'pointer-events-none' : ''}`}
             style={{ left: `${hotspot.dotX}%`, top: `${hotspot.dotY}%` }}
           >
             <div
@@ -129,7 +129,7 @@ export function ShowcaseDots({
               <button
                 data-hotspot-fade
                 type='button'
-                onClick={() => onSelect(hotspot.key)}
+                onClick={() => onSelect(index)}
                 aria-expanded={active}
                 aria-label={hotspot.label}
                 className='relative grid size-full cursor-pointer place-items-center will-change-[opacity]'
@@ -176,10 +176,10 @@ export function ShowcaseRail({ hotspots }: { hotspots: ShowcaseHotspot[] }) {
       aria-label='Featured details'
       className='absolute inset-x-0 bottom-[4.76%] z-10 hidden xl:block'
     >
-      <ul className='mx-auto flex w-max items-center gap-[max(0.83vw,10px)]'>
-        {hotspots.map(hotspot => (
+      <ul className='mx-auto flex max-w-full flex-wrap items-center justify-center gap-[max(0.83vw,10px)]'>
+        {hotspots.map((hotspot, index) => (
           <li
-            key={hotspot.key}
+            key={index}
             data-pill
             className={`rounded-full border px-4 py-3 ${CAPSULE_TYPE} ${PILL_STYLE}`}
           >
@@ -249,7 +249,7 @@ export function ShowcaseLegend({
       }`}
     >
       {hotspots.map((hotspot, index) => (
-        <li key={hotspot.key} data-legend-item className='flex gap-3'>
+        <li key={index} data-legend-item className='flex gap-3'>
           <span
             className={`grid size-6 shrink-0 place-items-center bg-[#763718] text-white ${NUMBER_TYPE}`}
           >

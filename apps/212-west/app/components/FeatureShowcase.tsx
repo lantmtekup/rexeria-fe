@@ -70,9 +70,13 @@ function collect(items: HTMLElement[], selector: string) {
 function ShowcasePanel({ section }: { section: ShowcaseSection }) {
   const sectionRef = useRef<HTMLElement>(null);
   const hotspotTimeline = useRef<gsap.core.Timeline | null>(null);
-  const openedHotspot = useRef(false);
-  const [activeHotspot, setActiveHotspot] = useState<string | null>(null);
-  const [stackedHotspot, setStackedHotspot] = useState<string | null>(null);
+  const openedHotspot = useRef<number | null>(null);
+  const [activeHotspot, setActiveHotspot] = useState<number | null>(null);
+  const [stackedHotspot, setStackedHotspot] = useState<number | null>(null);
+  const [imageSize, setImageSize] = useState({
+    width: section.imageWidth,
+    height: section.imageHeight,
+  });
   const right = section.align === 'right';
   const cardOnRight =
     section.cardAnchor === 'top-right' || section.cardAnchor === 'bottom-right';
@@ -197,9 +201,20 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
 
     hotspotTimeline.current?.kill();
 
-    if (!activeHotspot) {
-      if (!openedHotspot.current) return;
-      openedHotspot.current = false;
+    if (activeHotspot === null) {
+      const closingIndex = openedHotspot.current;
+      if (closingIndex === null) return;
+      openedHotspot.current = null;
+
+      const closing = root.querySelector<HTMLElement>(
+        `[data-hotspot-index="${closingIndex}"]`
+      );
+      const closingMove = closing?.querySelector<HTMLElement>(
+        '[data-hotspot-move]'
+      );
+      const closingDetail =
+        closing?.querySelector<HTMLElement>('[data-detail-card]');
+
       hotspotTimeline.current = gsap
         .timeline({
           defaults: {
@@ -216,12 +231,20 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
         .to(root.querySelectorAll('[data-capsule]'), { autoAlpha: 1 }, 0)
         .to(root.querySelectorAll('[data-plus-stem]'), { autoAlpha: 1 }, 0)
         .to(root.querySelectorAll('[data-detail-card]'), { autoAlpha: 0 }, 0);
+
+      if (closingMove && closingDetail) {
+        const holdX = gsap.getProperty(closingMove, 'x') as number;
+        const holdY = gsap.getProperty(closingMove, 'y') as number;
+        hotspotTimeline.current
+          .to(closingDetail, { x: `+=${holdX}`, y: `+=${holdY}` }, 0)
+          .set(closingDetail, { clearProps: 'transform' });
+      }
       return;
     }
 
-    const spot = section.hotspots.find(item => item.key === activeHotspot);
+    const spot = section.hotspots[activeHotspot];
     const target = root.querySelector<HTMLElement>(
-      `[data-hotspot-key="${activeHotspot}"]`
+      `[data-hotspot-index="${activeHotspot}"]`
     );
     if (!spot || !target) return;
 
@@ -251,7 +274,7 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
       .toArray<HTMLElement>('[data-hotspot]', root)
       .filter(item => item !== target);
 
-    openedHotspot.current = true;
+    openedHotspot.current = activeHotspot;
 
     const timeline = gsap
       .timeline({
@@ -302,10 +325,16 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
     []
   );
 
-  const selectHotspot = (key: string) => {
-    const next = activeHotspot === key ? null : key;
+  useEffect(() => {
+    setActiveHotspot(null);
+    setStackedHotspot(null);
+    openedHotspot.current = null;
+  }, [section.hotspots]);
+
+  const selectHotspot = (index: number) => {
+    const next = activeHotspot === index ? null : index;
     setActiveHotspot(next);
-    if (next) setStackedHotspot(next);
+    if (next !== null) setStackedHotspot(next);
   };
 
   const chipAndHeading = (
@@ -404,19 +433,25 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
           width={section.imageWidth}
           height={section.imageHeight}
           sizes='100vw'
+          onLoad={event =>
+            setImageSize({
+              width: event.currentTarget.naturalWidth,
+              height: event.currentTarget.naturalHeight,
+            })
+          }
           className='h-auto w-full object-contain will-change-transform xl:absolute xl:inset-0 xl:h-full xl:object-cover'
         />
         {hasHotspots && (
           <>
             <ShowcaseMarkers
               hotspots={section.hotspots}
-              imageWidth={section.imageWidth}
-              imageHeight={section.imageHeight}
+              imageWidth={imageSize.width}
+              imageHeight={imageSize.height}
             />
             <ShowcaseDots
               hotspots={section.hotspots}
-              activeKey={activeHotspot}
-              stackedKey={stackedHotspot}
+              activeIndex={activeHotspot}
+              stackedIndex={stackedHotspot}
               onSelect={selectHotspot}
             />
             <ShowcaseRail hotspots={section.hotspots} />
@@ -428,7 +463,7 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
             key={panel.index}
             data-curtain-panel
             data-panel-index={panel.index}
-            className={`pointer-events-none absolute left-(--pl-m) z-10 w-(--pw-m) bg-white ${
+            className={`pointer-events-none absolute left-(--pl-m) z-10 w-(--pw-m) bg-white will-change-transform ${
               panel.isCardColumn
                 ? 'xl:hidden'
                 : 'xl:left-(--pl-x) xl:w-(--pw-x)'

@@ -24,35 +24,54 @@ export default function SmoothScrollProvider({
     document.fonts?.ready?.then(refresh);
     window.addEventListener('load', refresh);
 
-    if (window.matchMedia(MQ.mobile).matches) {
-      return () => window.removeEventListener('load', refresh);
-    }
-
     gsap.config({ force3D: true });
     gsap.defaults({ overwrite: 'auto' });
 
-    const lenis = new Lenis({
-      duration: 1.0,
-      lerp: 0.12,
-      easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-      wheelMultiplier: 1,
-    });
+    const mobile = window.matchMedia(MQ.mobile);
 
-    (window as LenisWindow).__lenis = lenis;
+    let lenis: Lenis | null = null;
+    let tick: ((time: number) => void) | null = null;
 
-    lenis.on('scroll', ScrollTrigger.update);
+    const stop = () => {
+      if (!lenis) return;
+      if (tick) gsap.ticker.remove(tick);
+      lenis.destroy();
+      delete (window as LenisWindow).__lenis;
+      lenis = null;
+      tick = null;
+    };
 
-    const tick = (time: number) => lenis.raf(time * 1000);
+    const start = () => {
+      if (lenis) return;
 
-    gsap.ticker.add(tick);
-    gsap.ticker.lagSmoothing(0);
+      const instance = new Lenis({
+        duration: 1.0,
+        lerp: 0.12,
+        easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+        wheelMultiplier: 1,
+      });
+
+      lenis = instance;
+      (window as LenisWindow).__lenis = instance;
+
+      instance.on('scroll', ScrollTrigger.update);
+
+      tick = (time: number) => instance.raf(time * 1000);
+
+      gsap.ticker.add(tick);
+      gsap.ticker.lagSmoothing(0);
+    };
+
+    const sync = () => (mobile.matches ? stop() : start());
+
+    sync();
+    mobile.addEventListener('change', sync);
 
     return () => {
       window.removeEventListener('load', refresh);
-      gsap.ticker.remove(tick);
-      lenis.destroy();
-      delete (window as LenisWindow).__lenis;
+      mobile.removeEventListener('change', sync);
+      stop();
     };
   }, []);
 

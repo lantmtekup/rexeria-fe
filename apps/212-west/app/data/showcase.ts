@@ -1,5 +1,4 @@
 export type ShowcaseHotspot = {
-  key: string;
   label: string;
   desc?: string;
   dotX: number;
@@ -161,7 +160,6 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
     fullHeight: true,
     hotspots: [
       {
-        key: 'miele-dishwasher',
         label: 'Miele Dishwasher',
         desc: 'Fully-integrated dishwasher; two dishwashers in select residences',
         dotX: 44.3,
@@ -169,7 +167,6 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
         labelSide: 'bottom',
       },
       {
-        key: 'custom-cabinetry',
         label: 'Custom Cabinetry',
         desc: 'Custom white matte lacquer millwork cabinetry with polished nickel pulls. Select residences include full-height pantries',
         dotX: 61.9,
@@ -177,7 +174,6 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
         labelSide: 'bottom',
       },
       {
-        key: 'blanco-sink',
         label: 'Blanco Sink',
         desc: 'Stainless steel Blanco sink with Insinkerator garbage disposal and polished nickel faucet',
         dotX: 50.5,
@@ -185,7 +181,6 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
         labelSide: 'bottom',
       },
       {
-        key: 'miele-speed-oven',
         label: 'Miele Speed Oven',
         desc: 'Miele speed oven in brilliant white',
         dotX: 58.5,
@@ -193,7 +188,6 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
         labelSide: 'top',
       },
       {
-        key: 'miele-oven-cooktop',
         label: 'Miele Oven & Cooktop',
         desc: 'Miele gas cooktop and oven in Brilliant White; two ovens in select residences',
         dotX: 69.9,
@@ -201,7 +195,6 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
         labelSide: 'bottom',
       },
       {
-        key: 'quartzite',
         label: 'Quartzite',
         desc: 'Quartzite slab backsplash and countertops, featuring waterfall edge; honed finish',
         dotX: 82.7,
@@ -209,7 +202,6 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
         labelSide: 'bottom',
       },
       {
-        key: 'wine-refrigerator',
         label: 'Wine Refrigerator',
         desc: 'Select residences feature wine refrigerators',
         dotX: 90.5,
@@ -217,7 +209,6 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
         labelSide: 'bottom',
       },
       {
-        key: 'miele-refrigerator',
         label: 'Miele Refrigerator',
         desc: 'Integrated Miele refrigerator with custom cabinet front panel',
         dotX: 91.8,
@@ -253,7 +244,6 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
     align: 'right',
     hotspots: [
       {
-        key: 'fluted-glass-shower',
         label: 'Fluted-Glass Shower',
         desc: 'Ribbed glass encloses the generous shower clad in Venus White marble walls and a marble mosaic patterned floor; Select residences include a recessed niche.',
         dotX: 23.1,
@@ -261,7 +251,6 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
         labelSide: 'bottom',
       },
       {
-        key: 'soaking-tub',
         label: 'Soaking Tub',
         desc: 'Kohler under-mount soaking tub surrounded in honed Venus White marble',
         dotX: 16.3,
@@ -269,7 +258,6 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
         labelSide: 'bottom',
       },
       {
-        key: 'honed-marble',
         label: 'Honed Marble',
         desc: 'Venus White marble floors and walls with honed finish',
         dotX: 41.1,
@@ -277,7 +265,6 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
         labelSide: 'bottom',
       },
       {
-        key: 'double-vanity',
         label: 'Double Vanity',
         desc: 'Vanity by CetraRuddy clad in leathered textile, with deep drawers and custom polished nickel pulls, with a Pure White Caesarstone vanity deck.',
         dotX: 59.1,
@@ -285,14 +272,12 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
         labelSide: 'bottom',
       },
       {
-        key: 'kohler-water-closet',
         label: 'Kohler Water Closet',
         dotX: 58.2,
         dotY: 66.9,
         labelSide: 'top',
       },
       {
-        key: 'original-design-cetraruddy',
         label: 'Original Design by CetraRuddy',
         desc: 'Mirrors, medicine cabinets, and light fixtures by CetraRuddy',
         dotX: 57,

@@ -25,6 +25,8 @@ const MOBILE_NAV_TYPE =
 const HEADER_GRADIENT =
   'linear-gradient(180deg, rgba(97, 36, 8, 0.6) 0%, rgba(97, 36, 8, 0) 100%)';
 
+const DESKTOP_NAV_MQ = '(min-width: 1024px)';
+
 function PhoneIcon() {
   return (
     <svg
@@ -155,6 +157,20 @@ export default function Header() {
 
     if (open) tl.timeScale(1).play();
     else tl.timeScale(1.35).reverse();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const desktop = window.matchMedia(DESKTOP_NAV_MQ);
+    const closeOnDesktop = () => {
+      if (desktop.matches) closeMenu();
+    };
+
+    closeOnDesktop();
+    desktop.addEventListener('change', closeOnDesktop);
+
+    return () => desktop.removeEventListener('change', closeOnDesktop);
   }, [open]);
 
   useEffect(() => {

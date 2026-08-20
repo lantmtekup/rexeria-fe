@@ -21,6 +21,31 @@ const WIPE_DURATION = 1.7;
 const HERO_MOTION_DURATION = 1.7;
 const MOTION_EASE = 'power2.out';
 
+const SCROLL_TOP_SLACK = 10;
+
+function lockScroll() {
+  const lockedY = window.scrollY;
+
+  const freeze = () => {
+    if (window.scrollY !== lockedY) window.scrollTo(0, lockedY);
+  };
+
+  const block = (event: Event) => event.preventDefault();
+
+  window.addEventListener('scroll', freeze, { passive: true });
+  window.addEventListener('wheel', block, { passive: false, capture: true });
+  window.addEventListener('touchmove', block, {
+    passive: false,
+    capture: true,
+  });
+
+  return () => {
+    window.removeEventListener('scroll', freeze);
+    window.removeEventListener('wheel', block, true);
+    window.removeEventListener('touchmove', block, true);
+  };
+}
+
 export default function HeroStage() {
   const stageRef = useRef<HTMLDivElement>(null);
 
@@ -92,47 +117,54 @@ export default function HeroStage() {
         .to(nav, { yPercent: 0, ...heroDefaults }, 0)
         .to(image, { scale: 1, ...heroDefaults }, 0);
 
-      let atHero = window.scrollY < stage.offsetHeight;
+      let wiped = false;
       let busy = false;
+      let release: (() => void) | null = null;
+
+      const runWipe = (timeline: gsap.core.Timeline, done: () => void) => {
+        busy = true;
+        const lenis = getLenis();
+        lenis?.stop();
+        lenis?.scrollTo(0, { immediate: true });
+        window.scrollTo(0, 0);
+        release = lockScroll();
+        timeline.play(0);
+        timeline.eventCallback('onComplete', () => {
+          release?.();
+          release = null;
+          busy = false;
+          lenis?.start();
+          done();
+        });
+      };
 
       const observer = Observer.create({
         target: window,
         type: 'wheel,touch',
         tolerance: 10,
-        onDown: self => {
-          if (!atHero || busy) return;
-          self.event?.preventDefault();
-          busy = true;
-          const lenis = getLenis();
-          lenis?.stop();
-          lenis?.scrollTo(0, { immediate: true });
-          window.scrollTo(0, 0);
-          wipeIn.play(0);
-          wipeIn.eventCallback('onComplete', () => {
-            atHero = false;
-            busy = false;
-            lenis?.start();
+        onDown: () => {
+          if (wiped || busy) return;
+          if (window.scrollY >= stage.offsetHeight) {
+            wiped = true;
+            return;
+          }
+          runWipe(wipeIn, () => {
+            wiped = true;
           });
         },
-        onUp: self => {
-          if (atHero || busy) return;
-          if (window.scrollY > 10) return;
-          self.event?.preventDefault();
-          busy = true;
-          const lenis = getLenis();
-          lenis?.stop();
-          lenis?.scrollTo(0, { immediate: true });
-          window.scrollTo(0, 0);
-          wipeOut.play(0);
-          wipeOut.eventCallback('onComplete', () => {
-            atHero = true;
-            busy = false;
-            lenis?.start();
+        onUp: () => {
+          if (!wiped || busy) return;
+          if (window.scrollY > SCROLL_TOP_SLACK) return;
+          runWipe(wipeOut, () => {
+            wiped = false;
           });
         },
       });
 
-      return () => observer.kill();
+      return () => {
+        release?.();
+        observer.kill();
+      };
     });
 
     return () => mm.revert();
