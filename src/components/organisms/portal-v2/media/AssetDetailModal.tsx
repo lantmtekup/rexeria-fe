@@ -163,7 +163,7 @@ export const AssetDetailModal = ({
                 <Button
                   variant='ghost'
                   size='sm'
-                  onClick={() => toast.message(t('retagToast'))}
+                  onClick={() => toast.message(t('autoTagNotSupportedToast'))}
                 >
                   <Sparkles className='size-3' strokeWidth={2.2} aria-hidden />
                   {t('retag')}
