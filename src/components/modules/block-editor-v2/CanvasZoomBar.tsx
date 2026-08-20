@@ -10,9 +10,6 @@ import {
   clampCanvasZoom,
 } from './canvasZoom';
 
-import { DeviceSwitcher } from './DeviceSwitcher';
-import type { Device } from '@/components/modules/block-editor/types';
-
 const ZOOM_STEP = 5;
 
 /** `page` — cả trang nối liền; `block` — artboard 1 block để zoom sâu. */
@@ -24,33 +21,25 @@ interface CanvasZoomBarProps {
   onFitToFrame?: () => void;
   /** `right` — góc phải đáy (mặc định, như BlockTabBar cũ). `center` — giữa đáy. */
   align?: 'right' | 'center';
-  /** Device + zoom share one pill — both answer "how am I viewing this?". */
-  device?: Device;
-  onDeviceChange?: (next: Device) => void;
-  /** Omitted when the editor has a single block (saved-block mode). */
-  mode?: CanvasMode;
-  onModeChange?: (next: CanvasMode) => void;
 }
 
 /**
- * The canvas viewport bar — device frame and zoom, floating at the bottom.
+ * The canvas viewport bar — zoom, floating at the bottom.
  *
  * Floating on purpose: it costs zero layout height, so the canvas never
  * reflows when it appears. `BlockPreview`'s `pb-20` and `SURFACE_PAD_BOTTOM`
  * exist to reserve room for it — grow this pill and those must grow too.
  *
- * Device lives here rather than in the header because it is a viewport
- * control, not a document action, and the header already runs dense.
+ * Device switcher + page/block mode moved to the header (see
+ * `BlockEditorHeader`) — floating over an arbitrary block background made
+ * them hard to read against light covers/canvas colours; the header's fixed
+ * paper background doesn't have that problem.
  */
 export function CanvasZoomBar({
   zoom,
   onChange,
   onFitToFrame,
   align = 'right',
-  device,
-  onDeviceChange,
-  mode,
-  onModeChange,
 }: CanvasZoomBarProps) {
   return (
     <div
@@ -60,18 +49,6 @@ export function CanvasZoomBar({
       )}
     >
       <div className='pointer-events-auto flex items-center gap-1.5'>
-        {mode && onModeChange && (
-          <ModeSwitch mode={mode} onChange={onModeChange} />
-        )}
-        {device && onDeviceChange && (
-          <div className='flex shrink-0 items-center rounded-lg bg-[var(--pv2-paper)] px-1.5 py-1.5 shadow-[var(--pv2-sh-soft)]'>
-            <DeviceSwitcher
-              device={device}
-              onChange={onDeviceChange}
-              variant='editor'
-            />
-          </div>
-        )}
         <ZoomControls
           zoom={zoom}
           onChange={onChange}
@@ -87,7 +64,7 @@ export function CanvasZoomBar({
  * is the one viewport control users pick deliberately, and an icon pair here
  * reads as another zoom affordance.
  */
-function ModeSwitch({
+export function ModeSwitch({
   mode,
   onChange,
 }: {
