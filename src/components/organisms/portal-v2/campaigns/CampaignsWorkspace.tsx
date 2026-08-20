@@ -17,6 +17,7 @@ import {
   fetchCampaignDetail,
   saveCampaign,
 } from '@/services/portal-v2/campaignBoardV2';
+import { attachExperienceToItem } from '@/services/portal-v2/campaignExperiences';
 import { fetchCampaignFactDetail } from '@/services/portal-v2/campaignFacts';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
@@ -386,11 +387,12 @@ export const CampaignsWorkspace = ({
       if (res) {
         const fork = { ...res.journey, campaignName: created.name };
         setJourneys(prev => [fork, ...prev.filter(j => j.id !== fork.id)]);
-        const bound = bindRouteToItems(
+        const bound = await bindRouteToItems(
           { ...created, journeyId: fork.id },
           experiences,
-          productNames,
-          [fork]
+          [fork],
+          (itemId, masterId) =>
+            attachExperienceToItem(created.id, itemId, masterId)
         );
         setExperiences(bound.experiences);
         setCampaigns(prev => [bound.campaign, ...prev]);
@@ -457,8 +459,10 @@ export const CampaignsWorkspace = ({
    * Gắn một blueprint lên chiến dịch đang mở.
    *
    * Fork do SERVER tạo (`POST /journeys/{id}/use`), không dựng ở FE nữa: bản
-   * cũ tự sinh id rồi giữ trong state, nên tải lại trang là mất sạch. Phần
-   * gắn trải nghiệm vào từng hạng mục vẫn cục bộ — experiences chưa ráp API.
+   * cũ tự sinh id rồi giữ trong state, nên tải lại trang là mất sạch. Gắn trải
+   * nghiệm vào từng hạng mục (`bindRouteToItems`) cũng vậy — gọi thật
+   * `attachExperienceToItem` cho từng cặp (item, master), không còn dựng bản
+   * copy giả ở FE.
    */
   const handleRouteJourney = async (blueprintId: string) => {
     if (!open) return;
@@ -478,11 +482,11 @@ export const CampaignsWorkspace = ({
       ...prev.filter(j => j.id !== fork.id && j.id !== res.replacedId),
     ]);
 
-    const bound = bindRouteToItems(
+    const bound = await bindRouteToItems(
       { ...open, journeyId: fork.id },
       experiences,
-      productNames,
-      [fork]
+      [fork],
+      (itemId, masterId) => attachExperienceToItem(open.id, itemId, masterId)
     );
     setExperiences(bound.experiences);
     handleChange(bound.campaign);
@@ -496,9 +500,14 @@ export const CampaignsWorkspace = ({
     );
   };
 
-  const handleCarryRoute = () => {
+  const handleCarryRoute = async () => {
     if (!open) return;
-    const bound = bindRouteToItems(open, experiences, productNames, journeys);
+    const bound = await bindRouteToItems(
+      open,
+      experiences,
+      journeys,
+      (itemId, masterId) => attachExperienceToItem(open.id, itemId, masterId)
+    );
     setExperiences(bound.experiences);
     handleChange(bound.campaign);
     toast.success(t('toastCarried'));
