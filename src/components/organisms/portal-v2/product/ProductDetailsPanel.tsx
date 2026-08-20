@@ -36,7 +36,6 @@ import {
   PRODUCT_CHANNELS,
   PRODUCT_SOURCE,
   PRODUCT_STATUS,
-  PRODUCT_TYPES,
 } from '@/lib/portal-v2/product/constants';
 import {
   assetsOfProduct,
@@ -931,21 +930,12 @@ export const ProductDetailsPanel = ({
 
         <SectionBox title={t('boxOrganization')}>
           <Field label={t('fieldProductType')}>
-            {editing ? (
-              <TextSelect
-                value={p.type}
-                onChange={e => patch({ type: e.target.value })}
-              >
-                <option value=''>{t('chooseType')}</option>
-                {PRODUCT_TYPES.map(x => (
-                  <option key={x} value={x}>
-                    {x}
-                  </option>
-                ))}
-              </TextSelect>
-            ) : (
-              <TextInput value={p.type} readOnly />
-            )}
+            <TextInput
+              value={p.type}
+              readOnly={!editing}
+              placeholder={t('chooseType')}
+              onChange={e => patch({ type: e.target.value })}
+            />
           </Field>
           <Field label={t('fieldBrand')}>
             <TextInput
@@ -957,10 +947,17 @@ export const ProductDetailsPanel = ({
           </Field>
           <Field label={t('fieldCategory')}>
             <TextInput
-              value={p.category ? (p.category.split(' > ').pop() ?? '') : ''}
-              title={p.category}
-              readOnly
+              value={
+                editing
+                  ? p.category
+                  : p.category
+                    ? (p.category.split(' > ').pop() ?? '')
+                    : ''
+              }
+              title={editing ? undefined : p.category}
+              readOnly={!editing}
               placeholder='Search the product taxonomy…'
+              onChange={e => patch({ category: e.target.value })}
             />
           </Field>
           <Field label={t('fieldTags')}>
