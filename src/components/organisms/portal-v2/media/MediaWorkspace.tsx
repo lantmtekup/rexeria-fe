@@ -24,6 +24,10 @@ import {
   deleteMediaAsset,
   deleteMediaAssets,
 } from '@/services/portal-v2/mediaDelete';
+import {
+  fetchMediaProductHomes,
+  type MediaProductHome,
+} from '@/services/portal-v2/mediaProductHomes';
 import { updateMediaTags } from '@/services/portal-v2/mediaUpdate';
 import { uploadMediaFiles } from '@/services/portal-v2/mediaUpload';
 import { RxApiError } from '@/services/rexer/client';
@@ -75,6 +79,10 @@ export const MediaWorkspace = ({
   const [pendingDelete, setPendingDelete] = useState<MediaDeleteTarget | null>(
     null
   );
+  /** `asset id → sản phẩm đang gắn nó` — nạp riêng, xem effect bên dưới. */
+  const [productHomes, setProductHomes] = useState<
+    Map<string, MediaProductHome>
+  >(new Map());
   // Bump để ép refetch sau khi upload — chỉ đổi `debouncedQ` thì guard bên dưới
   // chặn, nên khoá phải là composite của cả hai.
   const [reloadToken, setReloadToken] = useState(0);
@@ -124,16 +132,54 @@ export const MediaWorkspace = ({
     };
   }, [fetchKey, debouncedQ]);
 
+  /**
+   * `GET /media` không trả asset này đang gắn ở sản phẩm nào — quét riêng qua
+   * `fetchMediaProductHomes` (N+1 theo catalogue sản phẩm). Tách khỏi
+   * `assets`/`fetchMediaCatalog` để một lượt search/upload không phải quét
+   * lại toàn bộ catalogue sản phẩm mỗi lần.
+   */
+  useEffect(() => {
+    let cancelled = false;
+    fetchMediaProductHomes(brandId)
+      .then(map => {
+        if (!cancelled) setProductHomes(map);
+      })
+      .catch(() => {
+        /* Nhóm "Products" chỉ rơi về rỗng — không đáng chặn cả trang Media. */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [brandId]);
+
+  /** `assets` + `productHomes` — chỉ dùng cho hiển thị (lọc/nhóm/label). */
+  const homedAssets = useMemo(() => {
+    if (!productHomes.size) return assets;
+    return assets.map(a => {
+      const home = productHomes.get(a.id);
+      return home
+        ? {
+            ...a,
+            home: {
+              scope: 'product' as const,
+              ref: home.productId,
+              label: home.productTitle,
+            },
+          }
+        : a;
+    });
+  }, [assets, productHomes]);
+
   const filtered = useMemo(
-    () => filterMediaAssets(assets, { ...filters, q: '' }),
-    [assets, filters]
+    () => filterMediaAssets(homedAssets, { ...filters, q: '' }),
+    [homedAssets, filters]
   );
-  const folders = useMemo(() => deriveMediaFolders(assets), [assets]);
+  const folders = useMemo(() => deriveMediaFolders(homedAssets), [homedAssets]);
   const expiringCount = useMemo(
     () => assets.filter(a => a.status === 'expiring').length,
     [assets]
   );
-  const activeAsset = assets.find(a => a.id === activeId) ?? null;
+  const activeAsset = homedAssets.find(a => a.id === activeId) ?? null;
   const modalAsset = editing ? draft : activeAsset;
 
   const patchFilters = (patch: Partial<MediaFilters>) =>
