@@ -327,22 +327,6 @@ export function BlockEditorV2({
     },
   });
 
-  // AI apply-product hook (uses autosave + canvas).
-  const ai = useAiApplyProduct({
-    templateId: templateId ?? '',
-    lang: deviceState.lang,
-    getBlocks: () => canvas.blocks,
-    getCanvasEtag: () => template?.canvas_etag,
-    getActiveId: () => canvas.activeId,
-    getPublish: () => publishState.publish,
-    // Page-scoped: `canvas.reset` would collapse the template to a single
-    // page and discard every other one.
-    applyBlocks: (next, nextActiveId) =>
-      canvas.replacePageBlocks(canvas.activePageId, next, nextActiveId),
-    isHomePage: () => canvas.activePage.isHome,
-    markDirty: autosave.markDirty,
-  });
-
   // ── Local UI state (not hook-worthy on its own) ────────────────────────
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
@@ -374,6 +358,48 @@ export function BlockEditorV2({
   const [transition, setTransition] = React.useState<string>('none');
   const [sidebarTab, setSidebarTab] = React.useState<SidebarTab>('design');
   const [motionEditorOpen, setMotionEditorOpen] = React.useState(false);
+
+  /**
+   * Chốt draft hiện tại thành 1 page revision mới — dùng làm bước 1 của AI
+   * apply-product (xem `useAiApplyProduct.ts`). Lặp lại đúng nhánh `pageId`
+   * của `handleSaveVersion` bên dưới nhưng KHÔNG toast "Đã lưu bản mới nhất"
+   * (luồng AI tự có toast riêng) và không chặn theo lỗi block-renderer —
+   * AI cần chốt được ngay cả khi canvas đang có lỗi validate khác.
+   */
+  const commitDraftAsRevision = React.useCallback(async (): Promise<{
+    revisionNo: number;
+  }> => {
+    if (!pageId) throw new Error('commitDraftAsRevision: missing pageId');
+    await autosave.flush({ silent: true, force: true });
+    const payload = serializeCanvasPages({
+      pages: canvas.pages,
+      publish: publishState.publish,
+      transition,
+    });
+    const revs = await rexerApi.pages.revisions(pageId, { limit: 1 });
+    const latestRev = revs.items?.[0];
+    const saved = await rexerApi.pages.saveConfig(pageId, {
+      config_json: latestRev?.config_json ?? {},
+      canvas_blueprint: payload,
+      base_revision_no: latestRev?.revision_no ?? 0,
+    });
+    return { revisionNo: saved.revision_no };
+  }, [pageId, autosave, canvas.pages, publishState.publish, transition]);
+
+  // AI apply-product hook (uses autosave + canvas).
+  const ai = useAiApplyProduct({
+    pageId: pageId ?? '',
+    lang: deviceState.lang,
+    getBlocks: () => canvas.blocks,
+    getActiveId: () => canvas.activeId,
+    getPublish: () => publishState.publish,
+    // Page-scoped: `canvas.reset` would collapse the template to a single
+    // page and discard every other one.
+    applyBlocks: (next, nextActiveId) =>
+      canvas.replacePageBlocks(canvas.activePageId, next, nextActiveId),
+    markDirty: autosave.markDirty,
+    commitDraftAsRevision,
+  });
 
   // ── Load ────────────────────────────────────────────────────────────────
   // Wave 3 migration 2026-05-30: canonical `templates.get` + `templates.version`
@@ -1937,7 +1963,13 @@ export function BlockEditorV2({
           dirty={dirty}
           duplicating={duplicating}
           onLangChange={deviceState.setLang}
-          onAi={() => setProductPickerOpen(true)}
+          onAi={() =>
+            pageId
+              ? setProductPickerOpen(true)
+              : toast.error(
+                  'AI áp sản phẩm cần một trang thật — chưa có trên template thuần.'
+                )
+          }
           onImportFromImage={() => setImportOpen(true)}
           onDuplicate={blockMode ? undefined : () => setDuplicateOpen(true)}
           onSaveBlock={
