@@ -942,6 +942,8 @@
       "pickerLoading": "Reading the library\u2026",
       "pickerEmpty": "No published page matches",
       "pickerEmptyHint": "Only published landing pages can be linked. Publish the page first, then come back.",
+      "pickerEmptyNoTemplates": "No templates to link yet",
+      "pickerEmptyNoTemplatesHint": "A journey node only accepts templates (not tied to one product yet) — your published page is a copy forked for a specific product. Go to Experiences, hit \"Duplicate\" on a proven experience to make a template, then come back.",
       "pickerNote": "The node stores the page's name and coverage, not the page itself.",
       "tabReady": "Readiness",
       "checkHasEntry": "Starts from a defined entry source",

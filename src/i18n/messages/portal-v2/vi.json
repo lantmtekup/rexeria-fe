@@ -942,6 +942,8 @@
       "pickerLoading": "Đang đọc thư viện…",
       "pickerEmpty": "Không có trang publish nào khớp",
       "pickerEmptyHint": "Chỉ landing page đã publish mới liên kết được. Publish trang trước rồi quay lại.",
+      "pickerEmptyNoTemplates": "Chưa có template nào để liên kết",
+      "pickerEmptyNoTemplatesHint": "Node hành trình chỉ nhận template (chưa gắn cứng cho 1 sản phẩm) — trang đã publish của bạn là bản copy riêng của 1 sản phẩm. Vào Trải nghiệm, bấm \"Nhân bản\" trên trải nghiệm đã proven để tạo template, rồi quay lại đây.",
       "pickerNote": "Node chỉ lưu tên và độ đo của trang, không lưu bản thân trang.",
       "tabReady": "Sẵn sàng",
       "checkHasEntry": "Có một cửa vào rõ ràng",
