@@ -50,6 +50,8 @@ export const BriefReviewStep = ({
   running: boolean;
 }) => {
   const t = useTranslations('portalV2.automation');
+  /** `queued`/`skipped` chỉ mang `product_id` — tra ngược tên để hiển thị dễ đọc. */
+  const productNameById = new Map(selectedProducts.map(p => [p.id, p.title]));
   const hasBrand = Boolean(
     brandBrief &&
     (brandBrief.name ||
@@ -204,7 +206,7 @@ export const BriefReviewStep = ({
               className='flex flex-wrap items-center gap-1.5 text-[12px] text-[var(--pv2-mut)]'
             >
               <span>
-                {item.product_id}
+                {productNameById.get(item.product_id) ?? item.product_id}
                 {item.auto_gaps.length > 0
                   ? ` · ${t('queuedGaps', { gaps: item.auto_gaps.join(', ') })}`
                   : ''}
@@ -234,7 +236,7 @@ export const BriefReviewStep = ({
               key={item.product_id}
               className='text-[12px] text-[var(--pv2-mut)]'
             >
-              {item.product_id} ·{' '}
+              {productNameById.get(item.product_id) ?? item.product_id} ·{' '}
               {item.reason === 'no_product_image'
                 ? t('runSkipReasonNoProductImage')
                 : item.reason}

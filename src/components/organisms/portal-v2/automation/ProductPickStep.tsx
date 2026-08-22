@@ -17,9 +17,27 @@ import type { AutomationProduct } from '@/lib/portal-v2/automation/types';
  * ứng viên. FE chấm lại chính là cách hai bên lệch nhau.
  *
  * Thẻ nào thiếu ô phễu vẫn CHỌN ĐƯỢC: bản copy vẫn là draft, và gap được ghi
- * lại kèm theo. Demo cũng vậy — nó chặn ở khâu deploy chứ không chặn khâu tạo.
- * Chặn ngay ở đây thì người dùng mất luôn đường tạo nháp rồi bổ sung sau.
+ * lại kèm theo — CHẶN Ở KHÂU DEPLOY chứ không chặn khâu tạo, cho phần lớn
+ * loại gap (EDU/TRU/CON, hoặc ATT/EXP riêng lẻ — 1 ảnh đã đủ tạo nháp).
+ *
+ * NGOẠI LỆ: sản phẩm KHÔNG có ảnh nào (cả ATT lẫn EXP đều gap — tức
+ * `imageCount === 0` phía BE) thì `Run()` (`automation.go`) bỏ qua hoàn toàn,
+ * không tạo draft — vì fork copy y nguyên canvas của master, và
+ * `apply_product` không có ảnh nào của SẢN PHẨM THẬT để thay vào, nên draft
+ * sẽ mang ảnh của sản phẩm khác. Đây là hàng rào cố ý, có test riêng
+ * (`deploy_automation_test.go`) — không phải bug BE. Vẫn cho chọn (đúng tinh
+ * thần "không chặn ở đây"), nhưng phải nói RÕ nó sẽ bị bỏ qua khi chạy, không
+ * chỉ "cần trước khi deploy" như các gap khác.
  */
+/**
+ * `imageCount === 0` phía BE ⇒ cả ATT (ảnh bìa) lẫn EXP (bộ ảnh) đều gap cùng
+ * lúc — dấu hiệu FE có được để suy ra đúng trường hợp `Run()` sẽ bỏ qua hẳn,
+ * vì `AutomationProduct.imageCount` chưa được nối với dữ liệu thật (v2 hub
+ * chỉ trả filled/gaps, không trả số ảnh thô).
+ */
+const willBeSkippedAtRun = (rd: Readiness): boolean =>
+  rd.gaps.some(g => g.role === 'ATT') && rd.gaps.some(g => g.role === 'EXP');
+
 export const ProductPickStep = ({
   masterProduct,
   masterReadiness,
@@ -113,6 +131,7 @@ export const ProductPickStep = ({
         {eligible.map(p => {
           const on = selected.includes(p.id);
           const rd = p.readiness;
+          const skipped = willBeSkippedAtRun(rd);
           return (
             <button
               key={p.id}
@@ -155,9 +174,11 @@ export const ProductPickStep = ({
                 <span
                   className={cn(
                     'shrink-0 text-[11.5px] font-semibold',
-                    rd.gaps.length === 0
-                      ? 'text-[var(--pv2-success)]'
-                      : 'text-[var(--pv2-warning)]'
+                    skipped
+                      ? 'text-[var(--pv2-error)]'
+                      : rd.gaps.length === 0
+                        ? 'text-[var(--pv2-success)]'
+                        : 'text-[var(--pv2-warning)]'
                   )}
                 >
                   {t('slotsReady', { filled: rd.filled, total: rd.total })}
@@ -169,16 +190,20 @@ export const ProductPickStep = ({
               <span
                 className={cn(
                   'text-[11.5px] leading-relaxed',
-                  rd.gaps.length === 0
-                    ? 'text-[var(--pv2-success)]'
-                    : 'text-[var(--pv2-warning)]'
+                  skipped
+                    ? 'font-semibold text-[var(--pv2-error)]'
+                    : rd.gaps.length === 0
+                      ? 'text-[var(--pv2-success)]'
+                      : 'text-[var(--pv2-warning)]'
                 )}
               >
-                {rd.gaps.length === 0
-                  ? t('readyToDeploy')
-                  : t('needsBeforeDeploy', {
-                      needs: rd.gaps.map(g => t(g.needKey)).join(', '),
-                    })}
+                {skipped
+                  ? t('needsBeforeRun')
+                  : rd.gaps.length === 0
+                    ? t('readyToDeploy')
+                    : t('needsBeforeDeploy', {
+                        needs: rd.gaps.map(g => t(g.needKey)).join(', '),
+                      })}
               </span>
             </button>
           );
