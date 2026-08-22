@@ -136,6 +136,12 @@ export type LiveDeployRow = {
   experiences: DeployExperience[];
   ownerId: string | null;
   channels: DeployChannelHealth[];
+  /** The shareable address — `null` when the BE couldn't resolve a slug
+   *  (should not happen for a genuinely live item, but never assume). */
+  publicUrl: string | null;
+  /** `RxCampaignItem.product_id` — already on the wire, just not surfaced
+   *  here before. `null` for a topic subject (`kind === 'topic'`). */
+  productId: string | null;
 };
 
 /** One row of the Ready tab — `ReadyItemView`. */

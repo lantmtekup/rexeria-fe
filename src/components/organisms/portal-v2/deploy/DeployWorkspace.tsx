@@ -9,6 +9,7 @@ import { ChannelDetailModal } from '@/components/organisms/portal-v2/deploy/Chan
 import { DeployChannelsPane } from '@/components/organisms/portal-v2/deploy/DeployChannelsPane';
 import { DeployKpis } from '@/components/organisms/portal-v2/deploy/DeployKpis';
 import { DeployLivePane } from '@/components/organisms/portal-v2/deploy/DeployLivePane';
+import { LiveRowDetailModal } from '@/components/organisms/portal-v2/deploy/LiveRowDetailModal';
 import { DeployReadyPane } from '@/components/organisms/portal-v2/deploy/DeployReadyPane';
 import type { CampaignTeamMember } from '@/lib/portal-v2/campaigns/types';
 import {
@@ -107,6 +108,8 @@ export const DeployWorkspace = ({
   const [tab, setTab] = useState<DeployTabId>(DEPLOY_DEFAULT_TAB);
   /** The channel whose detail is open, by id. */
   const [openChannel, setOpenChannel] = useState<string | null>(null);
+  /** The Live row whose detail (URL + content) is open, by id. */
+  const [openLiveRowId, setOpenLiveRowId] = useState<string | null>(null);
   /** Which channels a Ready row would publish to, staged client-side until
    *  Deploy is clicked — the BE keeps no selection for a not-yet-live item. */
   const [selections, setSelections] = useState<Record<string, string[]>>({});
@@ -399,6 +402,9 @@ export const DeployWorkspace = ({
   );
 
   const channel = openChannel ? findChannel(channels, openChannel) : null;
+  const openLiveRow = openLiveRowId
+    ? (live.find(row => row.id === openLiveRowId) ?? null)
+    : null;
 
   return (
     <div className='flex min-h-0 flex-col'>
@@ -459,6 +465,7 @@ export const DeployWorkspace = ({
               team={team}
               onPause={handlePause}
               pausingRow={pausingRow}
+              onOpenRow={setOpenLiveRowId}
             />
           ) : null}
 
@@ -499,6 +506,14 @@ export const DeployWorkspace = ({
           creatingDomain={creatingDomain}
           onVerifyDomain={handleVerifyDomain}
           verifyingDomainId={verifyingDomainId}
+        />
+      ) : null}
+
+      {openLiveRow ? (
+        <LiveRowDetailModal
+          key={openLiveRow.id}
+          row={openLiveRow}
+          onClose={() => setOpenLiveRowId(null)}
         />
       ) : null}
     </div>

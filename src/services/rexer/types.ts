@@ -2993,6 +2993,23 @@ export interface AIApplyProductOutput {
   };
 }
 
+// ── AI: social caption (Deploy Live row "AI sinh caption") ────────────────
+export interface AISocialCaptionInput {
+  product_id: string;
+  /** The live page's shareable URL, folded into the caption when given. */
+  page_url?: string;
+}
+
+export interface AISocialCaption {
+  platform: 'facebook' | 'instagram';
+  text: string;
+  hashtags?: string[];
+}
+
+export interface AISocialCaptionOutput {
+  captions: AISocialCaption[];
+}
+
 // ── AI-Automation: Multi-channel adapt ────────────────────────────────────
 export type AIChannel = 'landing' | 'ad' | 'curate' | 'email';
 

@@ -93,6 +93,8 @@ export const mapLiveRow = (view: RxLiveItemView): LiveDeployRow => ({
       reason: c.health_reason,
     })
   ),
+  publicUrl: view.public_url ?? null,
+  productId: view.item.product_id,
 });
 
 export const mapReadyRow = (view: RxReadyItemView): ReadyDeployRow => ({

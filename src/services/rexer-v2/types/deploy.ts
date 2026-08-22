@@ -121,11 +121,14 @@ export type RxCampaignSummary = {
   status: string;
 };
 
-/** `GET /deploy/live` row — `NewLiveItemView`. */
+/** `GET /deploy/live` row — `NewLiveItemView`. `public_url` is `omitempty` —
+ *  empty when the item's page has no slug yet (should not happen for a
+ *  genuinely live item, but never assume). */
 export type RxLiveItemView = {
   item: RxCampaignItem;
   campaign: RxCampaignSummary;
   channels: RxItemChannelHealth[];
+  public_url?: string;
 };
 
 export type RxDeployLiveResponse = { items: RxLiveItemView[]; total: number };
