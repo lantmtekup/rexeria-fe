@@ -93,7 +93,7 @@ export const fetchPulseOverview = async (
         ? Math.round(trust.value.coverage.tracked_components_pct * 100)
         : null,
     campaigns:
-      campaigns.status === 'fulfilled'
+      campaigns.status === 'fulfilled' && Array.isArray(campaigns.value.items)
         ? campaigns.value.items.map(campaignCardOf)
         : [],
     error: null,
@@ -227,7 +227,9 @@ export const fetchPulseExperience = async (
     tier: s.tier && isMeasured(s.tier) ? s.tier : '',
     steps: stepsFromStages(s.funnel ?? []),
     blocks:
-      blocks.status === 'fulfilled' ? blocks.value.items.map(blockRowOf) : [],
+      blocks.status === 'fulfilled' && Array.isArray(blocks.value.items)
+        ? blocks.value.items.map(blockRowOf)
+        : [],
     coveragePct: signal ? Math.round(signal.pct * 100) : null,
     componentsTracked: signal ? signal.components_tracked : null,
     error: null,

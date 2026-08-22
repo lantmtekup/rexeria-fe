@@ -84,15 +84,19 @@ export const totalsFromIntel = (
  * ở dạng đơn điệu (không chặng nào lớn hơn chặng trước), nên phép trừ là đúng
  * và tránh sai số làm tròn của tỷ lệ phần trăm.
  */
-export const stepsFromStages = (stages: RxFunnelStage[]): FunnelStep[] =>
-  stages.map((stage, index) => {
-    const previous = stages[index - 1];
+export const stepsFromStages = (stages: RxFunnelStage[]): FunnelStep[] => {
+  // BE đôi khi trả `{}` thay vì `[]` cho trải nghiệm chưa có lượt đo nào —
+  // gây "…map is not a function" khi mở phân tích cho trang chưa đo được.
+  const list = Array.isArray(stages) ? stages : [];
+  return list.map((stage, index) => {
+    const previous = list[index - 1];
     return {
       label: stage.label || FUNNEL_LABELS[index] || stage.role,
       value: stage.count,
       lost: previous ? Math.max(0, previous.count - stage.count) : 0,
     };
   });
+};
 
 export const leaksFromStages = (
   stages: RxFunnelStage[],
