@@ -372,7 +372,10 @@ export const ExchangePreviewShell = ({
             />
           </div>
         ) : listing.source === 'live' && renderStage ? (
-          <div className='h-full min-h-0 min-w-0 overflow-hidden'>
+          <div
+            key={stageKey}
+            className='h-full min-h-0 min-w-0 overflow-hidden'
+          >
             {renderStage(device)}
           </div>
         ) : (
