@@ -2,7 +2,7 @@
 
 import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -51,6 +51,7 @@ import {
   bindRouteToItems,
   ensureCampaignExperiences,
   ensureCampaignJourneys,
+  routeCoverage,
   withJourneyLinks,
 } from '@/lib/portal-v2/campaigns/journeyLink';
 import { campVerdict } from '@/lib/portal-v2/campaigns/verdict';
@@ -329,6 +330,36 @@ export const CampaignsWorkspace = ({
     },
     [campaigns, t]
   );
+
+  /**
+   * Tự "Carry" lại route khi phát hiện thiếu, không chờ người dùng bấm nút.
+   *
+   * `routeCoverage` chỉ SO SÁNH — node route đã link sản phẩm vào journey
+   * không tự động gắn xuống từng hạng mục của campaign (đó là việc của
+   * `bindRouteToItems`, trước đây chỉ chạy lúc route lần đầu hoặc bấm nút
+   * "Carry" thủ công). Nếu người dùng thêm link sản phẩm vào journey SAU khi
+   * đã route lên campaign, hạng mục vẫn trống cho tới khi ai đó để ý bấm nút
+   * — nên ở đây tự chạy lại mỗi khi mở một campaign mà route đang thiếu.
+   *
+   * Ref theo dõi "đã thử carry cho đúng bộ (campaign, need) này chưa" để
+   * không lặp vô hạn nếu BE từ chối một hạng mục (`bindRouteToItems` nuốt
+   * lỗi từng hạng mục, không throw).
+   */
+  const autoCarriedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!open) return;
+    const coverage = routeCoverage(open, experiences, journeys);
+    if (!coverage.need.length) return;
+    const signature = `${open.id}:${[...coverage.need].sort().join(',')}`;
+    if (autoCarriedRef.current.has(signature)) return;
+    autoCarriedRef.current.add(signature);
+    void bindRouteToItems(open, experiences, journeys, (itemId, masterId) =>
+      attachExperienceToItem(open.id, itemId, masterId)
+    ).then(bound => {
+      setExperiences(bound.experiences);
+      handleChange(bound.campaign);
+    });
+  }, [open, experiences, journeys, handleChange]);
 
   const handleCreate = async (wizard: CampaignWizard) => {
     const draft = wizardDraft(wizard);
