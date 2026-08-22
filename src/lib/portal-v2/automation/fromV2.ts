@@ -66,7 +66,7 @@ export const v2ExperienceToAutomation = (
   name: x.name,
   categoryKey: VEHICLE_KEY[x.vehicle ?? ''] ?? 'vehicleCurated',
   objectiveKey: OBJECTIVE_KEY[x.objective ?? ''] ?? 'objLead',
-  // Hub chỉ trả template ĐÃ Proven, nên cờ này luôn đúng — giữ lại để bộ lọc
+  // Hub chỉ trả trải nghiệm gốc ĐÃ Proven, nên cờ này luôn đúng — giữ lại để bộ lọc
   // phía UI không phải biết điều đó.
   proven: true,
   // `funnel_coverage` là danh sách vai mà thiết kế PHỦ được — đó là thứ v2 trả

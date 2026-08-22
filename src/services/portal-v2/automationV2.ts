@@ -12,10 +12,10 @@ import type {
  * Automation qua API v2 — thay cho bản ghép tay bằng endpoint v1.
  *
  * Bản trước phải tự nối `insights.create` → poll → `handoff` → `pages.create`,
- * tự chấm điểm sẵn sàng, tự đóng master thành template. Nhánh
+ * tự chấm điểm sẵn sàng, tự đóng master thành trải nghiệm gốc. Nhánh
  * `feature/v2-migration` đã có sẵn cả bốn việc đó ở BE:
  *
- *   GET  /automations                  hub (template proven + automation đang có)
+ *   GET  /automations                  hub (trải nghiệm gốc proven + automation đang có)
  *   POST /automations                  bước 1 — BE tự dựng master draft
  *   GET  /automations/{id}/candidates  bước 2 — sản phẩm + readiness BE chấm
  *   POST /automations/{id}/run         nhân bản
@@ -69,7 +69,7 @@ export const fetchAutomationHub = async (
 
 /**
  * Bước 1 — BE tự fork master draft TRONG MỘT transaction và trả `master_page_id`,
- * nên FE không phải tạo page rồi tự đóng canvas thành template như bản cũ.
+ * nên FE không phải tạo page rồi tự đóng canvas thành trải nghiệm gốc như bản cũ.
  */
 export const createAutomation = (body: {
   sourceExperienceId: string;

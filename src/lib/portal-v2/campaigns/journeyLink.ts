@@ -140,7 +140,7 @@ const carryMasterToItem = (
  * route never mentioned.
  *
  * `attach` gọi thẳng `POST /campaigns/{id}/items/{itemId}/experiences` (BE tự
- * fork template thành bản copy thật, xem `campaignExperiences.ts`) — bản trước
+ * fork trải nghiệm gốc thành bản copy thật, xem `campaignExperiences.ts`) — bản trước
  * tự dựng bản copy giả ở FE (`carryMasterToItem`/`forkExperience`), hiện toast
  * "đã gắn" nhưng chưa hề chạm BE, nên tải lại trang là mất sạch và ship gate lại
  * báo thiếu. Một hạng mục lỗi (BE từ chối) không chặn các hạng mục còn lại.

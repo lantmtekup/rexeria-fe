@@ -23,7 +23,7 @@ import type {
  *
  * Thay cho `mapPage.ts` + `seed.ts`, vốn suy trải nghiệm từ `/pages` rồi BỊA
  * nửa còn lại bằng hàm băm id: bậc bằng chứng, số phiên, độ phủ, cả trục sở
- * hữu template/product/topic. Các số đó ổn định theo id nên trông như thật —
+ * hữu trải nghiệm gốc/product/topic. Các số đó ổn định theo id nên trông như thật —
  * đó mới là chỗ nguy hiểm, vì `+45% HIGH CONFIDENCE` đọc như một phép đo.
  *
  * Quy tắc ở đây: KHÔNG suy ra cái gì không có trong phản hồi. Thiếu thì để
@@ -54,7 +54,7 @@ const pick = <T extends string>(
 /**
  * Trục sở hữu — nay là DỮ LIỆU THẬT.
  *
- * `kind` phân biệt template với bản copy, và `subject.kind` cho biết bản copy
+ * `kind` phân biệt trải nghiệm gốc với bản copy, và `subject.kind` cho biết bản copy
  * nói về sản phẩm hay chủ đề. Bản cũ bốc ngẫu nhiên bằng `ipick(id+'state')`,
  * nên ba tab đếm ra 1/1/1 dù cả ba mục đều là page.
  */
@@ -104,7 +104,7 @@ export const v2ToExperienceView = (x: RxExperience): ExperienceView => {
 
     // Block thật chỉ có ở `GET /experiences/{id}`; modal nạp khi mở.
     layers: [],
-    // Template model có Features/Benefits nhưng `Experience` không trả ra.
+    // Trải nghiệm gốc model có Features/Benefits nhưng `Experience` không trả ra.
     features: [],
     benefits: [],
 

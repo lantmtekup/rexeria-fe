@@ -46,7 +46,7 @@ export const OBJECTIVE_LABEL: Record<ExperienceObjective, string> = {
   convert: 'Conversion',
 };
 
-/** Template master id → objective (prototype `obj` on `DATA.experiences`). */
+/** Source-experience master id → objective (prototype `obj` on `DATA.experiences`). */
 export const TEMPLATE_OBJECTIVE: Record<string, ExperienceObjective> = {
   e1: 'lead',
   e2: 'convert',

@@ -11,9 +11,9 @@ import type { RxExperience } from '@/services/rexer-v2/types/experience';
  * Trải nghiệm gắn vào một hạng mục chiến dịch.
  *
  * Bản trước tự suy id bản copy ở FE (`origin × campaign × subject`) rồi dựng
- * bản ghi trong state. BE không dùng công thức đó: gắn một TEMPLATE thì nó tự
- * fork và tự cấp id (R1 — chiến dịch không bao giờ giữ template), nên id suy ra
- * ở FE trỏ vào hư không ngay lần tải lại đầu tiên.
+ * bản ghi trong state. BE không dùng công thức đó: gắn một TRẢI NGHIỆM GỐC
+ * thì nó tự fork và tự cấp id (R1 — chiến dịch không bao giờ giữ trải nghiệm
+ * gốc), nên id suy ra ở FE trỏ vào hư không ngay lần tải lại đầu tiên.
  */
 
 const toCampaignExperience = (x: RxExperience): CampaignExperience => ({
@@ -54,14 +54,14 @@ export const detachExperienceFromItem = (
  * đó là gửi lên BE một id không có thật.
  *
  * Bản kế tiếp gọi thẳng `state: 'all'` — tức nguyên thư viện Exchange (mọi
- * template hệ thống + block của MỌI brand), nên hộp chọn của một chiến dịch
- * hiện ra hàng trăm mục không thuộc về brand đang xem. Dùng lại đúng bộ lọc
- * "thư viện của brand" ở trang `portal-v2/experiences`
+ * trải nghiệm gốc hệ thống + block của MỌI brand), nên hộp chọn của một
+ * chiến dịch hiện ra hàng trăm mục không thuộc về brand đang xem. Dùng lại
+ * đúng bộ lọc "thư viện của brand" ở trang `portal-v2/experiences`
  * (`fetchExperienceLibrary`/`experienceLibrary.ts`): ba `COPY_STATES` cộng
- * template do chính brand sở hữu — không phải toàn bộ Exchange.
+ * trải nghiệm gốc do chính brand sở hữu — không phải toàn bộ Exchange.
  *
- * Lấy CẢ template lẫn copy: hộp chọn cần template để fork, còn các thẻ đã gắn
- * cần bản copy để hiện tên.
+ * Lấy CẢ trải nghiệm gốc lẫn copy: hộp chọn cần trải nghiệm gốc để fork, còn
+ * các thẻ đã gắn cần bản copy để hiện tên.
  */
 export const fetchCampaignExperienceLibrary = async (
   brandId: string | null
@@ -69,10 +69,10 @@ export const fetchCampaignExperienceLibrary = async (
   try {
     const common = brandId ? { brand_id: brandId } : {};
 
-    // `ownIds` chỉ nhánh lọc template cần — 3 nhánh COPY_STATES bên dưới
-    // không đụng tới nó. `await` ở TRONG closure này (thay vì ở ngoài, chặn cả
-    // `Promise.all`) để 3 nhánh kia không phải chờ xong lookup template mới
-    // được bắt đầu tải song song.
+    // `ownIds` chỉ nhánh lọc trải nghiệm gốc cần — 3 nhánh COPY_STATES bên
+    // dưới không đụng tới nó. `await` ở TRONG closure này (thay vì ở ngoài,
+    // chặn cả `Promise.all`) để 3 nhánh kia không phải chờ xong lookup trải
+    // nghiệm gốc mới được bắt đầu tải song song.
     const fetchOwnTemplates = async (): Promise<RxExperience[]> => {
       const ownIds = await fetchOwnTemplateIds();
       if (!ownIds || ownIds.size === 0) return [];

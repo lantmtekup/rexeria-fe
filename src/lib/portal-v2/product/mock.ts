@@ -756,8 +756,8 @@ export const MOCK_PRODUCT_CAMPAIGN_LINKS: ProductCampaignLink[] = [
 ];
 
 /**
- * Empty on purpose: in the prototype's boot data every experience is a template
- * (`template: true`, `subject: null`), so expsOf('product', id) returns nothing
+ * Empty on purpose: in the prototype's boot data every experience is a source
+ * experience (`template: true`, `subject: null`), so expsOf('product', id) returns nothing
  * for all ten products. Copies only exist once a campaign forks one.
  */
 export const MOCK_PRODUCT_EXPERIENCE_LINKS: ProductExperienceLink[] = [];

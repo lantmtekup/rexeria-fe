@@ -7,7 +7,7 @@ import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 /**
  * "Dùng trải nghiệm này" — `POST /v1/experiences/{id}/use`.
  *
- * Fork một template (hoặc block) thành BẢN COPY nằm trong một hạng mục chiến
+ * Fork một trải nghiệm gốc (hoặc block) thành BẢN COPY nằm trong một hạng mục chiến
  * dịch. Đây là đường duy nhất làm một mục hiện ra ở tab "Bản copy": `ListCopies`
  * lọc `pages.campaign_item_id IS NOT NULL`, và chỉ fork mới ghi cột đó.
  *
@@ -35,7 +35,7 @@ export type UseTargetItem = {
   /**
    * Id các trải nghiệm ĐÃ gắn vào hạng mục này.
    *
-   * Dùng để nói trước "hạng mục này đã có bản copy của template đó" thay vì để
+   * Dùng để nói trước "hạng mục này đã có bản copy của trải nghiệm gốc đó" thay vì để
    * người dùng bấm rồi nhận về một bản ghi cũ mà tưởng là bản mới — fork
    * idempotent theo `(origin, item)`.
    */
@@ -129,8 +129,8 @@ export const fetchUseItems = async (
               `#${(it.product_id ?? '').slice(0, 8)}`),
         status: it.status,
         // BE trả nguyên object trải nghiệm ở đây, không chỉ `{id, name}` như
-        // `RxCampaignItem` khai — `origin_id` là thứ cần để so với template
-        // đang mở.
+        // `RxCampaignItem` khai — `origin_id` là thứ cần để so với trải
+        // nghiệm gốc đang mở.
         originIds: (it.experiences ?? [])
           .map(e => (e as { origin_id?: string | null }).origin_id ?? e.id)
           .filter((v): v is string => Boolean(v)),

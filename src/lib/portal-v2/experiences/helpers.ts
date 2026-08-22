@@ -88,7 +88,7 @@ export const findById = (
  * `slug || id` because a page created without a slug still has to be openable,
  * and the editor route resolves both shapes. A `block`-state row has no page
  * behind it at all — `?kind=block` tells `CanvasEditor` to load
- * `blocks.get(id)` instead of resolving a page/template (see
+ * `blocks.get(id)` instead of resolving a page/source experience (see
  * `CanvasEditor.tsx`'s two-mode contract).
  */
 export const canvasEditorHref = (experience: ExperienceView): string => {

@@ -6,10 +6,10 @@ import type {
 import type { Template } from '@/services/rexer/types';
 
 /**
- * Template hệ thống → thẻ trên màn Exchange.
+ * Trải nghiệm gốc hệ thống → thẻ trên màn Exchange.
  *
  * `GET /v1/templates` áp `brand_id IS NULL OR brand_id = ?`
- * (`repository/template.go:79`), nên template hệ thống (`brand_id NULL`) hiện
+ * (`repository/template.go:79`), nên trải nghiệm gốc hệ thống (`brand_id NULL`) hiện
  * ra với MỌI tài khoản — admin hay brand đều thấy cùng một danh sách. Đó là
  * lý do khối này ghép được vào chợ mà không tạo lại chênh lệch cũ.
  *
@@ -62,14 +62,14 @@ export const mapTemplateToListing = (t: Template): ExchangeListingView => {
     kind: 'page',
     grad: gradientFor(t.id),
     ...(t.description ? { summary: t.description } : {}),
-    // evidence / coverage bỏ trống: chưa ai đo template này trên chợ.
+    // evidence / coverage bỏ trống: chưa ai đo trải nghiệm gốc này trên chợ.
   };
 
   return {
     id: `tpl-${t.id}`,
     source: 'page',
     templateId: t.id,
-    // Xem trước đi qua `/p/{slug}` của trang nguồn. Template không có slug
+    // Xem trước đi qua `/p/{slug}` của trang nguồn. Trải nghiệm gốc không có slug
     // riêng, và FE của một brand không tra nổi trang thuộc brand khác — nên
     // slug này do BE giải sẵn (`preview_slug`).
     ...(t.preview_slug ? { slug: t.preview_slug } : {}),

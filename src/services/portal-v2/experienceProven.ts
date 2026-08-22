@@ -33,10 +33,11 @@ export const readProven = (
 };
 
 /**
- * Bật/tắt dấu Proven. BE tự nhận id là template hay copy rồi ghi đúng bảng.
+ * Bật/tắt dấu Proven. BE tự nhận id là trải nghiệm gốc hay copy rồi ghi đúng
+ * bảng.
  *
  * Lưu ý: đánh dấu một COPY không đưa nó vào hub Automation — hub chỉ đọc
- * template. Muốn vậy phải `promoteToLibrary` trước.
+ * trải nghiệm gốc. Muốn vậy phải `promoteToLibrary` trước.
  */
 export const setExperienceProven = async (
   experienceId: string,

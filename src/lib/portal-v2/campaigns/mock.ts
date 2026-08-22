@@ -295,7 +295,7 @@ export const MOCK_CAMPAIGNS: CampaignView[] = [
         status: 'building',
         owner: 'Maya Okonjo',
         due: '2026-11-05',
-        note: 'Carried from the Gift Season Journey — three template experiences, yours to adapt.',
+        note: 'Carried from the Gift Season Journey — three source experiences, yours to adapt.',
       },
       {
         id: 'i4',

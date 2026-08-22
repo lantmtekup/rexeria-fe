@@ -190,8 +190,8 @@ const EMPTY_EXPERIENCE: PulseExperienceData = {
 /**
  * Một trải nghiệm ở tầng sâu nhất còn API: phễu riêng + bảng block + độ phủ.
  *
- * `experience_id` nhận cả template lẫn bản copy — BE tự nở template ra toàn bộ
- * copy của nó, nên id nào cũng gọi được mà không phải đoán trước.
+ * `experience_id` nhận cả trải nghiệm gốc lẫn bản copy — BE tự nở trải nghiệm
+ * gốc ra toàn bộ copy của nó, nên id nào cũng gọi được mà không phải đoán trước.
  */
 export const fetchPulseExperience = async (
   experienceId: string,

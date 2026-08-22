@@ -71,7 +71,7 @@ export type CampaignItem = {
   productId?: string;
   /** Set when `kind === 'topic'` — free text, no SKU behind it. */
   name?: string;
-  /** Experience ids — always campaign copies, never templates (Rule R1). */
+  /** Experience ids — always campaign copies, never source experiences (Rule R1). */
   expIds: string[];
   status: CampaignItemStatus;
   /** `owner_id` — a member's uuid, or `''` for unassigned. Resolve the display name via `ownerName`/`CampaignTeamMember[]`. */
