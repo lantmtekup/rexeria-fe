@@ -2271,6 +2271,7 @@
       "slotsReady": "{filled}/{total} sẵn sàng",
       "readyToDeploy": "Đủ dữ liệu để sinh và xuất bản",
       "needsBeforeDeploy": "Cần {needs} trước khi xuất bản được",
+      "needsBeforeRun": "Chưa có ảnh nào — sẽ bị BỎ QUA khi chạy, không tạo được bản nháp. Thêm ảnh cho sản phẩm rồi quay lại đây.",
       "toGenerate": "{n} bản sẽ được sinh",
       "slotFilled": "{role} lấp được từ sản phẩm này",
       "slotGap": "Thiếu: cần {need}",

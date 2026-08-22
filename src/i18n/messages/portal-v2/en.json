@@ -2271,6 +2271,7 @@
       "slotsReady": "{filled}/{total} ready",
       "readyToDeploy": "Ready to generate and deploy",
       "needsBeforeDeploy": "Needs {needs} before it can deploy",
+      "needsBeforeRun": "No photos on file — this will be SKIPPED when you run it, no draft gets made. Add photos to the product and come back.",
       "toGenerate": "{n} to generate",
       "slotFilled": "{role} fills from this product",
       "slotGap": "Gap: needs {need}",
