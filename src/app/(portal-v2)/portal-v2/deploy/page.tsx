@@ -1,10 +1,12 @@
 import { BrandScopeBar } from '@/components/molecules/portal-v2/BrandScopeBar';
 import { DeployWorkspace } from '@/components/organisms/portal-v2/deploy/DeployWorkspace';
+import { DEPLOY_TABS } from '@/lib/portal-v2/deploy/constants';
 import { mapBrandDomain } from '@/lib/portal-v2/deploy/helpers';
 import {
   MOCK_BRAND_DOMAINS,
   cloneBrandDomains,
 } from '@/lib/portal-v2/deploy/mock';
+import type { DeployTabId } from '@/lib/portal-v2/deploy/types';
 import { fetchCampaignTeam } from '@/services/portal-v2/campaignBoardV2';
 import {
   fetchDeployChannels,
@@ -55,6 +57,10 @@ export default async function PortalV2DeployPage({
 }: PortalV2DeployPageProps) {
   const params = await searchParams;
   const scope = await resolvePortalScope(params);
+  const tabParam = Array.isArray(params.tab) ? params.tab[0] : params.tab;
+  const initialTab = DEPLOY_TABS.some(t => t.id === tabParam)
+    ? (tabParam as DeployTabId)
+    : undefined;
 
   // Bốn nguồn độc lập ⇒ chạy song song.
   const [channels, live, ready, kpis, team, domains] = await Promise.all([
@@ -87,6 +93,7 @@ export default async function PortalV2DeployPage({
         initialError={
           channels.error ?? live.error ?? ready.error ?? scope.error
         }
+        initialTab={initialTab}
       />
     </div>
   );
