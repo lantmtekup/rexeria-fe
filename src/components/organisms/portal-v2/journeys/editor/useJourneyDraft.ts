@@ -25,8 +25,20 @@ type DraftState = {
   /** JSON snapshots, oldest first. `history[index]` is what is on screen. */
   history: string[];
   index: number;
-  /** Dirty-check baseline — open snapshot, then moved forward by autosave. */
-  origin: string;
+  /**
+   * Autosave-settle baseline — moved forward each time the debounced local
+   * write-back runs, purely so that effect stops re-firing on an unchanged
+   * draft. NOT a save-to-server signal — see `savedOrigin`.
+   */
+  autosaveOrigin: string;
+  /**
+   * Save-to-server baseline — open snapshot, moved forward ONLY by a real
+   * Save. `isDirty` (the "leave without saving" gate) is checked against
+   * this, never against `autosaveOrigin`: the debounced write-back only
+   * touches workspace state, not the server (see `JourneyEditor`'s
+   * `onPersist` vs `onSave`), so it must not silence that warning.
+   */
+  savedOrigin: string;
   /** Positioned clone at open — Discard restores this; never moves. */
   opened: string;
 };
@@ -63,14 +75,16 @@ const reducer = (state: DraftState, action: DraftAction): DraftState => {
     case 'commit':
       return push(state, state.draft);
 
-    case 'markClean':
-      return { ...state, origin: snapshotOf(state.draft) };
+    case 'markClean': {
+      const entry = snapshotOf(state.draft);
+      return { ...state, autosaveOrigin: entry, savedOrigin: entry };
+    }
 
     case 'autosaved':
       return {
         ...state,
         draft: action.draft,
-        origin: snapshotOf(action.draft),
+        autosaveOrigin: snapshotOf(action.draft),
       };
 
     case 'undo': {
@@ -99,7 +113,14 @@ const init = (journey: Journey): DraftState => {
      and no re-render can reshuffle it. */
   const draft = withPositions(structuredClone(journey));
   const entry = snapshotOf(draft);
-  return { draft, history: [entry], index: 0, origin: entry, opened: entry };
+  return {
+    draft,
+    history: [entry],
+    index: 0,
+    autosaveOrigin: entry,
+    savedOrigin: entry,
+    opened: entry,
+  };
 };
 
 export type JourneyDraftController = {
@@ -110,7 +131,7 @@ export type JourneyDraftController = {
   applyLive: (next: Journey) => void;
   /** Turn whatever `applyLive` has accumulated into one undo step. */
   commit: () => void;
-  /** Persist-shaped draft becomes the live draft and the clean baseline. */
+  /** Persist-shaped draft becomes the live draft and the autosave baseline. */
   markAutosaved: (next: Journey) => void;
   /** Positioned clone as the editor received it — Discard restores this. */
   opened: Journey;
@@ -118,8 +139,14 @@ export type JourneyDraftController = {
   redo: () => void;
   canUndo: boolean;
   canRedo: boolean;
-  /** The draft differs from the last clean baseline (open or last autosave). */
+  /**
+   * The draft differs from what the SERVER has (open or last real Save) —
+   * drives the "leave without saving" warning. Local autosave never clears
+   * this: it only writes back to workspace state, not the server.
+   */
   isDirty: boolean;
+  /** The draft differs from the last autosave write-back — internal to the debounce effect. */
+  needsAutosave: boolean;
 };
 
 export const useJourneyDraft = (journey: Journey): JourneyDraftController => {
@@ -146,8 +173,13 @@ export const useJourneyDraft = (journey: Journey): JourneyDraftController => {
   const redo = useCallback(() => dispatch({ type: 'redo' }), []);
 
   const isDirty = useMemo(
-    () => snapshotOf(state.draft) !== state.origin,
-    [state.draft, state.origin]
+    () => snapshotOf(state.draft) !== state.savedOrigin,
+    [state.draft, state.savedOrigin]
+  );
+
+  const needsAutosave = useMemo(
+    () => snapshotOf(state.draft) !== state.autosaveOrigin,
+    [state.draft, state.autosaveOrigin]
   );
 
   return {
@@ -162,5 +194,6 @@ export const useJourneyDraft = (journey: Journey): JourneyDraftController => {
     canUndo: state.index > 0,
     canRedo: state.index < state.history.length - 1,
     isDirty,
+    needsAutosave,
   };
 };

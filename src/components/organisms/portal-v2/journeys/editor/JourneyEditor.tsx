@@ -179,6 +179,7 @@ export const JourneyEditor = ({
     canUndo,
     canRedo,
     isDirty,
+    needsAutosave,
   } = useJourneyDraft(journey);
 
   const [selection, setSelection] = useState<JourneyEditorSelection>(() =>
@@ -273,9 +274,14 @@ export const JourneyEditor = ({
     onSave({ ...draft, updated: 'just now' });
   }, [draft, onSave]);
 
-  /* Debounced quiet write-back. Manual Save still alerts JSON + closes. */
+  /**
+   * Debounced quiet write-back — workspace state only, NOT the server (see
+   * `onPersist` vs `onSave`). Gated on `needsAutosave`, not `isDirty`: the
+   * latter tracks unsaved-vs-server and must keep warning on close until a
+   * real Save, which this effect never performs.
+   */
   useEffect(() => {
-    if (!isDirty) return;
+    if (!needsAutosave) return;
 
     setAutosaveStatus('dirty');
     const timer = window.setTimeout(() => {
@@ -287,7 +293,7 @@ export const JourneyEditor = ({
     }, AUTOSAVE_MS);
 
     return () => window.clearTimeout(timer);
-  }, [draft, isDirty, onPersist, markAutosaved]);
+  }, [draft, needsAutosave, onPersist, markAutosaved]);
 
   /* ── shortcuts ─────────────────────────────────────────────────────────
      Skipped while a field has focus (Delete belongs to the text there, Cmd+Z to
