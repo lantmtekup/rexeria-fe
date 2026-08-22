@@ -160,11 +160,11 @@ export const ExperiencesWorkspace = ({
       if (confirmed !== next) apply(confirmed);
     } catch (err) {
       apply(experience.proven);
-      // 403 còn lại giờ chỉ có MỘT lý do: `assertTemplateMutable` khoá template
-      // hệ thống (`brand_id` NULL) cho mọi người trừ platform admin. Guard chặn
-      // hẳn client-portal (bất kể sở hữu brand nào) đã gỡ — tài khoản brand giờ
-      // đánh Proven được template của chính mình (kể cả bản tạo qua "Add to
-      // library"), miễn đủ vai trò manager (`EnsureBrandRole`, kiểm ở
+      // 403 còn lại giờ chỉ có MỘT lý do: `assertTemplateMutable` khoá trải
+      // nghiệm gốc hệ thống (`brand_id` NULL) cho mọi người trừ platform admin.
+      // Guard chặn hẳn client-portal (bất kể sở hữu brand nào) đã gỡ — tài
+      // khoản brand giờ đánh Proven được trải nghiệm gốc của chính mình (kể cả
+      // bản tạo qua "Add to library"), miễn đủ vai trò manager (`EnsureBrandRole`, kiểm ở
       // `ensureManager` trước khi tới đây). Dịch thành câu người dùng làm được
       // gì tiếp; các lỗi khác thì đưa nguyên văn của BE.
       setProvenError(
@@ -424,9 +424,9 @@ export const ExperiencesWorkspace = ({
   /**
    * Tạo mới xong thì ĐI THẲNG vào canvas, không chèn thẻ vào lưới.
    *
-   * `POST /v1/experiences` dựng một template nháp (hoặc block) — không phải bản
-   * copy — nên nó không thuộc thư viện này, y hệt trường hợp nhân bản ở dưới.
-   * Chèn vào lưới sẽ tạo ra một thẻ biến mất ngay lần nạp sau.
+   * `POST /v1/experiences` dựng một trải nghiệm gốc nháp (hoặc block) — không
+   * phải bản copy — nên nó không thuộc thư viện này, y hệt trường hợp nhân
+   * bản ở dưới. Chèn vào lưới sẽ tạo ra một thẻ biến mất ngay lần nạp sau.
    *
    * Đi bằng `canvasEditorHref`, KHÔNG bằng `edit_url` của BE — cái đó trỏ tới
    * `/templates/{id}`, một route FE này không có, và bấm Tạo sẽ rơi thẳng vào
@@ -453,12 +453,13 @@ export const ExperiencesWorkspace = ({
       }
 
       /*
-        Nhân bản một COPY ra một TEMPLATE, không phải copy thứ hai — spec §4.11:
-        hai copy cùng `origin + campaign + item` sẽ đếm trùng dòng fact, và có
-        unique constraint chặn ở tầng cấu trúc. BE làm đúng luật đó.
+        Nhân bản một COPY ra một TRẢI NGHIỆM GỐC, không phải copy thứ hai —
+        spec §4.11: hai copy cùng `origin + campaign + item` sẽ đếm trùng dòng
+        fact, và có unique constraint chặn ở tầng cấu trúc. BE làm đúng luật đó.
 
-        Template nháp ấy giờ CÓ CHỖ ở màn này (tab "Template của tôi"), nên bản
-        sao hiện ra ngay cạnh bản gốc và bộ lọc nhảy sang tab chứa nó.
+        Trải nghiệm gốc nháp ấy giờ CÓ CHỖ ở màn này (tab "Bản gốc của tôi"),
+        nên bản sao hiện ra ngay cạnh thẻ vừa nhân bản và bộ lọc nhảy sang tab
+        chứa nó.
 
         Vẫn giữ nhánh `landsHere`: hỏi `EXPERIENCE_STATES` chứ không đoán cứng
         `'template'`. Đổi bộ lọc sang một tab không tồn tại thì lưới sẽ trống

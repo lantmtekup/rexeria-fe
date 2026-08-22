@@ -38,8 +38,8 @@ const realOptions = <T extends { id: string; labelKey: string }>(opts: T[]) =>
  * Tạo trải nghiệm mới — prototype `ednew`.
  *
  * MỘT ĐIỀU PHẢI NÓI THẲNG: `POST /v1/experiences` KHÔNG tạo ra một mục cho màn
- * này. `category: 'collection'` dựng một **Template** nháp, `'blocks'` dựng một
- * **Block** — cả hai đều không phải bản copy, mà thư viện Experiences chỉ nạp
+ * này. `category: 'collection'` dựng một **trải nghiệm gốc** nháp, `'blocks'`
+ * dựng một **Block** — cả hai đều không phải bản copy, mà thư viện Experiences chỉ nạp
  * ba state copy. Nên món vừa tạo sẽ không hiện trong lưới, và (vì còn `draft`)
  * cũng chưa hiện ở Exchange.
  *
@@ -223,8 +223,8 @@ export const NewExperienceModal = ({
 
       {/*
         Nói trước món này đi đâu. Nếu để người dùng bấm Tạo rồi tự nhận ra lưới
-        không đổi, họ sẽ bấm thêm vài lần nữa — và mỗi lần là một template nháp
-        thật nằm lại trong kho.
+        không đổi, họ sẽ bấm thêm vài lần nữa — và mỗi lần là một trải nghiệm
+        gốc nháp thật nằm lại trong kho.
       */}
       <p className='mt-4 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3.5 py-3 text-[12px] leading-relaxed text-[var(--pv2-mut)]'>
         {t('newLandsHint')}

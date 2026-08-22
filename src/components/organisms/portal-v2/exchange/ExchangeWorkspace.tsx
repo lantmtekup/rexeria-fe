@@ -309,8 +309,8 @@ export const ExchangeWorkspace = ({
     async (listing: ExchangeListingView) => {
       // Ads chưa có đường về Experiences (xem `ExchangeActionState`). UI đã
       // không bày nút Thêm cho chúng; chốt lại ở đây để nhánh `else` bên dưới
-      // — nhánh gán cứng `type: 'landing'` — không bao giờ nhận một ad
-      // template và lặng lẽ đẻ ra một landing page.
+      // — nhánh gán cứng `type: 'landing'` — không bao giờ nhận một ad là
+      // trải nghiệm gốc rồi lặng lẽ đẻ ra một landing page.
       if (listing.meta.kind === 'ad') return;
 
       // Không có workspace thì KHÔNG có chỗ để thêm vào. Trước đây nhánh này
@@ -350,7 +350,7 @@ export const ExchangeWorkspace = ({
             added: { ...prev.added, [listing.id]: block.id },
           }));
         } else {
-          // Template hệ thống. BE nhận `template_id`, KHÔNG nhận
+          // Trải nghiệm gốc hệ thống. BE nhận `template_id`, KHÔNG nhận
           // `template_version_id` (`models/page.go:118`) — bản trước gửi
           // nhầm trường nên BE thấy cả template_id lẫn external_url đều rỗng
           // và trả "exactly one of template_id or external_url is required".

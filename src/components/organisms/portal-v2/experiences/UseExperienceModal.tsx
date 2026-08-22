@@ -85,8 +85,8 @@ export const UseExperienceModal = ({
 
   const selectedItem = items?.find(i => i.id === itemId) ?? null;
   /* Fork idempotent theo (origin, item): hạng mục đã có bản copy của chính
-     template này thì bấm nữa chỉ nhận lại bản cũ. Nói trước, đừng để người
-     dùng tưởng vừa tạo ra cái mới. */
+     trải nghiệm gốc này thì bấm nữa chỉ nhận lại bản cũ. Nói trước, đừng để
+     người dùng tưởng vừa tạo ra cái mới. */
   const alreadyForked =
     selectedItem?.originIds.includes(experience.id) ?? false;
 

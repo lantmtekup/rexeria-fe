@@ -11,7 +11,7 @@ import type {
 
 /**
  * Prototype `XSTATES` + All (~L16071) — the page's primary navigation.
- * Ownership (template vs copy) is orthogonal to Category / Type / Objective.
+ * Ownership (source experience vs copy) is orthogonal to Category / Type / Objective.
  */
 export const EXPERIENCE_STATES: {
   id: ExperienceState | 'all';
@@ -22,17 +22,18 @@ export const EXPERIENCE_STATES: {
   { id: 'unassigned', labelKey: 'stateUnassigned' },
   { id: 'product', labelKey: 'stateProduct' },
   { id: 'topic', labelKey: 'stateTopic' },
-  // Template CỦA CHÍNH BRAND. Nhân bản một bản copy cho ra một template nháp
-  // (`promotePage`), và nó không hiện ở Exchange vì màn đó lọc `active` — nên
-  // không có tab này thì bấm Nhân bản xong thứ vừa tạo biến mất khỏi mọi màn.
+  // Trải nghiệm gốc CỦA CHÍNH BRAND. Nhân bản một bản copy cho ra một trải
+  // nghiệm gốc nháp (`promotePage`), và nó không hiện ở Exchange vì màn đó
+  // lọc `active` — nên không có tab này thì bấm Nhân bản xong thứ vừa tạo
+  // biến mất khỏi mọi màn.
   //
   // Tab cũ bị bỏ vì nó nạp `state: 'templates'` nguyên xi, tức là gộp cả kho hệ
   // thống. Nay `experienceLibrary` lọc theo `brand_id` trước khi trả về, nên ở
   // đây chỉ còn hàng của brand — đo thật: 3, không phải 79.
   { id: 'template', labelKey: 'stateTemplate' },
   // Block CỦA CHÍNH BRAND — bản fork qua Exchange (`exchange.add`) sống ở đây.
-  // `experienceLibrary` lọc theo brand giống hệt nhánh template ở trên, nên tab
-  // này chỉ đếm block của brand, không kéo theo ~146 block hệ thống.
+  // `experienceLibrary` lọc theo brand giống hệt nhánh trải nghiệm gốc ở trên,
+  // nên tab này chỉ đếm block của brand, không kéo theo ~146 block hệ thống.
   { id: 'block', labelKey: 'stateBlock' },
 ];
 

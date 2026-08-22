@@ -63,7 +63,7 @@ const AUTOMATION_BATCH_CAP = 200;
  *   POST /automations/{id}/run         nhân bản (xếp hàng, worker nền điền)
  */
 type AutomationWorkspaceProps = {
-  /** Template đã Proven — `GET /automations` (hub). */
+  /** Trải nghiệm gốc đã Proven — `GET /automations` (hub). */
   initialExperiences: RxExperience[];
   /** Automation đã tạo, cùng lượt gọi hub — `GET /automations`. */
   initialAutomations: RxAutomation[];

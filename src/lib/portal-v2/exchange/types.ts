@@ -1,7 +1,7 @@
 /**
- * `ad` là ad creative — template có `target_page_type === 'ad'`. Nó là một
- * KIND riêng chứ không phải một SOURCE riêng: vẫn nạp từ `GET /v1/templates`
- * cùng lượt với template landing, vẫn xem trước qua `/p/{preview_slug}`.
+ * `ad` là ad creative — trải nghiệm gốc có `target_page_type === 'ad'`. Nó là
+ * một KIND riêng chứ không phải một SOURCE riêng: vẫn nạp từ `GET /v1/templates`
+ * cùng lượt với trải nghiệm gốc landing, vẫn xem trước qua `/p/{preview_slug}`.
  * Tách ra để nó không lẫn vào tab Experiences như trước.
  */
 export type ExchangeKind = 'all' | 'page' | 'ad' | 'block';
@@ -59,7 +59,7 @@ export type ExchangeListingView = {
   /** Seed version when installing a landing listing into a workspace. */
   templateVersionId?: string;
   /**
-   * Id của TEMPLATE nguồn. `POST /workspaces/{ws}/pages` nhận `template_id`,
+   * Id của TRẢI NGHIỆM GỐC nguồn. `POST /workspaces/{ws}/pages` nhận `template_id`,
    * KHÔNG nhận `template_version_id` (`models/page.go:118`) — gửi nhầm trường
    * thì BE thấy cả template_id lẫn external_url đều rỗng và trả
    * "exactly one of template_id or external_url is required".
@@ -94,9 +94,10 @@ export type ExchangeFilters = {
 
 /**
  * `unavailable` — món xem được nhưng CHƯA có đường mang về. Đang chỉ dùng cho
- * `kind: 'ad'`: `GET /v1/experiences` chỉ gộp template, block, và page đã gắn
- * `campaign_item_id`, nên một page dựng từ ad template không bao giờ hiện
- * trong thư viện Experiences. Bày nút Thêm ở đó là hứa một chỗ đến không có.
+ * `kind: 'ad'`: `GET /v1/experiences` chỉ gộp trải nghiệm gốc, block, và page
+ * đã gắn `campaign_item_id`, nên một page dựng từ ad (nguồn là trải nghiệm
+ * gốc) không bao giờ hiện trong thư viện Experiences. Bày nút Thêm ở đó là
+ * hứa một chỗ đến không có.
  */
 export type ExchangeActionState =
   | 'added'

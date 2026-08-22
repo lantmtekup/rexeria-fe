@@ -88,11 +88,11 @@ export const ExperiencePickerModal = ({
   }, [query]);
 
   /**
-   * CHỈ template — một node journey là "route master", được Campaign tự fork
-   * riêng cho từng hạng mục (`journeyLink.ts` `bindRouteToItems`). Cho chọn cả
-   * bản copy đã gắn sẵn cho một sản phẩm thì `master()` bên đó không nhận diện
-   * được id đó là template, forking lặng lẽ không chạy — node coi như chưa có
-   * trải nghiệm, dù người dùng đã chọn một cái.
+   * CHỈ trải nghiệm gốc — một node journey là "route master", được Campaign tự
+   * fork riêng cho từng hạng mục (`journeyLink.ts` `bindRouteToItems`). Cho
+   * chọn cả bản copy đã gắn sẵn cho một sản phẩm thì `master()` bên đó không
+   * nhận diện được id đó là trải nghiệm gốc, forking lặng lẽ không chạy — node
+   * coi như chưa có trải nghiệm, dù người dùng đã chọn một cái.
    */
   const templates = useMemo(
     () => items.filter(item => item.state === 'template'),
@@ -103,9 +103,9 @@ export const ExperiencePickerModal = ({
    * `items` is non-empty but every one got filtered out above — the fetch's
    * own `status=published` gate already passed, so "publish it first"
    * (`pickerEmptyHint`) would be actively wrong here: the real ask is a
-   * template, and none of these published pages are one yet. Distinguish it
-   * from the genuine "nothing published matches" case, which still needs the
-   * original hint.
+   * source experience, and none of these published pages are one yet.
+   * Distinguish it from the genuine "nothing published matches" case, which
+   * still needs the original hint.
    */
   const hasPublishedButNoTemplates = items.length > 0 && templates.length === 0;
 

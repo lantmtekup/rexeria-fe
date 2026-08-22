@@ -20,16 +20,17 @@ export type NewExperienceDraft = {
 };
 
 /**
- * Tạo mới. Món ra lò là **template nháp** (hoặc block), KHÔNG phải bản copy —
- * xem `rexerV2Api.experiences.create`. Nên nơi gọi phải mở canvas, đừng chèn
- * thẳng vào lưới.
+ * Tạo mới. Món ra lò là **trải nghiệm gốc nháp** (hoặc block), KHÔNG phải
+ * bản copy — xem `rexerV2Api.experiences.create`. Nên nơi gọi phải mở canvas,
+ * đừng chèn thẳng vào lưới.
  *
  * CỐ Ý BỎ `edit_url`. BE dựng nó bằng cách nối chuỗi — `"/templates/" + t.ID`
  * (`usecase/experience.go:441`), `"/blocks/" + b.ID` cho block — tức là đoán
  * bảng route của một FE nào đó. FE này KHÔNG có `/templates/{id}`: đi theo nó
- * ra thẳng trang NotFound (đã thử với template `d9cb2f08…`). Đường đúng là
- * `canvasEditorHref` của chính FE (`/portal-v2/{slug|id}/canvas`), và route ấy
- * nhận cả UUID template — mở ra canvas rỗng, đúng như một bản nháp mới.
+ * ra thẳng trang NotFound (đã thử với id trải nghiệm gốc `d9cb2f08…`). Đường
+ * đúng là `canvasEditorHref` của chính FE (`/portal-v2/{slug|id}/canvas`), và
+ * route ấy nhận cả UUID trải nghiệm gốc — mở ra canvas rỗng, đúng như một bản
+ * nháp mới.
  *
  * Trường taxonomy rỗng bị BỎ HẲN khỏi body: BE validate `oneof=...` và chuỗi
  * rỗng lọt qua được `omitempty` ở tầng nào cũng là rủi ro 400 không cần thiết.

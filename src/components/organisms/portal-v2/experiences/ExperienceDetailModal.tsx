@@ -53,8 +53,8 @@ type ExperienceDetailModalProps = {
    * Bật/tắt dấu Proven trên chính trang này.
    *
    * Đủ để vào hub Automation ngay — hub giờ đọc cả copy Proven trực tiếp,
-   * không còn bắt buộc "Add to library" (Promote → template → Proven) như
-   * trước nữa.
+   * không còn bắt buộc "Add to library" (Promote → trải nghiệm gốc → Proven)
+   * như trước nữa.
    */
   onToggleProven: (experience: ExperienceView) => void;
   /** Đang ghi xuống server — khoá nút để không bấm kép. */

@@ -33,14 +33,14 @@ const LIMIT = 200;
  *
  * Bản thứ hai chuyển hẳn sang `GET /v1/exchange/items`. Đúng nguồn, giống nhau
  * cho mọi tài khoản, nhưng `exchange_listings` chưa có dòng nào nên màn hình
- * trống trơn — mất luôn 75 template và 109 block mà ai cũng có quyền xem.
+ * trống trơn — mất luôn 75 trải nghiệm gốc và 109 block mà ai cũng có quyền xem.
  *
  * Bản này lấy cả hai, từ những endpoint KHÔNG phân biệt người gọi:
  *
  *   1. `GET /v1/exchange/items` — hàng ai đó đăng bán. Không lọc brand ở bất
  *      kỳ tầng nào (handler `priv`, usecase, filter, repository).
  *   2. `GET /v1/templates`      — `brand_id IS NULL OR brand_id = ?`, nên 75
- *      template hệ thống hiện với mọi tài khoản.
+ *      trải nghiệm gốc hệ thống hiện với mọi tài khoản.
  *   3. `GET /v1/blocks`         — `brand_id = ? OR scope = 'system'`; sau khi
  *      kho RexerStudio chuyển về `scope='system'`, cả 109 block hiện với mọi
  *      tài khoản.

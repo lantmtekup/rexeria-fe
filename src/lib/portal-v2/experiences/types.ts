@@ -32,7 +32,7 @@ export type EvidenceTier = 'high' | 'directional' | 'early' | 'unmeasured';
 /**
  * Trục SỞ HỮU — prototype `expState` / `XSTATES` (~L15927), mở rộng cho v2.
  *
- * Template thuộc về thư viện dùng chung; bản copy thuộc về brand đã lấy nó.
+ * Trải nghiệm gốc thuộc về thư viện dùng chung; bản copy thuộc về brand đã lấy nó.
  *
  * `unassigned` không có trong prototype và là mắt xích thiếu: prototype giả
  * định mọi bản copy đều sinh ra bên trong một chiến dịch, còn thực tế người
@@ -115,7 +115,7 @@ export type ExperienceStats = {
 
 /**
  * Prototype `engShelfRead(e)` (~L15258) — the CONCEPT read, keyed on
- * `originId ?? id`, so a template and every copy of it always agree on tier.
+ * `originId ?? id`, so a source experience and every copy of it always agree on tier.
  */
 export type ExperienceEvidence = {
   tier: EvidenceTier;

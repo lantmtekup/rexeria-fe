@@ -6,7 +6,7 @@ import {
 /**
  * Trải nghiệm THẬT đã gắn với một sản phẩm — tab Trải nghiệm ở modal sản
  * phẩm trước đây đọc `MOCK_PRODUCT_EXPERIENCE_LINKS`, một hằng số RỖNG
- * (mọi trải nghiệm mẫu đều là template, `subject: null`), nên tab luôn
+ * (mọi trải nghiệm trong dữ liệu mẫu đều là trải nghiệm gốc, `subject: null`), nên tab luôn
  * trống dù sản phẩm đã có bản copy thật.
  *
  * `RxExperienceListQuery` không có tham số lọc theo sản phẩm — lọc lại ở FE

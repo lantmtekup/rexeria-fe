@@ -34,10 +34,10 @@ const MAX_PAGES = 10;
  * chiến dịch, còn `product_copies` / `topic_copies` là copy đã nộp vào một
  * hạng mục. Cộng ba cái mới ra đủ.
  *
- * KHÔNG dùng `state: 'all'`: nó gộp cả template và block — thứ thuộc về màn
- * Exchange, không phải thư viện của brand. Đo trên dữ liệu thật:
- * `all` = 320 (171 template + ~146 block + 3 copy), trong khi cái người dùng
- * vào đây để tìm chỉ có 3.
+ * KHÔNG dùng `state: 'all'`: nó gộp cả trải nghiệm gốc và block — thứ thuộc
+ * về màn Exchange, không phải thư viện của brand. Đo trên dữ liệu thật:
+ * `all` = 320 (171 trải nghiệm gốc + ~146 block + 3 copy), trong khi cái
+ * người dùng vào đây để tìm chỉ có 3.
  */
 export const COPY_STATES = [
   'unassigned',
@@ -79,17 +79,17 @@ const fetchMasterDraftIds = async (brandId?: string): Promise<Set<string>> => {
 };
 
 /**
- * Id của những template DO CHÍNH BRAND NÀY sở hữu.
+ * Id của những trải nghiệm gốc DO CHÍNH BRAND NÀY sở hữu.
  *
  * Phải hỏi `GET /v1/templates` (v1) chứ không hỏi `/experiences`: repository
  * gộp `brand_id IS NULL OR brand_id = ?` rồi trả ra một danh sách phẳng, và
- * `RxExperience` KHÔNG mang `brand_id` — nên từ v2 không cách nào tách template
- * hệ thống khỏi template của brand. `models.Template` thì có `brand_id`, và
- * `null` ở đó nghĩa là hàng của hệ thống.
+ * `RxExperience` KHÔNG mang `brand_id` — nên từ v2 không cách nào tách trải
+ * nghiệm gốc hệ thống khỏi trải nghiệm gốc của brand. `models.Template` thì
+ * có `brand_id`, và `null` ở đó nghĩa là hàng của hệ thống.
  *
  * Hỏng thì trả `null` (KHÔNG phải set rỗng): rỗng đọc như "brand không sở hữu
- * template nào", và cả 79 template hệ thống sẽ bị loại đúng như mong muốn —
- * nhưng bản copy của người dùng cũng biến mất mà không ai báo gì.
+ * trải nghiệm gốc nào", và cả 79 trải nghiệm gốc hệ thống sẽ bị loại đúng như
+ * mong muốn — nhưng bản copy của người dùng cũng biến mất mà không ai báo gì.
  */
 export const fetchOwnTemplateIds = async (): Promise<Set<string> | null> => {
   try {
@@ -109,9 +109,9 @@ export const fetchOwnTemplateIds = async (): Promise<Set<string> | null> => {
 
 /**
  * Id của những block DO CHÍNH BRAND NÀY sở hữu — cùng lý do với
- * `fetchOwnTemplateIds`: `GET /v1/blocks` (v1) có `scope`/`brand_id`, còn
- * `RxExperience` (v2) thì không, nên phải tra chéo sang v1 để tách hàng của
- * brand khỏi hàng hệ thống (`scope: 'system'`).
+ * `fetchOwnTemplateIds` (id trải nghiệm gốc của brand): `GET /v1/blocks` (v1)
+ * có `scope`/`brand_id`, còn `RxExperience` (v2) thì không, nên phải tra chéo
+ * sang v1 để tách hàng của brand khỏi hàng hệ thống (`scope: 'system'`).
  *
  * Hỏng thì trả `null` (KHÔNG phải set rỗng) — cùng lý do: rỗng đọc như "brand
  * không sở hữu block nào" và ẩn luôn cả block người dùng vừa fork từ Exchange.
@@ -189,8 +189,9 @@ const fetchExperienceCategory = (
  *
  * 1. Bộ lọc `published` cắt mất phần lớn thư viện — một brand có 33 landing
  *    page mà chỉ 3 cái published thì màn hình hiện 3, trông như mất dữ liệu.
- *    `/experiences` trả cả template lẫn bản copy, không lọc theo trạng thái.
- * 2. Trục sở hữu (template / product copy / topic copy), bậc bằng chứng, số
+ *    `/experiences` trả cả trải nghiệm gốc lẫn bản copy, không lọc theo
+ *    trạng thái.
+ * 2. Trục sở hữu (trải nghiệm gốc / product copy / topic copy), bậc bằng chứng, số
  *    phiên, độ phủ — `/pages` không có gì trong số đó, nên bản cũ BỊA bằng
  *    hàm băm id. Các số đó ổn định theo id nên đọc như phép đo thật.
  *
@@ -212,20 +213,20 @@ export const fetchExperienceLibrary = async (
     fetchExperienceState(common, state, sort);
 
   /**
-   * Template CỦA CHÍNH BRAND — bản sao mà `Duplicate` sinh ra sống ở đây.
+   * Trải nghiệm gốc CỦA CHÍNH BRAND — bản sao mà `Duplicate` sinh ra sống ở đây.
    *
-   * Nhân bản một copy cho ra một **template nháp** (`promotePage`,
+   * Nhân bản một copy cho ra một **trải nghiệm gốc nháp** (`promotePage`,
    * `experience.go:831`), nên nó không rơi vào ba state copy. Trước đây nó cũng
    * không hiện ở Exchange (màn đó lọc `status: 'active'`), tức là bấm Nhân bản
    * xong không màn nào bày ra thứ vừa tạo.
    *
-   * Chỉ lấy template của brand, KHÔNG lấy template hệ thống: hệ thống là hàng
-   * dùng chung, thuộc về Exchange. Đo thật trên brand đang dùng: 79 template
-   * thấy được thì 76 là hệ thống, 3 là của brand — nên chỗ này thêm 3 mục, chứ
-   * không phải kéo cả kho về như hồi còn tab template cũ.
+   * Chỉ lấy trải nghiệm gốc của brand, KHÔNG lấy trải nghiệm gốc hệ thống: hệ
+   * thống là hàng dùng chung, thuộc về Exchange. Đo thật trên brand đang dùng:
+   * 79 trải nghiệm gốc thấy được thì 76 là hệ thống, 3 là của brand — nên chỗ
+   * này thêm 3 mục, chứ không phải kéo cả kho về như hồi còn tab template cũ.
    */
   // `ownIds` chỉ hai nhánh dưới đây cần — `await` NGAY TRONG closure (không
-  // phải một biến chờ sẵn ở ngoài) để lookup template không chặn nhánh
+  // phải một biến chờ sẵn ở ngoài) để lookup trải nghiệm gốc không chặn nhánh
   // COPY_STATES độc lập trong `Promise.all` bên dưới.
   const fetchOwnTemplates = async (): Promise<RxExperience[]> => {
     const ownIds = await fetchOwnTemplateIds();
@@ -237,7 +238,8 @@ export const fetchExperienceLibrary = async (
   /**
    * Block CỦA CHÍNH BRAND — nơi bản fork từ Exchange (`exchange.add` trên một
    * item `kind: 'block'`, xem `ExchangeWorkspace.installListing`) sống sau khi
-   * thêm. Cùng khuôn với `fetchOwnTemplates`: tra `ownIds` trước ở v1, rồi lọc
+   * thêm. Cùng khuôn với `fetchOwnTemplates` (trải nghiệm gốc của brand): tra
+   * `ownIds` trước ở v1, rồi lọc
    * lại nhánh `category: 'blocks'` của v2 — vì `RxExperience` không mang
    * `brand_id` để tự tách brand khỏi hệ thống.
    */
@@ -256,9 +258,9 @@ export const fetchExperienceLibrary = async (
    * một mục `unassigned` chưa đo sẽ đứng trên một `topic_copies` bậc cao, đúng
    * ngược với điều cái nút hứa.
    *
-   * `state: 'all'` gộp cả template hệ thống và block (đo thật: 320 bản ghi),
-   * nên phải lọc lại: giữ bản copy, cộng template + block của chính brand. Lọc
-   * GIỮ NGUYÊN thứ tự, nên hạng chung vẫn đúng sau khi lọc.
+   * `state: 'all'` gộp cả trải nghiệm gốc hệ thống và block (đo thật: 320 bản
+   * ghi), nên phải lọc lại: giữ bản copy, cộng trải nghiệm gốc + block của
+   * chính brand. Lọc GIỮ NGUYÊN thứ tự, nên hạng chung vẫn đúng sau khi lọc.
    */
   const fetchRanked = async (): Promise<RxExperience[]> => {
     // Ba lookup này độc lập — chạy song song, chỉ lọc kết quả cuối cần đợi cả ba.
