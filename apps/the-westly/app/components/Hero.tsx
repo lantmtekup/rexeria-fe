@@ -370,8 +370,20 @@ export default function Hero() {
           </div>
 
           <div
+            data-ui
+            className='invisible absolute top-[20%] left-1/2 z-[1] w-full max-w-5xl -translate-x-1/2 px-5 text-center opacity-0'
+          >
+            <h1 className='text-[56px] leading-[1.15] font-medium text-[#6E7A6F]'>
+              The Master Penthouse.
+            </h1>
+            <p className='text-[56px] leading-[1.15] font-medium text-[#6E7A6F]'>
+              Your Home above the Everything else.
+            </p>
+          </div>
+
+          <div
             data-layer='scene'
-            className='invisible absolute inset-[-2%] opacity-0 will-change-transform'
+            className='invisible absolute inset-[-2%] z-[2] opacity-0 will-change-transform'
           >
             {/* WebP (~5× smaller than the 2.4MB PNG) — raw PNG often fails on
                 real devices over ngrok / slow links. unoptimized skips the
@@ -389,7 +401,6 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Overlay UI */}
       <a
         data-ui
         href='#explore'

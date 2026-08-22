@@ -18,6 +18,7 @@ import {
 } from 'react';
 
 import type { Device } from '@/components/modules/block-editor/types';
+import { ExchangeAdPreview } from '@/components/organisms/portal-v2/exchange/ExchangeAdPreview';
 import { ExchangeBlockPreview } from '@/components/organisms/portal-v2/exchange/ExchangeBlockPreview';
 import { ExchangePagePreview } from '@/components/organisms/portal-v2/exchange/ExchangePagePreview';
 import { ExchangePreviewRail } from '@/components/organisms/portal-v2/exchange/ExchangePreviewRail';
@@ -149,7 +150,9 @@ export const ExchangePreviewShell = ({
         ? t('previewMissingBlockId')
         : listing.source === 'live' && !renderStage
           ? t('previewUnavailable')
-          : null
+          : listing.source === 'ad' && !listing.adFormatId
+            ? t('previewUnavailable')
+            : null
     : null;
 
   return (
@@ -357,6 +360,14 @@ export const ExchangePreviewShell = ({
             <ExchangeBlockPreview
               key={stageKey}
               blockId={listing.blockId}
+              device={device}
+            />
+          </div>
+        ) : listing.source === 'ad' && listing.adFormatId ? (
+          <div className='h-full min-h-0 min-w-0 overflow-hidden'>
+            <ExchangeAdPreview
+              key={stageKey}
+              adFormatId={listing.adFormatId}
               device={device}
             />
           </div>

@@ -13,6 +13,7 @@ export const EXCHANGE_KINDS: {
   { id: 'all', labelKey: 'kindAll' },
   { id: 'page', labelKey: 'kindPage' },
   { id: 'block', labelKey: 'kindBlock' },
+  { id: 'ad', labelKey: 'kindAd' },
 ];
 
 export const EXCHANGE_OBJECTIVES: {

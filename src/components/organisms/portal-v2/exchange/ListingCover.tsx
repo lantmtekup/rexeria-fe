@@ -20,7 +20,9 @@ type ListingCoverProps = {
 
 /** Branded abstract cover used when the catalog item has no thumbnail. */
 const GeneratedThumb = ({ listing }: { listing: ExchangeListingView }) => {
-  const isPage = listing.meta.kind === 'page';
+  // Khung xương "cả trang" dùng cho mọi thứ KHÔNG phải block — ads cũng dựng
+  // ra một mặt đầy đủ ở `/p/{slug}`, không phải một dải chèn giữa trang.
+  const isPage = listing.meta.kind !== 'block';
 
   return (
     <div

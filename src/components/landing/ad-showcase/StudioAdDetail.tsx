@@ -32,13 +32,39 @@ type AdItem = {
   render: () => React.ReactNode;
 };
 
-export function StudioAdDetail({ id }: { id: string }) {
+/**
+ * `embed` — trang này đang nằm trong iframe của một màn khác (Exchange →
+ * Smart ads). Chỉ bỏ thanh chrome trên cùng (nút back + tên + device toggle);
+ * DeviceFrame giữ NGUYÊN vì `InterscrollerPreview` đo bounds của `.isp` bên
+ * trong nó để ghim quảng cáo — bỏ frame là vỡ. Device khi đó do host quyết,
+ * truyền vào qua `?device=`.
+ */
+export function StudioAdDetail({
+  id,
+  embed = false,
+  device: deviceOverride,
+}: {
+  id: string;
+  embed?: boolean;
+  device?: 'mobile' | 'desktop';
+}) {
   const items = ALL_ITEMS as AdItem[];
   const item = items.find(i => i.id === id);
 
-  const { device, setDevice } = useDeviceView();
+  const { device: ownDevice, setDevice } = useDeviceView();
+  const device = embed && deviceOverride ? deviceOverride : ownDevice;
 
   const urlBar = item ? `rexer.studio/ads/${item.id}` : 'about:blank';
+
+  React.useLayoutEffect(() => {
+    if (!embed) return;
+    const root = document.documentElement;
+    root.classList.add('pvx-embed-doc');
+    if (device === 'mobile') root.classList.add('pvx-embed-doc-mobile');
+    return () => {
+      root.classList.remove('pvx-embed-doc', 'pvx-embed-doc-mobile');
+    };
+  }, [embed, device]);
 
   // Khung phone notch/home-bar chỉ ngữ cảnh mobile; desktop dùng display bezel.
   // Render cùng children cho cả 2 nhánh (ad render()), chỉ đổi khung bao.
@@ -50,39 +76,58 @@ export function StudioAdDetail({ id }: { id: string }) {
     // Overlay full-screen phủ header/footer landing. DeviceFrame giữ nguyên
     // khung phone / display bezel; chỉ stage + top bar dùng light theme.
     <div
-      className={`ad-showcase-root ad-showcase-detail fixed inset-0 z-[999] dv-mode-${device}`}
+      className={[
+        'ad-showcase-root ad-showcase-detail z-[999]',
+        embed ? 'absolute inset-0' : 'fixed inset-0',
+        `dv-mode-${device}`,
+        embed ? 'pvx-embed' : '',
+        embed && device === 'mobile' ? 'overflow-hidden rounded-[28px]' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
-      <header className='pvx-chrome'>
-        <Link href='/rexer/ads' className='pv-back' aria-label='Back to Studio'>
-          <span className='pv-back-mark' aria-hidden='true'>
-            <svg
-              width='14'
-              height='14'
-              viewBox='0 0 24 24'
-              fill='none'
-              stroke='currentColor'
-              strokeWidth='1.5'
-              strokeLinecap='round'
-              strokeLinejoin='round'
-            >
-              <path d='M19 12H5' />
-              <path d='M12 19l-7-7 7-7' />
-            </svg>
-          </span>
-          <span className='pv-back-text'>Studio</span>
-        </Link>
-        {item ? (
-          <>
-            <p className='pvx-chrome-title'>{item.name ?? item.id}</p>
-            <DeviceToggle value={device} onChange={setDevice} />
-          </>
-        ) : (
-          <span className='pvx-chrome-spacer' aria-hidden='true' />
-        )}
-      </header>
+      {embed ? null : (
+        <header className='pvx-chrome'>
+          <Link
+            href='/rexer/ads'
+            className='pv-back'
+            aria-label='Back to Studio'
+          >
+            <span className='pv-back-mark' aria-hidden='true'>
+              <svg
+                width='14'
+                height='14'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                strokeWidth='1.5'
+                strokeLinecap='round'
+                strokeLinejoin='round'
+              >
+                <path d='M19 12H5' />
+                <path d='M12 19l-7-7 7-7' />
+              </svg>
+            </span>
+            <span className='pv-back-text'>Studio</span>
+          </Link>
+          {item ? (
+            <>
+              <p className='pvx-chrome-title'>{item.name ?? item.id}</p>
+              <DeviceToggle value={device} onChange={setDevice} />
+            </>
+          ) : (
+            <span className='pvx-chrome-spacer' aria-hidden='true' />
+          )}
+        </header>
+      )}
 
       {item ? (
-        <>
+        embed ? (
+          // Embed: host đã dựng khung máy quanh iframe rồi, nên ở đây KHÔNG
+          // dựng thêm DeviceFrame và không vẽ home-bar. `.isp` là width/height
+          // 100% nên nó lấp đầy đúng khung của host.
+          adNode
+        ) : (
           <DeviceFrame
             device={device}
             desktopMaxWidth='1040px'
@@ -99,7 +144,7 @@ export function StudioAdDetail({ id }: { id: string }) {
               <>{adNode}</>
             )}
           </DeviceFrame>
-        </>
+        )
       ) : (
         // Not-found: light stage từ detail-chrome.css.
         <div className='pv-page'>

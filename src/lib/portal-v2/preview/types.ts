@@ -13,14 +13,17 @@ export type PreviewItem = {
   id: string;
   name: string;
   /**
-   * Which stage renders: `/p/{slug}`, `/embed/block/{blockId}`, or — for
-   * `'live'` — a stage the host supplies via `ExchangePreviewShell.renderStage`.
+   * Which stage renders: `/p/{slug}`, `/embed/block/{blockId}`,
+   * `/rexer/ads/{adFormatId}`, or — for `'live'` — a stage the host supplies
+   * via `ExchangePreviewShell.renderStage`.
    * `'live'` exists for the canvas editor, whose content is unsaved state with
    * no URL to point an iframe at.
    */
-  source: 'page' | 'block' | 'live';
+  source: 'page' | 'block' | 'live' | 'ad';
   slug?: string;
   blockId?: string;
+  /** Với `'ad'`: id định dạng, iframe vào `/rexer/ads/{id}`. */
+  adFormatId?: string;
   /** Already-translated noun for the header sub-line ("Experiences"/"Blocks"). */
   kindLabel?: string;
   /** Drives the rail's Measured panel. Omit or null to hide it. */
