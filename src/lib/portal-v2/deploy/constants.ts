@@ -28,6 +28,27 @@ export const DEPLOY_TABS: {
   { id: 'channels', labelKey: 'tabChannels', questionKey: 'questionChannels' },
 ];
 
+/**
+ * `core.CheckDeployPreconditions` (be-ReXeR.ai) reasons that are fixed
+ * English sentences (no item-specific detail baked in) → the i18n key with a
+ * friendly localized version. The Ready queue's proactive `blockers` and a
+ * failed deploy's 409 both surface these verbatim from the BE, so both read
+ * as raw English inside an otherwise Vietnamese screen without this map.
+ *
+ * A reason NOT in this map (media-rights ones name the specific asset/
+ * territory) passes through unchanged — it is already informative on its own
+ * and translating it would have to either drop that detail or template it,
+ * neither worth it for a message this rare.
+ */
+export const DEPLOY_REASON_KEY: Record<string, string> = {
+  'no experience copy has an active published release to deploy':
+    'deployNeedsPublishedRelease',
+  'a campaign journey has an unresolved experience node':
+    'deployNeedsResolvedJourney',
+  'one or more selected channels are not connected':
+    'deployNeedsConnectedChannel',
+};
+
 export type DeployHealthStyle = {
   labelKey: string;
   /** What the state means — the cell's `title`, used as a fallback when the

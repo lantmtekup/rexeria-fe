@@ -9,6 +9,8 @@ import { DeployEmpty } from '@/components/organisms/portal-v2/deploy/DeployEmpty
 import { DeployNote } from '@/components/organisms/portal-v2/deploy/DeployNote';
 import { ownerName } from '@/lib/portal-v2/campaigns/helpers';
 import type { CampaignTeamMember } from '@/lib/portal-v2/campaigns/types';
+import { DEPLOY_REASON_KEY } from '@/lib/portal-v2/deploy/constants';
+import { canDeploySelection } from '@/lib/portal-v2/deploy/helpers';
 import type {
   DeployChannel,
   ReadyDeployRow,
@@ -56,11 +58,16 @@ export const DeployReadyPane = ({
       {rows.map(row => {
         const selected = selections[row.id] ?? [];
         /**
-         * No client gate — the BE is the single source of truth on whether a
-         * deploy actually goes through (`core.CheckDeployPreconditions`) and
-         * returns the real reason as a 409, surfaced verbatim via toast. The
-         * blockers banner below stays purely informational.
+         * `canDeploySelection` already existed as a pure helper but was never
+         * wired to the button — the click always reached the BE and came back
+         * with a raw English 409 (e.g. "one or more selected channels are not
+         * connected") even though the picked channel's disconnected state was
+         * fully knowable client-side. Gating here turns that into a disabled
+         * button instead of a surprise toast; anything it CAN'T know (no
+         * active release, unresolved journey, media rights) still relies on
+         * `row.blockers` — surfaced by the BE's Ready queue — or the 409.
          */
+        const canDeploy = canDeploySelection(selected, channels, row.blockers);
         const owner = row.ownerId ? ownerName(row.ownerId, team) : '';
 
         return (
@@ -91,8 +98,15 @@ export const DeployReadyPane = ({
               <Button
                 variant='primary'
                 size='sm'
-                disabled={deployingRow === row.id}
+                disabled={deployingRow === row.id || !canDeploy}
                 onClick={() => onDeploy(row)}
+                title={
+                  !canDeploy && deployingRow !== row.id
+                    ? selected.length === 0
+                      ? t('deployNeedsChannel')
+                      : t('deployNeedsConnectedChannel')
+                    : undefined
+                }
                 aria-label={t('deployAria', {
                   name: row.experiences[0]?.name ?? row.subjectName ?? row.id,
                 })}
@@ -111,7 +125,14 @@ export const DeployReadyPane = ({
                   strokeWidth={2.2}
                   aria-hidden
                 />
-                <span>{row.blockers.join(' ')}</span>
+                <span>
+                  {row.blockers
+                    .map(reason => {
+                      const key = DEPLOY_REASON_KEY[reason];
+                      return key ? t(key) : reason;
+                    })
+                    .join(' ')}
+                </span>
               </div>
             ) : null}
 

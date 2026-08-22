@@ -1937,6 +1937,8 @@
       "pauseFailedToast": "Không tạm dừng được",
       "deployedToastBodyNoUrl": "Đang chạy trên {channels}. Số liệu sẽ hiện khi có lượt truy cập.",
       "deployNeedsConnectedChannel": "Mọi kênh đã chọn phải được kết nối trước.",
+      "deployNeedsPublishedRelease": "Trải nghiệm này chưa từng được xuất bản trong canvas — mở canvas và bấm Xuất bản trước khi đẩy lên kênh.",
+      "deployNeedsResolvedJourney": "Hành trình của chiến dịch còn một chặng chưa gắn trải nghiệm — hoàn tất hành trình trước khi xuất bản.",
       "untitled": "Chưa đặt tên",
       "rowsCount": "{count, plural, one {# dòng} other {# dòng}}",
       "colOwner": "Phụ trách",
