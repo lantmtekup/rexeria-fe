@@ -514,7 +514,7 @@
         "journeys": "Journeys",
         "journeysSub": "{count} blueprints in market \u00b7 best by completion",
         "blocks": "Blocks",
-        "blocksSub": "{count} tracked \u00b7 best by assist",
+        "blocksSub": "{count} tracked \u00b7 best by contribution",
         "seeAll": "See all"
       },
       "campaigns": {
