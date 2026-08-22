@@ -745,9 +745,40 @@ function ImageDiffCard({
 
 // ─── Text value cell — typographic diff ──────────────────────────────────
 
+/**
+ * Field CTA/link đôi khi AI trả về dạng object (link picker) thay vì string
+ * thuần — `String(obj)` ra thẳng "[object Object]". Đoán field href/text
+ * quen thuộc trước khi rơi về JSON.stringify, để không bao giờ hiện
+ * "[object Object]" cho người dùng.
+ */
+function stringifyDiffValue(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    const href = obj.href ?? obj.url ?? obj.link;
+    if (typeof href === 'string') {
+      const label = typeof obj.text === 'string' ? obj.text : undefined;
+      return label ? `${label} → ${href}` : href;
+    }
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return '';
+    }
+  }
+  return String(value);
+}
+
 function TextValue({ value, side }: { value: unknown; side: 'old' | 'new' }) {
   const empty = value === undefined || value === null || value === '';
-  const text = empty ? (side === 'old' ? '(trống)' : '(xoá)') : String(value);
+  const text = empty
+    ? side === 'old'
+      ? '(trống)'
+      : '(xoá)'
+    : stringifyDiffValue(value);
 
   return (
     <div
