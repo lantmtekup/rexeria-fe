@@ -85,16 +85,18 @@ type ChannelToggleProps = {
   channel: DeployChannel;
   selected: boolean;
   onToggle: (id: string) => void;
-  /** Reason the pipe isn't connected yet — shown as the `title` on an
-   *  unconnected chip. Informational only; picking it is still allowed, the
-   *  BE is the one that rejects a deploy on an unconnected channel. */
+  /** Reason the pipe isn't connected yet — shown as the `title` on a
+   *  disabled, unconnected chip. */
   disabledHint: string;
 };
 
 /**
- * Pick a surface for a queued row. Client picks freely, including a channel
- * that isn't connected yet — the BE is the single source of truth on what a
- * deploy actually accepts, and returns the real reason as a 409 otherwise.
+ * Pick a surface for a queued row. An unconnected channel is disabled, not
+ * just discouraged: it used to be pickable like any other, so a person could
+ * select it, click Deploy, and only learn it was never an option from a raw
+ * English 409 ("one or more selected channels are not connected") — the
+ * pane's Deploy button now also gates on this via `canDeploySelection`, but
+ * disabling the chip itself stops the mistake at its source.
  */
 export const ChannelToggle = ({
   channel,
@@ -106,6 +108,7 @@ export const ChannelToggle = ({
     type='button'
     role='switch'
     aria-checked={selected}
+    disabled={!channel.connected}
     title={channel.connected ? undefined : disabledHint}
     onClick={() => onToggle(channel.id)}
     className={cn(

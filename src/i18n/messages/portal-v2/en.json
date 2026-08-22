@@ -1937,6 +1937,8 @@
       "pauseFailedToast": "Could not pause",
       "deployedToastBodyNoUrl": "Live on {channels}. It will report as soon as traffic arrives.",
       "deployNeedsConnectedChannel": "Every picked channel must be connected first.",
+      "deployNeedsPublishedRelease": "This experience has never been published in the canvas — open the canvas and hit Publish before pushing it to a channel.",
+      "deployNeedsResolvedJourney": "The campaign's journey has a stage with no experience attached — finish the journey before deploying.",
       "untitled": "Untitled",
       "rowsCount": "{count, plural, one {# row} other {# rows}}",
       "colOwner": "Owner",

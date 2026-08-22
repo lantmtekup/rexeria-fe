@@ -13,6 +13,7 @@ import { DeployReadyPane } from '@/components/organisms/portal-v2/deploy/DeployR
 import type { CampaignTeamMember } from '@/lib/portal-v2/campaigns/types';
 import {
   DEPLOY_DEFAULT_TAB,
+  DEPLOY_REASON_KEY,
   DEPLOY_TABS,
 } from '@/lib/portal-v2/deploy/constants';
 import {
@@ -214,8 +215,10 @@ export const DeployWorkspace = ({
         });
         await refresh();
       } catch (err) {
+        const reason = err instanceof Error ? err.message : String(err);
+        const key = DEPLOY_REASON_KEY[reason];
         toast.error(t('deployFailedToast'), {
-          description: err instanceof Error ? err.message : String(err),
+          description: key ? t(key) : reason,
         });
       } finally {
         setDeployingRow(null);
