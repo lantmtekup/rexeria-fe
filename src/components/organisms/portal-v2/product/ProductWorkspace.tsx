@@ -156,6 +156,10 @@ export const ProductWorkspace = ({
    * mới đổi theo, không bắt người dùng F5.
    */
   const [assets, setAssets] = useState<ProductAsset[]>(initialAssets);
+  /** Id sản phẩm đã nạp media thật (khác ảnh bìa tổng hợp) — xem readiness(). */
+  const [hydratedProductIds, setHydratedProductIds] = useState<Set<string>>(
+    () => new Set()
+  );
   /** Trải nghiệm THẬT của sản phẩm đang mở — xem effect nạp bên dưới. */
   const [experienceLinks, setExperienceLinks] = useState<
     ProductExperienceLink[]
@@ -340,6 +344,9 @@ export const ProductWorkspace = ({
       .then(real => {
         if (cancelled) return;
         setAssets(prev => [...prev.filter(a => a.home.ref !== id), ...real]);
+        setHydratedProductIds(prev =>
+          prev.has(id) ? prev : new Set(prev).add(id)
+        );
       })
       .catch(() => {
         /* đọc hụt media không đáng để chặn cả modal */
@@ -731,6 +738,7 @@ export const ProductWorkspace = ({
               <ProductGrid
                 products={list}
                 assets={assets}
+                hydratedIds={hydratedProductIds}
                 onOpen={openProduct}
                 onEdit={openEdit}
                 onDuplicate={handleDuplicate}
@@ -740,6 +748,7 @@ export const ProductWorkspace = ({
               <ProductTable
                 products={list}
                 assets={assets}
+                hydratedIds={hydratedProductIds}
                 selected={selected}
                 onToggleSelect={id =>
                   setSelected(prev =>
@@ -769,6 +778,7 @@ export const ProductWorkspace = ({
           mode={modal.mode}
           tab={modalTab}
           assets={assets}
+          assetsHydrated={hydratedProductIds.has(activeProduct.id)}
           experiences={experienceLinks}
           campaigns={MOCK_PRODUCT_CAMPAIGN_LINKS.filter(
             c => c.productId === activeProduct.id

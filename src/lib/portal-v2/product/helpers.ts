@@ -81,15 +81,26 @@ export const visibleProducts = (
   );
 };
 
-/** readiness() (:15690-15696) — how much of what an experience needs is on file. */
+/**
+ * readiness() (:15690-15696) — how much of what an experience needs is on file.
+ *
+ * `assetsHydrated = false` loại các check `requiresRealAssets` khỏi mẫu số —
+ * dùng khi `assets` chỉ có ảnh bìa tổng hợp của danh sách (xem
+ * `PRODUCT_READY_CHECKS`), để điểm không tự nhảy khi modal chi tiết nạp ảnh
+ * thật cho MỘT sản phẩm khác trong cùng state `assets` dùng chung.
+ */
 export const readiness = (
   p: Product,
-  assets: ProductAsset[]
+  assets: ProductAsset[],
+  assetsHydrated = true
 ): ProductReadiness => {
-  const met = PRODUCT_READY_CHECKS.filter(r => r.ok(p, assets));
+  const checks = assetsHydrated
+    ? PRODUCT_READY_CHECKS
+    : PRODUCT_READY_CHECKS.filter(r => !r.requiresRealAssets);
+  const met = checks.filter(r => r.ok(p, assets));
   return {
-    score: Math.round((met.length / PRODUCT_READY_CHECKS.length) * 100),
-    missing: PRODUCT_READY_CHECKS.filter(r => !r.ok(p, assets)).map(r => r.d),
+    score: Math.round((met.length / checks.length) * 100),
+    missing: checks.filter(r => !r.ok(p, assets)).map(r => r.d),
   };
 };
 
