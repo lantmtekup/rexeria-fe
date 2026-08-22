@@ -22,6 +22,9 @@ type DeployLivePaneProps = {
   team: CampaignTeamMember[];
   onPause: (row: LiveDeployRow) => void;
   pausingRow: string | null;
+  /** Opens the row's detail (live URL + product content) — the URL used to
+   *  exist only in the deploy toast, gone for good after a reload. */
+  onOpenRow: (rowId: string) => void;
 };
 
 const TH =
@@ -42,6 +45,7 @@ export const DeployLivePane = ({
   team,
   onPause,
   pausingRow,
+  onOpenRow,
 }: DeployLivePaneProps) => {
   const t = useTranslations('portalV2.deploy');
 
@@ -110,11 +114,15 @@ export const DeployLivePane = ({
                   return (
                     <tr key={row.id} className='hover:bg-[var(--pv2-canvas)]'>
                       <td className={TD}>
-                        <span className='block truncate font-semibold text-[var(--pv2-ink)]'>
+                        <button
+                          type='button'
+                          onClick={() => onOpenRow(row.id)}
+                          className='block max-w-full truncate text-left font-semibold text-[var(--pv2-ink)] hover:text-[var(--pv2-electric)] hover:underline'
+                        >
                           {row.experiences[0]?.name ??
                             row.subjectName ??
                             t('untitled')}
-                        </span>
+                        </button>
                       </td>
 
                       <td className={TD}>

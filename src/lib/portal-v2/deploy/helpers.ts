@@ -57,6 +57,20 @@ export const mapChannel = (ch: RxChannel): DeployChannel => ({
       : null,
 });
 
+const SLUG_FROM_PUBLIC_URL = /\/p\/([^/?#]+)\/?$/;
+const EXPERIENCE_HOST_SUFFIX = '.rexerstudio.com';
+
+/** BE hands back `<publicBase>/p/<slug>` — the pretty, shareable form is
+ *  `https://<slug>.rexerstudio.com`. Shared by `mapLiveRow` (the Live row's
+ *  `public_url`) and `deployBoard.ts`'s `deployCampaignItem` (the deploy
+ *  response's `public_url`) so both surfaces show the same address for the
+ *  same page — the row detail modal used to show the raw `<base>/p/<slug>`
+ *  form because only the deploy-click response went through this. */
+export const brandedExperienceUrl = (publicUrl: string): string => {
+  const slug = publicUrl.match(SLUG_FROM_PUBLIC_URL)?.[1];
+  return slug ? `https://${slug}${EXPERIENCE_HOST_SUFFIX}` : publicUrl;
+};
+
 /** An item's subject name — from the first experience's own subject (the BE
  *  resolves `product_id → name` there), falling back to `topic_name` for a
  *  topic item with no experience built yet. Never renders a raw uuid as if
@@ -93,6 +107,8 @@ export const mapLiveRow = (view: RxLiveItemView): LiveDeployRow => ({
       reason: c.health_reason,
     })
   ),
+  publicUrl: view.public_url ? brandedExperienceUrl(view.public_url) : null,
+  productId: view.item.product_id,
 });
 
 export const mapReadyRow = (view: RxReadyItemView): ReadyDeployRow => ({

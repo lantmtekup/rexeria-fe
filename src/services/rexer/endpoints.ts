@@ -251,6 +251,7 @@ import type {
   AIPageOptimizeInput,
   AIImageGenerateInput,
   AIApplyProductInput,
+  AISocialCaptionInput,
   AIMultiChannelInput,
   AISlotSuggestion,
   RespondAISlotSuggestionRequest,
@@ -2051,6 +2052,14 @@ export const rexerApi = {
     /** AI-Automation: áp 1 product vào template (new_page) hoặc page (rewrite). */
     applyProduct: async (body: AIApplyProductInput): Promise<AIJob> => {
       const r = await rx<AIJobResponse>('/ai/apply-product', {
+        method: 'POST',
+        body,
+      });
+      return r.job;
+    },
+    /** Deploy Live row: 1 caption Facebook + 1 Instagram cho sản phẩm. */
+    socialCaption: async (body: AISocialCaptionInput): Promise<AIJob> => {
+      const r = await rx<AIJobResponse>('/ai/social-caption', {
         method: 'POST',
         body,
       });
