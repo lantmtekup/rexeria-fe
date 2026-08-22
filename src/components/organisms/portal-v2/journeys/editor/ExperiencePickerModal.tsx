@@ -99,6 +99,16 @@ export const ExperiencePickerModal = ({
     [items]
   );
 
+  /**
+   * `items` is non-empty but every one got filtered out above — the fetch's
+   * own `status=published` gate already passed, so "publish it first"
+   * (`pickerEmptyHint`) would be actively wrong here: the real ask is a
+   * template, and none of these published pages are one yet. Distinguish it
+   * from the genuine "nothing published matches" case, which still needs the
+   * original hint.
+   */
+  const hasPublishedButNoTemplates = items.length > 0 && templates.length === 0;
+
   const visible = useMemo(
     () =>
       objective === 'all'
@@ -192,11 +202,17 @@ export const ExperiencePickerModal = ({
       {!error && !visible.length ? (
         <div className='rounded-[var(--pv2-r)] border border-dashed border-[var(--pv2-hair)] px-8 py-12 text-center'>
           <p className='text-[14px] font-semibold text-[var(--pv2-ink)]'>
-            {loading ? t('pickerLoading') : t('pickerEmpty')}
+            {loading
+              ? t('pickerLoading')
+              : hasPublishedButNoTemplates
+                ? t('pickerEmptyNoTemplates')
+                : t('pickerEmpty')}
           </p>
           {!loading ? (
             <p className='mt-1.5 text-[13px] text-[var(--pv2-faint)]'>
-              {t('pickerEmptyHint')}
+              {hasPublishedButNoTemplates
+                ? t('pickerEmptyNoTemplatesHint')
+                : t('pickerEmptyHint')}
             </p>
           ) : null}
         </div>
