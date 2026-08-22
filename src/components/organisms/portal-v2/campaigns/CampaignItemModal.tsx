@@ -2,6 +2,7 @@
 
 import { Check, Plus, Rocket, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -22,6 +23,7 @@ import {
   SHIP_TRACK_FLOOR,
 } from '@/lib/portal-v2/campaigns/constants';
 import { syncItemStage } from '@/lib/portal-v2/campaigns/helpers';
+import { PORTAL_V2_BASE } from '@/lib/portal-v2/nav';
 import {
   itemShipGate,
   speaksForSubject,
@@ -33,6 +35,7 @@ import type {
   CampaignItemStatus,
   CampaignTeamMember,
 } from '@/lib/portal-v2/campaigns/types';
+import { DEPLOY_REASON_KEY } from '@/lib/portal-v2/deploy/constants';
 import {
   canDeploySelection,
   findChannel,
@@ -101,6 +104,7 @@ export const CampaignItemModal = ({
 }: CampaignItemModalProps) => {
   const t = useTranslations('portalV2.campaigns');
   const td = useTranslations('portalV2.deploy');
+  const router = useRouter();
 
   const [draft, setDraft] = useState<CampaignItem>(() => ({
     ...item,
@@ -139,12 +143,21 @@ export const CampaignItemModal = ({
       patch({ status: 'live' });
       onDeployed('live');
     } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err);
+      const key = DEPLOY_REASON_KEY[reason];
       toast.error(td('deployFailedToast'), {
-        description: err instanceof Error ? err.message : String(err),
+        description: key ? td(key) : reason,
       });
     } finally {
       setDeploying(false);
     }
+  };
+
+  /** Same escape hatch as the Deploy screen's Ready tab: an unconnected
+   *  channel chip here has nowhere to open a connect flow inline, so it
+   *  sends the person to Deploy ▸ Channels instead of a dead disabled chip. */
+  const handleOpenChannel = () => {
+    router.push(`${PORTAL_V2_BASE}/deploy?tab=channels`);
   };
 
   const handlePause = async () => {
@@ -378,6 +391,7 @@ export const CampaignItemModal = ({
                       : [...prev, id]
                   )
                 }
+                onConnect={handleOpenChannel}
                 disabledHint={td('channelNotConnected')}
               />
             ))}

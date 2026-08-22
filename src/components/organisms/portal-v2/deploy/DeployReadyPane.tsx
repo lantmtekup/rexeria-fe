@@ -24,6 +24,9 @@ type DeployReadyPaneProps = {
    *  for an item that isn't live yet. */
   selections: Record<string, string[]>;
   onToggleChannel: (rowId: string, channelId: string) => void;
+  /** Opens a channel's connect flow — clicking an unconnected chip lands
+   *  here instead of toggling a selection that could never deploy. */
+  onOpenChannel: (channelId: string) => void;
   onDeploy: (row: ReadyDeployRow) => void;
   deployingRow: string | null;
 };
@@ -42,6 +45,7 @@ export const DeployReadyPane = ({
   team,
   selections,
   onToggleChannel,
+  onOpenChannel,
   onDeploy,
   deployingRow,
 }: DeployReadyPaneProps) => {
@@ -146,6 +150,7 @@ export const DeployReadyPane = ({
                   channel={ch}
                   selected={selected.includes(ch.id)}
                   onToggle={id => onToggleChannel(row.id, id)}
+                  onConnect={onOpenChannel}
                   disabledHint={t('channelNotConnected')}
                 />
               ))}

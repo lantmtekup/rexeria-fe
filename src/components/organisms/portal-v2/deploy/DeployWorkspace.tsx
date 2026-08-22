@@ -66,6 +66,9 @@ type DeployWorkspaceProps = {
    *  the only mock-fallback exception on this route (see `mock.ts`). */
   initialDomainSource: 'live' | 'fake';
   initialError: string | null;
+  /** `?tab=` — lets a deep link (e.g. an unconnected channel chip elsewhere
+   *  in the portal) land straight on Channels instead of the Live default. */
+  initialTab?: DeployTabId;
 };
 
 /**
@@ -96,6 +99,7 @@ export const DeployWorkspace = ({
   initialDomains,
   initialDomainSource,
   initialError,
+  initialTab,
 }: DeployWorkspaceProps) => {
   const t = useTranslations('portalV2.deploy');
 
@@ -105,7 +109,7 @@ export const DeployWorkspace = ({
   const [kpis, setKpis] = useState<RxDeployKPIsResponse | null>(initialKpis);
   const [loadError, setLoadError] = useState<string | null>(initialError);
 
-  const [tab, setTab] = useState<DeployTabId>(DEPLOY_DEFAULT_TAB);
+  const [tab, setTab] = useState<DeployTabId>(initialTab ?? DEPLOY_DEFAULT_TAB);
   /** The channel whose detail is open, by id. */
   const [openChannel, setOpenChannel] = useState<string | null>(null);
   /** The Live row whose detail (URL + content) is open, by id. */
@@ -476,6 +480,7 @@ export const DeployWorkspace = ({
               team={team}
               selections={selections}
               onToggleChannel={handleToggleRowChannel}
+              onOpenChannel={setOpenChannel}
               onDeploy={handleDeploy}
               deployingRow={deployingRow}
             />

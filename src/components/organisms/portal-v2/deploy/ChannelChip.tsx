@@ -85,40 +85,50 @@ type ChannelToggleProps = {
   channel: DeployChannel;
   selected: boolean;
   onToggle: (id: string) => void;
-  /** Reason the pipe isn't connected yet — shown as the `title` on a
-   *  disabled, unconnected chip. */
+  /** Opens this channel's connect flow (`ChannelDetailModal`) — an
+   *  unconnected chip calls this instead of `onToggle` on click. */
+  onConnect: (id: string) => void;
+  /** Reason the pipe isn't connected yet — shown as the `title` on an
+   *  unconnected chip. */
   disabledHint: string;
 };
 
 /**
- * Pick a surface for a queued row. An unconnected channel is disabled, not
- * just discouraged: it used to be pickable like any other, so a person could
- * select it, click Deploy, and only learn it was never an option from a raw
- * English 409 ("one or more selected channels are not connected") — the
- * pane's Deploy button now also gates on this via `canDeploySelection`, but
- * disabling the chip itself stops the mistake at its source.
+ * Pick a surface for a queued row. An unconnected channel cannot be
+ * SELECTED — it used to be pickable like any other, so a person could pick
+ * it, click Deploy, and only learn it was never an option from a raw English
+ * 409 ("one or more selected channels are not connected"); the pane's Deploy
+ * button also gates on this via `canDeploySelection`. But the chip itself
+ * stays clickable rather than `disabled`: clicking an unconnected one opens
+ * its connect flow right here, instead of a dead end that sends the person
+ * hunting for the Channels tab on their own — which is all a flat `disabled`
+ * chip left them with when EVERY channel is still unconnected (a fresh
+ * brand's common starting state).
  */
 export const ChannelToggle = ({
   channel,
   selected,
   onToggle,
+  onConnect,
   disabledHint,
 }: ChannelToggleProps) => (
   <button
     type='button'
     role='switch'
     aria-checked={selected}
-    disabled={!channel.connected}
     title={channel.connected ? undefined : disabledHint}
-    onClick={() => onToggle(channel.id)}
+    onClick={() =>
+      channel.connected ? onToggle(channel.id) : onConnect(channel.id)
+    }
     className={cn(
       'inline-flex cursor-pointer items-center gap-2 rounded-full border py-1 pr-3 pl-1.5',
       'text-[12px] font-semibold transition-colors',
       'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2 focus-visible:outline-none',
-      'disabled:cursor-not-allowed disabled:opacity-45',
       selected
         ? 'border-[var(--pv2-electric)] bg-[var(--pv2-electric-soft)] text-[var(--pv2-electric)]'
-        : 'border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-[var(--pv2-mut)] hover:border-[var(--pv2-slate-300)]'
+        : channel.connected
+          ? 'border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-[var(--pv2-mut)] hover:border-[var(--pv2-slate-300)]'
+          : 'border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-paper)] text-[var(--pv2-faint)] hover:border-[var(--pv2-slate-300)]'
     )}
   >
     <ChannelBadge channel={channel} />
