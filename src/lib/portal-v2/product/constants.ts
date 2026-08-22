@@ -118,6 +118,13 @@ export const PRODUCT_READY_CHECKS: {
   k: string;
   d: string;
   ok: (product: Product, assets: ProductAsset[]) => boolean;
+  /**
+   * True chỉ cho check cần đếm ảnh CHÍNH XÁC. Danh sách sản phẩm dùng
+   * `assets` tổng hợp (1 ảnh giả/sản phẩm, xem `ProductWorkspace.tsx`) nên
+   * không đáng tin cho check này — loại nó ra khi `assets` chưa hydrate thật
+   * cho sản phẩm đó, để điểm không nhảy 83%→100% ngay khi mở modal 1 lần.
+   */
+  requiresRealAssets?: boolean;
 }[] = [
   {
     k: 'a cover image',
@@ -127,6 +134,7 @@ export const PRODUCT_READY_CHECKS: {
   {
     k: 'more than one image',
     d: 'Only one image — Explore has nothing to explore',
+    requiresRealAssets: true,
     ok: (p, assets) =>
       assets.filter(
         a =>

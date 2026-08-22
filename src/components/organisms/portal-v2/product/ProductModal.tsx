@@ -28,6 +28,7 @@ type ProductModalProps = {
   mode: ProductModalMode;
   tab: ProductModalTab;
   assets: ProductAsset[];
+  assetsHydrated: boolean;
   experiences: ProductExperienceLink[];
   campaigns: ProductCampaignLink[];
   onTabChange: (tab: ProductModalTab) => void;
@@ -49,6 +50,7 @@ export const ProductModal = ({
   mode,
   tab,
   assets,
+  assetsHydrated,
   experiences,
   campaigns,
   onTabChange,
@@ -211,6 +213,7 @@ export const ProductModal = ({
             uploading={uploading}
             product={p}
             assets={assets}
+            assetsHydrated={assetsHydrated}
             editing={editing}
             isNew={isNew}
             onChange={onChange}

@@ -23,6 +23,7 @@ import type { Product, ProductAsset } from '@/lib/portal-v2/product/types';
 type ProductTableProps = {
   products: Product[];
   assets: ProductAsset[];
+  hydratedIds: Set<string>;
   selected: string[];
   onToggleSelect: (id: string) => void;
   onToggleAll: () => void;
@@ -47,6 +48,7 @@ const actionButton = cn(
 export const ProductTable = ({
   products,
   assets,
+  hydratedIds,
   selected,
   onToggleSelect,
   onToggleAll,
@@ -167,7 +169,9 @@ export const ProductTable = ({
                 </td>
 
                 <td className={cellClass}>
-                  <ReadinessBar score={readiness(p, assets).score} />
+                  <ReadinessBar
+                    score={readiness(p, assets, hydratedIds.has(p.id)).score}
+                  />
                 </td>
 
                 <td

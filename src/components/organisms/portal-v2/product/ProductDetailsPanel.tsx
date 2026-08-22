@@ -57,6 +57,7 @@ import type {
 type ProductDetailsPanelProps = {
   product: Product;
   assets: ProductAsset[];
+  assetsHydrated: boolean;
   editing: boolean;
   isNew: boolean;
   onChange: (next: Product) => void;
@@ -165,6 +166,7 @@ const NumberField = ({
 export const ProductDetailsPanel = ({
   product: p,
   assets,
+  assetsHydrated,
   editing,
   isNew,
   onChange,
@@ -181,7 +183,7 @@ export const ProductDetailsPanel = ({
   const source = PRODUCT_SOURCE[p.source];
   const stock = productStock(p);
   const margin = productMargin(p);
-  const rd = readiness(p, assets);
+  const rd = readiness(p, assets, isNew || assetsHydrated);
   const rc = readinessColor(rd.score);
   const first = p.variants[0];
 

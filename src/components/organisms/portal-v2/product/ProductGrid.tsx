@@ -17,6 +17,7 @@ import type { Product, ProductAsset } from '@/lib/portal-v2/product/types';
 type ProductGridProps = {
   products: Product[];
   assets: ProductAsset[];
+  hydratedIds: Set<string>;
   onOpen: (id: string) => void;
   onEdit: (id: string) => void;
   onDuplicate: (id: string) => void;
@@ -33,6 +34,7 @@ const actionButton = cn(
 export const ProductGrid = ({
   products,
   assets,
+  hydratedIds,
   onOpen,
   onEdit,
   onDuplicate,
@@ -43,7 +45,7 @@ export const ProductGrid = ({
   return (
     <div className='grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-3.5'>
       {products.map(p => {
-        const score = readiness(p, assets).score;
+        const score = readiness(p, assets, hydratedIds.has(p.id)).score;
         return (
           <div
             key={p.id}
