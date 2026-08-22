@@ -1,3 +1,5 @@
+import { AD_FORMATS, type AdFormat } from '@/lib/portal-v2/exchange/adFormats';
+import { mapAdFormatToListing } from '@/lib/portal-v2/exchange/mapAdFormat';
 import { mapBlockToListing } from '@/lib/portal-v2/exchange/mapBlock';
 import { mapExchangeItemToListing } from '@/lib/portal-v2/exchange/mapExchangeItem';
 import { mapTemplateToListing } from '@/lib/portal-v2/exchange/mapTemplate';
@@ -108,6 +110,14 @@ export const fetchExchangeCatalog = async (
     errors.push(reasonOf(blocks.reason, 'Failed to load blocks'));
   }
 
+  // Nguồn thứ tư: định dạng quảng cáo tương tác. Tĩnh, nằm sẵn trong bundle —
+  // không gọi mạng nên không nằm trong `Promise.allSettled` ở trên và không
+  // bao giờ đóng góp vào `errors`. Cũng vì tĩnh nên `q` phải tự lọc ở đây:
+  // ba nguồn kia đẩy `q` xuống server, nguồn này không có server để đẩy.
+  catalog.push(
+    ...AD_FORMATS.filter(f => matchesQuery(f, q)).map(mapAdFormatToListing)
+  );
+
   const joined = errors.length ? errors.join(' · ') : null;
 
   return {
@@ -119,3 +129,12 @@ export const fetchExchangeCatalog = async (
 
 const reasonOf = (reason: unknown, fallback: string): string =>
   reason instanceof Error ? reason.message : fallback;
+
+/** Tìm trên tên + mô tả + nhóm, không phân biệt hoa thường. */
+const matchesQuery = (f: AdFormat, q?: string): boolean => {
+  if (!q) return true;
+  const needle = q.toLowerCase();
+  return `${f.name} ${f.desc} ${f.group} ${f.author}`
+    .toLowerCase()
+    .includes(needle);
+};

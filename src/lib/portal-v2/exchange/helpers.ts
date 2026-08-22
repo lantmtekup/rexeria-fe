@@ -6,6 +6,20 @@ import type {
   ExchangeSessionState,
 } from '@/lib/portal-v2/exchange/types';
 
+/**
+ * Nhãn i18n cho kind của một listing. Trước đây hai chỗ tự viết
+ * `kind === 'block' ? kindBlock : kindPage`; thêm 'ad' vào ternary đó thì ads
+ * bị gọi là "Trải nghiệm". Gom lại một chỗ để lần thêm kind sau không phải đi
+ * tìm lại từng ternary.
+ */
+export const kindLabelKey = (
+  kind: ExchangeListingView['meta']['kind']
+): string => {
+  if (kind === 'block') return 'kindBlock';
+  if (kind === 'ad') return 'kindAd';
+  return 'kindPage';
+};
+
 export const formatPrice = (price: number): string =>
   price > 0 ? `$${price}` : 'Free';
 
@@ -15,15 +29,28 @@ export const formatLift = (lift: number): string => {
   return `${sign}${pct}% vs control`;
 };
 
-/** A preview needs a public slug (landings) or a block id (blocks) to render. */
-export const isPreviewable = (listing: ExchangeListingView): boolean =>
-  listing.source === 'page' ? Boolean(listing.slug) : Boolean(listing.blockId);
+/**
+ * A preview needs a public slug (landings) or a block id (blocks) to render.
+ * Ads luôn xem được: route `/rexer/ads/{id}` nằm ngay trong app này, không
+ * phụ thuộc bản ghi nào cả.
+ */
+export const isPreviewable = (listing: ExchangeListingView): boolean => {
+  if (listing.source === 'ad') return Boolean(listing.adFormatId);
+  return listing.source === 'page'
+    ? Boolean(listing.slug)
+    : Boolean(listing.blockId);
+};
 
 export const resolveActionState = (
   listing: ExchangeListingView,
   session: ExchangeSessionState,
   canBuy = EXCHANGE_CAN_BUY
 ): ExchangeActionState => {
+  // Ads xem được, chưa mang về được — xem doc của `ExchangeActionState`.
+  // Đứng TRƯỚC mọi nhánh khác: giá 0 sẽ thành 'owned' và bày ra nút Thêm,
+  // mà nút đó dựng `type: 'landing'` từ một creative quảng cáo.
+  if (listing.meta.kind === 'ad') return 'unavailable';
+
   if (session.added[listing.id]) return 'added';
 
   const ownedKeys = [listing.id, listing.pageId, listing.blockId].filter(

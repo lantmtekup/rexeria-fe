@@ -139,6 +139,7 @@ export const ExchangeDeviceStage = ({
                 'rounded-[40px] shadow-[var(--pv2-sh-soft)]',
                 'p-[11px]'
               )}
+              style={{ clipPath: 'inset(0 round 40px)' }}
             >
               <span
                 className='pointer-events-none absolute top-0 left-1/2 z-[2] h-[26px] w-[130px] -translate-x-1/2 rounded-b-[16px] bg-[var(--pv2-ink)]'
@@ -148,7 +149,11 @@ export const ExchangeDeviceStage = ({
                 data-device-frame='true'
                 data-device={device}
                 className='@container relative overflow-hidden rounded-[28px] bg-white'
-                style={{ width: vpW, height: contentH }}
+                style={{
+                  width: vpW,
+                  height: contentH,
+                  clipPath: 'inset(0 round 28px)',
+                }}
               >
                 <div
                   ref={scrollerRef}

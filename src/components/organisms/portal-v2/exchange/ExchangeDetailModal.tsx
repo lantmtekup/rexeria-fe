@@ -9,6 +9,7 @@ import { ListingCover } from '@/components/organisms/portal-v2/exchange/ListingC
 import {
   formatLift,
   formatPrice,
+  kindLabelKey,
   resolveActionState,
 } from '@/lib/portal-v2/exchange/helpers';
 import { objectiveLabelKey } from '@/lib/portal-v2/exchange/mapPage';
@@ -39,7 +40,7 @@ export const ExchangeDetailModal = ({
 
   const { meta } = listing;
   const action = resolveActionState(listing, session);
-  const kindLabel = meta.kind === 'block' ? t('kindBlock') : t('kindPage');
+  const kindLabel = t(kindLabelKey(meta.kind));
 
   const footer = (
     <>

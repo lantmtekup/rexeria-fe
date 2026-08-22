@@ -1,11 +1,24 @@
-export type ExchangeKind = 'all' | 'page' | 'block';
+/**
+ * `ad` là ad creative — template có `target_page_type === 'ad'`. Nó là một
+ * KIND riêng chứ không phải một SOURCE riêng: vẫn nạp từ `GET /v1/templates`
+ * cùng lượt với template landing, vẫn xem trước qua `/p/{preview_slug}`.
+ * Tách ra để nó không lẫn vào tab Experiences như trước.
+ */
+export type ExchangeKind = 'all' | 'page' | 'ad' | 'block';
 
 export type ExchangeObjective = 'all' | 'insight' | 'lead' | 'cta' | 'convert';
 
 export type ExchangePriceFilter = 'all' | 'free' | 'paid';
 
-/** Catalog sources: published landing pages + published blocks. */
-export type ExchangeSource = 'page' | 'block';
+/**
+ * Catalog sources: published landing pages + published blocks + định dạng
+ * quảng cáo tương tác.
+ *
+ * `ad` là nguồn TĨNH, khác hẳn hai cái kia: không gọi mạng, không brand,
+ * không status — xem `adFormats.ts`. Nó xem trước bằng route công khai
+ * `/rexer/ads/{id}` thay vì `/p/{slug}` hay `/embed/block/{id}`.
+ */
+export type ExchangeSource = 'page' | 'block' | 'ad';
 
 export type ExchangeEvidence = {
   lift: number;
@@ -59,6 +72,8 @@ export type ExchangeListingView = {
    */
   exchangeItemId?: string;
   blockId?: string;
+  /** Có giá trị ⇔ `source === 'ad'`. Id định dạng trong `AD_FORMATS`. */
+  adFormatId?: string;
   name: string;
   author: string;
   description: string;
@@ -77,7 +92,18 @@ export type ExchangeFilters = {
   price: ExchangePriceFilter;
 };
 
-export type ExchangeActionState = 'added' | 'owned' | 'buy' | 'locked';
+/**
+ * `unavailable` — món xem được nhưng CHƯA có đường mang về. Đang chỉ dùng cho
+ * `kind: 'ad'`: `GET /v1/experiences` chỉ gộp template, block, và page đã gắn
+ * `campaign_item_id`, nên một page dựng từ ad template không bao giờ hiện
+ * trong thư viện Experiences. Bày nút Thêm ở đó là hứa một chỗ đến không có.
+ */
+export type ExchangeActionState =
+  | 'added'
+  | 'owned'
+  | 'buy'
+  | 'locked'
+  | 'unavailable';
 
 export type ExchangeSessionState = {
   owned: Record<string, boolean>;

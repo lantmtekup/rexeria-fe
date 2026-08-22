@@ -25,6 +25,7 @@ import {
   countByKind,
   filterListings,
   isPreviewable,
+  kindLabelKey,
   resolveActionState,
 } from '@/lib/portal-v2/exchange/helpers';
 import { writeExchangePreviewParam } from '@/lib/portal-v2/exchange/previewParam';
@@ -289,7 +290,7 @@ export const ExchangeWorkspace = ({
   const toPreviewItem = useCallback(
     (listing: ExchangeListingView): PreviewItem => ({
       ...listing,
-      kindLabel: listing.meta.kind === 'block' ? t('kindBlock') : t('kindPage'),
+      kindLabel: t(kindLabelKey(listing.meta.kind)),
       evidence: listing.proven ? (listing.meta.evidence ?? null) : null,
     }),
     [t]
@@ -306,6 +307,12 @@ export const ExchangeWorkspace = ({
 
   const installListing = useCallback(
     async (listing: ExchangeListingView) => {
+      // Ads chưa có đường về Experiences (xem `ExchangeActionState`). UI đã
+      // không bày nút Thêm cho chúng; chốt lại ở đây để nhánh `else` bên dưới
+      // — nhánh gán cứng `type: 'landing'` — không bao giờ nhận một ad
+      // template và lặng lẽ đẻ ra một landing page.
+      if (listing.meta.kind === 'ad') return;
+
       // Không có workspace thì KHÔNG có chỗ để thêm vào. Trước đây nhánh này
       // bung JSON ra alert rồi vẫn đánh dấu "đã thêm" — người dùng đóng hộp
       // thoại và tin là xong, trong khi chẳng có gì được tạo.

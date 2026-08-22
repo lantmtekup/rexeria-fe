@@ -1,5 +1,4 @@
-import { LandingFooter } from '@/components/landing/LandingFooter';
-import { LandingNavbar } from '@/components/landing/LandingNavbar';
+import { LandingLayoutShell } from '@/components/landing/LandingLayoutShell';
 import { SEO_CONSTANTS } from '@/lib/metadata';
 
 /**
@@ -39,7 +38,7 @@ export default function LandingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className='flex min-h-screen flex-col bg-white text-neutral-900'>
+    <>
       <script
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_SCHEMA) }}
@@ -48,9 +47,7 @@ export default function LandingLayout({
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_SCHEMA) }}
       />
-      <LandingNavbar />
-      <main className='flex-1'>{children}</main>
-      <LandingFooter />
-    </div>
+      <LandingLayoutShell>{children}</LandingLayoutShell>
+    </>
   );
 }
