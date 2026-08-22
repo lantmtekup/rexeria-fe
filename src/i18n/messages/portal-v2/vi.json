@@ -514,7 +514,7 @@
         "journeys": "Hành trình",
         "journeysSub": "{count} blueprint trên thị trường · tốt nhất theo hoàn thành",
         "blocks": "Block",
-        "blocksSub": "{count} đang theo dõi · tốt nhất theo assist",
+        "blocksSub": "{count} đang theo dõi · tốt nhất theo đóng góp",
         "seeAll": "Xem tất cả"
       },
       "campaigns": {

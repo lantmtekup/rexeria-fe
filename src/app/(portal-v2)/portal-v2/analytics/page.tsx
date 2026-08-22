@@ -21,10 +21,17 @@ export default async function PortalV2AnalyticsPage({ searchParams }: Props) {
 
   // Hai nguồn độc lập ⇒ song song. Bảng block hỏng thì thẻ đó rỗng, không kéo
   // sập tổng quan — nên nó đi qua `catch` riêng chứ không nằm trong `all`.
+  //
+  // `blocksRank('', ...)` chứ không phải `blocks(...)`: nhãn ở widget nói "tốt
+  // nhất theo đóng góp", nhưng `blocks()` trả bảng KHÔNG sắp xếp (thứ tự gộp
+  // dữ liệu ở BE, gần như ngẫu nhiên) — 2 dòng hiện ra trước đây không phải
+  // "tốt nhất", chỉ là 2 cái đầu tiên gặp phải. `blocksRank` role rỗng = không
+  // lọc theo vai (`roleFilter != ""` ở BE `intel.go`), vẫn sort theo
+  // `ContributionScore` rồi cắt top 3 — đúng thứ cần cho widget tổng quan này.
   const [overview, blocks] = await Promise.all([
     fetchPulseOverview({ brandId: scope.brandId }),
     rexerV2Api.intel
-      .blocks(scope.brandId ? { brand_id: scope.brandId } : {})
+      .blocksRank('', scope.brandId ? { brand_id: scope.brandId } : {})
       .then(res => res.items.map(blockRowOf))
       .catch(() => []),
   ]);
