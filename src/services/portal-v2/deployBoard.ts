@@ -7,6 +7,7 @@
  */
 
 import {
+  brandedExperienceUrl,
   mapChannel,
   mapLiveRow,
   mapReadyRow,
@@ -93,14 +94,6 @@ export const fetchDeployKpis = async (): Promise<DeployKpisResult> => {
  * Wildcard DNS/Cloudflare route for `*.rexerstudio.com` is a deploy-time
  * prerequisite tracked outside this repo; until it exists this URL 404s.
  */
-const SLUG_FROM_PUBLIC_URL = /\/p\/([^/?#]+)\/?$/;
-const EXPERIENCE_HOST_SUFFIX = '.rexerstudio.com';
-
-const brandedExperienceUrl = (publicUrl: string): string => {
-  const slug = publicUrl.match(SLUG_FROM_PUBLIC_URL)?.[1];
-  return slug ? `https://${slug}${EXPERIENCE_HOST_SUFFIX}` : publicUrl;
-};
-
 /**
  * `POST /campaigns/{id}/items/{itemId}/deploy` — the only path an item
  * reaches `live`. Same endpoint the Campaign screen's own Deploy button
