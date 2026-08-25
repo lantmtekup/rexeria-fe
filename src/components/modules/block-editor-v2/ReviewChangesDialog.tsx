@@ -22,6 +22,8 @@ import { cn } from '@/lib/cn';
 import {
   FIELD_LABEL,
   GROUP_LABEL,
+  groupOf,
+  looksLikeImage,
   type BlockDiff,
   type CanvasDiff,
   type DiffGroup,
@@ -177,7 +179,11 @@ export function ReviewChangesDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className='flex max-h-[88vh] max-w-4xl flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl'
+        /* Rộng hơn `max-w-4xl` (56rem): mỗi trường là hai cột cạnh nhau, mà
+           nội dung thật hay là URL dài và danh sách ảnh — 56rem ép mỗi bên
+           còn ~26rem, chữ xuống dòng liên tục và ảnh phải thu nhỏ. Chốt ở
+           96rem, vẫn chừa lề trên màn 1440 và tự co xuống trên màn hẹp. */
+        className='flex max-h-[90vh] w-[96vw] max-w-[96rem] flex-col gap-0 overflow-hidden p-0 sm:max-w-[96rem]'
       >
         {/* ─── Compact header — eyebrow + heading + actions on one band ── */}
         <div className='relative shrink-0 overflow-hidden border-b border-stone-200 bg-stone-50'>
@@ -607,11 +613,27 @@ function GroupCard({
 function FieldRow({ field, group }: { field: FieldDiff; group: DiffGroup }) {
   const label = FIELD_LABEL[field.key] ?? field.key;
 
-  if (group === 'image') {
+  /*
+   * Chọn cách vẽ TẠI ĐÂY, không tin tuyệt đối vào nhóm đã lưu.
+   *
+   * Nhóm được chốt lúc TÍNH diff; khung này chỉ vẽ lại. Một diff tính trước
+   * khi luật phân nhóm đổi (hoặc do phiên bản cũ để lại) vẫn mang nhóm cũ, và
+   * người dùng nhận về một URL ảnh dưới dạng chữ, một mảng dưới dạng
+   * `0: {…} 1: {…}` — đúng hai lỗi vừa gặp.
+   *
+   * Chỉ nâng cấp từ `text`: `image`/`list`/`cta` là quyết định có chủ đích ở
+   * tầng tính diff, không đè.
+   */
+  const shown =
+    group === 'text'
+      ? groupOf(field.key, field.oldValue, field.newValue)
+      : group;
+
+  if (shown === 'image') {
     return (
       <li className='px-4 py-4'>
         <div className='mb-2 flex items-center gap-2'>
-          <span className='text-3xs font-mono tracking-widest text-stone-400 uppercase'>
+          <span className='font-mono text-[11px] tracking-widest text-stone-500 uppercase'>
             {label}
           </span>
         </div>
@@ -623,18 +645,20 @@ function FieldRow({ field, group }: { field: FieldDiff; group: DiffGroup }) {
     );
   }
 
-  if (group === 'list') {
+  if (shown === 'list') {
     return (
       <li className='px-4 py-3'>
         <div className='mb-1.5 flex items-center gap-2'>
-          <span className='text-3xs font-mono tracking-widest text-stone-400 uppercase'>
+          <span className='font-mono text-[11px] tracking-widest text-stone-500 uppercase'>
             {label}
           </span>
         </div>
-        <div className='flex flex-col gap-2 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-center'>
+        {/* `items-start` — mỗi bên giờ là một danh sách nhiều dòng, canh giữa
+            sẽ làm hai bên lệch nhau khi số mục khác nhau. */}
+        <div className='flex flex-col gap-2 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-start'>
           <ListPreview value={field.oldValue} side='old' />
           <ArrowRight
-            className='hidden size-3.5 shrink-0 self-center text-stone-300 sm:block'
+            className='mt-4 hidden size-3.5 shrink-0 text-stone-300 sm:block'
             aria-hidden
           />
           <ListPreview value={field.newValue} side='new' />
@@ -647,7 +671,7 @@ function FieldRow({ field, group }: { field: FieldDiff; group: DiffGroup }) {
   return (
     <li className='px-4 py-3'>
       <div className='mb-1.5 flex items-center gap-2'>
-        <span className='text-3xs font-mono tracking-widest text-stone-400 uppercase'>
+        <span className='font-mono text-[11px] tracking-widest text-stone-500 uppercase'>
           {label}
         </span>
       </div>
@@ -756,6 +780,19 @@ function stringifyDiffValue(value: unknown): string {
   if (typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
   }
+  /*
+   * Mảng lọt tới đây ⇒ nêu từng mục, đừng để `Object.keys` biến nó thành
+   * `0: {…} 1: {…}` — nhìn ra một cột số vô nghĩa. Bình thường mảng đã bị
+   * `FieldRow` đẩy sang `ListPreview`; đây chỉ là lưới an toàn.
+   */
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '(danh sách rỗng)';
+    const rows = value
+      .slice(0, 8)
+      .map((v, i) => `${i + 1}. ${describeItem(v).label}`);
+    if (value.length > 8) rows.push(`+${value.length - 8} mục khác`);
+    return rows.join('\n');
+  }
   if (value && typeof value === 'object') {
     const obj = value as Record<string, unknown>;
     const href = obj.href ?? obj.url ?? obj.link;
@@ -763,11 +800,24 @@ function stringifyDiffValue(value: unknown): string {
       const label = typeof obj.text === 'string' ? obj.text : undefined;
       return label ? `${label} → ${href}` : href;
     }
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return '';
-    }
+    /*
+     * Object lạ ⇒ liệt kê `khoá: giá trị` mỗi thứ một dòng, KHÔNG đổ
+     * `JSON.stringify`. Chuỗi JSON thô (dấu ngoặc, dấu nháy, escape) là thứ
+     * người dùng không đọc được, và nó chiếm cả khung khiến trường bên cạnh
+     * không còn nhìn thấy. Giá trị lồng sâu rút về tên kiểu, vì chi tiết bên
+     * trong không giúp quyết định nhận hay bỏ.
+     */
+    const line = (k: string, v: unknown): string => {
+      if (v === null || v === undefined) return `${k}: —`;
+      if (Array.isArray(v)) return `${k}: ${v.length} mục`;
+      if (typeof v === 'object') return `${k}: {…}`;
+      const s = String(v);
+      return `${k}: ${s.length > 60 ? s.slice(0, 60) + '…' : s}`;
+    };
+    const keys = Object.keys(obj);
+    const shown = keys.slice(0, 8).map(k => line(k, obj[k]));
+    if (keys.length > 8) shown.push(`+${keys.length - 8} trường khác`);
+    return shown.join('\n');
   }
   return String(value);
 }
@@ -796,7 +846,7 @@ function TextValue({ value, side }: { value: unknown; side: 'old' | 'new' }) {
       {/* Side label — tiny corner badge */}
       <span
         className={cn(
-          'text-3xs absolute -top-2 left-2 px-1.5 font-mono font-bold tracking-widest uppercase',
+          'absolute -top-2 left-2 px-1.5 font-mono text-[10.5px] font-bold tracking-widest uppercase',
           side === 'old'
             ? 'bg-stone-50/40 text-rose-500'
             : 'bg-stone-50/40 text-emerald-600'
@@ -804,9 +854,11 @@ function TextValue({ value, side }: { value: unknown; side: 'old' | 'new' }) {
       >
         {side === 'old' ? 'Đang dùng' : 'Đề xuất'}
       </span>
+      {/* `whitespace-pre-line` để danh sách `khoá: giá trị` xuống dòng thật;
+          `break-words` để một URL dài không đẩy rộng cả khung. */}
       <p
         className={cn(
-          'pt-0.5 text-sm leading-relaxed',
+          'pt-0.5 text-sm leading-relaxed break-words whitespace-pre-line',
           side === 'old' && !empty && 'line-through decoration-rose-400/50'
         )}
       >
@@ -818,18 +870,57 @@ function TextValue({ value, side }: { value: unknown; side: 'old' | 'new' }) {
 
 // ─── List preview — chip row showing first 3 items + count ───────────────
 
+/** Tên gọi ngắn của một chữ URL — phần cuối đường dẫn, bỏ tham số. */
+const fileLabel = (url: string): string => {
+  const clean = url.split(/[?#]/)[0];
+  return clean.slice(clean.lastIndexOf('/') + 1) || clean;
+};
+
+/**
+ * Một phần tử mảng → { ảnh đại diện, nhãn đọc được }.
+ *
+ * Trước đây mọi phần tử object bị rút về "giá trị chuỗi đầu tiên", mà với dữ
+ * liệu thật (slide có `backdrop`/`hero`/`thumbs`) giá trị đầu tiên lại là một
+ * URL dài — người dùng nhìn ra một hàng chữ giống hệt nhau, không phân biệt
+ * được phần tử nào. Ưu tiên trường có vẻ là TÊN, và tách riêng ảnh để vẽ.
+ */
+const NAME_KEYS = ['title', 'name', 'label', 'text', 'caption', 'heading'];
+
+function describeItem(v: unknown): { thumb: string | null; label: string } {
+  if (looksLikeImage(v)) return { thumb: v, label: fileLabel(v) };
+  if (typeof v === 'string') return { thumb: null, label: v };
+  if (typeof v !== 'object' || v === null) {
+    return { thumb: null, label: String(v) };
+  }
+
+  const obj = v as Record<string, unknown>;
+  const named = NAME_KEYS.map(k => obj[k]).find(
+    x => typeof x === 'string' && x.trim()
+  ) as string | undefined;
+  /* Ảnh đại diện: trường bất kỳ trông như ảnh, không thì mục đầu trong
+     `thumbs` — dữ liệu thật hay để ảnh nhỏ ở đó. */
+  const pickImage = (list: unknown[]): string | null => {
+    for (const x of list) if (looksLikeImage(x)) return x;
+    return null;
+  };
+  const thumb =
+    pickImage(Object.values(obj)) ??
+    (Array.isArray(obj.thumbs) ? pickImage(obj.thumbs) : null);
+
+  if (named) return { thumb: thumb ?? null, label: named };
+  if (thumb) return { thumb, label: fileLabel(thumb) };
+
+  // Không có tên, không có ảnh — nêu các trường thay vì đổ nguyên JSON.
+  return { thumb: null, label: Object.keys(obj).slice(0, 4).join(' · ') };
+}
+
+/** Số dòng vẽ ra trước khi gộp phần còn lại thành "+N khác". */
+const LIST_ROWS = 6;
+
 function ListPreview({ value, side }: { value: unknown; side: 'old' | 'new' }) {
   const empty = !Array.isArray(value) || value.length === 0;
   const items = Array.isArray(value) ? value : [];
-  const previews = items.slice(0, 4).map(v => {
-    if (typeof v === 'string') return v;
-    if (typeof v === 'object' && v !== null) {
-      const vals = Object.values(v as Record<string, unknown>);
-      const first = vals.find(x => typeof x === 'string' && x);
-      return (first as string | undefined) ?? '…';
-    }
-    return String(v);
-  });
+  const rows = items.slice(0, LIST_ROWS).map(describeItem);
 
   return (
     <div
@@ -842,7 +933,7 @@ function ListPreview({ value, side }: { value: unknown; side: 'old' | 'new' }) {
     >
       <span
         className={cn(
-          'text-3xs absolute -top-2 left-2 px-1.5 font-mono font-bold tracking-widest uppercase',
+          'absolute -top-2 left-2 px-1.5 font-mono text-[10.5px] font-bold tracking-widest uppercase',
           side === 'old'
             ? 'bg-stone-50/40 text-rose-500'
             : 'bg-stone-50/40 text-emerald-600'
@@ -858,37 +949,82 @@ function ListPreview({ value, side }: { value: unknown; side: 'old' | 'new' }) {
         <div className='flex flex-col gap-1.5 pt-0.5'>
           <span
             className={cn(
-              'text-3xs font-mono font-bold',
+              'font-mono text-[11px] font-bold',
               side === 'old' ? 'text-rose-700/70' : 'text-emerald-700'
             )}
           >
             {items.length} mục
           </span>
-          <div className='flex flex-wrap gap-1'>
-            {previews.map((p, i) => (
-              <span
+          {/* MỖI PHẦN TỬ MỘT DÒNG, kèm ảnh nhỏ nếu có. Trước đây là một hàng
+              chip cắt cụt: với mảng slide/frame thì mọi chip đều là URL dài
+              giống nhau, người dùng không biết mục nào đổi. */}
+          <ol className='flex flex-col gap-1'>
+            {rows.map((row, i) => (
+              <li
                 key={i}
                 className={cn(
-                  'text-3xs inline-flex max-w-[180px] items-center rounded-full px-2 py-0.5',
-                  side === 'old'
-                    ? 'bg-white/70 text-rose-900/80 line-through decoration-rose-400/40'
-                    : 'bg-emerald-50 text-emerald-900 ring-1 ring-emerald-100'
+                  'flex items-center gap-2.5 rounded-md px-2 py-1.5',
+                  side === 'old' ? 'bg-white/60' : 'bg-emerald-50/70'
                 )}
               >
-                <span className='truncate'>{p}</span>
-              </span>
+                <span
+                  className={cn(
+                    'w-5 shrink-0 text-right font-mono text-xs tabular-nums',
+                    side === 'old' ? 'text-rose-400' : 'text-emerald-600'
+                  )}
+                >
+                  {i + 1}
+                </span>
+                {row.thumb ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={row.thumb}
+                    alt=''
+                    loading='lazy'
+                    draggable={false}
+                    className={cn(
+                      'size-16 shrink-0 rounded-md object-cover ring-1',
+                      side === 'old'
+                        ? 'opacity-60 ring-rose-200/60'
+                        : 'ring-emerald-200/70'
+                    )}
+                  />
+                ) : (
+                  <span
+                    className={cn(
+                      'grid size-16 shrink-0 place-items-center rounded-md ring-1',
+                      side === 'old'
+                        ? 'bg-white/70 ring-rose-200/50'
+                        : 'bg-white ring-emerald-200/60'
+                    )}
+                  >
+                    <ImageIcon className='size-6 text-stone-300' />
+                  </span>
+                )}
+                <span
+                  className={cn(
+                    'min-w-0 flex-1 text-sm leading-snug break-words',
+                    side === 'old'
+                      ? 'text-rose-900/70 line-through decoration-rose-400/40'
+                      : 'text-neutral-800'
+                  )}
+                  title={row.label}
+                >
+                  {row.label}
+                </span>
+              </li>
             ))}
-            {items.length > 4 && (
-              <span
-                className={cn(
-                  'text-3xs inline-flex items-center rounded-full px-2 py-0.5 font-mono',
-                  side === 'old' ? 'text-rose-500/70' : 'text-emerald-700'
-                )}
-              >
-                +{items.length - 4} khác
-              </span>
-            )}
-          </div>
+          </ol>
+          {items.length > LIST_ROWS && (
+            <span
+              className={cn(
+                'pl-2 font-mono text-[11px]',
+                side === 'old' ? 'text-rose-500/70' : 'text-emerald-700'
+              )}
+            >
+              +{items.length - LIST_ROWS} mục khác
+            </span>
+          )}
         </div>
       )}
     </div>
