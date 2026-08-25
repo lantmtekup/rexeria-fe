@@ -13,6 +13,7 @@ import {
   type UseTargetCampaign,
   type UseTargetItem,
 } from '@/services/portal-v2/experienceUse';
+import { forkReasonKey } from '@/lib/portal-v2/experiences/constants';
 import type { ExperienceView } from '@/lib/portal-v2/experiences/types';
 import { cn } from '@/lib/cn';
 
@@ -101,7 +102,14 @@ export const UseExperienceModal = ({
         attach && campaignId && itemId ? { campaignId, itemId } : null
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('useFailed'));
+      /*
+       * `message` của BE viết cho log, không cho người dùng. Dịch những câu đã
+       * biết sang tiếng của màn hình; câu chưa biết thì hiện nguyên văn — thà
+       * thô còn hơn nuốt mất một lỗi chưa lường trước.
+       */
+      const raw = err instanceof Error ? err.message : '';
+      const key = raw ? forkReasonKey(raw) : null;
+      setError(key ? t(key) : raw || t('useFailed'));
     } finally {
       setPending(false);
     }

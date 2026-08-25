@@ -21,6 +21,7 @@ import { Input } from '@/components/atoms/input';
 import { Modal } from '@/components/molecules/portal-v2/Modal';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
 import { ImagePicker } from '@/components/modules/block-editor-v2/ImagePicker';
+import { MediaPickerModal } from '@/components/organisms/portal-v2/product/MediaPickerModal';
 import { ExperienceCover } from '@/components/organisms/portal-v2/experiences/ExperienceCover';
 import { ExperienceDetailsPane } from '@/components/organisms/portal-v2/experiences/ExperienceDetailsPane';
 import { ExperiencePerfPane } from '@/components/organisms/portal-v2/experiences/ExperiencePerfPane';
@@ -31,6 +32,7 @@ import {
   canPreview,
   formatCount,
   formatLift,
+  isReadOnlyShelf,
 } from '@/lib/portal-v2/experiences/helpers';
 import { EVIDENCE_TIER_STYLE } from '@/lib/portal-v2/experiences/roleStyles';
 import type {
@@ -161,6 +163,8 @@ export const ExperienceDetailModal = ({
   const [editingDetails, setEditingDetails] = useState(false);
   const [nameDraft, setNameDraft] = useState(experience.name);
   const [thumbDraft, setThumbDraft] = useState(experience.thumbnailUrl ?? '');
+  /** Bộ chọn ảnh từ Media — đường thứ hai bên cạnh tải file lên và dán URL. */
+  const [libraryOpen, setLibraryOpen] = useState(false);
 
   useEffect(() => {
     setEditingDetails(false);
@@ -250,6 +254,8 @@ export const ExperienceDetailModal = ({
   const tierStyle = EVIDENCE_TIER_STYLE[evidence.tier];
   const previewable = canPreview(experience);
   const editable = canEditCanvas(experience);
+  /* Ngăn "Exchange" là chỉ đọc theo thiết kế — nói lý do, đừng để nút xám câm. */
+  const readOnlyShelf = isReadOnlyShelf(experience);
 
   const subtitleParts = [
     t(CATEGORY_LABEL_KEY[experience.category]),
@@ -307,7 +313,13 @@ export const ExperienceDetailModal = ({
             variant='ghost'
             size='sm'
             disabled={!editable}
-            title={editable ? undefined : t('editExternalHint')}
+            title={
+              editable
+                ? undefined
+                : readOnlyShelf
+                  ? t('editShelfHint')
+                  : t('editExternalHint')
+            }
             onClick={() => onEdit(experience)}
           >
             <PenLine className='size-3.5' strokeWidth={2.2} aria-hidden />
@@ -348,9 +360,14 @@ export const ExperienceDetailModal = ({
       <div className='mb-4 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-3.5'>
         {editingDetails ? (
           <div className='flex flex-col gap-3 sm:flex-row'>
+            {/* `onBrowseLibrary` là thứ làm hiện nút "Thư viện" trong
+                ImagePicker. Không truyền thì chỉ còn tải lên + dán URL — ảnh
+                thường đã nằm sẵn trong Media, bắt tải lại vừa sinh bản trùng
+                vừa tốn dung lượng. */}
             <ImagePicker
               value={thumbDraft}
               onChange={setThumbDraft}
+              onBrowseLibrary={() => setLibraryOpen(true)}
               className='sm:w-[180px] sm:shrink-0'
             />
             <div className='flex min-w-0 flex-1 flex-col gap-2'>
@@ -403,17 +420,21 @@ export const ExperienceDetailModal = ({
                 {experience.name}
               </p>
               <p className='text-[11.5px] text-[var(--pv2-faint)]'>
-                {t('editDetailsHint')}
+                {readOnlyShelf ? t('shelfReadOnly') : t('editDetailsHint')}
               </p>
             </div>
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={() => setEditingDetails(true)}
-            >
-              <ImageIcon className='size-3.5' strokeWidth={2.2} aria-hidden />
-              {t('editDetails')}
-            </Button>
+            {/* Ngăn "Exchange" giữ nguyên bản gốc — không có nút sửa ở đây, và
+                câu bên trên đã nói chỗ sửa đúng là bản fork trong hạng mục. */}
+            {readOnlyShelf ? null : (
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => setEditingDetails(true)}
+              >
+                <ImageIcon className='size-3.5' strokeWidth={2.2} aria-hidden />
+                {t('editDetails')}
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -471,6 +492,20 @@ export const ExperienceDetailModal = ({
           <ExperiencePerfPane experience={experience} stats={stats} />
         ) : null}
       </div>
+
+      {/* Chọn ảnh bìa từ Media. Đặt TRONG modal chi tiết để form đổi tên/ảnh
+          không bị đóng khi bộ chọn mở — người dùng quay lại đúng chỗ đang sửa,
+          với ảnh vừa chọn đã điền sẵn. */}
+      {libraryOpen ? (
+        <MediaPickerModal
+          confirmLabel={t('useThisImage')}
+          onClose={() => setLibraryOpen(false)}
+          onPickUrl={url => {
+            setThumbDraft(url);
+            setLibraryOpen(false);
+          }}
+        />
+      ) : null}
     </Modal>
   );
 };

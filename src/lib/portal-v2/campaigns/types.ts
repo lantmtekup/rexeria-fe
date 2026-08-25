@@ -12,11 +12,7 @@
 
 /** Prototype `CAMP_TYPES` (rexer-demo-v3.html :15610). */
 export type CampaignType =
-  | 'launch'
-  | 'seasonal'
-  | 'sale'
-  | 'always'
-  | 'retention';
+  'launch' | 'seasonal' | 'sale' | 'always' | 'retention';
 
 /** The commercial intent — distinct from `brief.objective`, which is prose. */
 export type CampaignGoal = 'awareness' | 'traffic' | 'conversion' | 'retention';
@@ -47,11 +43,7 @@ export type CampaignPhase = 'plan' | 'build' | 'run' | 'learn';
 
 /** Plan §mod-campaigns: "Not started → In build → In review → Ready → Live". */
 export type CampaignItemStatus =
-  | 'todo'
-  | 'building'
-  | 'review'
-  | 'ready'
-  | 'live';
+  'todo' | 'building' | 'review' | 'ready' | 'live';
 
 /** "hạng mục theo sản phẩm hoặc chủ đề" — a SKU or a topic with no SKU behind it. */
 export type CampaignSubjectKind = 'product' | 'topic';
@@ -159,8 +151,16 @@ export type CampaignExperience = {
   name: string;
   slug: string;
   summary: string;
-  /** Share of blocks and components carrying a signal, 0–1. */
-  coverage: number;
+  /**
+   * Share of blocks and components carrying a signal, 0–1.
+   *
+   * `null` = CHƯA ĐO ĐƯỢC, khác hẳn `0` = đo rồi và không có gì mang tín hiệu.
+   * BE bỏ trống trường này với loại không đo được, và danh sách `/experiences`
+   * cũng không trả nó (số thật chỉ có ở `/experiences/{id}/coverage`, nạp khi
+   * mở chi tiết). Quy `null` về `0` khiến cổng ship chặn oan một trang đã gắn
+   * đủ điểm đo — xem `itemShipGate`.
+   */
+  coverage: number | null;
   /** The product this was authored for, or null for a subject-agnostic master. */
   productId: string | null;
   /** True ⇒ a library master, forked on use. */
@@ -169,6 +169,14 @@ export type CampaignExperience = {
   origin: string | null;
   /** Copies only — the campaign that owns it. */
   campaign: string | null;
+  /**
+   * Hạng mục đang giữ bản này; `null` ⇒ chưa gắn chiến dịch nào.
+   *
+   * Đây là trục quyết định thứ gì fork được: một bản chưa gắn hạng mục vẫn là
+   * gốc phẳng hai tầng, nên nó dùng làm nguồn fork được y như một bản gốc thật.
+   * `campaign` không thay thế được — bản gốc cũng có `campaign: null`.
+   */
+  itemId: string | null;
   /**
    * Copies only — its words were rewritten for the subject it is filed under.
    *
@@ -247,11 +255,7 @@ export type CampaignVerdict = {
 };
 
 export type CampaignHealthState =
-  | 'healthy'
-  | 'valuable'
-  | 'delayed'
-  | 'risk'
-  | 'complete';
+  'healthy' | 'valuable' | 'delayed' | 'risk' | 'complete';
 
 export type CampaignHealth = {
   state: CampaignHealthState;

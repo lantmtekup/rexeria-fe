@@ -51,6 +51,7 @@ const MASTERS: CampaignExperience[] = [
     template: true,
     origin: null,
     campaign: null,
+    itemId: null,
   },
   {
     id: 'e2',
@@ -62,6 +63,7 @@ const MASTERS: CampaignExperience[] = [
     template: true,
     origin: null,
     campaign: null,
+    itemId: null,
   },
   {
     id: 'e3',
@@ -73,6 +75,7 @@ const MASTERS: CampaignExperience[] = [
     template: true,
     origin: null,
     campaign: null,
+    itemId: null,
   },
   {
     id: 'e4',
@@ -84,6 +87,7 @@ const MASTERS: CampaignExperience[] = [
     template: true,
     origin: null,
     campaign: null,
+    itemId: null,
   },
   {
     id: 'e5',
@@ -95,6 +99,7 @@ const MASTERS: CampaignExperience[] = [
     template: true,
     origin: null,
     campaign: null,
+    itemId: null,
   },
   {
     id: 'e6',
@@ -106,6 +111,7 @@ const MASTERS: CampaignExperience[] = [
     template: true,
     origin: null,
     campaign: null,
+    itemId: null,
   },
   {
     id: 'e7',
@@ -117,6 +123,7 @@ const MASTERS: CampaignExperience[] = [
     template: true,
     origin: null,
     campaign: null,
+    itemId: null,
   },
   {
     id: 'e8',
@@ -128,6 +135,7 @@ const MASTERS: CampaignExperience[] = [
     template: true,
     origin: null,
     campaign: null,
+    itemId: null,
   },
   {
     id: 'e9',
@@ -139,6 +147,7 @@ const MASTERS: CampaignExperience[] = [
     template: true,
     origin: null,
     campaign: null,
+    itemId: null,
   },
 ];
 
@@ -169,6 +178,8 @@ export const forkExperience = (
   template: false,
   origin: master.id,
   campaign: campaignId,
+  // Bản fork thuộc về một hạng mục ⇒ không dùng lại làm nguồn fork được nữa.
+  itemId: subjectRef,
   ...patch,
 });
 

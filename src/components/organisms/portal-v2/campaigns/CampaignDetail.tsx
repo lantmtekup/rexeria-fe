@@ -31,6 +31,7 @@ import { PhaseStrip } from '@/components/organisms/portal-v2/campaigns/detail/Ph
 import { PlanPhase } from '@/components/organisms/portal-v2/campaigns/detail/PlanPhase';
 import { RunPhase } from '@/components/organisms/portal-v2/campaigns/detail/RunPhase';
 import { campaignTypeStyle } from '@/lib/portal-v2/campaigns/constants';
+import { forkReasonKey } from '@/lib/portal-v2/experiences/constants';
 import {
   applyDraft,
   deriveStage,
@@ -123,6 +124,9 @@ export const CampaignDetail = ({
   onJourneyChange,
 }: CampaignDetailProps) => {
   const t = useTranslations('portalV2.campaigns');
+  /* Lý do BE từ chối fork dùng chung câu chữ với màn Experiences — cùng một
+     lỗi, cùng một hướng xử lý, nên không viết lại bản thứ hai ở đây. */
+  const tx = useTranslations('portalV2.experiences');
 
   const derivedPhase = campPhase(campaign, experiences, journeys);
   const [phase, setPhase] = useState<CampaignPhase>(derivedPhase);
@@ -301,13 +305,24 @@ export const CampaignDetail = ({
   const handleAttachMaster =
     (item: CampaignItem) =>
     async (masterId: string): Promise<string | null> => {
-      const copy = await attachExperienceToItem(
-        campaign.id,
-        item.id,
-        masterId
-      ).catch(() => null);
+      /*
+       * Giữ lỗi lại để NÓI được nó là lỗi gì. `catch(() => null)` trước đây
+       * gộp mọi thất bại thành một câu "gắn thất bại" duy nhất, kể cả những
+       * lỗi có hướng xử lý rõ ràng (chọn nhầm một bản đã thuộc hạng mục
+       * khác, chưa chọn brand…). Dịch câu đã biết, câu lạ thì hiện nguyên văn.
+       */
+      let copy: CampaignExperience | null = null;
+      let reason: string | null = null;
+      try {
+        copy = await attachExperienceToItem(campaign.id, item.id, masterId);
+      } catch (err) {
+        reason = err instanceof Error ? err.message : null;
+      }
       if (!copy) {
-        toast.error(t('toastAttachFailed'));
+        const key = reason ? forkReasonKey(reason) : null;
+        toast.error(t('toastAttachFailed'), {
+          description: key ? tx(key) : (reason ?? undefined),
+        });
         return null;
       }
       // Bản copy do server dựng — đưa nó vào danh sách để thẻ vẽ được tên.
