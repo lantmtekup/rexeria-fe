@@ -29,6 +29,8 @@ const LEGEND_DESC_TYPE =
 const PILL_STYLE =
   'border-transparent bg-white/50 text-black backdrop-blur-[10px]';
 
+const RAIL_PILL_STYLE = 'border-white/70 bg-transparent text-white';
+
 const DOT_HALO = 'absolute inset-0 rounded-full bg-white blur-[8.1px]';
 
 const DOT_CORE = 'absolute inset-1.5 rounded-full bg-white';
@@ -169,7 +171,15 @@ export function ShowcaseDots({
   );
 }
 
-export function ShowcaseRail({ hotspots }: { hotspots: ShowcaseHotspot[] }) {
+export function ShowcaseRail({
+  hotspots,
+  activeIndex,
+  onSelect,
+}: {
+  hotspots: ShowcaseHotspot[];
+  activeIndex: number | null;
+  onSelect: (index: number) => void;
+}) {
   return (
     <nav
       data-rail
@@ -177,15 +187,25 @@ export function ShowcaseRail({ hotspots }: { hotspots: ShowcaseHotspot[] }) {
       className='absolute inset-x-0 bottom-[4.76%] z-10 hidden xl:block'
     >
       <ul className='mx-auto flex max-w-full flex-wrap items-center justify-center gap-[max(0.83vw,10px)]'>
-        {hotspots.map((hotspot, index) => (
-          <li
-            key={index}
-            data-pill
-            className={`rounded-full border px-4 py-3 ${CAPSULE_TYPE} ${PILL_STYLE}`}
-          >
-            {hotspot.label}
-          </li>
-        ))}
+        {hotspots.map((hotspot, index) => {
+          const active = activeIndex === index;
+
+          return (
+            <li key={index} data-pill>
+              <button
+                type='button'
+                onClick={() => onSelect(index)}
+                aria-expanded={active}
+                aria-label={hotspot.label}
+                className={`cursor-pointer rounded-full border px-4 py-3 ${CAPSULE_TYPE} ${
+                  active ? PILL_STYLE : RAIL_PILL_STYLE
+                }`}
+              >
+                {hotspot.label}
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );

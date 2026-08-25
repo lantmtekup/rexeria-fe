@@ -54,7 +54,13 @@ export default function HeroStage() {
       history.scrollRestoration = 'manual';
     }
 
-    const toTop = () => window.scrollTo(0, 0);
+    const toTop = () => {
+      const lenis = getLenis();
+      lenis?.stop();
+      window.scrollTo(0, 0);
+      lenis?.scrollTo(0, { immediate: true });
+      lenis?.start();
+    };
     toTop();
 
     window.addEventListener('load', toTop, { once: true });

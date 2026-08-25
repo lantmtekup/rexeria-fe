@@ -103,8 +103,10 @@ export default function ElevatedLiving() {
 
     const mm = gsap.matchMedia(section);
 
-    mm.add(MOTION_CONDITIONS, context => {
-      const { reduce } = context.conditions as MotionConditions;
+    mm.add({ ...MOTION_CONDITIONS, isXl: '(min-width: 1280px)' }, context => {
+      const { reduce, isXl } = context.conditions as MotionConditions & {
+        isXl: boolean;
+      };
       const duration = reduce ? 0 : BEAT_DURATION;
       const factor = frame.offsetWidth / INTRO_DESIGN_WIDTH;
 
@@ -133,7 +135,7 @@ export default function ElevatedLiving() {
 
       const trigger = ScrollTrigger.create({
         trigger: section,
-        start: 'top 20%',
+        start: isXl ? 'top 20%' : 'top 70%',
         once: true,
         onEnter: () => master.play(),
       });

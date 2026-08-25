@@ -102,8 +102,10 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
 
     const mm = gsap.matchMedia(root);
 
-    mm.add(MOTION_CONDITIONS, context => {
-      const { reduce } = context.conditions as MotionConditions;
+    mm.add({ ...MOTION_CONDITIONS, isXl: '(min-width: 1280px)' }, context => {
+      const { reduce, isXl } = context.conditions as MotionConditions & {
+        isXl: boolean;
+      };
 
       const duration = reduce ? 0 : REVEAL_BEAT_DURATION;
       const factor = frame.offsetWidth / REVEAL_DESIGN_WIDTH;
@@ -172,7 +174,7 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
 
       const trigger = ScrollTrigger.create({
         trigger: root,
-        start: 'top 20%',
+        start: isXl ? 'top 20%' : 'top 70%',
         once: true,
         onEnter: () => timeline.play(),
       });
@@ -454,7 +456,11 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
               stackedIndex={stackedHotspot}
               onSelect={selectHotspot}
             />
-            <ShowcaseRail hotspots={section.hotspots} />
+            <ShowcaseRail
+              hotspots={section.hotspots}
+              activeIndex={activeHotspot}
+              onSelect={selectHotspot}
+            />
           </>
         )}
 
@@ -487,13 +493,13 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
       {cardColumnPanel ? (
         <div
           style={{ ['--card-w' as string]: `${SHOWCASE_CARD_WIDTH}%` }}
-          className={`relative z-20 flex w-full flex-col xl:absolute xl:top-0 xl:h-full xl:w-(--card-w) ${
+          className={`relative z-20 flex w-full flex-col xl:pointer-events-none xl:absolute xl:top-0 xl:h-full xl:w-(--card-w) ${
             cardOnRight ? 'xl:right-0' : 'xl:left-0'
           } ${cardAtBottom ? 'xl:flex-col-reverse' : ''}`}
         >
           <div
             data-card
-            className={`relative flex w-full flex-col bg-white px-5 py-10 xl:p-[max(2.78vw,28px)] ${
+            className={`relative flex w-full flex-col bg-white px-5 py-10 xl:pointer-events-auto xl:p-[max(2.78vw,28px)] ${
               right ? 'xl:items-end xl:text-right' : ''
             }`}
           >
