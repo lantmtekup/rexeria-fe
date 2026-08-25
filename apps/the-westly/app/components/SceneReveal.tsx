@@ -5,6 +5,7 @@ import { useLayoutEffect, useRef } from 'react';
 import {
   gsap,
   Observer,
+  ScrollTrigger,
   MOTION_CONDITIONS,
   type MotionConditions,
 } from '../lib/motion';
@@ -18,15 +19,35 @@ const BLEED = { x: 16, y: 5 } as const;
 // Stage = max(100cqw, 100cqh·1440/820) — portrait mobile bị chiều cao quyết định,
 // nên sizes phải theo vh thay vì vw kẻo Next serve variant quá nhỏ (mờ).
 const STAGE_RATIO = 1440 / 820;
-const LAYER_SIZES = `calc(max(100vw, ${Math.round(STAGE_RATIO * 100)}vh) * ${
-  (100 + BLEED.x * 2) / 100
-})`;
+// Dưới `md` stage bị chặn ở 160vw (xem class của [data-stage]): cover theo chiều
+// cao trên máy dọc phải phóng ~3.8× nên chỉ còn thấy một góc bếp. Hai con số 160
+// này phải đi cùng nhau — Tailwind không nội suy được nên đành lặp lại.
+const STAGE_WIDTH = `max(100vw, ${Math.round(STAGE_RATIO * 100)}vh)`;
+const BLEED_SCALE = (100 + BLEED.x * 2) / 100;
+const LAYER_SIZES = [
+  `(max-width: 767px) calc(min(160vw, ${STAGE_WIDTH}) * ${BLEED_SCALE})`,
+  `calc(${STAGE_WIDTH} * ${BLEED_SCALE})`,
+].join(', ');
 const LAYER_INSET = {
   top: `-${BLEED.y}%`,
   right: `-${BLEED.x}%`,
   bottom: `-${BLEED.y}%`,
   left: `-${BLEED.x}%`,
 } as const;
+
+const COPY = {
+  eyebrow: 'EXPLORE KITCHEN SPACE',
+  title: 'The separate windowed kitchen recalls the sophistication',
+} as const;
+
+/**
+ * Tâm khối chữ khi nó nằm trong ô kính, tính theo % của stage. Đọc ra từ ảnh
+ * design rồi quy về hệ toạ độ stage (1440×820).
+ */
+const WINDOW_POS = { x: 17, y: 31 } as const;
+
+/** Xanh trên bản sketch, trắng khi nằm trên ảnh thật. */
+const COPY_COLOR = { sketch: '#6E7A6F', photo: '#FFFFFF' } as const;
 
 export default function SceneReveal() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -50,40 +71,195 @@ export default function SceneReveal() {
         ctx.conditions as MotionConditions;
       const cleanups: Array<() => void> = [];
 
+      const bg = section.querySelector<HTMLElement>('[data-layer="bg"]');
       const photo = section.querySelector<HTMLElement>('[data-layer="photo"]');
       const far = section.querySelector<HTMLElement>('[data-layer="far"]');
       const near = section.querySelector<HTMLElement>('[data-layer="near"]');
       const veil = section.querySelector<HTMLElement>('[data-layer="veil"]');
       const stage = section.querySelector<HTMLElement>('[data-stage]');
-      if (!photo || !far || !near || !veil) return;
+      const copy = section.querySelector<HTMLElement>('[data-layer="copy"]');
+      const copyShift = section.querySelector<HTMLElement>('[data-copy-shift]');
+      const copyItems =
+        section.querySelectorAll<HTMLElement>('[data-copy-item]');
+      if (!photo || !far || !near || !veil || !copy || !copyShift || !stage)
+        return;
 
       gsap.set(photo, { autoAlpha: 0 });
-      gsap.set([far, near], { autoAlpha: 0 });
+      // far/near hiện/ẩn theo cổng [data-stage] bên dưới, không tự tắt bật —
+      // để không giẫm chân trạng thái reveal.
+      gsap.set([far, near], { autoAlpha: 1 });
+      gsap.set(copyItems, { autoAlpha: 0 });
 
+      // MÉP TAN + CỔNG — y hệt cặp ProductShowcase → SceneParallax.
+      // Mask: dải ngay dưới mép trong suốt rồi đục dần, dài đúng bằng khoảng
+      // cách từ mép tới đỉnh màn, nên tại mép section không vẽ gì — không có
+      // bậc nào để mắt bắt thành đường cắt. Không scrub: mask phải bám đúng vị
+      // trí mép thật. Phủ kín màn thì gỡ hẳn cho khỏi ôm thêm lớp composite.
+      // Cổng: bản vẽ chỉ hiện khi FinalResidences bên dưới đã bạc trắng hết
+      // (veil bên đó kín ở mốc 65%), kẻo hai lớp chồng nhau.
+      if (!reduce) {
+        const paintFeather = (progress: number) => {
+          const px = Math.round(window.innerHeight * (1 - progress));
+          const mask =
+            px > 1
+              ? `linear-gradient(to bottom, transparent 0px, #000 ${px}px)`
+              : '';
+          section.style.maskImage = mask;
+          section.style.webkitMaskImage = mask;
+        };
+
+        const feather = ScrollTrigger.create({
+          trigger: wrap,
+          start: 'top bottom',
+          end: 'top top',
+          onUpdate: self => paintFeather(self.progress),
+          onLeave: () => paintFeather(1),
+          onLeaveBack: () => paintFeather(0),
+          onRefresh: self => paintFeather(self.progress),
+        });
+
+        cleanups.push(() => {
+          feather.kill();
+          section.style.maskImage = '';
+          section.style.webkitMaskImage = '';
+        });
+
+        if (bg) {
+          gsap.fromTo(
+            bg,
+            { opacity: 0 },
+            {
+              opacity: 1,
+              ease: 'none',
+              scrollTrigger: {
+                trigger: wrap,
+                start: 'top 64%',
+                end: 'top 52%',
+                scrub: 0.4,
+              },
+            }
+          );
+        }
+
+        gsap.fromTo(
+          [stage, copy],
+          { autoAlpha: 0 },
+          {
+            autoAlpha: 1,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: wrap,
+              start: 'top 62%',
+              end: 'top 50%',
+              scrub: 0.4,
+            },
+          }
+        );
+      } else {
+        gsap.set([stage, copy], { autoAlpha: 1 });
+      }
+
+      let revealed = false;
+      const nearSplit = isDesktop ? 7 : 4;
+      const farSplit = isDesktop ? 4 : 2.5;
+
+      /**
+       * Bề ngang quyết định câu ngắt mấy dòng: hẹp để lọt ô kính thì thành 3–4
+       * dòng, rộng ra giữa thì gom lại còn 2. Tính bằng px vì cỡ chữ cũng là px
+       * cố định — lấy theo % stage sẽ trôi số dòng mỗi khi đổi khổ màn.
+       */
+      const copyWidth = () => {
+        const wide = section.clientWidth >= 1024;
+        if (revealed || !isDesktop) {
+          return Math.min(wide ? 600 : 420, section.clientWidth - 48);
+        }
+        return wide ? 340 : 280;
+      };
+
+      /** Chỗ đứng của khối chữ theo trạng thái hiện tại. */
+      const copyPlacement = () => {
+        if (revealed || !isDesktop || !stage) return { x: 0, y: 0 };
+        const stageW = stage.offsetWidth;
+        // Stage rộng hơn section thì bị xén đều hai bên; ở khổ càng thấp so với
+        // 1440/820 phần xén càng lớn và kéo ô kính ra ngoài mép trái. Đẩy chữ
+        // sang phải vừa đủ để nó không bị xén theo.
+        const clipped = (stageW - section.clientWidth) / 2;
+        const wanted = (WINDOW_POS.x / 100) * stageW;
+        // Cộng cả biên độ parallax: chữ còn bị scrub kéo thêm ±farSplit% nữa,
+        // không trừ hao thì đúng lúc trôi hết sang trái là chữ lẹm mất mép.
+        const drift = (farSplit / 100) * stageW;
+        const safe = clipped + copyWidth() / 2 + drift + 24;
+        return {
+          x: Math.max(wanted, safe) - stageW / 2,
+          y: ((WINDOW_POS.y - 50) / 100) * stage.offsetHeight,
+        };
+      };
+
+      /**
+       * Đặt chỗ tức thì, không tween: bề ngang đổi thì câu ngắt lại dòng, mà
+       * nội suy bề ngang qua từng frame là chữ nhảy dòng liên tục suốt đoạn
+       * chuyển — chuyển cảnh của hai lớp ảnh đã đủ để che cú đổi chỗ này.
+       */
+      const placeCopy = () => {
+        // xPercent/yPercent phải khai ở đây chứ không dựa vào `-translate-*` của
+        // class: GSAP đụng vào transform là xoá luôn property `translate` của
+        // Tailwind, và phần -50% theo trục y không phải lúc nào cũng được nó
+        // giữ lại — khối chữ khi đó tụt xuống đúng nửa chiều cao của mình.
+        gsap.set(copyShift, {
+          width: copyWidth(),
+          xPercent: -50,
+          yPercent: -50,
+          ...copyPlacement(),
+        });
+        copyShift.style.textAlign = revealed || !isDesktop ? 'center' : 'left';
+      };
+
+      /** Màu thì tween được mà không kéo theo reflow, nên vẫn cho nó chạy. */
+      const paintCopy = (dur = 0) => {
+        gsap.to(copyItems, {
+          color: revealed ? COPY_COLOR.photo : COPY_COLOR.sketch,
+          duration: dur,
+          ease: 'power2.inOut',
+          overwrite: 'auto',
+        });
+      };
+
+      placeCopy();
+      paintCopy();
+      // copyPlacement trả px nên phải đo lại khi khung đổi kích thước.
+      window.addEventListener('resize', placeCopy);
+      cleanups.push(() => window.removeEventListener('resize', placeCopy));
+
+      // Entrance chỉ lo phần "an vị" (scale nhả ra, chữ so le) và chạy đúng lúc
+      // cổng mở — phần hiện/ẩn là việc của cổng.
       const enter = gsap.timeline({
         defaults: { ease: 'power3.out', duration: reduce ? 0 : 1.1 },
-        scrollTrigger: { trigger: wrap, start: 'top 80%', once: true },
+        scrollTrigger: { trigger: wrap, start: 'top 50%', once: true },
       });
       enter
-        .fromTo(
-          [far, near],
-          { autoAlpha: 0, scale: reduce ? 1 : 1.06 },
-          { autoAlpha: 1, scale: 1 }
-        )
+        .fromTo([far, near], { scale: reduce ? 1 : 1.06 }, { scale: 1 })
         .fromTo(
           photo,
           { scale: reduce ? 1 : 1.04 },
           { scale: 1, duration: reduce ? 0 : 1.2 },
           0
+        )
+        .fromTo(
+          copyItems,
+          { autoAlpha: 0, y: reduce ? 0 : 14 },
+          {
+            autoAlpha: 1,
+            y: 0,
+            duration: reduce ? 0 : 0.9,
+            stagger: reduce ? 0 : 0.12,
+          },
+          reduce ? 0 : '-=0.6'
         );
 
-      let revealed = false;
       let covered = false;
       // Suppress section-click toggle after a horizontal drag (whole section
       // is the toggle target — drag would otherwise flip reveal on release).
       let suppressClick = false;
-      const nearSplit = isDesktop ? 7 : 4;
-      const farSplit = isDesktop ? 4 : 2.5;
 
       if (!reduce) {
         // The section holds still via CSS sticky, so no ScrollTrigger pin: the
@@ -108,7 +284,15 @@ export default function SceneReveal() {
             },
           })
           .fromTo(near, { xPercent: -nearSplit }, { xPercent: nearSplit }, 0)
-          .fromTo(far, { xPercent: farSplit }, { xPercent: -farSplit }, 0);
+          // Chữ trôi cùng cảnh phố chứ không đứng yên — nó nằm sau kính, mà
+          // khung cửa sổ thì trượt ngược lại, nên chữ đứng yên sẽ lòi dần ra
+          // ngoài ô.
+          .fromTo(
+            [far, copy],
+            { xPercent: farSplit },
+            { xPercent: -farSplit },
+            0
+          );
 
         // Hand-off to ProductReveal — mirrors the hero: a cream veil (same
         // colour as that section) washes this one out while it rides up, so the
@@ -155,18 +339,18 @@ export default function SceneReveal() {
       const applyPan = (x: number) => {
         if (revealed) {
           gsap.set(photo, { x: x * DEPTH.photo });
-          gsap.set([near, far], { x: 0 });
+          gsap.set([near, far, copy], { x: 0 });
           return;
         }
         gsap.set(near, { x: x * DEPTH.near });
-        gsap.set(far, { x: x * DEPTH.far });
+        gsap.set([far, copy], { x: x * DEPTH.far });
         gsap.set(photo, { x: 0 });
       };
 
       const resetPan = () => {
         gsap.killTweensOf(panState);
         panState.x = 0;
-        gsap.set([near, far, photo], { x: 0 });
+        gsap.set([near, far, photo, copy], { x: 0 });
       };
 
       const onToggle = () => {
@@ -190,6 +374,24 @@ export default function SceneReveal() {
           ease: 'power2.inOut',
           stagger: 0.06,
         });
+        // Chữ ở lại qua cả hai chế độ, chỉ đổi chỗ: nấp trong ô kính khi xem
+        // sketch, ra chính giữa khi xem ảnh thật.
+        // Đổi chỗ và đổi màu trong lúc chữ còn ẩn, rồi mới cho hiện dần tại
+        // chỗ mới. Trượt từ vị trí cũ sang thì bề ngang đổi giữa đường và câu
+        // nhảy dòng liên tục suốt đoạn bay.
+        placeCopy();
+        paintCopy();
+        gsap.fromTo(
+          copyItems,
+          { autoAlpha: 0 },
+          {
+            autoAlpha: 1,
+            duration,
+            ease: 'power2.out',
+            stagger: reduce ? 0 : 0.08,
+            overwrite: 'auto',
+          }
+        );
         section.setAttribute('aria-pressed', String(revealed));
       };
 
@@ -214,6 +416,9 @@ export default function SceneReveal() {
         const nearY = gsap.quickTo(near, 'y', follow);
         const farX = gsap.quickTo(far, 'x', follow);
         const farY = gsap.quickTo(far, 'y', follow);
+        // Chữ ăn theo cùng giá trị với lớp phố — cùng độ sâu thì cùng biên độ.
+        const copyX = gsap.quickTo(copy, 'x', follow);
+        const copyY = gsap.quickTo(copy, 'y', follow);
 
         // Bleed is % of stage; xPercent travel is % of layer width — reserve that in px.
         const maxNearX = () => {
@@ -241,14 +446,19 @@ export default function SceneReveal() {
           const nMaxY = maxNearY();
           const fMaxY = maxFarY();
 
+          const fx = gsap.utils.clamp(-fMaxX, fMaxX, nx * 28);
+          const fy = gsap.utils.clamp(-fMaxY, fMaxY, ny * 10);
+
           nearX(gsap.utils.clamp(-nMaxX, nMaxX, -nx * 52));
           nearY(gsap.utils.clamp(-nMaxY, nMaxY, -ny * 18));
-          farX(gsap.utils.clamp(-fMaxX, fMaxX, nx * 28));
-          farY(gsap.utils.clamp(-fMaxY, fMaxY, ny * 10));
+          farX(fx);
+          farY(fy);
+          copyX(fx);
+          copyY(fy);
         };
         const onLeave = () => {
           if (revealed) return;
-          gsap.to([near, far], {
+          gsap.to([near, far, copy], {
             x: 0,
             y: 0,
             duration: 1,
@@ -356,11 +566,18 @@ export default function SceneReveal() {
       tabIndex={0}
       aria-pressed='false'
       aria-label='Toggle interior view'
-      className='[container-type:size] sticky top-0 z-0 h-svh min-h-120 w-full cursor-pointer overflow-hidden bg-white md:min-h-150'
+      className='[container-type:size] sticky top-0 z-0 h-svh min-h-120 w-full cursor-pointer overflow-hidden md:min-h-150'
     >
+      {/* Nền tách lớp để mờ dần lên trên FinalResidences đang ghim. */}
+      <div
+        data-layer='bg'
+        aria-hidden
+        className='absolute inset-0 -z-10 bg-white'
+      />
+
       <div
         data-stage
-        className='pointer-events-none absolute top-1/2 left-1/2 aspect-[1440/820] w-[max(100cqw,calc(100cqh*1440/820))] -translate-x-1/2 -translate-y-1/2 overflow-hidden'
+        className='pointer-events-none absolute top-1/2 left-1/2 aspect-[1440/820] w-[min(160cqw,max(100cqw,calc(100cqh*1440/820)))] -translate-x-1/2 -translate-y-1/2 overflow-hidden mask-[linear-gradient(to_bottom,transparent,#000_8%,#000_92%,transparent)] md:w-[max(100cqw,calc(100cqh*1440/820))] md:mask-none'
       >
         <div
           data-layer='photo'
@@ -388,6 +605,36 @@ export default function SceneReveal() {
             sizes={LAYER_SIZES}
             className='object-center'
           />
+        </div>
+
+        {/* Nằm giữa `far` và `near` — đúng thứ tự DOM này mới ra hiệu ứng chữ
+            hiện qua lỗ kính, phần tràn ra ngoài bị khung và tường của lớp bếp
+            che. Đưa lên trên `near` là mất hẳn chiều sâu.
+            Dưới `md` thì ngược lại: ô kính nằm ở 17% bề ngang stage, mà stage
+            rộng hơn màn nên nó rơi ra ngoài mép trái — copyPlacement() vì vậy
+            trả chữ về giữa, tức là đúng chỗ tủ bếp che kín. Cho chữ lên trên
+            `near` để nó còn đọc được; hiệu ứng lỗ kính chỉ chạy từ `md`. */}
+        <div
+          data-layer='copy'
+          className='pointer-events-none absolute inset-0 z-[1] will-change-transform md:z-auto'
+        >
+          <div
+            data-copy-shift
+            className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 will-change-transform'
+          >
+            <p
+              data-copy-item
+              className='font-ui invisible text-xs leading-none font-medium tracking-[0.2em] text-[#6E7A6F] uppercase'
+            >
+              {COPY.eyebrow}
+            </p>
+            <h2
+              data-copy-item
+              className='invisible mt-4 text-[30px] leading-tight font-medium text-[#6E7A6F] sm:text-[38px] lg:text-[48px]'
+            >
+              {COPY.title}
+            </h2>
+          </div>
         </div>
 
         <div

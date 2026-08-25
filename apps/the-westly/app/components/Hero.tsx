@@ -329,18 +329,28 @@ export default function Hero() {
   return (
     <section
       ref={sectionRef}
-      className='[container-type:size] sticky top-0 z-0 h-svh min-h-120 w-full overflow-hidden bg-white md:min-h-150'
+      // min-h không được vượt quá màn hình: điện thoại xoay ngang chỉ cao 390px,
+      // min-h-150 (600px) đẩy nút EXPLORE xuống dưới mép dưới mà section thì
+      // sticky nên không bao giờ cuộn tới được.
+      className='[container-type:size] sticky top-0 z-0 h-svh min-h-[min(30rem,100svh)] w-full overflow-hidden bg-white md:min-h-[min(37.5rem,100svh)]'
     >
       {/* Stage: fixed 3:2 design frame (1440×960) that covers the section —
           layers keep their design-frame percentages so they scale uniformly
-          and stay aligned; the section crops the edges on other aspects. */}
-      <div className='pointer-events-none absolute top-1/2 left-1/2 aspect-[3/2] w-[max(100cqw,150cqh)] -translate-x-1/2 -translate-y-1/2'>
+          and stay aligned; the section crops the edges on other aspects.
+          Phủ kín một khung 3:2 trên màn dọc đòi hỏi phóng 3.25× (stage 1266px
+          trên máy 390px): còn thấy đúng cái cây, mất sạch sân thượng. Dưới `md`
+          chặn ở 220cqw và chấp nhận chừa dải trắng trên/dưới — nền section vốn
+          trắng và mảng trời của bản vẽ cũng trắng nên mép trên không thành
+          đường cắt; chỉ mép dưới (sàn gạch) cần mask cho tan đi — mask nằm ở
+          từng lớp ảnh chứ không ở stage, vì khối chữ nhô lên trên mép stage và
+          mask của stage sẽ xoá luôn dòng đầu. */}
+      <div className='pointer-events-none absolute top-1/2 left-1/2 aspect-[3/2] w-[min(220cqw,max(100cqw,150cqh))] -translate-x-1/2 -translate-y-1/2 md:w-[max(100cqw,150cqh)]'>
         {/* Pan layer — mobile drag offsets this; outer stays CSS-centered. */}
         <div data-pan className='absolute inset-0 will-change-transform'>
           {/* Far clouds — full frame */}
           <div
             data-layer='clouds-far'
-            className='invisible absolute inset-[-2%] opacity-0 will-change-transform'
+            className='invisible absolute inset-[-2%] mask-[linear-gradient(to_bottom,#000_84%,transparent)] opacity-0 will-change-transform md:mask-none'
           >
             <div data-drift className='absolute inset-0'>
               <Image
@@ -369,21 +379,27 @@ export default function Hero() {
             </div>
           </div>
 
+          {/* Copy stays inside the stage — nó phải nằm cùng stacking context
+              với lớp cảnh mới có hiệu ứng chữ nấp sau sân thượng ở desktop.
+              Nhưng mọi số đo thì tính theo SECTION chứ không theo stage: bề
+              ngang bằng cqw (stage rộng hơn màn, `w-full` sẽ đẩy chữ ra ngoài
+              hai mép), và dưới `md` cả `top` cũng bằng cqh — stage co giãn theo
+              tỉ lệ màn nên lấy % của stage thì chữ trôi lung tung mỗi khổ. */}
           <div
             data-ui
-            className='invisible absolute top-[20%] left-1/2 z-[1] w-full max-w-5xl -translate-x-1/2 px-5 text-center opacity-0'
+            className='invisible absolute top-[calc(50%+12cqh-50cqh)] left-1/2 z-[3] w-[min(100cqw,64rem)] -translate-x-1/2 px-6 text-center opacity-0 [@media(max-height:520px)]:top-[calc(50%+28cqh-50cqh)] md:[@media(min-height:521px)]:top-[20%] md:[@media(min-height:521px)]:z-[1]'
           >
-            <h1 className='text-[56px] leading-[1.15] font-medium text-[#6E7A6F]'>
+            <h1 className='text-[28px] leading-[1.15] font-medium text-balance text-[#6E7A6F] sm:text-[36px] md:text-[46px] lg:text-[56px] [@media(max-height:520px)]:text-[30px]'>
               The Master Penthouse.
             </h1>
-            <p className='text-[56px] leading-[1.15] font-medium text-[#6E7A6F]'>
+            <p className='text-[28px] leading-[1.15] font-medium text-balance text-[#6E7A6F] sm:text-[36px] md:text-[46px] lg:text-[56px] [@media(max-height:520px)]:text-[30px]'>
               Your Home above the Everything else.
             </p>
           </div>
 
           <div
             data-layer='scene'
-            className='invisible absolute inset-[-2%] z-[2] opacity-0 will-change-transform'
+            className='invisible absolute inset-[-2%] z-[2] mask-[linear-gradient(to_bottom,#000_84%,transparent)] opacity-0 will-change-transform md:mask-none'
           >
             {/* WebP (~5× smaller than the 2.4MB PNG) — raw PNG often fails on
                 real devices over ngrok / slow links. unoptimized skips the
@@ -405,7 +421,7 @@ export default function Hero() {
         data-ui
         href='#explore'
         onClick={handleExploreClick}
-        className='invisible absolute bottom-10 left-1/2 z-10 -translate-x-1/2 border border-neutral-200 bg-white px-10 py-2.5 text-[11px] font-medium tracking-[0.35em] text-neutral-700 opacity-0 shadow-sm transition-colors hover:border-[#6E7A6F] hover:bg-[#6E7A6F] hover:text-white'
+        className='invisible absolute bottom-8 left-1/2 z-10 -translate-x-1/2 border border-neutral-200 bg-white px-8 py-2.5 text-[10px] font-medium tracking-[0.28em] text-neutral-700 opacity-0 shadow-sm transition-colors hover:border-[#6E7A6F] hover:bg-[#6E7A6F] hover:text-white sm:bottom-10 sm:px-10 sm:text-[11px] sm:tracking-[0.35em]'
       >
         EXPLORE
       </a>
