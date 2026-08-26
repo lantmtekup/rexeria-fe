@@ -41,9 +41,15 @@ const LIMIT = 200;
  *      kỳ tầng nào (handler `priv`, usecase, filter, repository).
  *   2. `GET /v1/templates`      — `brand_id IS NULL OR brand_id = ?`, nên 75
  *      trải nghiệm gốc hệ thống hiện với mọi tài khoản.
- *   3. `GET /v1/blocks`         — `brand_id = ? OR scope = 'system'`; sau khi
- *      kho RexerStudio chuyển về `scope='system'`, cả 109 block hiện với mọi
- *      tài khoản.
+ *   3. `GET /v1/blocks?scope=system` — CHỈ kho nền tảng (109 block scope
+ *      `'system'`), không kèm `brand_id = ?`. Exchange là quầy của Rexer, không
+ *      phải thư viện riêng của brand: mỗi brand tự "mua/copy" một block hệ
+ *      thống về thư viện riêng (`Block.clone` → brand-private), và bản clone
+ *      đó CHỈ brand đó thấy — không brand nào khác thấy, và cũng không được
+ *      quay lại hiện trong Exchange. Trước đây gọi thiếu `scope`, repo tự
+ *      nới thành `brand_id = ? OR scope = 'system'` (`block.go` filter
+ *      `EnforceBrandOrSystem`) nên bản clone của chính người bấm "Thêm" lọt
+ *      ngược vào catalog của họ ở lần tải sau — nhìn như bị nhân đôi.
  *
  * `GET /pages` CỐ Ý không nằm trong danh sách: nó là endpoint duy nhất trong
  * ba nguồn cũ không thể trả cùng một kết quả cho hai loại tài khoản.
@@ -73,6 +79,7 @@ export const fetchExchangeCatalog = async (
       ...(q ? { q } : {}),
     }),
     rexerApi.blocks.list({
+      scope: 'system',
       status: 'published',
       page: 1,
       limit: LIMIT,
