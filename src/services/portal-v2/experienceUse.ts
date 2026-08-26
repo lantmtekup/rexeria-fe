@@ -11,15 +11,18 @@ import { rexerV2Api } from '@/services/rexer-v2/endpoints';
  * dịch. Đây là đường duy nhất làm một mục hiện ra ở tab "Bản copy": `ListCopies`
  * lọc `pages.campaign_item_id IS NOT NULL`, và chỉ fork mới ghi cột đó.
  *
- * Vì sao cần chọn chiến dịch + hạng mục chứ không bấm một phát là xong: BE bắt
- * buộc cả hai (`UseExperienceRequest`, `validate:"required,uuid"`). Prototype
- * cũng vậy — nút `xuse` của nó không fork, nó chuyển sang màn Campaigns kèm câu
- * "Open a campaign, pick a subject, then add this experience".
+ * Chọn chiến dịch + hạng mục là TUỲ CHỌN (`UseExperienceRequest` để cả hai
+ * `omitempty`, nhưng gửi một trong hai là 400 — phải đủ cặp hoặc không trường
+ * nào). Không gửi ⇒ lấy một bản của mình, `campaign_item_id` NULL.
  *
- * Trùng chức năng với `POST /campaigns/{cid}/items/{iid}/experiences`
- * (`campaignExperiences.ts`): `AttachToItem` gọi thẳng `u.Use(...)` bên trong.
- * Hai cửa vào, một thao tác — cửa này dành cho người đang đứng ở thư viện, cửa
- * kia cho người đang đứng trong chiến dịch.
+ * HAI CỬA, KHÔNG CÒN GIỐNG NHAU (2026-08-24). `AttachToItem`
+ * (`POST /campaigns/{cid}/items/{iid}/experiences`, xem `campaignExperiences.ts`)
+ * trước đây gọi thẳng `u.Use(...)` nên hai đường tương đương. Sau khi BE nới
+ * guard fork, đo trên môi trường thật: cửa `campaigns/...` nhận nguồn
+ * `unassigned`, còn `experiences/{id}/use` vẫn trả `cannot fork a copy`.
+ *
+ * Vì thế `forkExperience` bên dưới ĐỊNH TUYẾN theo đích: có hạng mục thì đi cửa
+ * campaigns, không hạng mục mới đi `use`. Xem chú thích tại chỗ.
  */
 
 /** Số sản phẩm nạp để dịch `product_id` của hạng mục thành tên đọc được. */
@@ -161,20 +164,47 @@ export const forkExperience = async (
   experienceId: string,
   target: ForkTarget = null,
   brandId: string | null = null
-): Promise<ExperienceView> =>
-  v2ToExperienceView(
+): Promise<ExperienceView> => {
+  /*
+   * CÓ hạng mục ⇒ đi `POST /campaigns/{cid}/items/{iid}/experiences`, KHÔNG đi
+   * `POST /experiences/{id}/use`.
+   *
+   * Hai endpoint này từng là "hai cửa vào, một thao tác" (`AttachToItem` gọi
+   * thẳng `u.Use(...)`), nhưng sau khi BE nới guard (2026-08-24) chúng KHÔNG
+   * còn hành xử giống nhau: đo trên môi trường thật, thêm cùng một trải nghiệm
+   * `unassigned` vào cùng một hạng mục thì cửa `campaigns/...` nhận, còn cửa
+   * `experiences/{id}/use` vẫn trả `cannot fork a copy; only a template can be
+   * used`. Guard mới chỉ áp ở một nhánh.
+   *
+   * Cả hai cửa cùng sinh ra một bản copy trong đúng một hạng mục, nên chọn cửa
+   * đang chạy được là đúng — không phải lách. Khi BE nới nốt nhánh kia thì đổi
+   * lại cũng được, nhưng không bắt buộc: đường này ngắn hơn (một lời gọi, không
+   * cần `brand_id`).
+   *
+   * Xem `docs/be-gap-fork-unassigned-experience-2026-08-24.md`.
+   */
+  if (target) {
+    return v2ToExperienceView(
+      await rexerV2Api.experiences.attachToItem(
+        target.campaignId,
+        target.itemId,
+        experienceId
+      )
+    );
+  }
+
+  /*
+   * Không hạng mục ⇒ lấy một bản của mình. Chỉ `use` làm được việc này; không
+   * có endpoint nào khác sinh ra một bản `campaign_item_id` NULL.
+   *
+   * `brand_id` bắt buộc với platform admin: họ không thuộc brand nào nên BE
+   * không suy ra được chủ của bản copy và trả 400. Người dùng thuộc brand gửi
+   * kèm cũng vô hại — BE bỏ qua khi trùng brand của phiên.
+   */
+  return v2ToExperienceView(
     await rexerV2Api.experiences.use(
       experienceId,
-      // Gửi một trong hai là 400 ở BE — nên hoặc cả cặp, hoặc không trường nào.
-      //
-      // Đường không chiến dịch phải kèm `brand_id`, nếu không platform admin
-      // luôn ăn 400: họ không thuộc brand nào nên BE không suy ra được chủ của
-      // bản copy. Người dùng thuộc brand gửi kèm cũng vô hại — BE bỏ qua khi
-      // trùng brand của phiên.
-      target
-        ? { campaign_id: target.campaignId, item_id: target.itemId }
-        : brandId
-          ? { brand_id: brandId }
-          : {}
+      brandId ? { brand_id: brandId } : {}
     )
   );
+};

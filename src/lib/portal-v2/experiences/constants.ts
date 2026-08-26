@@ -10,6 +10,43 @@ import type {
 } from '@/lib/portal-v2/experiences/types';
 
 /**
+ * Lỗi `POST /v1/experiences/{id}/use` → khoá i18n, cùng khuôn với
+ * `DEPLOY_REASON_KEY` (`lib/portal-v2/deploy/constants.ts`).
+ *
+ * BE trả `message` bằng tiếng Anh, viết cho người đọc log chứ không cho người
+ * dùng: `cannot fork a copy; only a template can be used` dùng từ "fork",
+ * "copy", "template" — ba từ không xuất hiện ở đâu trên giao diện. Trước đây
+ * câu đó hiện nguyên văn giữa một màn tiếng Việt, và không nói bước tiếp theo
+ * là gì.
+ *
+ * Khớp theo tiền tố, không khớp tuyệt đối: BE có thể nối thêm ngữ cảnh vào
+ * cuối. Không khớp thì rơi về chính `message` của BE — thà hiện câu thô còn
+ * hơn nuốt mất một lỗi chưa biết.
+ *
+ * THỨ TỰ có ý nghĩa: `forkReasonKey` trả về khoá của entry KHỚP ĐẦU TIÊN.
+ * `"cannot fork a copy with no origin template"` (trang external-URL, không
+ * có gì để chain origin) chứa nguyên cụm `"cannot fork a copy"` bên trong nó,
+ * nên nếu entry ngắn đứng trước, mọi lỗi "không có origin" sẽ bị đọc nhầm
+ * thành "đã thuộc một hạng mục chiến dịch" — sai hẳn nguyên nhân. Entry dài
+ * + cụ thể hơn phải luôn đứng TRƯỚC entry ngắn mà nó chứa.
+ */
+export const USE_EXPERIENCE_REASON_KEY: Record<string, string> = {
+  'cannot fork a copy with no origin template': 'useErrNoOrigin',
+  'cannot fork a copy': 'useErrAlreadyInCampaign',
+  'taking a copy of an experience requires a brand scope': 'useErrNeedsBrand',
+  'campaign_id and item_id must be provided together': 'useErrNeedsBothTargets',
+};
+
+/** Tra khoá i18n cho một `message` của BE; `null` ⇒ chưa có bản dịch. */
+export const forkReasonKey = (message: string): string | null => {
+  const low = message.toLowerCase();
+  for (const [prefix, key] of Object.entries(USE_EXPERIENCE_REASON_KEY)) {
+    if (low.includes(prefix)) return key;
+  }
+  return null;
+};
+
+/**
  * Prototype `XSTATES` + All (~L16071) — the page's primary navigation.
  * Ownership (source experience vs copy) is orthogonal to Category / Type / Objective.
  */

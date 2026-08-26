@@ -26,26 +26,47 @@ type LibraryImage = {
  * binding trỏ cùng một asset, và lưới ảnh hiện đúp.
  */
 export const MediaPickerModal = ({
-  attachedIds,
+  attachedIds = [],
   onClose,
   onConfirm,
+  onPickUrl,
+  confirmLabel,
   busy = false,
 }: {
-  attachedIds: string[];
+  /** Ảnh đã gắn ⇒ ẩn khỏi danh sách. Không áp dụng ở chế độ chọn một ảnh. */
+  attachedIds?: string[];
   onClose: () => void;
-  onConfirm: (mediaIds: string[]) => void;
+  /** Chế độ gắn nhiều ảnh vào sản phẩm. */
+  onConfirm?: (mediaIds: string[]) => void;
+  /**
+   * Chế độ CHỌN MỘT ẢNH, trả về URL — dùng cho ảnh bìa (trải nghiệm, sản
+   * phẩm…) nơi thứ cần là một đường dẫn chứ không phải một liên kết trong kho.
+   *
+   * Có prop này ⇒ chỉ chọn được một ảnh, và không lọc `attachedIds`: một ảnh
+   * đang gắn ở đâu đó vẫn hoàn toàn dùng làm bìa được.
+   */
+  onPickUrl?: (url: string) => void;
+  /** Chữ trên nút xác nhận; thiếu thì dùng chữ mặc định của luồng gắn ảnh. */
+  confirmLabel?: string;
   busy?: boolean;
 }) => {
   const t = useTranslations('portalV2.products');
   const [items, setItems] = useState<LibraryImage[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
+  const single = Boolean(onPickUrl);
 
   useEffect(() => {
     let cancelled = false;
     void listLibraryImages()
       .then(list => {
         if (cancelled) return;
+        // Chọn ảnh bìa ⇒ KHÔNG lọc: một ảnh đang gắn ở sản phẩm khác vẫn dùng
+        // làm bìa được, và lọc đi thì người dùng tưởng thư viện thiếu ảnh.
+        if (single) {
+          setItems(list.filter(x => x.kind === 'image' && x.url));
+          return;
+        }
         const taken = new Set(attachedIds);
         setItems(list.filter(x => !taken.has(x.id)));
       })
@@ -56,12 +77,28 @@ export const MediaPickerModal = ({
     return () => {
       cancelled = true;
     };
-  }, [attachedIds]);
+  }, [attachedIds, single]);
 
   const toggle = (id: string) =>
     setPicked(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+      single
+        ? prev.includes(id)
+          ? []
+          : [id]
+        : prev.includes(id)
+          ? prev.filter(x => x !== id)
+          : [...prev, id]
     );
+
+  const handleConfirm = () => {
+    if (!picked.length) return;
+    if (onPickUrl) {
+      const url = items?.find(x => x.id === picked[0])?.url;
+      if (url) onPickUrl(url);
+      return;
+    }
+    onConfirm?.(picked);
+  };
 
   return (
     <Modal
@@ -79,12 +116,12 @@ export const MediaPickerModal = ({
           <Button
             size='sm'
             disabled={!picked.length || busy}
-            onClick={() => onConfirm(picked)}
+            onClick={handleConfirm}
           >
             {busy ? (
               <Loader2 className='size-3.5 animate-spin' aria-hidden />
             ) : null}
-            {t('attachSelected', { count: picked.length })}
+            {confirmLabel ?? t('attachSelected', { count: picked.length })}
           </Button>
         </>
       }

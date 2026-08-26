@@ -93,6 +93,17 @@ export const ExperiencePickerModal = ({
    * chọn cả bản copy đã gắn sẵn cho một sản phẩm thì `master()` bên đó không
    * nhận diện được id đó là trải nghiệm gốc, forking lặng lẽ không chạy — node
    * coi như chưa có trải nghiệm, dù người dùng đã chọn một cái.
+   *
+   * Bản CHƯA gắn hạng mục cũng bị loại, dù bộ lọc bên hạng mục chiến dịch có
+   * nhận: `bindRouteToItems` gắn một nguồn xuống MỌI hạng mục, mà BE hiện GÁN
+   * bản nguồn thay vì nhân bản (đo thật 2026-08-24: tổng số bản ghi không
+   * tăng) — hạng mục đầu ăn mất nguồn, các hạng mục sau nhận 400 và bị `catch`
+   * nuốt, chiến dịch nhiều sản phẩm lặng lẽ chỉ có một sản phẩm được gắn.
+   *
+   * Mở lại khi BE nhân bản đúng — xem
+   * `docs/be-gap-fork-unassigned-experience-2026-08-24.md`, mục "FORK — KHÔNG
+   * PHẢI ASSIGN". Khi mở, nới CẢ `journeyLink.master()` cùng lúc: lệch một bên
+   * thì fork lặng lẽ không chạy và node hiện ra như chưa gắn gì.
    */
   const templates = useMemo(
     () => items.filter(item => item.state === 'template'),

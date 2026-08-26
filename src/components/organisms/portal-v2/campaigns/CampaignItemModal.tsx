@@ -195,13 +195,26 @@ export const CampaignItemModal = ({
     [draft, experiences]
   );
 
+  /**
+   * Thứ dùng được làm NGUỒN fork cho hạng mục này.
+   *
+   * Không chỉ bản gốc: một bản CHƯA GẮN HẠNG MỤC NÀO (ngăn "Exchange" — chỗ
+   * hàng lấy từ chợ về nằm) cũng là gốc phẳng hai tầng, nên fork từ nó không
+   * sinh chuỗi dây chuyền. Trước đây bộ lọc chỉ nhận `template`, nên một brand
+   * chưa tự dựng bản gốc nào mở ra ô chọn RỖNG dù thư viện đầy hàng dùng được.
+   *
+   * Trục quyết định là `itemId`, không phải `campaign`: bản gốc cũng có
+   * `campaign: null`, nên hỏi `campaign` sẽ không tách được hai nhóm.
+   */
   const ownTemplates = useMemo(() => {
     const carried = new Set(
       draft.expIds
         .map(id => experiences.find(e => e.id === id)?.origin)
         .filter((origin): origin is string => Boolean(origin))
     );
-    return experiences.filter(e => e.template && !carried.has(e.id));
+    return experiences.filter(
+      e => (e.template || e.itemId === null) && !carried.has(e.id)
+    );
   }, [experiences, draft.expIds]);
 
   const candidates = useMemo(() => {
@@ -476,7 +489,12 @@ export const CampaignItemModal = ({
         <div className='mb-3 flex flex-col gap-2'>
           {attached.map(({ id, view }) => {
             const fits = view ? speaksForSubject(draft, view) : true;
-            const thin = view ? view.coverage < SHIP_TRACK_FLOOR : false;
+            // Chưa đo (`null`) KHÔNG phải mỏng — cổng ship cũng không chặn nó,
+            // nên dán nhãn cảnh báo ở đây là nói ngược với chính cái cổng.
+            const thin =
+              view && view.coverage !== null
+                ? view.coverage < SHIP_TRACK_FLOOR
+                : false;
             return (
               <div
                 key={id}
@@ -487,12 +505,14 @@ export const CampaignItemModal = ({
                     {view?.name ?? t('experienceMissing')}
                   </span>
                   <span className='block truncate text-[11px] text-[var(--pv2-faint)]'>
-                    {view
-                      ? t('expMeta', {
-                          slug: `/p/${view.slug}`,
-                          coverage: Math.round(view.coverage * 100),
-                        })
-                      : id}
+                    {!view
+                      ? id
+                      : view.coverage === null
+                        ? t('expMetaUnmeasured', { slug: `/p/${view.slug}` })
+                        : t('expMeta', {
+                            slug: `/p/${view.slug}`,
+                            coverage: Math.round(view.coverage * 100),
+                          })}
                   </span>
                   {!fits || thin ? (
                     <span className='mt-1 flex flex-wrap gap-1.5'>
@@ -563,9 +583,11 @@ export const CampaignItemModal = ({
                     {experience.summary}
                   </span>
                   <span className='mt-1 block text-[10.5px] text-[var(--pv2-faint)]'>
-                    {t('expCoverage', {
-                      coverage: Math.round(experience.coverage * 100),
-                    })}
+                    {experience.coverage === null
+                      ? t('expCoverageUnmeasured')
+                      : t('expCoverage', {
+                          coverage: Math.round(experience.coverage * 100),
+                        })}
                   </span>
                 </button>
               ))}

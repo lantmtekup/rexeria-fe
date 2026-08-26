@@ -86,8 +86,56 @@ const KEY_TO_GROUP: Record<string, DiffGroup> = {
 
 const GROUP_ORDER: DiffGroup[] = ['text', 'image', 'list', 'cta'];
 
-function groupOf(key: string): DiffGroup {
-  return KEY_TO_GROUP[key] ?? 'text';
+const IMAGE_EXT = /\.(png|jpe?g|webp|avif|gif|svg)(?:[?#]|$)/i;
+
+/**
+ * Chuỗi trông như một tấm ảnh — dùng để suy nhóm khi tên trường lạ, và để
+ * `ReviewChangesDialog` quyết định vẽ ảnh nhỏ trong danh sách.
+ *
+ * Export để hai nơi dùng CHUNG một luật: bản chép tay ở khung hiển thị từng
+ * lệch với bản này, và lệch ở đây nghĩa là cùng một URL vừa được xếp vào nhóm
+ * ảnh vừa không được vẽ ra ảnh.
+ */
+export function looksLikeImage(value: unknown): value is string {
+  if (typeof value !== 'string' || !value) return false;
+  if (value.startsWith('data:image/')) return true;
+  return IMAGE_EXT.test(value);
+}
+
+/**
+ * Nhóm của một trường — bảng tên trường TRƯỚC, rồi mới suy từ giá trị.
+ *
+ * Bảng `KEY_TO_GROUP` chỉ liệt kê ~20 tên quen thuộc, mà block trong repo có
+ * hàng trăm tên trường riêng (`coinUrl`, `decorUrl`, `slides`, `frames`…).
+ * Trước đây mọi tên lạ rơi hết về `text`, nên:
+ *
+ *   - URL ảnh hiện ra dưới dạng chuỗi dài gạch ngang, không có hình
+ *   - mảng object bị `JSON.stringify` thành một khối chữ không ai đọc nổi
+ *
+ * Suy theo giá trị sửa cả hai mà không phải liệt kê tên trường của từng block.
+ * Bảng vẫn thắng khi có, vì nó ghi Ý ĐỊNH chứ không chỉ hình dạng — ví dụ
+ * `imageTransform` là object nhưng thuộc nhóm ảnh, `ctaLink` là chuỗi nhưng
+ * thuộc nhóm nút bấm.
+ */
+export function groupOf(
+  key: string,
+  oldValue?: unknown,
+  newValue?: unknown
+): DiffGroup {
+  const explicit = KEY_TO_GROUP[key];
+  if (explicit) return explicit;
+
+  // Mảng ⇒ danh sách, bất kể tên trường. Xét cả hai vế: thêm mới thì vế cũ
+  // undefined, xoá hết thì vế mới undefined.
+  if (Array.isArray(oldValue) || Array.isArray(newValue)) return 'list';
+
+  if (looksLikeImage(oldValue) || looksLikeImage(newValue)) return 'image';
+
+  // Tên trường kết thúc bằng link/href/url mà giá trị không phải ảnh ⇒ đường
+  // dẫn bấm được, xếp cùng nhóm với nút bấm.
+  if (/(?:link|href|url)$/i.test(key)) return 'cta';
+
+  return 'text';
 }
 
 // ─── Equality check ───────────────────────────────────────────────────────
@@ -161,7 +209,7 @@ export function diffCanvas(
       const fieldsByGroup = new Map<DiffGroup, FieldDiff[]>();
       for (const [key, v] of Object.entries(c)) {
         if (v === undefined || v === null || v === '') continue;
-        const g = groupOf(key);
+        const g = groupOf(key, undefined, v);
         if (!fieldsByGroup.has(g)) fieldsByGroup.set(g, []);
         fieldsByGroup
           .get(g)!
@@ -212,7 +260,7 @@ export function diffCanvas(
         : newEmpty
           ? 'removed'
           : 'changed';
-      const g = groupOf(key);
+      const g = groupOf(key, oldValue, newValue);
       if (!fieldsByGroup.has(g)) fieldsByGroup.set(g, []);
       fieldsByGroup.get(g)!.push({ key, oldValue, newValue, status });
       totalChanges++;

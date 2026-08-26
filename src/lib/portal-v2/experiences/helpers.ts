@@ -96,9 +96,26 @@ export const canvasEditorHref = (experience: ExperienceView): string => {
   return experience.state === 'block' ? `${base}?kind=block` : base;
 };
 
+/**
+ * Ngăn "Exchange" — hàng lấy từ chợ về, giữ nguyên làm bản gốc để nhiều sản
+ * phẩm cùng dùng.
+ *
+ * Đây là ngăn CHỈ ĐỌC theo thiết kế, không phải vì thiếu tính năng: sửa một
+ * bản gốc là sửa cái khuôn mà mọi bản fork sau này kế thừa, và nếu lời văn ấy
+ * đã bị viết cho một sản phẩm cụ thể thì mọi chiến dịch fork sau đều lôi theo.
+ * Muốn sửa thì fork vào hạng mục rồi sửa bản fork — bản fork thuộc đúng một
+ * sản phẩm nên sửa ở đó là an toàn.
+ *
+ * Đóng luôn hai đường đang lỗi trên loại bản ghi này: đổi tên gọi nhầm API của
+ * trang (404 "Page not found"), và mở canvas thì đọc nội dung sai chỗ (khung
+ * trắng). Không ai chạm vào hai đường đó nữa.
+ */
+export const isReadOnlyShelf = (experience: ExperienceView): boolean =>
+  experience.state === 'unassigned';
+
 /** An external landing has no canvas of ours to open. */
 export const canEditCanvas = (experience: ExperienceView): boolean =>
-  !experience.externalUrl;
+  !experience.externalUrl && !isReadOnlyShelf(experience);
 
 /**
  * Xem trước được không.

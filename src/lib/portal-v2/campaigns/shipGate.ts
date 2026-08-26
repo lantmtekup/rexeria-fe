@@ -59,9 +59,23 @@ export const itemShipGate = (
       id: 'words',
       ok: built && attached.every(e => speaksForSubject(item, e)),
     },
+    /*
+     * `coverage: null` = CHƯA ĐO ĐƯỢC, và một câu hỏi chưa trả lời không phải
+     * là một câu trả lời "không". Danh sách `/experiences` không trả
+     * `signal_coverage` (số thật chỉ có ở `/experiences/{id}/coverage`, nạp khi
+     * mở chi tiết), nên trước đây mọi bản đính kèm đọc ra `0` và cổng này chặn
+     * cả trang đã gắn đủ điểm đo — đo thật 100% mà báo "chưa đo đủ".
+     *
+     * Chưa đo thì KHÔNG chặn. Chỉ chặn khi đã đo và đo ra dưới sàn — đó mới là
+     * điều cổng này sinh ra để nói: "shipping it teaches nothing".
+     */
     {
       id: 'tracked',
-      ok: built && attached.every(e => e.coverage >= SHIP_TRACK_FLOOR),
+      ok:
+        built &&
+        attached.every(
+          e => e.coverage === null || e.coverage >= SHIP_TRACK_FLOOR
+        ),
     },
     { id: 'dated', ok: item.due !== null || item.status === 'live' },
   ];

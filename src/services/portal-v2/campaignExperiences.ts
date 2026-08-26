@@ -21,12 +21,16 @@ const toCampaignExperience = (x: RxExperience): CampaignExperience => ({
   name: x.name,
   slug: x.slug ?? '',
   summary: x.summary ?? '',
-  // BE BỎ QUA `signal_coverage` với loại không đo được ⇒ 0 nghĩa là chưa đo.
-  coverage: typeof x.signal_coverage === 'number' ? x.signal_coverage : 0,
+  // BE BỎ QUA `signal_coverage` với loại không đo được, và danh sách
+  // `/experiences` cũng không trả nó — số thật chỉ có ở `/experiences/{id}/
+  // coverage`. Giữ nguyên `null`, KHÔNG quy về 0: hai chuyện đó khác nhau, và
+  // gộp chúng làm cổng ship chặn oan (đo thật 100% mà báo "chưa đo đủ").
+  coverage: typeof x.signal_coverage === 'number' ? x.signal_coverage : null,
   productId: x.subject?.product_id ?? null,
   template: x.is_template,
   origin: x.origin_id,
   campaign: x.campaign_id,
+  itemId: x.item_id,
 });
 
 export const attachExperienceToItem = async (
