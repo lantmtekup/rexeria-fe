@@ -32,7 +32,6 @@ import {
   canPreview,
   formatCount,
   formatLift,
-  isReadOnlyShelf,
 } from '@/lib/portal-v2/experiences/helpers';
 import { EVIDENCE_TIER_STYLE } from '@/lib/portal-v2/experiences/roleStyles';
 import type {
@@ -254,8 +253,6 @@ export const ExperienceDetailModal = ({
   const tierStyle = EVIDENCE_TIER_STYLE[evidence.tier];
   const previewable = canPreview(experience);
   const editable = canEditCanvas(experience);
-  /* Ngăn "Exchange" là chỉ đọc theo thiết kế — nói lý do, đừng để nút xám câm. */
-  const readOnlyShelf = isReadOnlyShelf(experience);
 
   const subtitleParts = [
     t(CATEGORY_LABEL_KEY[experience.category]),
@@ -313,13 +310,7 @@ export const ExperienceDetailModal = ({
             variant='ghost'
             size='sm'
             disabled={!editable}
-            title={
-              editable
-                ? undefined
-                : readOnlyShelf
-                  ? t('editShelfHint')
-                  : t('editExternalHint')
-            }
+            title={editable ? undefined : t('editExternalHint')}
             onClick={() => onEdit(experience)}
           >
             <PenLine className='size-3.5' strokeWidth={2.2} aria-hidden />
@@ -420,21 +411,17 @@ export const ExperienceDetailModal = ({
                 {experience.name}
               </p>
               <p className='text-[11.5px] text-[var(--pv2-faint)]'>
-                {readOnlyShelf ? t('shelfReadOnly') : t('editDetailsHint')}
+                {t('editDetailsHint')}
               </p>
             </div>
-            {/* Ngăn "Exchange" giữ nguyên bản gốc — không có nút sửa ở đây, và
-                câu bên trên đã nói chỗ sửa đúng là bản fork trong hạng mục. */}
-            {readOnlyShelf ? null : (
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={() => setEditingDetails(true)}
-              >
-                <ImageIcon className='size-3.5' strokeWidth={2.2} aria-hidden />
-                {t('editDetails')}
-              </Button>
-            )}
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => setEditingDetails(true)}
+            >
+              <ImageIcon className='size-3.5' strokeWidth={2.2} aria-hidden />
+              {t('editDetails')}
+            </Button>
           </div>
         )}
       </div>
