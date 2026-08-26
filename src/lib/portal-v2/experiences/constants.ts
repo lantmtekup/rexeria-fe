@@ -22,8 +22,16 @@ import type {
  * Khớp theo tiền tố, không khớp tuyệt đối: BE có thể nối thêm ngữ cảnh vào
  * cuối. Không khớp thì rơi về chính `message` của BE — thà hiện câu thô còn
  * hơn nuốt mất một lỗi chưa biết.
+ *
+ * THỨ TỰ có ý nghĩa: `forkReasonKey` trả về khoá của entry KHỚP ĐẦU TIÊN.
+ * `"cannot fork a copy with no origin template"` (trang external-URL, không
+ * có gì để chain origin) chứa nguyên cụm `"cannot fork a copy"` bên trong nó,
+ * nên nếu entry ngắn đứng trước, mọi lỗi "không có origin" sẽ bị đọc nhầm
+ * thành "đã thuộc một hạng mục chiến dịch" — sai hẳn nguyên nhân. Entry dài
+ * + cụ thể hơn phải luôn đứng TRƯỚC entry ngắn mà nó chứa.
  */
 export const USE_EXPERIENCE_REASON_KEY: Record<string, string> = {
+  'cannot fork a copy with no origin template': 'useErrNoOrigin',
   'cannot fork a copy': 'useErrAlreadyInCampaign',
   'taking a copy of an experience requires a brand scope': 'useErrNeedsBrand',
   'campaign_id and item_id must be provided together': 'useErrNeedsBothTargets',

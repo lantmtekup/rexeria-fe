@@ -1242,6 +1242,7 @@
       "useConfirm": "Tạo bản copy",
       "useConfirmOwn": "Lấy một bản",
       "useDone": "Đã tạo bản copy \"{name}\".",
+      "useErrNoOrigin": "Trang này không có bản gốc để nhân bản (trang gắn link ngoài, không dựng từ template). Chọn một bản khác.",
       "useErrAlreadyInCampaign": "Mục này đã thuộc về một hạng mục chiến dịch. Chọn bản gốc ở Exchange mà nó sinh ra từ đó, hoặc một mục ở Bản gốc của tôi.",
       "useErrNeedsBrand": "Chọn brand trước — một bản copy phải thuộc về một brand.",
       "useErrNeedsBothTargets": "Chọn cả chiến dịch lẫn hạng mục, hoặc bỏ tick ô chiến dịch.",

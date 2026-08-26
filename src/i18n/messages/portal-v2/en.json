@@ -1242,6 +1242,7 @@
       "useConfirm": "Create the copy",
       "useConfirmOwn": "Take a copy",
       "useDone": "Created the copy \"{name}\".",
+      "useErrNoOrigin": "This page has no source template to fork from (an external-link page, not built from a template). Pick a different one.",
       "useErrAlreadyInCampaign": "This one already belongs to a campaign subject. Pick the Exchange original it came from, or an item under My sources.",
       "useErrNeedsBrand": "Pick a brand first — a copy has to belong to one.",
       "useErrNeedsBothTargets": "Pick both a campaign and a subject, or leave the campaign box unticked.",
