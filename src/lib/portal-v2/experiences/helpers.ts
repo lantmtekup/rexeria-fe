@@ -97,25 +97,24 @@ export const canvasEditorHref = (experience: ExperienceView): string => {
 };
 
 /**
- * Ngăn "Exchange" — hàng lấy từ chợ về, giữ nguyên làm bản gốc để nhiều sản
- * phẩm cùng dùng.
+ * An external landing has no canvas of ours to open.
  *
- * Đây là ngăn CHỈ ĐỌC theo thiết kế, không phải vì thiếu tính năng: sửa một
- * bản gốc là sửa cái khuôn mà mọi bản fork sau này kế thừa, và nếu lời văn ấy
- * đã bị viết cho một sản phẩm cụ thể thì mọi chiến dịch fork sau đều lôi theo.
- * Muốn sửa thì fork vào hạng mục rồi sửa bản fork — bản fork thuộc đúng một
- * sản phẩm nên sửa ở đó là an toàn.
- *
- * Đóng luôn hai đường đang lỗi trên loại bản ghi này: đổi tên gọi nhầm API của
- * trang (404 "Page not found"), và mở canvas thì đọc nội dung sai chỗ (khung
- * trắng). Không ai chạm vào hai đường đó nữa.
+ * Bản chưa gán hạng mục (`state: 'unassigned'`) từng bị khoá sửa ở đây, với lý
+ * do hai đường đang lỗi trên loại bản ghi này: đổi tên gọi nhầm API của trang
+ * (404 "Page not found"), và mở canvas đọc nội dung sai chỗ (khung trắng).
+ * Verify lại 2026-08-26: cả hai bug đó chỉ xảy ra ở luồng CŨ "Duplicate →
+ * promotePage" (dựng ra một TEMPLATE — `state` luôn là `'template'`, không
+ * bao giờ là `'unassigned'`, nên khoá ở đây thật ra không hề chặn được hai
+ * đường lỗi đó). Với một bản copy chưa gán THẬT (`kind: 'copy'`, page thật,
+ * id thật), `PATCH /v1/pages/{id}` và `useResolvedCanvasTarget` đều chạy đúng
+ * — test trực tiếp trên dữ liệu thật (Royal Mint / "Belgo (Exchange)") ra
+ * 200, không 404. Luồng "Duplicate" cũ giờ cũng không còn ai dùng nữa (Use
+ * đã fork thẳng từ 2026-08-25). Bỏ khoá theo yêu cầu — sửa bản chưa gán ảnh
+ * hưởng tới các bản fork MỚI từ đó về sau (bản đã fork trước đó không đổi,
+ * mỗi fork có canvas riêng); người dùng tự biết đánh đổi này.
  */
-export const isReadOnlyShelf = (experience: ExperienceView): boolean =>
-  experience.state === 'unassigned';
-
-/** An external landing has no canvas of ours to open. */
 export const canEditCanvas = (experience: ExperienceView): boolean =>
-  !experience.externalUrl && !isReadOnlyShelf(experience);
+  !experience.externalUrl;
 
 /**
  * Xem trước được không.
