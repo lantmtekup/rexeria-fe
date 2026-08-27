@@ -774,7 +774,9 @@
       "storyLeakWeak": "Đường rò rỉ: {notes}.",
       "storyLoopsTitle": "{count} vòng quay lại · thu hồi {volume}",
       "storyLoopsBody": "{volume} khách quay lại hành trình mỗi tháng qua {names} — bỏ qua mọi touchpoint thu hút phía trên. Đây là lưu lượng rẻ nhất trên bản đồ.",
-      "storyNoLoops": "Chưa vòng nào khép. Mỗi lần mua lại đều phải thu hút lại từ đầu — cách tăng trưởng đắt nhất."
+      "storyNoLoops": "Chưa vòng nào khép. Mỗi lần mua lại đều phải thu hút lại từ đầu — cách tăng trưởng đắt nhất.",
+      "runStatus": "Lượt audit: {status}.",
+      "runStillQueued": "Lượt audit đang xếp hàng — worker quét sẽ nhận trong ít phút."
     },
     "dropoff": {
       "eyebrow": "Khai phá từ các nguồn đã kết nối",
@@ -815,10 +817,10 @@
       "typical": "điển hình cho bước này",
       "ranked": "Xếp hạng — điểm rò lớn nhất trước",
       "stageAt": "Giai đoạn {stage} · ",
-      "confRec": "tin cậy {conf}% · thu hồi {range}",
+      "confRec": "tin cậy {conf} · thu hồi {range}",
       "happensAt": "xảy ra ở giai đoạn {stage} của bạn",
       "pillRisk": "Mất −{amount} mỗi tháng",
-      "pillConf": "tin cậy {conf}% cho chẩn đoán này",
+      "pillConf": "tin cậy {conf} cho chẩn đoán này",
       "pillRec": "{range} trong đó có thể giành lại",
       "pillTp": "Touchpoint: {name} — điểm {score}",
       "evidenceTitle": "Bằng chứng từ các nguồn của bạn",
@@ -898,7 +900,15 @@
       "wizardClose": "Đóng",
       "wizardOpenJourney": "Mở Journey",
       "wizardFeeding": "{name} đang nuôi audit",
-      "wizardMappingAria": "Các cột feed đã nhận diện và ý nghĩa của chúng"
+      "wizardMappingAria": "Các cột feed đã nhận diện và ý nghĩa của chúng",
+      "attentionIssue": "Kết nối mất quyền truy cập — kết nối lại để các touchpoint của nó tiếp tục được chấm bằng dữ liệu thật.",
+      "disconnectBodyLive": "Các touchpoint mà {name} nuôi sẽ thành ghost và điểm giai đoạn tính lại ở lần tải sau — lịch sử đã audit được giữ.",
+      "toastAuthorizePending": "OAuth của {name} chưa cấu hình trên deployment này — tiếp tục ở chế độ demo.",
+      "toastAuthorizeOpened": "Ủy quyền {name} trong cửa sổ vừa mở — kết nối xuất hiện khi callback hoàn tất.",
+      "toastSyncQueuedJob": "Đã xếp hàng sync cho {name} (job {id}).",
+      "toastSyncedNow": "Đã sync {name} — độ tươi dữ liệu vừa cập nhật.",
+      "toastDisconnectedLive": "Đã ngắt {name} — journey chấm lại không có nó. Lịch sử được giữ.",
+      "wizardAuthorizing": "Đang ủy quyền…"
     },
     "brand": {
       "title": "Thương hiệu",

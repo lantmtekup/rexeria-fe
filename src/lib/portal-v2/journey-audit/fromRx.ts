@@ -1,12 +1,15 @@
 import type {
+  RxAuditEvidenceItem,
   RxAuditFlow,
   RxAuditJourney,
   RxAuditLeaksResponse,
   RxAuditProduct,
+  RxAuditSnapshot,
   RxAuditTouchpoint,
   RxAuditTouchpointDetail,
 } from '@/services/rexer-v2/types/audit';
-import type { RxSource } from '@/services/rexer-v2/types/sources';
+
+import { formatMoney } from '@/lib/portal-v2/format';
 
 import { AUDIT_PRODUCT_ICONS, AUDIT_STAGE_ICONS } from './mock';
 import type {
@@ -14,13 +17,35 @@ import type {
   AuditFlow,
   AuditJourney,
   AuditProductRow,
-  AuditSource,
+  AuditSnapshot,
   AuditTouchpoint,
 } from './types';
 
-/** Hợp đồng Rx (snake_case, cents) → view model (camelCase, tiền). */
+/** Hợp đồng Rx (snake_case, cents, phân số) → view model (camelCase, tiền, %). */
 
 const money = (cents: number): number => cents / 100;
+
+/** BE trả TÊN icon lucide-ish; prototype/mock dùng emoji. Quy về emoji. */
+const ICON_EMOJI: Record<string, string> = {
+  megaphone: '📣',
+  music: '🎵',
+  search: '🔍',
+  instagram: '📸',
+  layout: '🖥️',
+  star: '⭐',
+  'message-square': '💬',
+  tag: '🏷️',
+  'shopping-cart': '🛒',
+  wallet: '💳',
+  'credit-card': '💳',
+  package: '📦',
+  mail: '✉️',
+  'refresh-cw': '♻️',
+  gift: '🎁',
+  'check-circle': '✅',
+};
+
+export const iconEmoji = (icon: string): string => ICON_EMOJI[icon] ?? icon;
 
 export const auditProductFromRx = (rx: RxAuditProduct): AuditProductRow => ({
   id: rx.id,
@@ -33,24 +58,54 @@ export const auditProductFromRx = (rx: RxAuditProduct): AuditProductRow => ({
   auditId: rx.id,
 });
 
+/** Snapshot BE (url + extract có cấu trúc) → khung hiển thị của drawer. */
+const snapshotFromRaw = (raw: RxAuditSnapshot | null): AuditSnapshot | null => {
+  if (!raw) return null;
+  const subline = Object.entries(raw.extract ?? {})
+    .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+    .join(' · ');
+  return {
+    kind: 'page',
+    heading: raw.url,
+    subline: subline || raw.content_hash,
+    cta: 'OBSERVED',
+  };
+};
+
+/** continue_rate của BE là phân số 0..1; mock cũng vậy sau khi đồng bộ. */
+const ratePct = (rate: number): number =>
+  Math.round(rate <= 1 ? rate * 100 : rate);
+
 const touchpointFromRx = (
   rx: RxAuditTouchpoint,
-  detail: RxAuditTouchpointDetail | undefined
+  detail: RxAuditTouchpointDetail | undefined,
+  displaySnapshot: AuditSnapshot | undefined
 ): AuditTouchpoint => ({
   id: rx.id,
   name: rx.name,
   channel: rx.channel,
-  icon: rx.icon,
+  icon: iconEmoji(rx.icon),
   score: rx.score,
-  dims: {
-    messageMatch: rx.dims.message_match,
-    loadSpeed: rx.dims.load_speed,
-    brandConsistency: rx.dims.brand_consistency,
-    friction: rx.dims.friction,
-    accessibility: rx.dims.accessibility,
-  },
+  dims: rx.dims
+    ? {
+        messageMatch: rx.dims.message_match,
+        loadSpeed: rx.dims.load_speed,
+        brandConsistency: rx.dims.brand_consistency,
+        friction: rx.dims.friction,
+        accessibility: rx.dims.accessibility,
+      }
+    : null,
   flags: rx.flags.map(flag => ({ severity: flag.severity, label: flag.label })),
   sourceIds: rx.source_ids,
+  state: rx.state,
+  traffic: rx.traffic
+    ? {
+        arrive: rx.traffic.arrive,
+        continueRatePct: ratePct(rx.traffic.continue_rate),
+        leave: rx.traffic.leave,
+        estimated: rx.traffic.estimated,
+      }
+    : null,
   findings: (detail?.findings ?? []).map(finding => ({
     severity: finding.severity,
     text: finding.text,
@@ -58,18 +113,20 @@ const touchpointFromRx = (
     observedAt: finding.observed_at,
   })),
   recommendation: detail?.recommendation ?? '',
-  snapshot: detail?.snapshot ?? {
-    kind: 'page',
-    heading: rx.name,
-    subline: rx.channel,
-    cta: 'View',
-  },
+  snapshot: displaySnapshot ??
+    snapshotFromRaw(detail?.snapshot ?? null) ?? {
+      kind: 'page',
+      heading: rx.name,
+      subline: rx.channel,
+      cta: 'OBSERVED',
+    },
 });
 
 export const journeyFromRx = (
   productId: string,
   rx: RxAuditJourney,
-  details: Record<string, RxAuditTouchpointDetail>
+  details: Record<string, RxAuditTouchpointDetail>,
+  displaySnapshots: Record<string, AuditSnapshot> = {}
 ): AuditJourney => ({
   productId,
   stages: rx.stages.map(stage => ({
@@ -78,7 +135,7 @@ export const journeyFromRx = (
     icon: AUDIT_STAGE_ICONS[stage.key] ?? '◇',
     objective: stage.objective,
     touchpoints: stage.touchpoints.map(tp =>
-      touchpointFromRx(tp, details[tp.id])
+      touchpointFromRx(tp, details[tp.id], displaySnapshots[tp.id])
     ),
   })),
   handoffs: rx.handoffs.map(handoff => ({
@@ -89,71 +146,93 @@ export const journeyFromRx = (
   })),
 });
 
-export const flowFromRx = (productId: string, rx: RxAuditFlow): AuditFlow => ({
+/**
+ * Flow Rx (node BE không mang entry volume) → view. `entry` do caller cấp:
+ * mock lấy từ MOCK_FLOW_ENTRY; đường thật suy ngược từ `traffic.arrive` của
+ * journey (arrive − tổng cạnh vào không-influence).
+ */
+export const flowFromRx = (
+  productId: string,
+  rx: RxAuditFlow,
+  entry: Record<string, number>,
+  estimated: boolean
+): AuditFlow => ({
   productId,
-  entry: Object.fromEntries(rx.nodes.map(node => [node.id, node.entry_volume])),
+  entry,
   edges: rx.edges.map(e => ({
     from: e.from,
     to: e.to,
     type: e.type,
     volume: e.volume,
-    note: e.note,
+    note: e.note || null,
   })),
-  estimated: rx.nodes.every(node => node.estimated),
+  estimated,
 });
+
+const evidenceText = (item: RxAuditEvidenceItem): string => {
+  if (item.text) return item.text;
+  if (item.metric) return `${item.metric}: ${String(item.value ?? '')}`;
+  if (item.snapshot_id) return `Snapshot ${item.snapshot_id.slice(0, 8)}`;
+  return JSON.stringify(item);
+};
 
 export const dropoffFromRx = (
   productId: string,
   rx: RxAuditLeaksResponse,
   measured: boolean
-): AuditDropoff => ({
-  productId,
-  steps: rx.funnel.steps.map(step => ({
+): AuditDropoff => {
+  const steps = rx.funnel.steps.map(step => ({
     key: step.key,
     label: step.label,
     count: step.count,
-  })),
-  benchmarks: rx.funnel.benchmarks,
-  leaks: rx.leaks.map(leak => ({
-    id: leak.id,
-    rank: leak.rank,
-    title: leak.title,
-    fromStep: leak.from_step,
-    toStep: leak.to_step,
-    touchpointId: leak.touchpoint_id,
-    usd: money(leak.usd_cents),
-    confidence: leak.confidence,
-    recoveryRange: leak.recovery_range,
-    narrative: leak.narrative,
-    evidence: leak.evidence.map(item => ({
-      sourceId: item.source_id,
-      text: item.text,
-    })),
-    fix: leak.fix,
-  })),
-  channels: rx.channels.map(channel => ({
-    name: channel.name,
-    sharePct: channel.share_pct,
-    buyersPer1000: channel.buyers_per_1000,
-    leakId: channel.leak_id,
-  })),
-  measured,
-});
+  }));
+  const stepIndex = (key: string): number => {
+    const index = steps.findIndex(step => step.key === key);
+    return index >= 0 ? index : 0;
+  };
+  const benchByKey = Object.fromEntries(
+    rx.funnel.benchmarks.map(bench => [bench.key, ratePct(bench.rate)])
+  );
+  const totalSessions = rx.channels.reduce(
+    (total, channel) => total + channel.sessions,
+    0
+  );
 
-export const sourceFromRx = (rx: RxSource): AuditSource => ({
-  id: rx.id,
-  provider: rx.provider,
-  name: rx.name,
-  icon: rx.icon,
-  category: rx.category,
-  auth: rx.auth,
-  status: rx.status,
-  firstParty: rx.first_party,
-  stages: rx.stages,
-  observes: rx.observes,
-  stats: rx.stats,
-  lastSync: rx.last_sync,
-  issue: rx.issue,
-  value: rx.value,
-  unlocks: rx.unlocks,
-});
+  return {
+    productId,
+    steps,
+    // benchmarks[i] áp cho lần chuyển steps[i] → steps[i+1], key = bước nguồn.
+    benchmarks: steps.slice(0, -1).map(step => benchByKey[step.key] ?? null),
+    leaks: rx.leaks.map(leak => ({
+      id: leak.id,
+      rank: leak.rank,
+      title: leak.title,
+      fromStep: stepIndex(leak.from_step),
+      toStep: stepIndex(leak.to_step),
+      touchpointId: leak.touchpoint_id,
+      usd: money(leak.usd_cents),
+      confidence: leak.confidence,
+      recoveryRange: `${formatMoney(money(leak.recovery_range.lo_usd_cents))}–${formatMoney(
+        money(leak.recovery_range.hi_usd_cents)
+      )}/mo`,
+      narrative: leak.narrative,
+      evidence: leak.evidence.map(item => ({
+        sourceId: item.source ?? 'audit',
+        text: evidenceText(item),
+      })),
+      fix: leak.fix,
+      estimated: leak.estimated,
+    })),
+    channels: rx.channels.map(channel => ({
+      name: channel.channel,
+      sessions: channel.sessions,
+      sharePct: totalSessions
+        ? Math.round((100 * channel.sessions) / totalSessions)
+        : 0,
+      buyersPer1000: channel.sessions
+        ? Math.round((1000 * channel.converted) / channel.sessions)
+        : 0,
+    })),
+    measured,
+  };
+};

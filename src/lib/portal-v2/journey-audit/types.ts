@@ -2,13 +2,8 @@ import type {
   RxAuditFlowEdgeType,
   RxAuditHandoffSeverity,
   RxAuditSeverity,
-  RxAuditSnapshotKind,
   RxAuditTouchpointState,
 } from '@/services/rexer-v2/types/audit';
-import type {
-  RxSourceAuth,
-  RxSourceStatus,
-} from '@/services/rexer-v2/types/sources';
 
 /**
  * View model của Journey Audit — bản camelCase của hợp đồng Rx, tiền đã đổi
@@ -20,9 +15,18 @@ export type AuditSeverity = RxAuditSeverity;
 export type AuditTouchpointState = RxAuditTouchpointState;
 export type AuditHandoffSeverity = RxAuditHandoffSeverity;
 export type AuditFlowEdgeType = RxAuditFlowEdgeType;
-export type AuditSnapshotKind = RxAuditSnapshotKind;
-export type AuditSourceStatus = RxSourceStatus;
-export type AuditSourceAuth = RxSourceAuth;
+export type AuditSnapshotKind =
+  | 'page'
+  | 'listing'
+  | 'social'
+  | 'email'
+  | 'reviews'
+  | 'audio'
+  | 'chat'
+  | 'physical';
+/** View: BE `off` hiển thị là `available` (chưa/không còn kết nối). */
+export type AuditSourceStatus = 'connected' | 'attention' | 'available';
+export type AuditSourceAuth = string;
 
 /* ── catalog rail ────────────────────────────────────────────────────────── */
 
@@ -68,15 +72,28 @@ export type AuditSnapshot = {
   cta: string;
 };
 
+export type AuditTraffic = {
+  arrive: number;
+  /** Phần trăm 0..100 (đã quy đổi từ phân số của BE). */
+  continueRatePct: number;
+  leave: number;
+  estimated: boolean;
+};
+
 export type AuditTouchpoint = {
   id: string;
   name: string;
   channel: string;
   icon: string;
-  score: number;
-  dims: AuditDims;
+  /** null = ghost chưa từng được chấm. */
+  score: number | null;
+  dims: AuditDims | null;
   flags: AuditFlag[];
   sourceIds: string[];
+  /** Trạng thái server chấm — fallback khi statuses client không phủ đủ
+   *  (vd admin đọc được journey nhưng /v1/sources từ chối). */
+  state: AuditTouchpointState;
+  traffic: AuditTraffic | null;
   findings: AuditFinding[];
   recommendation: string;
   snapshot: AuditSnapshot;
@@ -140,26 +157,30 @@ export type AuditLeak = {
   title: string;
   fromStep: number;
   toStep: number;
-  touchpointId: string;
+  touchpointId: string | null;
   usd: number;
-  confidence: number;
+  /** Chuỗi hiển thị: BE trả chữ ("high"), mock trả "86%". */
+  confidence: string;
+  /** Chuỗi hiển thị dựng từ lo/hi usd_cents ("$2,470–$4,120/mo"). */
   recoveryRange: string;
   narrative: string;
   evidence: AuditLeakEvidence[];
   fix: string;
+  estimated: boolean;
 };
 
 export type AuditChannelRow = {
   name: string;
+  sessions: number;
   sharePct: number;
   buyersPer1000: number;
-  leakId: string | null;
 };
 
 export type AuditDropoff = {
   productId: string;
   steps: AuditFunnelStep[];
-  benchmarks: number[];
+  /** benchmarks[i] = %-continue điển hình của lần chuyển i → i+1; null = không có. */
+  benchmarks: Array<number | null>;
   leaks: AuditLeak[];
   channels: AuditChannelRow[];
   /** true = phễu là số đo thật (intel.funnel); false = traffic model ước tính. */
@@ -169,6 +190,7 @@ export type AuditDropoff = {
 /* ── sources ─────────────────────────────────────────────────────────────── */
 
 export type AuditSource = {
+  /** Connection id (uuid) với nguồn đã kết nối; provider key với nguồn catalog. */
   id: string;
   provider: string;
   name: string;
@@ -181,6 +203,7 @@ export type AuditSource = {
   observes: string | null;
   stats: string | null;
   lastSync: string | null;
+  freshness?: 'fresh' | 'stale' | 'never' | null;
   issue: string | null;
   value: string | null;
   unlocks: string | null;
@@ -271,5 +294,7 @@ export type JourneyAuditBundle = {
   journeys: Record<string, AuditJourney>;
   flows: Record<string, AuditFlow>;
   sources: AuditSource[];
+  /** true = dữ liệu từ `/v1/audit/*` thật; false = demo mock. */
+  live: boolean;
   error: string | null;
 };

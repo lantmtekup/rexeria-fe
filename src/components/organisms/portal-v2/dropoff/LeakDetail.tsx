@@ -68,8 +68,12 @@ export const LeakDetail = ({
         {t('evidenceTitle')}
       </h4>
       {leak.evidence.map(item => {
-        const source = sources.find(s => s.id === item.sourceId);
-        const off = !source || source.status === 'available';
+        const source = sources.find(
+          s => s.id === item.sourceId || s.provider === item.sourceId
+        );
+        // "Evidence unavailable" chỉ khi nguồn CÓ trong catalog nhưng đã ngắt;
+        // nguồn lạ (vd "snapshot" của BE) vẽ dòng trung tính.
+        const off = source != null && source.status === 'available';
         if (off) {
           return (
             <p
@@ -94,14 +98,14 @@ export const LeakDetail = ({
               aria-hidden
               className='grid size-[26px] shrink-0 place-items-center rounded-[7px] bg-[var(--pv2-canvas)] text-[13px]'
             >
-              {source.icon}
+              {source?.icon ?? '📸'}
             </span>
             <span>
               {item.text}
               <br />
               <span className='text-3xs text-[var(--pv2-faint)]'>
-                {source.name}
-                {source.status === 'attention'
+                {source?.name ?? item.sourceId}
+                {source?.status === 'attention'
                   ? ` · ⚠ ${t('evidenceStale')}`
                   : ''}
               </span>
@@ -121,9 +125,11 @@ export const LeakDetail = ({
       </div>
 
       <div className='mt-4 flex flex-wrap gap-2.5'>
-        <Button variant='primary' onClick={onOpenTouchpoint}>
-          {t('openTpInJourney', { name: tpName })}
-        </Button>
+        {tpName ? (
+          <Button variant='primary' onClick={onOpenTouchpoint}>
+            {t('openTpInJourney', { name: tpName })}
+          </Button>
+        ) : null}
         <Button
           variant='ghost'
           onClick={() =>

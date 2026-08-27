@@ -126,6 +126,7 @@ export const TouchpointDrawer = ({
   const t = useTranslations('portalV2.journeyAudit');
   if (!context) return null;
   const { tp, stageName, stale, stats, leaks, downstream } = context;
+  const tpScore = tp.score ?? 0;
   const captured =
     sources.find(source => source.id === tp.sourceIds[0])?.name ??
     'ReXeR Public Crawl';
@@ -185,18 +186,18 @@ export const TouchpointDrawer = ({
           <div className='mt-3 flex items-center gap-3'>
             <span
               className='text-[26px] font-semibold'
-              style={{ color: scoreColor(tp.score) }}
+              style={{ color: scoreColor(tpScore) }}
             >
-              {tp.score}
+              {tp.score ?? '—'}
             </span>
             <span
               className='text-2xs rounded-[var(--pv2-r-sm)] px-2 py-0.5 font-bold'
               style={{
-                color: scoreColor(tp.score),
-                background: scoreSoft(tp.score),
+                color: scoreColor(tpScore),
+                background: scoreSoft(tpScore),
               }}
             >
-              {t('gradeLabel', { grade: grade(tp.score) })}
+              {t('gradeLabel', { grade: grade(tpScore) })}
             </span>
             <span className='text-2xs ml-auto text-right leading-snug text-[var(--pv2-faint)]'>
               {t('drawerLastCrawl')}
@@ -397,7 +398,7 @@ export const TouchpointDrawer = ({
           <section className='mb-5'>
             <SectionTitle>{t('dimensions')}</SectionTitle>
             {DIM_KEYS.map(({ key, labelKey }) => {
-              const value = tp.dims[key];
+              const value = tp.dims?.[key] ?? 0;
               return (
                 <div key={key} className='mb-2 flex items-center gap-2.5'>
                   <span className='w-[128px] shrink-0 text-xs font-medium text-[var(--pv2-mut)]'>

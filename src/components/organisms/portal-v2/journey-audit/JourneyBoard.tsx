@@ -7,7 +7,7 @@ import { cn } from '@/lib/cn';
 import { formatMoney } from '@/lib/portal-v2/format';
 import {
   auditedTouchpoints,
-  flowStats,
+  tpFlowStats,
   leaksForTouchpoint,
   scoreColor,
   scoreSoft,
@@ -136,11 +136,9 @@ export const JourneyBoard = ({
                         tp={tp}
                         stale={state === 'stale'}
                         selected={tp.id === selectedTpId}
-                        stats={flowStats(flow, conns, tp.id)}
+                        stats={tpFlowStats(flow, conns, tp)}
                         sources={sources}
-                        estimated={
-                          flow.estimated && !(dropoff?.measured ?? false)
-                        }
+                        estimated={tp.traffic?.estimated ?? flow.estimated}
                         onOpen={() => onOpenTp(tp.id)}
                       />
                     );

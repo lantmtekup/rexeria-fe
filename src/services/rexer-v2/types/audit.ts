@@ -1,30 +1,34 @@
 /**
- * Journey Audit (`/v1/audit/*`) — hợp đồng Phase 1, BE đang xây song song đúng
- * shape này (JSON snake_case). Phase 1 FE trả mock qua đúng các shape dưới đây
- * để lúc nối thật chỉ đổi nguồn, không đổi hình.
+ * Journey Audit (`/v1/audit/*`) — hợp đồng THẬT, đối chiếu từng field với BE
+ * `internal/domain/models/audit.go` (nhánh feature/journey-audit-api) và curl
+ * thật ngày 2026-08-27. JSON snake_case.
  *
- * Quy ước:
- * - Severity: `crit | warn | good`.
- * - Tiền: `*_usd_cents` int — FE đổi về đơn vị tiền khi map sang view.
- * - Số ước tính mang `estimated: true` (traffic model, chưa có GA4).
+ * Điểm dễ vấp (đều đã thấy trên dữ liệu thật):
+ * - `score`/`dims`/`traffic` của touchpoint NULLABLE — ghost chưa từng chấm
+ *   trả null, nhưng một touchpoint `off` VẪN có thể mang điểm của run cũ.
+ * - `traffic.continue_rate` là PHÂN SỐ 0..1, không phải phần trăm.
+ * - `from_step`/`to_step` của leak là KEY stage ("decision"), không phải index.
+ * - `confidence` là chữ ("high"), không phải số phần trăm.
+ * - `benchmarks` là mảng object `{key, rate}` với rate 0..1.
+ * - icon là TÊN lucide-ish ("megaphone"), không phải emoji.
  */
 
 export type RxAuditSeverity = 'crit' | 'warn' | 'good';
 
-/** Trạng thái nguồn nuôi touchpoint: live = có nguồn khỏe, stale = chỉ còn
- *  nguồn mất quyền truy cập, off = không nguồn nào kết nối. */
 export type RxAuditTouchpointState = 'live' | 'stale' | 'off';
 
 export type RxAuditHandoffSeverity = 'crit' | 'warn' | 'ok';
 
-/* ── GET /v1/audit/products ──────────────────────────────────────────────── */
+export type RxAuditRunStatus = 'queued' | 'running' | 'succeeded' | 'failed';
+
+/* ── GET /v1/audit/products (query brand_id — admin override) ────────────── */
 
 export type RxAuditProduct = {
   id: string;
   name: string;
   sku: string;
   category: string;
-  /** null = chưa audit được touchpoint nào (mọi nguồn off). */
+  /** null = chưa touchpoint non-off nào có điểm. */
   score: number | null;
   touchpoint_count: number;
 };
@@ -48,6 +52,7 @@ export type RxAuditFlag = {
 
 export type RxAuditTraffic = {
   arrive: number;
+  /** Phân số 0..1 (BE trả 0.47 = 47%). */
   continue_rate: number;
   leave: number;
   estimated: boolean;
@@ -57,13 +62,14 @@ export type RxAuditTouchpoint = {
   id: string;
   name: string;
   channel: string;
+  /** Tên icon lucide-ish ("megaphone", "search"…), không phải emoji. */
   icon: string;
   state: RxAuditTouchpointState;
-  score: number;
-  dims: RxAuditDims;
+  score: number | null;
+  dims: RxAuditDims | null;
   flags: RxAuditFlag[];
-  /** null = endpoint/không đo được dòng chảy cho touchpoint này. */
   traffic: RxAuditTraffic | null;
+  /** Id các source_connections nuôi touchpoint; rỗng = ghost. */
   source_ids: string[];
 };
 
@@ -71,7 +77,6 @@ export type RxAuditStage = {
   key: string;
   name: string;
   objective: string;
-  /** null = không touchpoint nào trong stage được audit. */
   score: number | null;
   leak_usd_cents: number;
   touchpoints: RxAuditTouchpoint[];
@@ -99,42 +104,14 @@ export type RxAuditFinding = {
   snapshot_id: string | null;
 };
 
-export type RxAuditSnapshotKind =
-  | 'page'
-  | 'listing'
-  | 'social'
-  | 'email'
-  | 'reviews'
-  | 'audio'
-  | 'chat'
-  | 'physical';
-
+/** Snapshot THẬT của BE: extract có cấu trúc, body nằm ở S3. */
 export type RxAuditSnapshot = {
-  kind: RxAuditSnapshotKind;
-  heading: string;
-  subline: string;
-  cta: string;
-};
-
-export type RxAuditFlowRef = {
-  touchpoint_id: string;
-  name: string;
-  volume: number;
-  edge_type: RxAuditFlowEdgeType;
-};
-
-export type RxAuditTouchpointDetail = {
   id: string;
-  dims: RxAuditDims;
-  findings: RxAuditFinding[];
-  recommendation: string;
-  snapshot: RxAuditSnapshot;
-  flows_in: RxAuditFlowRef[];
-  flows_out: RxAuditFlowRef[];
-  leak_ids: string[];
+  url: string;
+  content_hash: string;
+  extract: Record<string, unknown>;
+  captured_at: string;
 };
-
-/* ── GET /v1/audit/products/:id/flow ─────────────────────────────────────── */
 
 export type RxAuditFlowEdgeType =
   | 'path'
@@ -143,19 +120,42 @@ export type RxAuditFlowEdgeType =
   | 'loop'
   | 'broken';
 
-export type RxAuditFlowNode = {
-  id: string;
-  /** Lượng khách đến thẳng (ads, search, links) — không qua cạnh nào. */
-  entry_volume: number;
-  estimated: boolean;
-};
-
 export type RxAuditFlowEdge = {
   from: string;
   to: string;
   type: RxAuditFlowEdgeType;
   volume: number;
-  note: string | null;
+  note: string;
+};
+
+export type RxAuditTouchpointDetail = {
+  id: string;
+  product_id: string;
+  stage: string;
+  name: string;
+  channel: string;
+  icon: string;
+  state: RxAuditTouchpointState;
+  score: number | null;
+  dims: RxAuditDims | null;
+  findings: RxAuditFinding[];
+  recommendation: string;
+  snapshot: RxAuditSnapshot | null;
+  flows_in: RxAuditFlowEdge[];
+  flows_out: RxAuditFlowEdge[];
+  leaks: RxAuditLeak[];
+  source_ids: string[];
+};
+
+/* ── GET /v1/audit/products/:id/flow ─────────────────────────────────────── */
+
+export type RxAuditFlowNode = {
+  id: string;
+  name: string;
+  stage: string;
+  channel: string;
+  state: RxAuditTouchpointState;
+  score: number | null;
 };
 
 export type RxAuditFlow = {
@@ -169,39 +169,63 @@ export type RxAuditFunnelStep = {
   key: string;
   label: string;
   count: number;
+  /** Phân số 0..1; null ở bước đầu. */
+  drop_pct: number | null;
+  estimated: boolean;
+};
+
+export type RxAuditFunnelBenchmark = {
+  /** Key của bước NGUỒN của lần chuyển. */
+  key: string;
+  /** Continue-rate điển hình, phân số 0..1. */
+  rate: number;
 };
 
 export type RxAuditFunnel = {
   steps: RxAuditFunnelStep[];
-  /** % continue điển hình cho từng bước chuyển (length = steps - 1). */
-  benchmarks: number[];
+  benchmarks: RxAuditFunnelBenchmark[];
 };
 
-export type RxAuditEvidence = {
-  source_id: string;
-  text: string;
+export type RxAuditRecoveryRange = {
+  lo_usd_cents: number;
+  hi_usd_cents: number;
+};
+
+/**
+ * Evidence là jsonb tự do: dữ liệu thật thấy `{metric, source, value}` và
+ * `{snapshot_id, source: "snapshot"}`; mock giữ `{source, text}`.
+ */
+export type RxAuditEvidenceItem = {
+  source?: string;
+  text?: string;
+  metric?: string;
+  value?: unknown;
+  snapshot_id?: string;
 };
 
 export type RxAuditLeak = {
   id: string;
   rank: number;
   title: string;
-  from_step: number;
-  to_step: number;
-  touchpoint_id: string;
+  from_step: string;
+  to_step: string;
+  touchpoint_id: string | null;
   usd_cents: number;
-  confidence: number;
-  recovery_range: string;
+  /** Chữ, không phải số: "high" | "medium" | … (mock dùng "86%"). */
+  confidence: string;
+  recovery_range: RxAuditRecoveryRange;
   narrative: string;
-  evidence: RxAuditEvidence[];
+  evidence: RxAuditEvidenceItem[];
   fix: string;
+  estimated: boolean;
 };
 
 export type RxAuditChannel = {
-  name: string;
-  share_pct: number;
-  buyers_per_1000: number;
-  leak_id: string | null;
+  channel: string;
+  sessions: number;
+  converted: number;
+  revenue_cents: number;
+  estimated: boolean;
 };
 
 export type RxAuditLeaksResponse = {
@@ -210,14 +234,14 @@ export type RxAuditLeaksResponse = {
   channels: RxAuditChannel[];
 };
 
-/* ── POST /v1/audit/products/:id/runs · GET /v1/audit/runs/:id ───────────── */
-
-export type RxAuditRunStatus = 'queued' | 'crawling' | 'scoring' | 'done';
+/* ── POST /v1/audit/products/:id/runs (201) · GET /v1/audit/runs/:id ─────── */
 
 export type RxAuditRun = {
   id: string;
   product_id: string;
   status: RxAuditRunStatus;
-  started_at: string;
+  stats: Record<string, unknown>;
+  started_at: string | null;
   finished_at: string | null;
+  created_at: string;
 };

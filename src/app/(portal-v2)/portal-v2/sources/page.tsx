@@ -19,6 +19,7 @@ export default async function PortalV2SourcesPage({ searchParams }: Props) {
         key={scope.brandId ?? 'none'}
         initialSources={data.sources}
         wizards={data.wizards}
+        live={data.live}
         initialError={data.error ?? scope.error}
       />
     </div>

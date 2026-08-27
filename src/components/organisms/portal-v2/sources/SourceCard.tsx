@@ -8,8 +8,8 @@ import type { AuditSource } from '@/lib/portal-v2/journey-audit/types';
 
 type SourceCardProps = {
   source: AuditSource;
-  /** Số touchpoint trong các journey audit mà nguồn này nuôi. */
-  feeds: number;
+  /** Số touchpoint mà nguồn nuôi (demo). null = không rõ (live) → ẩn dòng. */
+  feeds: number | null;
   /** Card ở mục Recommended next — các stage nó vá được. */
   reason?: string | null;
   onConnect: (providerId: string) => void;
@@ -84,9 +84,9 @@ export const SourceCard = ({
         )}
       >
         {head}
-        {source.status === 'attention' && source.issue ? (
+        {source.status === 'attention' ? (
           <p className='flex gap-2 rounded-[var(--pv2-r-sm)] border border-[color-mix(in_srgb,var(--pv2-warning)_40%,var(--pv2-hair))] bg-[color-mix(in_srgb,var(--pv2-warning)_10%,var(--pv2-paper))] px-2.5 py-2 text-xs leading-relaxed text-[color-mix(in_srgb,var(--pv2-warning)_75%,var(--pv2-ink))]'>
-            ⚠️ {source.issue}
+            ⚠️ {source.issue ?? t('attentionIssue')}
           </p>
         ) : null}
         {source.stats ? (
@@ -99,16 +99,18 @@ export const SourceCard = ({
             {source.observes}
           </p>
         ) : null}
-        <p
-          className={cn(
-            'text-2xs w-fit rounded-[var(--pv2-r-sm)] px-2.5 py-1.5 font-semibold',
-            feeds
-              ? 'bg-[var(--pv2-electric-soft)] text-[var(--pv2-electric)]'
-              : 'bg-[var(--pv2-canvas)] text-[var(--pv2-faint)]'
-          )}
-        >
-          {feeds ? t('feeds', { count: feeds }) : t('feedsNone')}
-        </p>
+        {feeds != null ? (
+          <p
+            className={cn(
+              'text-2xs w-fit rounded-[var(--pv2-r-sm)] px-2.5 py-1.5 font-semibold',
+              feeds
+                ? 'bg-[var(--pv2-electric-soft)] text-[var(--pv2-electric)]'
+                : 'bg-[var(--pv2-canvas)] text-[var(--pv2-faint)]'
+            )}
+          >
+            {feeds ? t('feeds', { count: feeds }) : t('feedsNone')}
+          </p>
+        ) : null}
         <div className='mt-auto flex items-center border-t border-[var(--pv2-hair)] pt-2.5'>
           <span className='text-2xs flex items-center gap-1.5 text-[var(--pv2-faint)]'>
             {source.lastSync === 'live' ? (

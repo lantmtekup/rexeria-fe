@@ -31,6 +31,11 @@ export const tpState = (
   tp: AuditTouchpoint,
   statuses: SourceStatusMap
 ): AuditTouchpointState => {
+  // Không nguồn nào của touchpoint nằm trong bộ statuses client (vd admin đọc
+  // được journey nhưng /v1/sources từ chối brand scope) ⇒ tin state server.
+  if (tp.sourceIds.length && tp.sourceIds.every(id => !(id in statuses))) {
+    return tp.state;
+  }
   const list = tp.sourceIds.map(id => statuses[id]);
   if (list.includes('connected')) return 'live';
   if (list.includes('attention')) return 'stale';
@@ -60,10 +65,12 @@ export const stageScore = (
   stage: AuditStage,
   statuses: SourceStatusMap
 ): number | null => {
-  const audited = auditedTouchpoints(stage, statuses);
+  const audited = auditedTouchpoints(stage, statuses).filter(
+    tp => tp.score != null
+  );
   if (!audited.length) return null;
   return Math.round(
-    audited.reduce((total, tp) => total + tp.score, 0) / audited.length
+    audited.reduce((total, tp) => total + (tp.score ?? 0), 0) / audited.length
   );
 };
 
@@ -199,6 +206,28 @@ export const flowStats = (
   };
 };
 
+/**
+ * FlowStats của MỘT touchpoint, ưu tiên `traffic` server chấm (arrive/leave
+ * đo hoặc model của BE) — số suy từ cạnh chỉ là fallback khi thiếu.
+ */
+export const tpFlowStats = (
+  flow: AuditFlow,
+  conns: AuditFlowEdge[],
+  tp: AuditTouchpoint
+): FlowStats => {
+  const base = flowStats(flow, conns, tp.id);
+  if (!tp.traffic) return base;
+  const arrive = tp.traffic.arrive;
+  const leave = tp.traffic.leave;
+  return {
+    ...base,
+    arrive,
+    leave,
+    cont: Math.max(0, arrive - leave),
+    rate: tp.traffic.continueRatePct,
+  };
+};
+
 export const isEntry = (conns: AuditFlowEdge[], id: string): boolean =>
   !inboundEdges(conns, id).some(e => e.type === 'path' || e.type === 'weak');
 
@@ -318,7 +347,9 @@ export const stageLeaks = (
 ): AuditLeak[] => {
   if (!dropoff) return [];
   const ids = new Set(stage.touchpoints.map(tp => tp.id));
-  return dropoff.leaks.filter(leak => ids.has(leak.touchpointId));
+  return dropoff.leaks.filter(
+    leak => leak.touchpointId != null && ids.has(leak.touchpointId)
+  );
 };
 
 export const totalRisk = (dropoff: AuditDropoff | null): number =>

@@ -9,8 +9,8 @@ import type { AuditLeak } from '@/lib/portal-v2/journey-audit/types';
 type LeakListProps = {
   leaks: AuditLeak[];
   selectedId: string | null;
-  stageNameOf: (touchpointId: string) => string | null;
-  tpNameOf: (touchpointId: string) => string;
+  stageNameOf: (touchpointId: string | null) => string | null;
+  tpNameOf: (touchpointId: string | null) => string;
   onSelect: (leakId: string) => void;
 };
 

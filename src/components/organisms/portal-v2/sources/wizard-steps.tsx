@@ -170,6 +170,10 @@ type StepBodyProps = {
   step: Exclude<WizardStep, { kind: 'sync' }>;
   selections: Record<string, number>;
   onSelect: (key: string, index: number) => void;
+  /** Giá trị field của bước form (controlled — bước authorize thật cần đọc,
+   *  vd shop domain của Shopify). */
+  fieldValues: Record<string, string>;
+  onFieldChange: (label: string, value: string) => void;
 };
 
 /** Body của một bước không-sync, theo `kind`. */
@@ -177,6 +181,8 @@ export const WizardStepBody = ({
   step,
   selections,
   onSelect,
+  fieldValues,
+  onFieldChange,
 }: StepBodyProps) => {
   const t = useTranslations('portalV2.sources');
 
@@ -202,7 +208,10 @@ export const WizardStepBody = ({
               {field.label}
               <input
                 type={field.type ?? 'text'}
-                defaultValue={field.value}
+                value={fieldValues[field.label] ?? field.value}
+                onChange={event =>
+                  onFieldChange(field.label, event.target.value)
+                }
                 spellCheck={false}
                 className='mt-1 w-full rounded-[var(--pv2-r-sm)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-3 py-2 text-[13px] text-[var(--pv2-ink)] normal-case focus:border-[var(--pv2-electric)] focus:ring-2 focus:ring-[var(--pv2-electric-soft)] focus:outline-none'
               />

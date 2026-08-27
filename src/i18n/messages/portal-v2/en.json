@@ -774,7 +774,9 @@
       "storyLeakWeak": "Leaky paths: {notes}.",
       "storyLoopsTitle": "{count} return loops · {volume} recovered",
       "storyLoopsBody": "{volume} customers re-enter the journey each month via {names} — skipping every acquisition touchpoint above them. This is the cheapest traffic in the map.",
-      "storyNoLoops": "No loop is closing. Every repeat purchase must be re-acquired from the top — the most expensive way to grow."
+      "storyNoLoops": "No loop is closing. Every repeat purchase must be re-acquired from the top — the most expensive way to grow.",
+      "runStatus": "Audit run: {status}.",
+      "runStillQueued": "Audit run is queued — the crawl worker picks it up shortly."
     },
     "dropoff": {
       "eyebrow": "Mined from your connected sources",
@@ -815,10 +817,10 @@
       "typical": "typical for this step",
       "ranked": "Ranked — biggest leak first",
       "stageAt": "{stage} stage · ",
-      "confRec": "{conf}% conf · rec {range}",
+      "confRec": "{conf} conf · rec {range}",
       "happensAt": "happens at your {stage} stage",
       "pillRisk": "−{amount} lost per month",
-      "pillConf": "{conf}% confidence in this diagnosis",
+      "pillConf": "{conf} confidence in this diagnosis",
       "pillRec": "{range} of it is winnable back",
       "pillTp": "Touchpoint: {name} — score {score}",
       "evidenceTitle": "Evidence from your sources",
@@ -898,7 +900,15 @@
       "wizardClose": "Close",
       "wizardOpenJourney": "Open Journey",
       "wizardFeeding": "{name} is feeding the audit",
-      "wizardMappingAria": "Detected feed columns and their meaning"
+      "wizardMappingAria": "Detected feed columns and their meaning",
+      "attentionIssue": "Connection lost access — reconnect to keep its touchpoints scoring live.",
+      "disconnectBodyLive": "Touchpoints fed by {name} become ghosts and stage scores recalculate on the next load — audited history is retained.",
+      "toastAuthorizePending": "{name} OAuth is not configured on this deployment — continuing in demo mode.",
+      "toastAuthorizeOpened": "Authorize {name} in the window that just opened — the connection appears once the callback completes.",
+      "toastSyncQueuedJob": "Sync queued for {name} (job {id}).",
+      "toastSyncedNow": "{name} synced — freshness updated.",
+      "toastDisconnectedLive": "{name} disconnected — the journey re-scores without it. History is retained.",
+      "wizardAuthorizing": "Authorizing…"
     },
     "brand": {
       "title": "Brand",

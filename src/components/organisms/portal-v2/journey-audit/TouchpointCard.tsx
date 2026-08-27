@@ -82,13 +82,17 @@ export const TouchpointCard = ({
             {tp.channel}
           </span>
         </span>
-        <ScoreRing
-          score={tp.score}
-          size={34}
-          stroke={4}
-          className='shrink-0'
-          numberClassName='text-3xs'
-        />
+        {tp.score != null ? (
+          <ScoreRing
+            score={tp.score}
+            size={34}
+            stroke={4}
+            className='shrink-0'
+            numberClassName='text-3xs'
+          />
+        ) : (
+          <span className='text-2xs shrink-0 text-[var(--pv2-faint)]'>—</span>
+        )}
       </span>
 
       <span className='flex flex-wrap gap-1'>

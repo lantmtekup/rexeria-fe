@@ -92,10 +92,14 @@ export const DropoffWorkspace = ({
 
   if (!product || !journey) return null;
 
-  const tpNameOf = (touchpointId: string): string =>
-    findTouchpoint(journey, touchpointId)?.tp.name ?? touchpointId;
-  const stageNameOf = (touchpointId: string): string | null =>
-    findTouchpoint(journey, touchpointId)?.stage.name ?? null;
+  const tpNameOf = (touchpointId: string | null): string =>
+    touchpointId
+      ? (findTouchpoint(journey, touchpointId)?.tp.name ?? touchpointId)
+      : '';
+  const stageNameOf = (touchpointId: string | null): string | null =>
+    touchpointId
+      ? (findTouchpoint(journey, touchpointId)?.stage.name ?? null)
+      : null;
 
   const goJourney = (params: Record<string, string | null> = {}) =>
     router.push(
@@ -190,7 +194,9 @@ export const DropoffWorkspace = ({
   const total = dropoff.steps[0]?.count ?? 0;
   const buyers = dropoff.steps[dropoff.steps.length - 1]?.count ?? 0;
   const risk = ranked.reduce((sum, leak) => sum + leak.usd, 0);
-  const selectedFound = findTouchpoint(journey, selected.touchpointId);
+  const selectedFound = selected.touchpointId
+    ? findTouchpoint(journey, selected.touchpointId)
+    : null;
 
   return (
     <div className='w-full px-5 pt-7 pb-16 md:px-8'>
@@ -282,27 +288,29 @@ export const DropoffWorkspace = ({
         </div>
 
         <StepHeading n={3}>{t('step3')}</StepHeading>
-        <ChannelTable dropoff={dropoff} onSelectLeak={setSelectedLeakId} />
+        <ChannelTable dropoff={dropoff} />
 
-        <div className='mt-5 rounded-[var(--pv2-r)] bg-[var(--pv2-ink)] px-5 py-4 text-[color-mix(in_srgb,var(--pv2-paper)_88%,var(--pv2-ink))]'>
-          <h3 className='mb-2.5 font-[family-name:var(--pv2-disp)] text-[15px] font-bold text-[var(--pv2-paper)]'>
-            {t('patternsTitle')}
-          </h3>
-          {dropoffBundle.patterns.map((pattern, index) => (
-            <p
-              key={pattern.title}
-              className='flex gap-2.5 border-t border-[color-mix(in_srgb,var(--pv2-paper)_9%,transparent)] py-1.5 text-[13px] leading-relaxed first:border-t-0'
-            >
-              <span className='shrink-0 font-semibold text-[color-mix(in_srgb,var(--pv2-electric)_60%,var(--pv2-paper))]'>
-                {index + 1}
-              </span>
-              <span>
-                <b className='text-[var(--pv2-paper)]'>{pattern.title}</b>{' '}
-                {pattern.body}
-              </span>
-            </p>
-          ))}
-        </div>
+        {dropoffBundle.patterns.length ? (
+          <div className='mt-5 rounded-[var(--pv2-r)] bg-[var(--pv2-ink)] px-5 py-4 text-[color-mix(in_srgb,var(--pv2-paper)_88%,var(--pv2-ink))]'>
+            <h3 className='mb-2.5 font-[family-name:var(--pv2-disp)] text-[15px] font-bold text-[var(--pv2-paper)]'>
+              {t('patternsTitle')}
+            </h3>
+            {dropoffBundle.patterns.map((pattern, index) => (
+              <p
+                key={pattern.title}
+                className='flex gap-2.5 border-t border-[color-mix(in_srgb,var(--pv2-paper)_9%,transparent)] py-1.5 text-[13px] leading-relaxed first:border-t-0'
+              >
+                <span className='shrink-0 font-semibold text-[color-mix(in_srgb,var(--pv2-electric)_60%,var(--pv2-paper))]'>
+                  {index + 1}
+                </span>
+                <span>
+                  <b className='text-[var(--pv2-paper)]'>{pattern.title}</b>{' '}
+                  {pattern.body}
+                </span>
+              </p>
+            ))}
+          </div>
+        ) : null}
       </div>
     </div>
   );

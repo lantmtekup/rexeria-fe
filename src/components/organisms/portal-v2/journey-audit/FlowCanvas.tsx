@@ -8,6 +8,7 @@ import {
   auditedTouchpoints,
   downstreamCount,
   flowStats,
+  tpFlowStats,
   inboundEdges,
   isEntry,
   isIsland,
@@ -112,16 +113,17 @@ export const FlowCanvas = ({
     const all = cols.flat();
     if (!all.length) return null;
     const ids = all.map(tp => tp.id);
-    const nameOf = (id: string): string =>
-      all.find(tp => tp.id === id)?.name ?? id;
+    const tpById = new Map(all.map(tp => [tp.id, tp]));
+    const statsOf = (id: string) => {
+      const tp = tpById.get(id);
+      return tp ? tpFlowStats(flow, conns, tp) : flowStats(flow, conns, id);
+    };
+    const nameOf = (id: string): string => tpById.get(id)?.name ?? id;
 
     const sel =
       selectedId && ids.includes(selectedId)
         ? selectedId
-        : [...ids].sort(
-            (a, b) =>
-              flowStats(flow, conns, b).leave - flowStats(flow, conns, a).leave
-          )[0];
+        : [...ids].sort((a, b) => statsOf(b).leave - statsOf(a).leave)[0];
 
     /* 1. spine — đường volume lớn nhất khách thật sự đi */
     const colOf: Record<string, number> = {};
@@ -133,10 +135,7 @@ export const FlowCanvas = ({
     const start =
       ids
         .filter(id => isEntry(conns, id))
-        .sort(
-          (a, b) =>
-            flowStats(flow, conns, b).arrive - flowStats(flow, conns, a).arrive
-        )[0] ?? ids[0];
+        .sort((a, b) => statsOf(b).arrive - statsOf(a).arrive)[0] ?? ids[0];
     const spine = new Set<string>([start]);
     let cursor = start;
     for (let guard = 0; guard < 12; guard += 1) {
@@ -164,11 +163,7 @@ export const FlowCanvas = ({
       const onSpine = tps.filter(tp => spine.has(tp.id));
       const support = tps
         .filter(tp => !spine.has(tp.id))
-        .sort(
-          (a, b) =>
-            flowStats(flow, conns, b.id).arrive -
-            flowStats(flow, conns, a.id).arrive
-        );
+        .sort((a, b) => statsOf(b.id).arrive - statsOf(a.id).arrive);
       onSpine.forEach((tp, i) => {
         pos[tp.id] = { x, y: SPINE_Y + i * ROWH, ci, lane: 0, tp };
       });
@@ -209,18 +204,15 @@ export const FlowCanvas = ({
       }))
       .sort((a, b) => b.inbound + b.downstream - (a.inbound + a.downstream))[0];
     const worst = ids
-      .map(id => ({ id, stats: flowStats(flow, conns, id) }))
+      .map(id => ({ id, stats: statsOf(id) }))
       .sort((a, b) => b.stats.leave - a.stats.leave)[0];
     const story: FlowStorySummary = {
       entryCount: entries.length,
-      entryVolume: entries.reduce(
-        (total, id) => total + flowStats(flow, conns, id).arrive,
-        0
-      ),
+      entryVolume: entries.reduce((total, id) => total + statsOf(id).arrive, 0),
       hubName: nameOf(hub.id),
       hubInbound: hub.inbound,
       hubDownstream: hub.downstream,
-      hubArrive: flowStats(flow, conns, hub.id).arrive,
+      hubArrive: statsOf(hub.id).arrive,
       worstName: nameOf(worst.id),
       worstLeave: worst.stats.leave,
       worstLeavePct: worst.stats.arrive
@@ -236,7 +228,7 @@ export const FlowCanvas = ({
       loopNames: loops.map(e => nameOf(e.from)),
     };
 
-    return { pos, sel, RAIL, H, W, maxVolume, story };
+    return { pos, sel, RAIL, H, W, maxVolume, story, statsOf };
   }, [journey, flow, conns, statuses, selectedId]);
 
   if (!model) {
@@ -249,7 +241,7 @@ export const FlowCanvas = ({
     );
   }
 
-  const { pos, sel, RAIL, H, W, maxVolume, story } = model;
+  const { pos, sel, RAIL, H, W, maxVolume, story, statsOf } = model;
 
   /* links + labels */
   const links: React.ReactNode[] = [];
@@ -520,7 +512,7 @@ export const FlowCanvas = ({
             {links}
             {labels}
             {Object.entries(pos).map(([id, q]) => {
-              const stats = flowStats(flow, conns, id);
+              const stats = statsOf(id);
               const entry = isEntry(conns, id);
               const island = isIsland(conns, id);
               const active = id === sel;
@@ -576,7 +568,7 @@ export const FlowCanvas = ({
                     width='4'
                     height={NH}
                     rx='2'
-                    fill={scoreColor(q.tp.score)}
+                    fill={scoreColor(q.tp.score ?? 0)}
                   />
                   <text
                     x={q.x + 14}
@@ -595,7 +587,7 @@ export const FlowCanvas = ({
                   >
                     {t('flowNodeMeta', {
                       volume: formatCount(stats.arrive),
-                      score: q.tp.score,
+                      score: q.tp.score ?? '—',
                     })}
                   </text>
                   <text x={q.x + 14} y={q.y + 51} fontSize='9.5' fill={sev}>

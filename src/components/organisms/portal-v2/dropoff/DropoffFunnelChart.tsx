@@ -14,7 +14,7 @@ type DropoffFunnelChartProps = {
   dropoff: AuditDropoff;
   stages: FunnelStageMeta[];
   selectedLeakId: string | null;
-  tpNameOf: (touchpointId: string) => string;
+  tpNameOf: (touchpointId: string | null) => string;
   onSelectLeak: (leakId: string) => void;
   onOpenStage: () => void;
 };
@@ -316,7 +316,7 @@ export const DropoffFunnelChart = ({
               opacity={active ? 0.9 : 1}
             >
               {(() => {
-                const name = tpNameOf(leak.touchpointId);
+                const name = tpNameOf(leak.touchpointId) || leak.title;
                 return name.length > 22 ? `${name.slice(0, 21)}…` : name;
               })()}
             </text>

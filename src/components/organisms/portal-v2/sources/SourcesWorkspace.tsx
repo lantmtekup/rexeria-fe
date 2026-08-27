@@ -19,10 +19,15 @@ import {
 } from '@/lib/portal-v2/journey-audit/mock';
 import { crossHref } from '@/lib/portal-v2/journey-audit/params';
 import {
+  authorizeSource,
+  type AuthorizeOutcome,
+} from '@/lib/portal-v2/journey-audit/authorize';
+import {
   connectAuditSource,
   disconnectAuditSource,
   useAuditSources,
 } from '@/lib/portal-v2/journey-audit/sourcesStore';
+import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 import type {
   AuditSource,
   WizardConfig,
@@ -35,6 +40,8 @@ import { SourceCard } from '@/components/organisms/portal-v2/sources/SourceCard'
 type SourcesWorkspaceProps = {
   initialSources: AuditSource[];
   wizards: Record<string, WizardConfig>;
+  /** true = connections/catalog thật từ BE — mutations gọi API + refresh. */
+  live: boolean;
   initialError: string | null;
 };
 
@@ -56,6 +63,7 @@ const feedsOf = (sourceId: string): number =>
 export const SourcesWorkspace = ({
   initialSources,
   wizards,
+  live,
   initialError,
 }: SourcesWorkspaceProps) => {
   const t = useTranslations('portalV2.sources');
@@ -125,8 +133,36 @@ export const SourcesWorkspace = ({
     ? (wizards[wizardProvider] ?? null)
     : null;
 
+  const handleAuthorize = async (
+    provider: string,
+    fields: Record<string, string>
+  ): Promise<AuthorizeOutcome | 'error'> => {
+    const name =
+      sources.find(item => item.provider === provider)?.name ?? provider;
+    try {
+      const outcome = await authorizeSource(
+        provider,
+        provider === 'shopify' ? fields['Store domain'] : undefined
+      );
+      if (outcome === 'opened') {
+        toast(t('toastAuthorizeOpened', { name }));
+      } else {
+        toast(t('toastAuthorizePending', { name }));
+      }
+      return outcome;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('actionFailed'));
+      return 'error';
+    }
+  };
+
   const handleConnect = (providerId: string) => {
     if (!wizards[providerId]) {
+      if (live) {
+        // Không có stepper riêng — vẫn đi qua authorize thật.
+        void handleAuthorize(providerId, {});
+        return;
+      }
       connectAuditSource(providerId);
       toast.success(t('toastConnected'));
       return;
@@ -134,8 +170,40 @@ export const SourcesWorkspace = ({
     setWizardProvider(providerId);
   };
 
-  const handleDisconnect = () => {
+  const handleSync = async (source: AuditSource) => {
+    if (!live) {
+      toast(t('toastSyncQueued', { name: source.name }));
+      return;
+    }
+    try {
+      const res = await rexerV2Api.sources.sync(source.id);
+      toast.success(
+        res.queued
+          ? t('toastSyncQueuedJob', { name: source.name, id: res.job_id ?? '' })
+          : t('toastSyncedNow', { name: source.name })
+      );
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('actionFailed'));
+    }
+  };
+
+  const handleDisconnect = async () => {
     if (!pendingDisconnect) return;
+    if (live) {
+      try {
+        await rexerV2Api.sources.remove(pendingDisconnect.id);
+        setPendingDisconnectId(null);
+        toast.success(
+          t('toastDisconnectedLive', { name: pendingDisconnect.name })
+        );
+        // Refetch để journey/coverage tính lại điểm ngay (FR-D9).
+        router.refresh();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : t('actionFailed'));
+      }
+      return;
+    }
     disconnectAuditSource(pendingDisconnect.id);
     setPendingDisconnectId(null);
     toast.success(
@@ -155,11 +223,13 @@ export const SourcesWorkspace = ({
     <SourceCard
       key={source.id}
       source={source}
-      feeds={feedsOf(source.id)}
+      feeds={live ? null : feedsOf(source.id)}
       reason={reason}
       onConnect={handleConnect}
       onDisconnect={setPendingDisconnectId}
-      onSync={item => toast(t('toastSyncQueued', { name: item.name }))}
+      onSync={item => {
+        void handleSync(item);
+      }}
     />
   );
 
@@ -292,16 +362,22 @@ export const SourcesWorkspace = ({
 
       <DisconnectSourceModal
         source={pendingDisconnect}
-        feeds={pendingDisconnect ? feedsOf(pendingDisconnect.id) : 0}
+        feeds={
+          live ? null : pendingDisconnect ? feedsOf(pendingDisconnect.id) : 0
+        }
         open={Boolean(pendingDisconnect)}
         onClose={() => setPendingDisconnectId(null)}
-        onConfirm={handleDisconnect}
+        onConfirm={() => {
+          void handleDisconnect();
+        }}
       />
       <ConnectWizard
         source={wizardSource}
         config={wizardConfig}
         open={Boolean(wizardProvider)}
+        live={live}
         onClose={() => setWizardProvider(null)}
+        onAuthorize={handleAuthorize}
         onComplete={(provider, doneStats, doneMsg) => {
           connectAuditSource(provider, doneStats);
           toast.success(doneMsg);

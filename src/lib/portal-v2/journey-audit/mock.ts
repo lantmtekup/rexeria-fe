@@ -1,4 +1,5 @@
 import type {
+  RxAuditChannel,
   RxAuditDims,
   RxAuditFinding,
   RxAuditFlag,
@@ -8,14 +9,12 @@ import type {
   RxAuditLeaksResponse,
   RxAuditProduct,
   RxAuditSeverity,
-  RxAuditSnapshot,
   RxAuditStage,
   RxAuditTouchpoint,
   RxAuditTouchpointDetail,
 } from '@/services/rexer-v2/types/audit';
-import type { RxSource } from '@/services/rexer-v2/types/sources';
 
-import type { WizardConfig } from './types';
+import type { AuditSnapshot, AuditSource, WizardConfig } from './types';
 
 /**
  * Mock Phase 1 của Journey Audit — port nguyên DATA của prototype live-case
@@ -36,7 +35,11 @@ export const AUDIT_STAGE_NAMES = [
 
 /* ── nguồn (12) ──────────────────────────────────────────────────────────── */
 
-export const MOCK_AUDIT_SOURCES: RxSource[] = [
+/**
+ * Bộ nguồn DEMO (không brand / API lỗi) — shape VIEW trực tiếp: đường thật
+ * dựng AuditSource từ `/v1/sources` + `/v1/sources/catalog` qua sourcesView.
+ */
+export const MOCK_AUDIT_SOURCES: AuditSource[] = [
   {
     id: 'crawl',
     provider: 'crawl',
@@ -45,12 +48,12 @@ export const MOCK_AUDIT_SOURCES: RxSource[] = [
     category: 'Audit crawlers',
     auth: 'No credentials',
     status: 'connected',
-    first_party: true,
+    firstParty: true,
     stages: [...AUDIT_STAGE_NAMES],
     observes:
       'Live pages exactly as a customer sees them: PDPs, collection, offer pages, policies, navigation',
     stats: '14 public pages captured · 25 Aug 2026',
-    last_sync: '2h ago',
+    lastSync: '2h ago',
     issue: null,
     value: null,
     unlocks: null,
@@ -63,12 +66,12 @@ export const MOCK_AUDIT_SOURCES: RxSource[] = [
     category: 'Marketplaces',
     auth: 'Public listing',
     status: 'connected',
-    first_party: false,
+    firstParty: false,
     stages: ['Awareness', 'Consideration'],
     observes:
       'Marketplace title, bullets, usage instructions and imagery, compared against the DTC page',
     stats: '1 listing tracked · JLO BEAUTY store',
-    last_sync: '3h ago',
+    lastSync: '3h ago',
     issue: null,
     value: null,
     unlocks: null,
@@ -81,11 +84,11 @@ export const MOCK_AUDIT_SOURCES: RxSource[] = [
     category: 'Reviews & UGC',
     auth: 'Public listing',
     status: 'connected',
-    first_party: false,
+    firstParty: false,
     stages: ['Consideration'],
     observes: 'Ratings, review themes, unanswered complaints and Q&A coverage',
     stats: '34 reviews on the serum PDP · 4.44★',
-    last_sync: '3h ago',
+    lastSync: '3h ago',
     issue: null,
     value: null,
     unlocks: null,
@@ -98,12 +101,12 @@ export const MOCK_AUDIT_SOURCES: RxSource[] = [
     category: 'Analytics & Behavior',
     auth: 'Modelled',
     status: 'connected',
-    first_party: true,
+    firstParty: true,
     stages: ['Awareness', 'Consideration', 'Decision', 'Purchase'],
     observes:
       'Estimated session and funnel volumes, used to demonstrate the drop-off engine. Replace with GA4 for real figures.',
     stats: 'Illustrative volumes — not JLO Beauty data',
-    last_sync: 'modelled',
+    lastSync: 'modelled',
     issue: null,
     value: null,
     unlocks: null,
@@ -116,11 +119,11 @@ export const MOCK_AUDIT_SOURCES: RxSource[] = [
     category: 'Commerce',
     auth: 'OAuth',
     status: 'available',
-    first_party: false,
+    firstParty: false,
     stages: ['Decision', 'Purchase'],
     observes: null,
     stats: null,
-    last_sync: null,
+    lastSync: null,
     issue: null,
     value:
       'Read live pricing, promotions and checkout behaviour to confirm which discount actually applies at each step.',
@@ -135,11 +138,11 @@ export const MOCK_AUDIT_SOURCES: RxSource[] = [
     category: 'Commerce',
     auth: 'API key',
     status: 'available',
-    first_party: false,
+    firstParty: false,
     stages: ['Decision', 'Purchase'],
     observes: null,
     stats: null,
-    last_sync: null,
+    lastSync: null,
     issue: null,
     value:
       'Read products, pricing, coupons and order flow from a WordPress store to audit every step of its checkout.',
@@ -153,11 +156,11 @@ export const MOCK_AUDIT_SOURCES: RxSource[] = [
     category: 'Analytics & Behavior',
     auth: 'OAuth',
     status: 'available',
-    first_party: false,
+    firstParty: false,
     stages: ['Awareness', 'Consideration', 'Decision', 'Purchase'],
     observes: null,
     stats: null,
-    last_sync: null,
+    lastSync: null,
     issue: null,
     value:
       "Replace the estimated traffic model with the brand's real funnel, channel mix and page performance.",
@@ -171,11 +174,11 @@ export const MOCK_AUDIT_SOURCES: RxSource[] = [
     category: 'Marketplaces',
     auth: 'OAuth',
     status: 'available',
-    first_party: false,
+    firstParty: false,
     stages: ['Awareness', 'Consideration', 'Purchase'],
     observes: null,
     stats: null,
-    last_sync: null,
+    lastSync: null,
     issue: null,
     value:
       'Audit shop listings, livestream offers and product performance — where pricing and naming drift fastest.',
@@ -189,11 +192,11 @@ export const MOCK_AUDIT_SOURCES: RxSource[] = [
     category: 'Paid Media',
     auth: 'OAuth',
     status: 'available',
-    first_party: false,
+    firstParty: false,
     stages: ['Awareness'],
     observes: null,
     stats: null,
-    last_sync: null,
+    lastSync: null,
     issue: null,
     value:
       'Audit live Instagram and Facebook creative for naming and claim consistency against the product page.',
@@ -207,11 +210,11 @@ export const MOCK_AUDIT_SOURCES: RxSource[] = [
     category: 'Paid Media',
     auth: 'OAuth',
     status: 'available',
-    first_party: false,
+    firstParty: false,
     stages: ['Awareness'],
     observes: null,
     stats: null,
-    last_sync: null,
+    lastSync: null,
     issue: null,
     value:
       'Audit creator content and link destinations — the highest-risk channel for product-name drift.',
@@ -225,11 +228,11 @@ export const MOCK_AUDIT_SOURCES: RxSource[] = [
     category: 'Email & SMS',
     auth: 'OAuth',
     status: 'available',
-    first_party: false,
+    firstParty: false,
     stages: ['Post-Purchase'],
     observes: null,
     stats: null,
-    last_sync: null,
+    lastSync: null,
     issue: null,
     value:
       'Audit onboarding and replenishment email for usage guidance and cadence.',
@@ -243,11 +246,11 @@ export const MOCK_AUDIT_SOURCES: RxSource[] = [
     category: 'Retail partners',
     auth: 'Feed',
     status: 'available',
-    first_party: false,
+    firstParty: false,
     stages: ['Awareness', 'Consideration'],
     observes: null,
     stats: null,
-    last_sync: null,
+    lastSync: null,
     issue: null,
     value:
       'Compare retail partner listings against DTC content — the same drift found on Amazon usually repeats at retail.',
@@ -279,7 +282,7 @@ type TpDef = {
   source_ids: string[];
   findings: Array<[RxAuditSeverity, string]>;
   reco: string;
-  snap: RxAuditSnapshot;
+  snap: AuditSnapshot;
 };
 
 const dims = (
@@ -1046,317 +1049,384 @@ const edge = (
   to: string,
   type: RxAuditFlowEdge['type'],
   volume: number,
-  note: string | null = null
+  note = ''
 ): RxAuditFlowEdge => ({ from, to, type, volume, note });
 
-export const MOCK_AUDIT_FLOWS: Record<string, RxAuditFlow> = {
+/** Lượng khách đến thẳng từng touchpoint (traffic model demo). Đường thật
+ *  không có số này — service suy ngược từ `traffic.arrive` của journey. */
+export const MOCK_FLOW_ENTRY: Record<string, Record<string, number>> = {
   glow: {
-    nodes: [
-      ['g-search', 29800],
-      ['g-amazon', 21400],
-      ['g-press', 8600],
-      ['g-pdp', 18900],
-      ['g-science', 6200],
-      ['g-clinical', 5100],
-      ['g-reviews', 12400],
-      ['g-offer', 16700],
-      ['g-instagram', 14200],
-      ['g-tiktok', 9800],
-      ['g-replenish', 3100],
-      ['g-mantra', 1900],
-      ['g-email', 2300],
-    ].map(([id, entry]) => ({
-      id: id as string,
-      entry_volume: entry as number,
-      estimated: true,
-    })),
-    edges: [
-      edge(
-        'g-search',
-        'g-pdp',
-        'weak',
-        13600,
-        'Title leads with a generic term, not the name people search'
-      ),
-      edge(
-        'g-press',
-        'g-pdp',
-        'influence',
-        3200,
-        'Builds trust but the logos do not link to the coverage'
-      ),
-      edge('g-science', 'g-pdp', 'path', 4900),
-      edge(
-        'g-clinical',
-        'g-pdp',
-        'weak',
-        3800,
-        'Clinical proof sits here, not on the page where the decision is made'
-      ),
-      edge('g-reviews', 'g-pdp', 'influence', 12400),
-      edge('g-pdp', 'g-subscription', 'path', 9400),
-      edge('g-pdp', 'g-crosssell', 'path', 6100),
-      edge(
-        'g-offer',
-        'g-pdp',
-        'broken',
-        0,
-        'Offer page promises 20% off; the product page shows the full price'
-      ),
-      edge('g-subscription', 'g-checkout', 'path', 2600),
-      edge('g-crosssell', 'g-checkout', 'path', 1400),
-      edge('g-pdp', 'g-checkout', 'path', 4100),
-      edge('g-checkout', 'g-guarantee', 'path', 2300),
-      edge('g-checkout', 'g-replenish', 'path', 1900),
-      edge('g-replenish', 'g-checkout', 'loop', 740),
-      edge('g-mantra', 'g-replenish', 'loop', 1200),
-    ],
+    'g-search': 29800,
+    'g-amazon': 21400,
+    'g-press': 8600,
+    'g-pdp': 18900,
+    'g-science': 6200,
+    'g-clinical': 5100,
+    'g-reviews': 12400,
+    'g-offer': 16700,
+    'g-instagram': 14200,
+    'g-tiktok': 9800,
+    'g-replenish': 3100,
+    'g-mantra': 1900,
+    'g-email': 2300,
   },
   ampm: {
-    nodes: [
-      ['a-hero', 34200],
-      ['a-press', 8600],
-      ['a-clinical', 5100],
-      ['a-kit', 11300],
-      ['a-mantra', 1900],
-    ].map(([id, entry]) => ({
-      id: id as string,
-      entry_volume: entry as number,
-      estimated: true,
-    })),
-    edges: [
-      edge('a-hero', 'a-kit', 'path', 14800),
-      edge('a-press', 'a-kit', 'influence', 3200),
-      edge(
-        'a-clinical',
-        'a-kit',
-        'weak',
-        3800,
-        'Figures measured on this routine are not shown on its own page'
-      ),
-      edge('a-kit', 'a-gifts', 'path', 7900),
-      edge('a-gifts', 'a-checkout', 'path', 3100),
-      edge('a-kit', 'a-checkout', 'path', 2700),
-      edge('a-checkout', 'a-mantra', 'path', 1900),
-      edge('a-checkout', 'a-guarantee', 'path', 2400),
-      edge('a-mantra', 'a-checkout', 'loop', 620),
-    ],
+    'a-hero': 34200,
+    'a-press': 8600,
+    'a-clinical': 5100,
+    'a-kit': 11300,
+    'a-mantra': 1900,
   },
+};
+
+const FLOW_EDGES: Record<string, RxAuditFlowEdge[]> = {
+  glow: [
+    edge(
+      'g-search',
+      'g-pdp',
+      'weak',
+      13600,
+      'Title leads with a generic term, not the name people search'
+    ),
+    edge(
+      'g-press',
+      'g-pdp',
+      'influence',
+      3200,
+      'Builds trust but the logos do not link to the coverage'
+    ),
+    edge('g-science', 'g-pdp', 'path', 4900),
+    edge(
+      'g-clinical',
+      'g-pdp',
+      'weak',
+      3800,
+      'Clinical proof sits here, not on the page where the decision is made'
+    ),
+    edge('g-reviews', 'g-pdp', 'influence', 12400),
+    edge('g-pdp', 'g-subscription', 'path', 9400),
+    edge('g-pdp', 'g-crosssell', 'path', 6100),
+    edge(
+      'g-offer',
+      'g-pdp',
+      'broken',
+      0,
+      'Offer page promises 20% off; the product page shows the full price'
+    ),
+    edge('g-subscription', 'g-checkout', 'path', 2600),
+    edge('g-crosssell', 'g-checkout', 'path', 1400),
+    edge('g-pdp', 'g-checkout', 'path', 4100),
+    edge('g-checkout', 'g-guarantee', 'path', 2300),
+    edge('g-checkout', 'g-replenish', 'path', 1900),
+    edge('g-replenish', 'g-checkout', 'loop', 740),
+    edge('g-mantra', 'g-replenish', 'loop', 1200),
+  ],
+  ampm: [
+    edge('a-hero', 'a-kit', 'path', 14800),
+    edge('a-press', 'a-kit', 'influence', 3200),
+    edge(
+      'a-clinical',
+      'a-kit',
+      'weak',
+      3800,
+      'Figures measured on this routine are not shown on its own page'
+    ),
+    edge('a-kit', 'a-gifts', 'path', 7900),
+    edge('a-gifts', 'a-checkout', 'path', 3100),
+    edge('a-kit', 'a-checkout', 'path', 2700),
+    edge('a-checkout', 'a-mantra', 'path', 1900),
+    edge('a-checkout', 'a-guarantee', 'path', 2400),
+    edge('a-mantra', 'a-checkout', 'loop', 620),
+  ],
 };
 
 /* ── drop-off (FUNNELS của prototype) ────────────────────────────────────── */
 
 const usd = (dollars: number): number => dollars * 100;
 
+/** Kênh demo: sessions theo share prototype, converted giữ đúng buyers/1000. */
+const ch = (
+  channel: string,
+  sessions: number,
+  per1000: number
+): RxAuditChannel => ({
+  channel,
+  sessions,
+  converted: Math.round((sessions * per1000) / 1000),
+  revenue_cents: 0,
+  estimated: true,
+});
+
 export const MOCK_AUDIT_LEAKS: Record<string, RxAuditLeaksResponse> = {
   glow: {
     funnel: {
       steps: [
-        { key: 'sessions', label: 'Sessions', count: 96000 },
-        { key: 'product_view', label: 'Product view', count: 41000 },
-        { key: 'add_to_cart', label: 'Add to cart', count: 7800 },
-        { key: 'checkout', label: 'Checkout', count: 4100 },
-        { key: 'purchase', label: 'Purchase', count: 2300 },
+        {
+          key: 'sessions',
+          label: 'Sessions',
+          count: 96000,
+          drop_pct: null,
+          estimated: true,
+        },
+        {
+          key: 'product_view',
+          label: 'Product view',
+          count: 41000,
+          drop_pct: null,
+          estimated: true,
+        },
+        {
+          key: 'add_to_cart',
+          label: 'Add to cart',
+          count: 7800,
+          drop_pct: null,
+          estimated: true,
+        },
+        {
+          key: 'checkout',
+          label: 'Checkout',
+          count: 4100,
+          drop_pct: null,
+          estimated: true,
+        },
+        {
+          key: 'purchase',
+          label: 'Purchase',
+          count: 2300,
+          drop_pct: null,
+          estimated: true,
+        },
       ],
-      benchmarks: [46, 26, 55, 66],
+      benchmarks: [
+        { key: 'sessions', rate: 0.46 },
+        { key: 'product_view', rate: 0.26 },
+        { key: 'add_to_cart', rate: 0.55 },
+        { key: 'checkout', rate: 0.66 },
+      ],
     },
     leaks: [
       {
         id: 'g2',
         rank: 1,
         title: "The proof isn't on the page where people decide",
-        from_step: 1,
-        to_step: 2,
+        from_step: 'product_view',
+        to_step: 'add_to_cart',
         touchpoint_id: 'g-pdp',
         usd_cents: usd(27300),
-        confidence: 86,
-        recovery_range: '16–24%',
+        confidence: '86%',
+        recovery_range: { lo_usd_cents: 440000, hi_usd_cents: 650000 },
         narrative:
           'The product page carries 34 reviews and no clinical figures, while the brand advertises 16,000+ reviews and a study showing 97% of users saw firmer skin. The evidence that would close the sale exists — it is simply on other pages. The same page also contradicts itself on how to use the product.',
         evidence: [
           {
-            source_id: 'crawl',
+            source: 'crawl',
             text: 'Clinical figures appear on the homepage and Results page, not on the serum PDP',
           },
           {
-            source_id: 'reviews',
+            source: 'reviews',
             text: '34 reviews shown at 4.44★ against 16,000+ advertised sitewide',
           },
           {
-            source_id: 'crawl',
+            source: 'crawl',
             text: '“How To Use” says AM; the FAQ on the same page says morning and night',
           },
         ],
         fix: 'Move the 97%/94% clinical figures and the full review count above the fold, and resolve the AM versus AM/PM contradiction. Estimated recovery: $4,400–6,500/mo.',
+        estimated: true,
       },
       {
         id: 'g1',
         rank: 2,
         title: 'One product, four different names',
-        from_step: 0,
-        to_step: 1,
+        from_step: 'sessions',
+        to_step: 'product_view',
         touchpoint_id: 'g-search',
         usd_cents: usd(21600),
-        confidence: 79,
-        recovery_range: '14–22%',
+        confidence: '79%',
+        recovery_range: { lo_usd_cents: 300000, hi_usd_cents: 480000 },
         narrative:
           'The serum is called “Brightening Serum” on its own page, “That JLO Glow Brightening Serum” on Amazon, “That JLo Glow Multitasking Serum” in press coverage, and “That JLo Glow Serum” in resale listings. Recognition breaks between the channel that creates demand and the page that captures it.',
         evidence: [
           {
-            source_id: 'crawl',
+            source: 'crawl',
             text: 'PDP headline is “Brightening Serum” with That JLO Glow® as a subtitle',
           },
           {
-            source_id: 'amazonmon',
+            source: 'amazonmon',
             text: 'Amazon title leads with the full equity name; the DTC page does not',
           },
         ],
         fix: 'Adopt one canonical product name and lead with it everywhere — page title, PDP headline, marketplace listing and creator briefs. Estimated recovery: $3,000–4,800/mo.',
+        estimated: true,
       },
       {
         id: 'g3',
         rank: 3,
         title: 'Three prices for one product at the moment of choice',
-        from_step: 2,
-        to_step: 3,
+        from_step: 'add_to_cart',
+        to_step: 'checkout',
         touchpoint_id: 'g-offer',
         usd_cents: usd(15900),
-        confidence: 81,
-        recovery_range: '12–18%',
+        confidence: '81%',
+        recovery_range: { lo_usd_cents: 190000, hi_usd_cents: 290000 },
         narrative:
           'The shop page shows $63.00 with a 20% saving. The product page shows $79.00. The subscription module shows $19.99 alongside terms of three monthly payments of $49.95 plus shipping. A shopper cannot tell what the product costs.',
         evidence: [
           {
-            source_id: 'crawl',
+            source: 'crawl',
             text: 'Shop page: $79.00 struck through, $63.00, SAVE 20%',
           },
           {
-            source_id: 'crawl',
+            source: 'crawl',
             text: 'Product page price block: $79.00, no discount applied',
           },
           {
-            source_id: 'crawl',
+            source: 'crawl',
             text: 'Subscription terms: 3 × $49.95 + $3.99 S&H, described as 66% off the first shipment',
           },
         ],
         fix: 'Serve one price and one offer from a single source of truth across shop page, product page and cart. Estimated recovery: $1,900–2,900/mo.',
+        estimated: true,
       },
       {
         id: 'g4',
         rank: 4,
         title: 'Subscription terms disclosed inside a modal',
-        from_step: 3,
-        to_step: 4,
+        from_step: 'checkout',
+        to_step: 'purchase',
         touchpoint_id: 'g-subscription',
         usd_cents: usd(9700),
-        confidence: 72,
-        recovery_range: '9–15%',
+        confidence: '72%',
+        recovery_range: { lo_usd_cents: 90000, hi_usd_cents: 150000 },
         narrative:
           'The instalment structure and the three-month renewal cadence are explained in a “How it works” overlay rather than beside the subscribe button, so the commitment is only clear to shoppers who open it.',
         evidence: [
           {
-            source_id: 'crawl',
+            source: 'crawl',
             text: 'Terms appear in a modal; the button area shows only price and “Cancel Anytime”',
           },
           {
-            source_id: 'crawl',
+            source: 'crawl',
             text: 'Header promotes complimentary shipping while subscription terms add $3.99 S&H',
           },
         ],
         fix: 'Put the instalment and renewal terms in plain text beside the button and reconcile the shipping message. Estimated recovery: $900–1,500/mo.',
+        estimated: true,
       },
     ],
     channels: [
-      {
-        name: 'Organic search',
-        share_pct: 31,
-        buyers_per_1000: 24,
-        leak_id: null,
-      },
-      { name: 'Direct', share_pct: 22, buyers_per_1000: 33, leak_id: null },
-      { name: 'Instagram', share_pct: 17, buyers_per_1000: 14, leak_id: 'g1' },
-      { name: 'TikTok', share_pct: 12, buyers_per_1000: 11, leak_id: null },
-      { name: 'Email', share_pct: 10, buyers_per_1000: 41, leak_id: null },
-      {
-        name: 'Amazon referral',
-        share_pct: 8,
-        buyers_per_1000: 19,
-        leak_id: null,
-      },
+      ch('Organic search', 29760, 24),
+      ch('Direct', 21120, 33),
+      ch('Instagram', 16320, 14),
+      ch('TikTok', 11520, 11),
+      ch('Email', 9600, 41),
+      ch('Amazon referral', 7680, 19),
     ],
   },
   ampm: {
     funnel: {
       steps: [
-        { key: 'sessions', label: 'Sessions', count: 58000 },
-        { key: 'product_view', label: 'Product view', count: 26000 },
-        { key: 'add_to_cart', label: 'Add to cart', count: 5400 },
-        { key: 'checkout', label: 'Checkout', count: 3100 },
-        { key: 'purchase', label: 'Purchase', count: 1950 },
+        {
+          key: 'sessions',
+          label: 'Sessions',
+          count: 58000,
+          drop_pct: null,
+          estimated: true,
+        },
+        {
+          key: 'product_view',
+          label: 'Product view',
+          count: 26000,
+          drop_pct: null,
+          estimated: true,
+        },
+        {
+          key: 'add_to_cart',
+          label: 'Add to cart',
+          count: 5400,
+          drop_pct: null,
+          estimated: true,
+        },
+        {
+          key: 'checkout',
+          label: 'Checkout',
+          count: 3100,
+          drop_pct: null,
+          estimated: true,
+        },
+        {
+          key: 'purchase',
+          label: 'Purchase',
+          count: 1950,
+          drop_pct: null,
+          estimated: true,
+        },
       ],
-      benchmarks: [46, 24, 55, 66],
+      benchmarks: [
+        { key: 'sessions', rate: 0.46 },
+        { key: 'product_view', rate: 0.24 },
+        { key: 'add_to_cart', rate: 0.55 },
+        { key: 'checkout', rate: 0.66 },
+      ],
     },
     leaks: [
       {
         id: 'a1',
         rank: 1,
         title: 'Two headline offers competing in the header',
-        from_step: 0,
-        to_step: 1,
+        from_step: 'sessions',
+        to_step: 'product_view',
         touchpoint_id: 'a-hero',
         usd_cents: usd(14800),
-        confidence: 74,
-        recovery_range: '12–19%',
+        confidence: '74%',
+        recovery_range: { lo_usd_cents: 180000, hi_usd_cents: 280000 },
         narrative:
           'The site header runs a 20% End of Summer Event and a routine-plus-three-gifts offer simultaneously, with no statement of whether they combine. Shoppers arriving on either promise cannot tell which applies to them.',
         evidence: [
           {
-            source_id: 'crawl',
+            source: 'crawl',
             text: 'Header carries both announcements at the same time',
           },
           {
-            source_id: 'crawl',
+            source: 'crawl',
             text: 'Catalogue discounts range across 15%, 20%, 21% and 29%',
           },
         ],
         fix: 'Run one headline offer at a time, and state explicitly whether gifts stack with the percentage discount. Estimated recovery: $1,800–2,800/mo.',
+        estimated: true,
       },
       {
         id: 'a2',
         rank: 2,
         title: "The routine's own clinical proof isn't on its page",
-        from_step: 1,
-        to_step: 2,
+        from_step: 'product_view',
+        to_step: 'add_to_cart',
         touchpoint_id: 'a-kit',
         usd_cents: usd(11200),
-        confidence: 80,
-        recovery_range: '10–16%',
+        confidence: '80%',
+        recovery_range: { lo_usd_cents: 110000, hi_usd_cents: 180000 },
         narrative:
           "The 8-week study was run on the serum and hydrating cream — the core of this routine — yet the kit page does not carry those figures, so the strongest argument for buying the routine is absent from the routine's page.",
         evidence: [
           {
-            source_id: 'crawl',
+            source: 'crawl',
             text: 'Clinical figures appear on the homepage and Results page only',
           },
           {
-            source_id: 'crawl',
+            source: 'crawl',
             text: 'Kit page leads on value framing rather than proof',
           },
         ],
         fix: 'Put the 97% firmer skin and 94% radiance figures on the kit page hero. Estimated recovery: $1,100–1,800/mo.',
+        estimated: true,
       },
     ],
     channels: [
-      { name: 'Direct', share_pct: 34, buyers_per_1000: 38, leak_id: null },
-      {
-        name: 'Organic search',
-        share_pct: 26,
-        buyers_per_1000: 29,
-        leak_id: null,
-      },
-      { name: 'Instagram', share_pct: 18, buyers_per_1000: 17, leak_id: 'a1' },
-      { name: 'Email', share_pct: 14, buyers_per_1000: 44, leak_id: null },
-      { name: 'TikTok', share_pct: 8, buyers_per_1000: 12, leak_id: null },
+      ch('Direct', 19720, 38),
+      ch('Organic search', 15080, 29),
+      ch('Instagram', 10440, 17),
+      ch('Email', 8120, 44),
+      ch('TikTok', 4640, 12),
     ],
   },
 };
@@ -1523,7 +1593,7 @@ const HANDOFFS: Record<
   ],
 };
 
-const defaultSourceStatus = (sourceId: string): RxSource['status'] =>
+const defaultSourceStatus = (sourceId: string): AuditSource['status'] =>
   MOCK_AUDIT_SOURCES.find(source => source.id === sourceId)?.status ??
   'available';
 
@@ -1538,21 +1608,21 @@ const trafficOf = (
   productId: string,
   tpId: string
 ): RxAuditTouchpoint['traffic'] => {
-  const flow = MOCK_AUDIT_FLOWS[productId];
-  if (!flow) return null;
-  const entry = flow.nodes.find(node => node.id === tpId)?.entry_volume ?? 0;
-  const inbound = flow.edges
+  const edges = FLOW_EDGES[productId] ?? [];
+  const entry = MOCK_FLOW_ENTRY[productId]?.[tpId] ?? 0;
+  const inbound = edges
     .filter(e => e.to === tpId && e.type !== 'influence')
     .reduce((total, e) => total + e.volume, 0);
-  const outbound = flow.edges
+  const outbound = edges
     .filter(e => e.from === tpId && e.type !== 'influence')
     .reduce((total, e) => total + e.volume, 0);
   const arrive = entry + inbound;
   if (!arrive) return null;
   const leave = Math.max(0, arrive - outbound);
+  // continue_rate là PHÂN SỐ 0..1 như BE.
   return {
     arrive,
-    continue_rate: Math.round((100 * outbound) / arrive),
+    continue_rate: Math.min(1, outbound / arrive),
     leave,
     estimated: true,
   };
@@ -1582,11 +1652,15 @@ const buildJourney = (
     const audited = touchpoints.filter(tp => tp.state !== 'off');
     const score = audited.length
       ? Math.round(
-          audited.reduce((total, tp) => total + tp.score, 0) / audited.length
+          audited.reduce((total, tp) => total + (tp.score ?? 0), 0) /
+            audited.length
         )
       : null;
     const leakCents = leaks
-      .filter(leak => stage.tpIds.includes(leak.touchpoint_id))
+      .filter(
+        leak =>
+          leak.touchpoint_id != null && stage.tpIds.includes(leak.touchpoint_id)
+      )
       .reduce((total, leak) => total + leak.usd_cents, 0);
     return {
       key: stage.key,
@@ -1613,6 +1687,40 @@ export const MOCK_AUDIT_JOURNEYS: Record<string, RxAuditJourney> = {
   glow: buildJourney('glow', GLOW_STAGES),
   ampm: buildJourney('ampm', AMPM_STAGES),
 };
+
+const stageKeyOf = (tpId: string): string => {
+  const defs = tpId.startsWith('g-') ? GLOW_STAGES : AMPM_STAGES;
+  return defs.find(stage => stage.tpIds.includes(tpId))?.key ?? '';
+};
+
+/** Flow mock theo shape BE: node không mang entry — entry ở MOCK_FLOW_ENTRY. */
+export const MOCK_AUDIT_FLOWS: Record<string, RxAuditFlow> = Object.fromEntries(
+  Object.entries(FLOW_EDGES).map(([productId, edges]) => {
+    const ids = new Set<string>();
+    edges.forEach(e => {
+      ids.add(e.from);
+      ids.add(e.to);
+    });
+    Object.keys(MOCK_FLOW_ENTRY[productId] ?? {}).forEach(id => ids.add(id));
+    return [
+      productId,
+      {
+        nodes: [...ids].map(id => {
+          const def = TP_DEFS[id];
+          return {
+            id,
+            name: def?.name ?? id,
+            stage: stageKeyOf(id),
+            channel: def?.channel ?? '',
+            state: def ? tpStateOf(def) : 'off',
+            score: def?.score ?? null,
+          };
+        }),
+        edges,
+      },
+    ];
+  })
+);
 
 /** Icon stage theo key — phần trình bày, không nằm trong hợp đồng Rx. */
 export const AUDIT_STAGE_ICONS: Record<string, string> = {
@@ -1673,7 +1781,7 @@ export const AUDIT_PRODUCT_ICONS: Record<string, string> = {
 const detailOf = (tpId: string): RxAuditTouchpointDetail => {
   const def = TP_DEFS[tpId];
   const productId = tpId.startsWith('g-') ? 'glow' : 'ampm';
-  const flow = MOCK_AUDIT_FLOWS[productId];
+  const edges = FLOW_EDGES[productId] ?? [];
   const findings: RxAuditFinding[] = def.findings.map(([severity, text]) => ({
     severity,
     text,
@@ -1683,31 +1791,30 @@ const detailOf = (tpId: string): RxAuditTouchpointDetail => {
   }));
   return {
     id: def.id,
+    product_id: productId,
+    stage: stageKeyOf(tpId),
+    name: def.name,
+    channel: def.channel,
+    icon: def.icon,
+    state: tpStateOf(def),
+    score: def.score,
     dims: def.dims,
     findings,
     recommendation: def.reco,
-    snapshot: def.snap,
-    flows_in: flow.edges
-      .filter(e => e.to === tpId)
-      .map(e => ({
-        touchpoint_id: e.from,
-        name: TP_DEFS[e.from]?.name ?? e.from,
-        volume: e.volume,
-        edge_type: e.type,
-      })),
-    flows_out: flow.edges
-      .filter(e => e.from === tpId)
-      .map(e => ({
-        touchpoint_id: e.to,
-        name: TP_DEFS[e.to]?.name ?? e.to,
-        volume: e.volume,
-        edge_type: e.type,
-      })),
-    leak_ids: (MOCK_AUDIT_LEAKS[productId]?.leaks ?? [])
-      .filter(leak => leak.touchpoint_id === tpId)
-      .map(leak => leak.id),
+    // Snapshot BE là extract có cấu trúc; bản hiển thị demo nằm ở
+    // MOCK_SNAPSHOTS bên dưới.
+    snapshot: null,
+    flows_in: edges.filter(e => e.to === tpId),
+    flows_out: edges.filter(e => e.from === tpId),
+    leaks: [],
+    source_ids: def.source_ids,
   };
 };
+
+/** Snapshot hiển thị (kind/heading/subline/cta) — bản demo theo prototype. */
+export const MOCK_SNAPSHOTS: Record<string, AuditSnapshot> = Object.fromEntries(
+  Object.values(TP_DEFS).map(def => [def.id, def.snap])
+);
 
 export const MOCK_AUDIT_TOUCHPOINT_DETAILS: Record<
   string,
@@ -2200,8 +2307,8 @@ export const MOCK_WIZARDS: Record<string, WizardConfig> = {
       },
     ],
   },
-  sephora: {
-    provider: 'sephora',
+  retail_feed: {
+    provider: 'retail_feed',
     steps: [
       {
         kind: 'form',

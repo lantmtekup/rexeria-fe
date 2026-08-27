@@ -9,8 +9,8 @@ import type { AuditSource } from '@/lib/portal-v2/journey-audit/types';
 
 type DisconnectSourceModalProps = {
   source: AuditSource | null;
-  /** Số touchpoint trong các journey audit sẽ thành ghost khi ngắt. */
-  feeds: number;
+  /** Số touchpoint sẽ thành ghost (demo); null = không đếm được (live). */
+  feeds: number | null;
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
@@ -46,9 +46,11 @@ export const DisconnectSourceModal = ({
       }
     >
       <p className='text-[13px] leading-6 text-[var(--pv2-mut)]'>
-        {feeds
-          ? t('disconnectBody', { name: source.name, count: feeds })
-          : t('disconnectBodyNone', { name: source.name })}
+        {feeds == null
+          ? t('disconnectBodyLive', { name: source.name })
+          : feeds
+            ? t('disconnectBody', { name: source.name, count: feeds })
+            : t('disconnectBodyNone', { name: source.name })}
       </p>
     </Modal>
   );

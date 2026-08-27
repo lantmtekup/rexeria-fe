@@ -7,17 +7,27 @@ import type { AuditDropoff } from '@/lib/portal-v2/journey-audit/types';
 
 type ChannelTableProps = {
   dropoff: AuditDropoff;
-  onSelectLeak: (leakId: string) => void;
 };
 
-/** Bảng kênh: share of visits · buyers/1000 · so với trung bình site (±25%). */
-export const ChannelTable = ({ dropoff, onSelectLeak }: ChannelTableProps) => {
+/**
+ * Bảng kênh: share of visits · buyers/1000 · so trung bình site (±25%).
+ * Hợp đồng thật không mang liên kết kênh → leak (khác prototype), nên bảng
+ * này thuần số đo; avg = 0 (chưa có converted) thì cột delta hiện "—".
+ */
+export const ChannelTable = ({ dropoff }: ChannelTableProps) => {
   const t = useTranslations('portalV2.dropoff');
-  const steps = dropoff.steps;
-  const avg = Math.round(
-    (1000 * (steps[steps.length - 1]?.count ?? 0)) / (steps[0]?.count || 1)
-  );
   const max = Math.max(...dropoff.channels.map(row => row.buyersPer1000), 1);
+  const totalSessions = dropoff.channels.reduce(
+    (total, row) => total + row.sessions,
+    0
+  );
+  const totalBuyers = dropoff.channels.reduce(
+    (total, row) => total + (row.buyersPer1000 * row.sessions) / 1000,
+    0
+  );
+  const avg = totalSessions
+    ? Math.round((1000 * totalBuyers) / totalSessions)
+    : 0;
 
   const rowClass =
     'grid grid-cols-[1.5fr_1.6fr_1.6fr_1.1fr] items-center gap-3.5 border-b border-[var(--pv2-hair)] px-3.5 py-2.5 text-xs last:border-b-0';
@@ -46,35 +56,25 @@ export const ChannelTable = ({ dropoff, onSelectLeak }: ChannelTableProps) => {
           {dropoff.channels.map(row => {
             const delta = avg
               ? Math.round((100 * (row.buyersPer1000 - avg)) / avg)
-              : 0;
+              : null;
             const cls =
-              delta <= -25
-                ? 'text-[var(--pv2-error)]'
-                : delta >= 25
-                  ? 'text-[var(--pv2-success)]'
-                  : 'text-[var(--pv2-faint)]';
+              delta == null
+                ? 'text-[var(--pv2-faint)]'
+                : delta <= -25
+                  ? 'text-[var(--pv2-error)]'
+                  : delta >= 25
+                    ? 'text-[var(--pv2-success)]'
+                    : 'text-[var(--pv2-faint)]';
             const barCls =
-              delta <= -25
+              delta != null && delta <= -25
                 ? 'bg-[var(--pv2-error)]'
-                : delta >= 25
+                : delta != null && delta >= 25
                   ? 'bg-[var(--pv2-success)]'
                   : 'bg-[var(--pv2-faint)]';
             return (
-              <div
-                key={row.name}
-                className={cn(
-                  rowClass,
-                  row.leakId &&
-                    'bg-[color-mix(in_srgb,var(--pv2-error)_3%,var(--pv2-paper))]'
-                )}
-              >
-                <span className='flex flex-wrap items-center gap-1.5 font-semibold text-[var(--pv2-ink)]'>
+              <div key={row.name} className={rowClass}>
+                <span className='font-semibold text-[var(--pv2-ink)] capitalize'>
                   {row.name}
-                  {row.leakId ? (
-                    <span className='rounded-[5px] bg-[color-mix(in_srgb,var(--pv2-error)_10%,var(--pv2-paper))] px-1.5 py-px text-[9.5px] font-bold tracking-[0.03em] text-[var(--pv2-error)]'>
-                      {t('leakFound')}
-                    </span>
-                  ) : null}
                 </span>
                 <span className='flex items-center gap-2'>
                   <i
@@ -97,20 +97,7 @@ export const ChannelTable = ({ dropoff, onSelectLeak }: ChannelTableProps) => {
                   </b>
                 </span>
                 <span className={cn('font-semibold', cls)}>
-                  {delta > 0 ? '+' : ''}
-                  {delta}%
-                  {row.leakId ? (
-                    <>
-                      {' · '}
-                      <button
-                        type='button'
-                        onClick={() => onSelectLeak(row.leakId!)}
-                        className='font-semibold text-[var(--pv2-electric)] hover:underline'
-                      >
-                        {t('seeWhy')}
-                      </button>
-                    </>
-                  ) : null}
+                  {delta == null ? '—' : `${delta > 0 ? '+' : ''}${delta}%`}
                 </span>
               </div>
             );

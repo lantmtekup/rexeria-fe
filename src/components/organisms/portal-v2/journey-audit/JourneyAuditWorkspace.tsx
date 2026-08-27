@@ -14,7 +14,7 @@ import {
   countOffTouchpoints,
   downstreamCount,
   findTouchpoint,
-  flowStats,
+  tpFlowStats,
   leaksForTouchpoint,
   liveConns,
   productScore,
@@ -31,9 +31,14 @@ import {
   type JourneyAuditViewState,
 } from '@/lib/portal-v2/journey-audit/params';
 import {
+  authorizeSource,
+  type AuthorizeOutcome,
+} from '@/lib/portal-v2/journey-audit/authorize';
+import {
   connectAuditSource,
   useAuditSources,
 } from '@/lib/portal-v2/journey-audit/sourcesStore';
+import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 import type {
   AuditDropoff,
   JourneyAuditBundle,
@@ -67,7 +72,9 @@ export const JourneyAuditWorkspace = ({
   initialError,
 }: JourneyAuditWorkspaceProps) => {
   const t = useTranslations('portalV2.journeyAudit');
+  const tSources = useTranslations('portalV2.sources');
   const router = useRouter();
+  const live = bundle.live;
 
   const [productId, setProductId] = useState<string>(() => {
     const found = bundle.products.find(p => p.id === initialState.productId);
@@ -129,6 +136,57 @@ export const JourneyAuditWorkspace = ({
     []
   );
 
+  const handleAuthorize = useCallback(
+    async (
+      provider: string,
+      fields: Record<string, string>
+    ): Promise<AuthorizeOutcome | 'error'> => {
+      try {
+        const outcome = await authorizeSource(
+          provider,
+          provider === 'shopify' ? fields['Store domain'] : undefined
+        );
+        if (outcome === 'opened') {
+          toast(tSources('toastAuthorizeOpened', { name: provider }));
+        } else {
+          toast(tSources('toastAuthorizePending', { name: provider }));
+        }
+        return outcome;
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : tSources('actionFailed')
+        );
+        return 'error';
+      }
+    },
+    [tSources]
+  );
+
+  const handleRunAudit = useCallback(async () => {
+    if (!live || !product) {
+      toast(t('toastRunQueued'));
+      return;
+    }
+    try {
+      // POST /v1/audit/products/:id/runs rồi poll ngắn GET /v1/audit/runs/:id
+      // — worker là Phase 3 nên thường dừng ở `queued`.
+      const run = await rexerV2Api.audit.createRun(product.auditId);
+      toast(t('toastRunQueued'));
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const polled = await rexerV2Api.audit.run(run.id);
+        if (polled.status !== 'queued') {
+          toast(t('runStatus', { status: polled.status }));
+          if (polled.status === 'succeeded') router.refresh();
+          return;
+        }
+      }
+      toast(t('runStillQueued'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('toastRunQueued'));
+    }
+  }, [live, product, router, t]);
+
   if (!product || !journey || !flow) return null;
 
   const goLeak = (leakId: string) =>
@@ -160,7 +218,7 @@ export const JourneyAuditWorkspace = ({
       tp: found.tp,
       stageName: found.stage.name,
       stale: state === 'stale',
-      stats: flowStats(flow, conns, found.tp.id),
+      stats: tpFlowStats(flow, conns, found.tp),
       leaks: leaksForTouchpoint(dropoff, found.tp.id),
       downstream: downstreamCount(conns, found.tp.id),
     };
@@ -198,7 +256,12 @@ export const JourneyAuditWorkspace = ({
               {t('experienceScore')}
             </span>
           ) : null}
-          <Button variant='primary' onClick={() => toast(t('toastRunQueued'))}>
+          <Button
+            variant='primary'
+            onClick={() => {
+              void handleRunAudit();
+            }}
+          >
             <ScanSearch aria-hidden />
             {t('runAudit')}
           </Button>
@@ -377,7 +440,9 @@ export const JourneyAuditWorkspace = ({
         source={wizardSource}
         config={wizardConfig}
         open={Boolean(wizardProvider)}
+        live={live}
         onClose={() => setWizardProvider(null)}
+        onAuthorize={handleAuthorize}
         onComplete={handleWizardComplete}
         onOpenJourney={() => setWizardProvider(null)}
       />
