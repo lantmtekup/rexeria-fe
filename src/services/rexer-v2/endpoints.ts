@@ -101,6 +101,19 @@ import type {
   RxRunAutomationRequest,
   RxRunAutomationResponse,
 } from './types/automation';
+import type {
+  RxAuditFlow,
+  RxAuditJourney,
+  RxAuditLeaksResponse,
+  RxAuditProductsResponse,
+  RxAuditRun,
+  RxAuditTouchpointDetail,
+} from './types/audit';
+import type {
+  RxSourceConnectResponse,
+  RxSourceSyncResponse,
+  RxSourcesResponse,
+} from './types/sources';
 
 /**
  * Lát cắt §8 → query string. Bỏ khoá rỗng: `campaign_id=` là 400
@@ -115,6 +128,67 @@ const intelQuery = (q: RxIntelQuery): Record<string, string> => {
 };
 
 export const rexerV2Api = {
+  // ── Journey Audit (`/v1/audit/*`) — BE đang xây song song đúng shape này.
+  // Phase 1: FE phục vụ mock qua services/portal-v2/journeyAudit.ts; các hàm
+  // dưới đây là hợp đồng để lúc nối thật chỉ đổi nguồn, không đổi hình.
+  audit: {
+    /** `GET /v1/audit/products` — danh mục sản phẩm kèm điểm audit. */
+    products: (brandId?: string) =>
+      rxV2<RxAuditProductsResponse>('/audit/products', {
+        ...(brandId ? { query: { brand_id: brandId } } : {}),
+      }),
+
+    /** `GET /v1/audit/products/{id}/journey` — stage × touchpoint + handoffs. */
+    journey: (productId: string) =>
+      rxV2<RxAuditJourney>(`/audit/products/${productId}/journey`),
+
+    /** `GET /v1/audit/touchpoints/{id}` — chi tiết drawer. */
+    touchpoint: (touchpointId: string) =>
+      rxV2<RxAuditTouchpointDetail>(`/audit/touchpoints/${touchpointId}`),
+
+    /** `GET /v1/audit/products/{id}/flow` — DAG dòng chảy giữa touchpoint. */
+    flow: (productId: string) =>
+      rxV2<RxAuditFlow>(`/audit/products/${productId}/flow`),
+
+    /** `GET /v1/audit/products/{id}/leaks` — phễu + leak xếp hạng + kênh. */
+    leaks: (productId: string) =>
+      rxV2<RxAuditLeaksResponse>(`/audit/products/${productId}/leaks`),
+
+    /** `POST /v1/audit/products/{id}/runs` — xếp hàng một lượt audit mới. */
+    createRun: (productId: string) =>
+      rxV2<RxAuditRun>(`/audit/products/${productId}/runs`, {
+        method: 'POST',
+      }),
+
+    /** `GET /v1/audit/runs/{id}` — trạng thái lượt audit. */
+    run: (runId: string) => rxV2<RxAuditRun>(`/audit/runs/${runId}`),
+  },
+
+  // ── Sources (`/v1/sources*`) — hub tích hợp read-only nuôi Journey Audit ──
+  sources: {
+    /** `GET /v1/sources` — nguồn đã kết nối / cần xử lý. */
+    list: () => rxV2<RxSourcesResponse>('/sources'),
+
+    /** `GET /v1/sources/catalog` — nguồn có thể kết nối thêm. */
+    catalog: () => rxV2<RxSourcesResponse>('/sources/catalog'),
+
+    /** `POST /v1/sources/{provider}/connect` — trả `authorize_url` để mở OAuth. */
+    connect: (provider: string) =>
+      rxV2<RxSourceConnectResponse>(`/sources/${provider}/connect`, {
+        method: 'POST',
+      }),
+
+    /** `POST /v1/sources/{id}/sync` — xếp hàng một lượt sync. */
+    sync: (sourceId: string) =>
+      rxV2<RxSourceSyncResponse>(`/sources/${sourceId}/sync`, {
+        method: 'POST',
+      }),
+
+    /** `DELETE /v1/sources/{id}` — ngắt kết nối; lịch sử audit giữ lại. */
+    remove: (sourceId: string) =>
+      rxV2<void>(`/sources/${sourceId}`, { method: 'DELETE' }),
+  },
+
   // ── Automation — v2-only. BE tự chấm readiness và tự dựng master draft. ──
   automations: {
     /**
