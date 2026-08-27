@@ -5,12 +5,12 @@ import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { Modal } from '@/components/molecules/portal-v2/Modal';
-import { EXPERIMENT_SHIP_GATE } from '@/lib/portal-v2/mining/constants';
-import { getExperimentLift } from '@/lib/portal-v2/mining/helpers';
-import type { MiningExperiment } from '@/lib/portal-v2/mining/types';
+import { EXPERIMENT_SHIP_GATE } from '@/lib/portal-v2/experiments/constants';
+import { getExperimentLift } from '@/lib/portal-v2/experiments/helpers';
+import type { Experiment } from '@/lib/portal-v2/experiments/types';
 
 type ExperimentEndModalProps = {
-  experiment: MiningExperiment | null;
+  experiment: Experiment | null;
   open: boolean;
   onClose: () => void;
   onStop: () => void;

@@ -12,8 +12,8 @@ import type { AuditSource, AuditSourceStatus } from './types';
  * layout: ba màn Journey / Sources / Drop-off là ba route RSC riêng, nhưng
  * cùng đọc một bộ nguồn — connect ở Sources phải làm ghost card ở Journey
  * biến mất và Drop-off mở khoá ngay trong cùng phiên điều hướng client
- * (FR-D9), mà layout thì không còn được phép giữ provider mock (đã gỡ
- * MiningDataProvider).
+ * (FR-D9), mà layout thì không còn được phép giữ provider mock nào (provider
+ * của module Mining cũ đã bị gỡ khỏi layout).
  */
 
 type SourceOverride = {

@@ -1,7 +1,7 @@
 import { cn } from '@/lib/cn';
-import type { MiningExperimentStatus } from '@/lib/portal-v2/mining/types';
+import type { ExperimentStatus } from '@/lib/portal-v2/experiments/types';
 
-const STATUS_CLASSES: Record<MiningExperimentStatus, string> = {
+const STATUS_CLASSES: Record<ExperimentStatus, string> = {
   running: 'bg-[var(--pv2-electric-soft)] text-[var(--pv2-electric)]',
   draft: 'bg-[var(--pv2-canvas)] text-[var(--pv2-mut)]',
   stopped:
@@ -11,7 +11,7 @@ const STATUS_CLASSES: Record<MiningExperimentStatus, string> = {
 };
 
 type ExperimentStatusChipProps = {
-  status: MiningExperimentStatus;
+  status: ExperimentStatus;
   label: string;
 };
 

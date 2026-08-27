@@ -21,28 +21,27 @@ import { ExperimentEndModal } from '@/components/organisms/portal-v2/experiments
 import { ExperimentStatusChip } from '@/components/organisms/portal-v2/experiments/ExperimentStatusChip';
 import { cn } from '@/lib/cn';
 import { writeExperimentIdParam } from '@/lib/portal-v2/experiments/idParam';
-import { EXPERIMENT_SHIP_GATE } from '@/lib/portal-v2/mining/constants';
+import { EXPERIMENT_SHIP_GATE } from '@/lib/portal-v2/experiments/constants';
 import {
   findExperimentOpportunity,
   findExperimentOption,
-  formatMiningCount,
-  formatMiningMoney,
   getExperimentCvr,
   getExperimentInFlight,
   getExperimentLift,
   getExperimentRecoveredMonthly,
-} from '@/lib/portal-v2/mining/helpers';
-import { useMiningData } from '@/lib/portal-v2/mining/MiningDataProvider';
+} from '@/lib/portal-v2/experiments/helpers';
+import { useExperimentsData } from '@/lib/portal-v2/experiments/ExperimentsDataProvider';
 import type {
-  MiningExperiment,
-  MiningExperimentStatus,
-} from '@/lib/portal-v2/mining/types';
+  Experiment,
+  ExperimentStatus,
+} from '@/lib/portal-v2/experiments/types';
+import { formatCount, formatMoney } from '@/lib/portal-v2/format';
 
 type ExperimentsWorkspaceProps = {
   initialExperimentId: string | null;
 };
 
-const isActiveExperiment = (experiment: MiningExperiment): boolean =>
+const isActiveExperiment = (experiment: Experiment): boolean =>
   experiment.status === 'running' || experiment.status === 'draft';
 
 type SummaryTileProps = {
@@ -89,7 +88,7 @@ export const ExperimentsWorkspace = ({
   initialExperimentId,
 }: ExperimentsWorkspaceProps) => {
   const t = useTranslations('portalV2.experiments');
-  const { data, stopExperiment, concludeExperiment } = useMiningData();
+  const { data, stopExperiment, concludeExperiment } = useExperimentsData();
   const validInitialId = data.experiments.some(
     experiment => experiment.id === initialExperimentId
   )
@@ -121,7 +120,7 @@ export const ExperimentsWorkspace = ({
     experiment => experiment.status === 'running'
   ).length;
 
-  const statusLabel = (status: MiningExperimentStatus): string => {
+  const statusLabel = (status: ExperimentStatus): string => {
     if (status === 'running') return t('statusRunning');
     if (status === 'draft') return t('statusDraft');
     if (status === 'won') return t('statusWon');
@@ -165,7 +164,7 @@ export const ExperimentsWorkspace = ({
     );
   };
 
-  const renderRow = (experiment: MiningExperiment) => {
+  const renderRow = (experiment: Experiment) => {
     const opportunity = findExperimentOpportunity(experiment, data);
     const sessions = experiment.a.sess + experiment.b.sess;
     const lift = getExperimentLift(experiment);
@@ -189,7 +188,7 @@ export const ExperimentsWorkspace = ({
           {experiment.days
             ? t('daysAndSessions', {
                 days: experiment.days,
-                sessions: formatMiningCount(sessions),
+                sessions: formatCount(sessions),
               })
             : t('notStarted')}
         </span>
@@ -233,7 +232,7 @@ export const ExperimentsWorkspace = ({
             </p>
           </div>
           <Button asChild variant='primary'>
-            <Link href='/portal-v2/mining'>
+            <Link href='/portal-v2/journey-audit'>
               <Beaker aria-hidden />
               {t('newExperiment')}
             </Link>
@@ -248,14 +247,14 @@ export const ExperimentsWorkspace = ({
         >
           <SummaryTile
             label={t('shippedRecovery')}
-            value={formatMiningMoney(recovered)}
+            value={formatMoney(recovered)}
             note={t('perMonthRecovered')}
             icon={CheckCircle2}
             tone='success'
           />
           <SummaryTile
             label={t('inFlight')}
-            value={formatMiningMoney(inFlight)}
+            value={formatMoney(inFlight)}
             note={t('observedVariantGain')}
             icon={TrendingUp}
             tone='electric'
@@ -324,7 +323,7 @@ export const ExperimentsWorkspace = ({
             <div className='mt-4 flex flex-wrap items-end justify-between gap-4'>
               <div className='min-w-0'>
                 <Link
-                  href={`/portal-v2/mining?opp=${selected.from}`}
+                  href='/portal-v2/journey-audit'
                   className='text-[10px] font-bold tracking-[0.12em] text-[var(--pv2-electric)] uppercase hover:underline'
                 >
                   {t('fromLeak', {
@@ -380,7 +379,7 @@ export const ExperimentsWorkspace = ({
                   : '—'
               }
               note={t('sessionCount', {
-                count: formatMiningCount(selected.a.sess),
+                count: formatCount(selected.a.sess),
               })}
               icon={Gauge}
             />
@@ -392,7 +391,7 @@ export const ExperimentsWorkspace = ({
                   : '—'
               }
               note={t('sessionCount', {
-                count: formatMiningCount(selected.b.sess),
+                count: formatCount(selected.b.sess),
               })}
               icon={FlaskConical}
               tone='electric'
@@ -414,7 +413,7 @@ export const ExperimentsWorkspace = ({
               note={
                 selected.status === 'won'
                   ? t('recoveredMonthly', {
-                      value: formatMiningMoney(recoveredMonthly),
+                      value: formatMoney(recoveredMonthly),
                     })
                   : gateOpen
                     ? t('gateOpen')

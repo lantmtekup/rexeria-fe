@@ -1,7 +1,7 @@
 /**
- * Formatter dùng chung cho Portal V2 — trước đây là
- * `formatMiningMoney`/`formatMiningCount` trong `lib/portal-v2/mining/helpers`;
- * chuyển ra đây khi gỡ module Mining vì Analytics và Experiments vẫn dùng.
+ * Formatter dùng chung cho Portal V2 — tách ra từ helpers của module Mining
+ * cũ khi module đó được thay bằng Journey Audit; Analytics và Experiments
+ * vẫn dùng chung hai hàm này.
  */
 
 export const formatMoney = (value: number): string =>
