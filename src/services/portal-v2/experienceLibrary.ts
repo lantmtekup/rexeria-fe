@@ -201,6 +201,47 @@ const fetchExperienceCategory = (
  * Không có `'use client'`: hàm này chạy ở server component cho lần vẽ đầu, và
  * chạy lại từ workspace khi người dùng gõ tìm kiếm.
  */
+/** Trần tra tên chiến dịch. Một brand thực tế có vài chục, không tới mức này. */
+const CAMPAIGN_NAME_LIMIT = 100;
+
+/**
+ * Điền TÊN chiến dịch cho những bản copy đã gắn hạng mục.
+ *
+ * `GET /v1/experiences` chỉ trả `campaign_id`. Không có tên thì màn hình chỉ
+ * nói được "đây là bản copy sản phẩm" — người dùng nhìn ba thẻ tên na ná nhau
+ * trong tab Product copies và không có cách nào biết cái nào phục vụ chiến dịch
+ * nào. Tên sản phẩm thì đã có sẵn trên dây (`subject.name`), chỉ thiếu vế này.
+ *
+ * MỘT lời gọi cho cả danh sách, và chỉ gọi khi thật sự có mục cần tên. Hỏng thì
+ * trả nguyên danh sách: thiếu tên chiến dịch không đáng để cả thư viện trắng.
+ */
+const withCampaignNames = async (
+  items: ExperienceView[],
+  brandId: string | null
+): Promise<ExperienceView[]> => {
+  const needed = new Set(
+    items.map(x => x.campaignId).filter((id): id is string => Boolean(id))
+  );
+  if (needed.size === 0) return items;
+
+  let nameById: Map<string, string>;
+  try {
+    const res = await rexerV2Api.campaigns.list({
+      limit: CAMPAIGN_NAME_LIMIT,
+      ...(brandId ? { brand_id: brandId } : {}),
+    });
+    nameById = new Map((res.items ?? []).map(c => [c.id, c.name]));
+  } catch {
+    return items;
+  }
+
+  return items.map(x => {
+    if (!x.campaignId) return x;
+    const name = nameById.get(x.campaignId);
+    return name ? { ...x, campaignName: name } : x;
+  });
+};
+
 export const fetchExperienceLibrary = async (
   query: ExperienceLibraryQuery = {}
 ): Promise<ExperienceLibraryResult> => {
@@ -280,9 +321,10 @@ export const fetchExperienceLibrary = async (
         fetchMasterDraftIds(query.brandId ?? undefined),
       ]);
       return {
-        items: ranked
-          .filter(x => !masterDraftIds.has(x.id))
-          .map(v2ToExperienceView),
+        items: await withCampaignNames(
+          ranked.filter(x => !masterDraftIds.has(x.id)).map(v2ToExperienceView),
+          query.brandId ?? null
+        ),
         error: null,
       };
     }
@@ -306,7 +348,13 @@ export const fetchExperienceLibrary = async (
       return true;
     });
 
-    return { items: items.map(v2ToExperienceView), error: null };
+    return {
+      items: await withCampaignNames(
+        items.map(v2ToExperienceView),
+        query.brandId ?? null
+      ),
+      error: null,
+    };
   } catch (err) {
     return {
       items: [],

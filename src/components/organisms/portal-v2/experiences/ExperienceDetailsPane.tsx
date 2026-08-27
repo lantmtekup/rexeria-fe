@@ -200,6 +200,41 @@ export const ExperienceDetailsPane = ({
                 </span>
               )}
             </ReadField>
+            {/*
+              ĐANG PHỤC VỤ CÁI GÌ — chỉ hiện với bản copy đã gắn hạng mục.
+              Không có hai dòng này thì tab "Bản copy sản phẩm" bày ra mấy thẻ
+              tên na ná nhau mà không nói được thẻ nào thuộc chiến dịch nào,
+              sản phẩm nào. Với một bản copy thì đó chính là danh tính của nó.
+            */}
+            {experience.itemId ? (
+              <>
+                <ReadField label={t('fieldCampaign')}>
+                  {experience.campaignName ? (
+                    experience.campaignName
+                  ) : (
+                    <span className='text-[12.5px] font-normal text-[var(--pv2-faint)]'>
+                      {t('campaignUnknown')}
+                    </span>
+                  )}
+                </ReadField>
+                <ReadField
+                  label={
+                    experience.subject?.kind === 'topic'
+                      ? t('fieldTopic')
+                      : t('fieldProduct')
+                  }
+                >
+                  {experience.subject?.name ? (
+                    experience.subject.name
+                  ) : (
+                    <span className='text-[12.5px] font-normal text-[var(--pv2-faint)]'>
+                      {t('subjectUnknown')}
+                    </span>
+                  )}
+                </ReadField>
+              </>
+            ) : null}
+
             {/* Ba dòng dưới KHÔNG có trong prototype. Giữ vì chúng là thứ duy
                 nhất trên màn này nối bản ghi với trang thật ngoài kia. */}
             <ReadField label={t('fieldSlug')}>

@@ -55,8 +55,10 @@ import {
   countByState,
   filterExperiences,
   findById,
+  isExchangeShelf,
 } from '@/lib/portal-v2/experiences/helpers';
 import { writeExchangePreviewParam } from '@/lib/portal-v2/exchange/previewParam';
+import { clearExperienceOpenParam } from '@/lib/portal-v2/experiences/openParam';
 import type {
   ExperienceFilters,
   ExperienceState,
@@ -77,6 +79,13 @@ type ExperiencesWorkspaceProps = {
   brandId?: string | null;
   /** Experience id from `?preview=` — reopens that preview on a pasted link. */
   initialPreviewId?: string | null;
+  /**
+   * `?open=` — mở sẵn hộp CHI TIẾT của mục này, và nhảy sang tab chứa nó.
+   *
+   * Đường về từ màn Exchange sau khi bấm Thêm. Không có nó, người dùng bị thả
+   * lại giữa lưới và phải tự mò ra thứ mình vừa lấy.
+   */
+  initialOpenId?: string | null;
 };
 
 type ModalMode = 'detail' | 'preview' | null;
@@ -113,6 +122,7 @@ export const ExperiencesWorkspace = ({
   initialItems,
   initialError,
   initialPreviewId = null,
+  initialOpenId = null,
   brandId = null,
 }: ExperiencesWorkspaceProps) => {
   const t = useTranslations('portalV2.experiences');
@@ -126,6 +136,17 @@ export const ExperiencesWorkspace = ({
     if (!initialPreviewId) return null;
     const match = findById(initialItems, initialPreviewId);
     return match && canPreview(match) ? match : null;
+  });
+
+  /**
+   * `?open=` — cũng giải một lần lúc mount, cùng lý do như `?preview=`.
+   *
+   * `preview` thắng nếu cả hai cùng có: nó là link người dùng tự chia sẻ cho
+   * nhau, còn `open` do chính hệ thống gắn vào sau khi Thêm.
+   */
+  const [deepLinkedOpen] = useState<ExperienceView | null>(() => {
+    if (!initialOpenId || initialPreviewId) return null;
+    return findById(initialItems, initialOpenId) ?? null;
   });
 
   const [items, setItems] = useState<ExperienceView[]>(initialItems);
@@ -230,8 +251,12 @@ export const ExperiencesWorkspace = ({
 
   const [loadError, setLoadError] = useState<string | null>(initialError);
   const [searching, setSearching] = useState(false);
-  const [filters, setFilters] = useState<ExperienceFilters>(
-    EXPERIENCE_DEFAULT_FILTERS
+  const [filters, setFilters] = useState<ExperienceFilters>(() =>
+    // Nhảy sẵn sang tab CHỨA mục được mở. Không có vế này thì đóng hộp xong
+    // người dùng nhìn vào một lưới không hề có thứ họ vừa xem.
+    deepLinkedOpen
+      ? { ...EXPERIENCE_DEFAULT_FILTERS, state: deepLinkedOpen.state }
+      : EXPERIENCE_DEFAULT_FILTERS
   );
   /** Category / Type / Objective / Evidence — collapsed until asked for. */
   const [refineOpen, setRefineOpen] = useState(false);
@@ -247,10 +272,10 @@ export const ExperiencesWorkspace = ({
   const [rank, setRank] = useState(false);
 
   const [activeId, setActiveId] = useState<string | null>(
-    deepLinkedExperience?.id ?? null
+    deepLinkedExperience?.id ?? deepLinkedOpen?.id ?? null
   );
   const [modalMode, setModalMode] = useState<ModalMode>(
-    deepLinkedExperience ? 'preview' : null
+    deepLinkedExperience ? 'preview' : deepLinkedOpen ? 'detail' : null
   );
   const [previewReturnToDetail, setPreviewReturnToDetail] = useState(false);
 
@@ -260,6 +285,16 @@ export const ExperiencesWorkspace = ({
   /** `?preview=` pointed at an experience that is gone or has nothing to render. */
   const deadPreviewLinkRef = useRef(
     Boolean(initialPreviewId) && deepLinkedExperience === null
+  );
+  /**
+   * `?open=` trỏ vào một mục không có trong thư viện.
+   *
+   * Hay gặp nhất ngay sau khi Thêm từ chợ: bản ghi vừa tạo chưa kịp vào danh
+   * sách. Nói một câu "đang cập nhật" còn hơn để người dùng nhìn một lưới im
+   * lặng và tưởng lượt Thêm vừa rồi thất bại.
+   */
+  const deadOpenLinkRef = useRef(
+    Boolean(initialOpenId) && !initialPreviewId && deepLinkedOpen === null
   );
 
   modalModeRef.current = modalMode;
@@ -578,13 +613,34 @@ export const ExperiencesWorkspace = ({
     toast.error(t('previewUnavailable'));
   }, [t]);
 
+  /*
+   * `?open=` đã làm xong việc của nó ⇒ xoá khỏi thanh địa chỉ.
+   *
+   * Còn để đó thì tải lại trang sẽ mở lại cái hộp người dùng vừa cố ý đóng, và
+   * link họ copy đi sẽ mang theo một mục chẳng liên quan gì tới người nhận.
+   */
+  useEffect(() => {
+    if (!initialOpenId) return;
+    if (deadOpenLinkRef.current) {
+      deadOpenLinkRef.current = false;
+      toast.message(t('openMissing'));
+    }
+    clearExperienceOpenParam();
+  }, [initialOpenId, t]);
+
   /* ── edit ────────────────────────────────────────────────────────────── */
 
   /* Same tab, so the canvas's own back button has a history entry to return to. */
   const handleEdit = useCallback(
     (experience: ExperienceView) => {
       if (!canEditCanvas(experience)) {
-        toast.error(t('editExternalHint'));
+        // Hai lý do khác nhau, hai câu khác nhau: kệ Exchange thì chỉ ra chỗ
+        // sửa đúng (Dùng rồi sửa bản copy), trang ngoài thì không có canvas.
+        toast.error(
+          isExchangeShelf(experience)
+            ? t('editShelfHint')
+            : t('editExternalHint')
+        );
         return;
       }
       router.push(canvasEditorHref(experience));

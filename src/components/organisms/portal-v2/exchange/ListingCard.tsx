@@ -24,6 +24,8 @@ type ListingCardProps = {
   onOpen: (listing: ExchangeListingView) => void;
   onAction: (listing: ExchangeListingView) => void;
   onPreview: (listing: ExchangeListingView) => void;
+  /** Món đã có trong thư viện — mở thẳng nó ở màn Experiences. */
+  onOpenInLibrary: (listing: ExchangeListingView) => void;
 };
 
 const cardShell = cn(
@@ -40,6 +42,7 @@ export const ListingCard = ({
   onOpen,
   onAction,
   onPreview,
+  onOpenInLibrary,
 }: ListingCardProps) => {
   const t = useTranslations('portalV2.exchange');
   const action = resolveActionState(listing, session);
@@ -101,15 +104,24 @@ export const ListingCard = ({
           {formatPrice(meta.price)}
         </span>
         <span className='flex-1' />
+        {/*
+          Đã có rồi thì đừng dừng ở một nhãn chết. Người dùng đọc "đã có" xong
+          câu hỏi kế tiếp luôn là "vậy nó nằm đâu" — trả lời ngay tại đây bằng
+          một cú bấm, thay vì để họ tự đi mò trong thư viện.
+        */}
         {action === 'added' ? (
           <Button
             variant='ghost'
             size='sm'
-            disabled
-            className='pointer-events-none whitespace-nowrap text-[#0e9d6e]'
+            className='whitespace-nowrap text-[#0e9d6e]'
+            title={t('inLibrary')}
+            onClick={e => {
+              e.stopPropagation();
+              onOpenInLibrary(listing);
+            }}
           >
             <Check className='size-3.5' strokeWidth={2.6} aria-hidden />
-            {t('inLibrary')}
+            {t('openInLibrary')}
           </Button>
         ) : null}
         {action === 'owned' ? (

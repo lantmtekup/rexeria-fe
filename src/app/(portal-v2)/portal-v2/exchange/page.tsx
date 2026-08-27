@@ -2,6 +2,10 @@ import { ExchangeWorkspace } from '@/components/organisms/portal-v2/exchange/Exc
 import { readExchangePreviewParam } from '@/lib/portal-v2/exchange/previewParam';
 import { readExchangeTabParam } from '@/lib/portal-v2/exchange/tabParam';
 import { fetchExchangeCatalog } from '@/services/portal-v2/exchangeCatalog';
+import {
+  buildAddedMap,
+  fetchExchangeOwnedIndex,
+} from '@/services/portal-v2/exchangeOwned';
 import { RxApiError } from '@/services/rexer/client';
 
 type PortalV2ExchangePageProps = {
@@ -16,7 +20,20 @@ export default async function PortalV2ExchangePage({
   const initialKind = readExchangeTabParam(params);
 
   try {
-    const { catalog, error, softError } = await fetchExchangeCatalog();
+    /*
+     * Song song, không nối đuôi: tra thư viện KHÔNG phụ thuộc catalog, nên nối
+     * tiếp nhau chỉ cộng dồn thời gian chờ vào lần mở trang.
+     *
+     * Tra ở SERVER chứ không phải sau khi trang hiện: nhãn "Đã có trong thư
+     * viện" phải đúng ngay từ lần vẽ đầu. Tính sau thì thẻ hiện nút Thêm trước
+     * rồi mới đổi — và trong khoảnh khắc đó người dùng đã kịp bấm.
+     */
+    const [catalogResult, ownedIndex] = await Promise.all([
+      fetchExchangeCatalog(),
+      fetchExchangeOwnedIndex(),
+    ]);
+    const { catalog, error, softError } = catalogResult;
+
     return (
       <ExchangeWorkspace
         initialCatalog={catalog}
@@ -24,6 +41,7 @@ export default async function PortalV2ExchangePage({
         softError={softError}
         initialPreviewId={initialPreviewId}
         initialKind={initialKind}
+        initialAdded={buildAddedMap(catalog, ownedIndex)}
       />
     );
   } catch (err) {

@@ -1,6 +1,7 @@
 import { BrandScopeBar } from '@/components/molecules/portal-v2/BrandScopeBar';
 import { ExperiencesWorkspace } from '@/components/organisms/portal-v2/experiences/ExperiencesWorkspace';
 import { readExchangePreviewParam } from '@/lib/portal-v2/exchange/previewParam';
+import { readExperienceOpenParam } from '@/lib/portal-v2/experiences/openParam';
 import { fetchExperienceLibrary } from '@/services/portal-v2/experienceLibrary';
 import { resolvePortalScope } from '@/services/portal-v2/scope';
 
@@ -13,6 +14,7 @@ export default async function PortalV2ExperiencesPage({
 }: PortalV2ExperiencesPageProps) {
   const sp = await searchParams;
   const initialPreviewId = readExchangePreviewParam(sp);
+  const initialOpenId = readExperienceOpenParam(sp);
   const scope = await resolvePortalScope(sp);
   const { items, error } = await fetchExperienceLibrary({
     brandId: scope.brandId,
@@ -33,6 +35,7 @@ export default async function PortalV2ExperiencesPage({
         initialItems={items}
         initialError={error ?? scope.error}
         initialPreviewId={initialPreviewId}
+        initialOpenId={initialOpenId}
       />
     </div>
   );

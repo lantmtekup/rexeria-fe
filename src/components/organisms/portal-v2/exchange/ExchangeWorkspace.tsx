@@ -1,7 +1,8 @@
 'use client';
 
-import { Loader2, Search, Sparkles } from 'lucide-react';
+import { Loader2, Search, Sparkles, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -11,6 +12,7 @@ import { BuyConfirmModal } from '@/components/organisms/portal-v2/exchange/BuyCo
 import { ExchangeDetailModal } from '@/components/organisms/portal-v2/exchange/ExchangeDetailModal';
 import { ExchangePreviewShell } from '@/components/organisms/portal-v2/exchange/ExchangePreviewShell';
 import { FeaturedStrip } from '@/components/organisms/portal-v2/exchange/FeaturedStrip';
+import { ObjectiveFilterHelp } from '@/components/organisms/portal-v2/exchange/ObjectiveFilterHelp';
 import { FilterChips } from '@/components/molecules/portal-v2/FilterChips';
 import type { PreviewItem } from '@/lib/portal-v2/preview/types';
 import { ListingCard } from '@/components/organisms/portal-v2/exchange/ListingCard';
@@ -30,6 +32,8 @@ import {
 } from '@/lib/portal-v2/exchange/helpers';
 import { writeExchangePreviewParam } from '@/lib/portal-v2/exchange/previewParam';
 import { writeExchangeTabParam } from '@/lib/portal-v2/exchange/tabParam';
+import { experienceOpenHref } from '@/lib/portal-v2/experiences/openParam';
+import { PORTAL_V2_BASE } from '@/lib/portal-v2/nav';
 import type {
   ExchangeFilters,
   ExchangeKind,
@@ -37,7 +41,6 @@ import type {
   ExchangeSessionState,
 } from '@/lib/portal-v2/exchange/types';
 import { cn } from '@/lib/cn';
-import { fetchExchangeCatalog } from '@/services/portal-v2/exchangeCatalog';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
@@ -52,9 +55,15 @@ type ExchangeWorkspaceProps = {
   initialPreviewId?: string | null;
   /** Kind tab from `?tab=` — restored on reload or shared links. */
   initialKind?: ExchangeKind | null;
+  /**
+   * `{ id thẻ: id món trong thư viện }` — món brand ĐÃ lấy về, tra ở server.
+   *
+   * Nhờ nó mà "Đã có trong thư viện" sống qua lần tải lại trang. Trước đây
+   * trạng thái này chỉ nằm trong phiên: tải lại là quên, và người dùng lấy
+   * trùng bao nhiêu lần cũng được mà không ai cảnh báo.
+   */
+  initialAdded?: Record<string, string>;
 };
-
-const SEARCH_DEBOUNCE_MS = 350;
 
 export const ExchangeWorkspace = ({
   initialCatalog,
@@ -62,8 +71,10 @@ export const ExchangeWorkspace = ({
   softError: initialSoftError = null,
   initialPreviewId = null,
   initialKind = null,
+  initialAdded,
 }: ExchangeWorkspaceProps) => {
   const t = useTranslations('portalV2.exchange');
+  const router = useRouter();
 
   /**
    * Resolved at mount only: a deep link opens the preview on the first paint
@@ -75,19 +86,36 @@ export const ExchangeWorkspace = ({
     return match && isPreviewable(match) ? match : null;
   });
 
-  const [catalog, setCatalog] = useState(initialCatalog);
-  const [loadError, setLoadError] = useState(initialError);
-  const [softError, setSoftError] = useState(initialSoftError);
-  const [searching, setSearching] = useState(false);
+  /**
+   * Catalog nạp MỘT LẦN ở server rồi đứng yên — mọi bộ lọc, kể cả ô tìm kiếm,
+   * chạy hết trên tập này.
+   *
+   * Bản trước gõ một ký tự là nạp lại cả ba kho sau 350ms, và trong lúc chờ thì
+   * lưới bị xoá trắng thay bằng vòng xoay — nên sửa từ "landing" thành "landing
+   * page" làm màn hình nháy vài lần. Bản sau đó chuyển sang nhấn Enter mới hỏi
+   * server, nhưng vẫn còn một cái bẫy: lượt tìm ấy THU HẸP luôn catalog, nên
+   * xoá trắng ô lại phải chờ một lượt nạp nữa mới về đủ.
+   *
+   * Nay không có lượt hỏi nào cả. Ba nguồn đã nạp tới trần 200 mỗi nguồn — đo
+   * thật là 13 trải nghiệm gốc + ~109 block + 11 định dạng quảng cáo, tức là
+   * TOÀN BỘ hàng đang có. Lọc tại chỗ vì thế cho đúng kết quả mà server sẽ trả,
+   * tức thì, và xoá ô là về đủ ngay lập tức.
+   *
+   * KHI NÀO PHẢI XEM LẠI: một nguồn chạm trần 200. Lúc đó phần vượt trần không
+   * nằm trong tập này, và tìm tại chỗ sẽ im lặng bỏ sót — cần trả lại một đường
+   * hỏi server, kèm chỗ nói cho người dùng biết là còn hàng chưa hiện.
+   */
+  const catalog = initialCatalog;
+  const loadError = initialError;
+  const softError = initialSoftError;
   const [filters, setFilters] = useState<ExchangeFilters>(() => ({
     ...EXCHANGE_DEFAULT_FILTERS,
     kind: initialKind ?? EXCHANGE_DEFAULT_FILTERS.kind,
   }));
-  const [debouncedQ, setDebouncedQ] = useState('');
-  const [session, setSession] = useState<ExchangeSessionState>({
+  const [session, setSession] = useState<ExchangeSessionState>(() => ({
     owned: {},
-    added: {},
-  });
+    added: { ...(initialAdded ?? {}) },
+  }));
   const [activeListing, setActiveListing] =
     useState<ExchangeListingView | null>(deepLinkedListing);
   const [modalMode, setModalMode] = useState<ModalMode>(
@@ -96,7 +124,6 @@ export const ExchangeWorkspace = ({
   const [previewReturnToDetail, setPreviewReturnToDetail] = useState(false);
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [installing, setInstalling] = useState(false);
-  const skipFirstSearch = useRef(true);
   const modalModeRef = useRef(modalMode);
   /** `?preview=` pointed at a listing that is gone or has nothing to render. */
   const deadPreviewLinkRef = useRef(
@@ -131,53 +158,24 @@ export const ExchangeWorkspace = ({
     };
   }, []);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setDebouncedQ(filters.q.trim());
-    }, SEARCH_DEBOUNCE_MS);
-    return () => window.clearTimeout(timer);
-  }, [filters.q]);
-
-  useEffect(() => {
-    if (skipFirstSearch.current) {
-      skipFirstSearch.current = false;
-      return;
-    }
-
-    let cancelled = false;
-    setSearching(true);
-
-    fetchExchangeCatalog({ q: debouncedQ || undefined })
-      .then(result => {
-        if (cancelled) return;
-        setCatalog(result.catalog);
-        setLoadError(result.error);
-        setSoftError(result.softError);
-      })
-      .catch(err => {
-        if (cancelled) return;
-        setLoadError(
-          err instanceof RxApiError
-            ? err.message
-            : err instanceof Error
-              ? err.message
-              : 'Failed to load catalog'
-        );
-        setCatalog([]);
-        setSoftError(null);
-      })
-      .finally(() => {
-        if (!cancelled) setSearching(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [debouncedQ]);
+  /**
+   * Tập đã áp MỌI bộ lọc TRỪ loại — dùng chung cho lưới và cho số đếm trên tab.
+   *
+   * Đếm phải nằm trên cùng tập với lưới, nếu không tab ghi "13" mà bấm vào chỉ
+   * thấy 2 vì từ khoá đang lọc bớt. Đó cũng là con số mà chỉ báo "còn N kết quả
+   * ở tab khác" sẽ đọc.
+   */
+  const scoped = useMemo(
+    () => filterListings(catalog, { ...filters, kind: 'all' }),
+    [catalog, filters]
+  );
 
   const filtered = useMemo(
-    () => filterListings(catalog, { ...filters, q: '' }),
-    [catalog, filters]
+    () =>
+      filters.kind === 'all'
+        ? scoped
+        : scoped.filter(r => r.meta.kind === filters.kind),
+    [scoped, filters.kind]
   );
 
   const kindTabs = useMemo(
@@ -185,11 +183,37 @@ export const ExchangeWorkspace = ({
       EXCHANGE_KINDS.map(k => ({
         id: k.id,
         label: t(k.labelKey),
-        count: countByKind(catalog, k.id),
+        count: countByKind(scoped, k.id),
       })),
-    [catalog, t]
+    [scoped, t]
   );
 
+  /**
+   * Các tab KHÁC đang có kết quả cho bộ lọc hiện tại.
+   *
+   * Không còn tab "Tất cả" thì ô tìm kiếm — vốn tìm xuyên cả ba loại — sẽ để
+   * người dùng đứng trước một lưới trống trong khi hàng nằm ngay tab bên cạnh.
+   * Dải này là thứ nói ra điều đó; thiếu nó thì việc bỏ tab "Tất cả" chỉ đổi
+   * một lỗi cũ lấy một lỗi mới.
+   */
+  const otherKindHits = useMemo(
+    () =>
+      EXCHANGE_KINDS.filter(k => k.id !== filters.kind)
+        .map(k => ({
+          id: k.id,
+          label: t(k.labelKey),
+          count: countByKind(scoped, k.id),
+        }))
+        .filter(k => k.count > 0),
+    [scoped, filters.kind, t]
+  );
+
+  /*
+   * KHÔNG gắn chú thích rê chuột lên từng chip: nó chồng lên lưới, che mất
+   * đúng thứ người dùng đang nhìn, và chỉ trả lời được một chip một lúc. Toàn
+   * bộ phần giải thích nằm ở dấu hỏi cạnh chữ "Mục tiêu" (`ObjectiveFilterHelp`),
+   * nơi cả bốn hiện cạnh nhau.
+   */
   const objectiveOptions = useMemo(
     () =>
       EXCHANGE_OBJECTIVES.map(o => ({
@@ -322,6 +346,8 @@ export const ExchangeWorkspace = ({
       }
 
       setInstalling(true);
+      /** Id của món vừa tạo trong thư viện — đích để dẫn người dùng tới. */
+      let libraryId: string | null = null;
       try {
         if (listing.exchangeItemId) {
           // Món trên CHỢ (kể cả kind='block') — hợp đồng Exchange cố ý không
@@ -332,6 +358,7 @@ export const ExchangeWorkspace = ({
           // `source === 'block'` bên dưới, vì item block trên chợ cũng mang
           // `source: 'block'` nhưng không có `blockId`.
           const exp = await rexerV2Api.exchange.add(listing.exchangeItemId);
+          libraryId = exp.id;
           setSession(prev => ({
             ...prev,
             added: { ...prev.added, [listing.id]: exp.id },
@@ -345,6 +372,7 @@ export const ExchangeWorkspace = ({
           const block = await rexerApi.blocks.clone(listing.blockId, {
             name: `${listing.name} (Exchange)`,
           });
+          libraryId = block.id;
           setSession(prev => ({
             ...prev,
             added: { ...prev.added, [listing.id]: block.id },
@@ -363,6 +391,7 @@ export const ExchangeWorkspace = ({
             template_id: listing.templateId,
             name: `${listing.name} (Exchange)`,
           });
+          libraryId = page.id;
           setSession(prev => ({
             ...prev,
             added: { ...prev.added, [listing.id]: page.id },
@@ -370,6 +399,18 @@ export const ExchangeWorkspace = ({
         }
         toast.success(t('addedToast', { name: listing.name }));
         handleCloseModal();
+
+        /*
+         * DẪN NGƯỜI DÙNG ĐI TIẾP, đừng thả lại giữa lưới.
+         *
+         * Đây là khoảnh khắc người ta vừa quyết xong và đang có đà. Bản trước
+         * chỉ hiện một thông báo rồi đóng hộp — muốn dùng tiếp phải tự sang
+         * thư viện, mò đúng tab, mò đúng thẻ, mở ra, mới thấy nút "Dùng trải
+         * nghiệm này". Bốn bước mò mẫm ở đúng chỗ đắt giá nhất của cả phễu.
+         */
+        if (libraryId) {
+          router.push(experienceOpenHref(PORTAL_V2_BASE, libraryId));
+        }
       } catch (err) {
         const msg =
           err instanceof RxApiError
@@ -382,7 +423,7 @@ export const ExchangeWorkspace = ({
         setInstalling(false);
       }
     },
-    [workspaceId, handleCloseModal, t]
+    [workspaceId, handleCloseModal, router, t]
   );
 
   const handleAction = useCallback(
@@ -423,6 +464,24 @@ export const ExchangeWorkspace = ({
     setFilters(prev => ({ ...prev, kind }));
     writeExchangeTabParam(kind);
   };
+
+  const handleSearchChange = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, q: value }));
+  }, []);
+
+  const handleSearchClear = useCallback(() => {
+    setFilters(prev => ({ ...prev, q: '' }));
+  }, []);
+
+  /** Mở món đã lấy về, ngay tại chỗ nó nằm trong thư viện. */
+  const handleOpenInLibrary = useCallback(
+    (listing: ExchangeListingView) => {
+      const libraryId = session.added[listing.id];
+      if (!libraryId) return;
+      router.push(experienceOpenHref(PORTAL_V2_BASE, libraryId));
+    },
+    [session.added, router]
+  );
 
   return (
     <div className='flex min-h-0 flex-col'>
@@ -489,10 +548,11 @@ export const ExchangeWorkspace = ({
             </div>
 
             <div className='mb-3.5 flex flex-wrap items-center gap-2'>
-              <label
+              <div
+                role='search'
                 className={cn(
                   'flex min-w-[250px] flex-1 items-center gap-2 rounded-[10px]',
-                  'border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-[11px] py-2 text-[var(--pv2-faint)]',
+                  'border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] py-2 pr-1.5 pl-[11px] text-[var(--pv2-faint)]',
                   'transition-colors focus-within:border-[var(--pv2-violet)]'
                 )}
               >
@@ -502,19 +562,36 @@ export const ExchangeWorkspace = ({
                   aria-hidden
                 />
                 <input
-                  type='search'
+                  // `type='text'`, KHÔNG `search`: nút X mặc định của trình
+                  // duyệt không đi qua state của React, nên hai đường xoá sẽ
+                  // lệch nhau. Nút X bên dưới là đường DUY NHẤT.
+                  type='text'
                   value={filters.q}
-                  onChange={e =>
-                    setFilters(prev => ({ ...prev, q: e.target.value }))
-                  }
+                  onChange={e => handleSearchChange(e.target.value)}
                   placeholder={t('searchPlaceholder')}
                   aria-label={t('searchAria')}
                   className='min-w-0 flex-1 border-0 bg-transparent text-[12.5px] text-[var(--pv2-ink)] outline-none placeholder:text-[var(--pv2-faint)]'
                 />
-              </label>
 
-              <span className='ml-1.5 self-center text-[11px] font-semibold tracking-[0.04em] text-[var(--pv2-faint)] uppercase'>
+                {filters.q ? (
+                  <button
+                    type='button'
+                    onClick={handleSearchClear}
+                    aria-label={t('searchClear')}
+                    className={cn(
+                      'grid size-6 shrink-0 place-items-center rounded-md',
+                      'text-[var(--pv2-faint)] transition-colors hover:text-[var(--pv2-ink)]',
+                      'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
+                    )}
+                  >
+                    <X className='size-3.5' strokeWidth={2.2} aria-hidden />
+                  </button>
+                ) : null}
+              </div>
+
+              <span className='ml-1.5 flex items-center gap-1.5 self-center text-[11px] font-semibold tracking-[0.04em] text-[var(--pv2-faint)] uppercase'>
                 {t('filterObjective')}
+                <ObjectiveFilterHelp />
               </span>
               <FilterChips
                 inline
@@ -544,12 +621,32 @@ export const ExchangeWorkspace = ({
               />
             </div>
 
-            {searching ? (
-              <div className='mt-4 flex items-center justify-center gap-2 py-10 text-[13px] text-[var(--pv2-mut)]'>
-                <Loader2 className='size-4 animate-spin text-[var(--pv2-electric)]' />
-                {t('loading')}
+            {/*
+              Chỉ hiện khi ĐANG tìm kiếm. Lúc chỉ lướt tab thì con số đã nằm
+              ngay trên chính tab đó rồi — nhắc lại là nhiễu.
+            */}
+            {filters.q.trim() && otherKindHits.length ? (
+              <div className='mb-3.5 flex flex-wrap items-center gap-2 text-[12px] text-[var(--pv2-mut)]'>
+                <span>{t('otherTabsLabel')}</span>
+                {otherKindHits.map(k => (
+                  <button
+                    key={k.id}
+                    type='button'
+                    onClick={() => handleKindChange(k.id)}
+                    className={cn(
+                      'rounded-full border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-2.5 py-1',
+                      'text-[11.5px] font-semibold text-[var(--pv2-ink)] transition-colors',
+                      'hover:border-[var(--pv2-electric)] hover:text-[var(--pv2-electric)]',
+                      'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:outline-none'
+                    )}
+                  >
+                    {t('otherTabsHit', { label: k.label, count: k.count })}
+                  </button>
+                ))}
               </div>
-            ) : filtered.length ? (
+            ) : null}
+
+            {filtered.length ? (
               <div className='mt-4 grid grid-cols-[repeat(auto-fill,minmax(244px,1fr))] gap-4'>
                 {filtered.map(listing => (
                   <ListingCard
@@ -559,6 +656,7 @@ export const ExchangeWorkspace = ({
                     onOpen={handleOpen}
                     onAction={handleAction}
                     onPreview={handlePreview}
+                    onOpenInLibrary={handleOpenInLibrary}
                   />
                 ))}
               </div>
@@ -594,6 +692,7 @@ export const ExchangeWorkspace = ({
           onClose={handleCloseModal}
           onAction={handleAction}
           onPreview={handlePreview}
+          onOpenInLibrary={handleOpenInLibrary}
         />
       ) : null}
 

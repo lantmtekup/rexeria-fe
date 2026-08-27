@@ -1,7 +1,10 @@
-import { EXCHANGE_KINDS } from '@/lib/portal-v2/exchange/constants';
+import {
+  EXCHANGE_DEFAULT_FILTERS,
+  EXCHANGE_KINDS,
+} from '@/lib/portal-v2/exchange/constants';
 import type { ExchangeKind } from '@/lib/portal-v2/exchange/types';
 
-/** Query param for the active kind tab: `?tab=page|block` (omit when `all`). */
+/** Query param for the active kind tab: `?tab=block|ad` (omit on the default). */
 export const EXCHANGE_TAB_PARAM = 'tab';
 
 const VALID_KINDS = new Set<string>(EXCHANGE_KINDS.map(k => k.id));
@@ -18,13 +21,16 @@ export const readExchangeTabParam = (
 /**
  * Keeps the address bar in step with the kind tab. `replaceState` avoids
  * re-running the server page and keeps preview/history behavior predictable.
+ *
+ * Tab mặc định KHÔNG ghi vào địa chỉ — `/exchange` trần vẫn mở đúng tab đó, nên
+ * thêm `?tab=page` chỉ làm link dài ra mà không mang thêm thông tin nào.
  */
 export const writeExchangeTabParam = (kind: ExchangeKind): void => {
   if (typeof window === 'undefined') return;
 
   const url = new URL(window.location.href);
   const current = url.searchParams.get(EXCHANGE_TAB_PARAM);
-  const next = kind === 'all' ? null : kind;
+  const next = kind === EXCHANGE_DEFAULT_FILTERS.kind ? null : kind;
 
   if (current === next || (current === null && next === null)) return;
 
