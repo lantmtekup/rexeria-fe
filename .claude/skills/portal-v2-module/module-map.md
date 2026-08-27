@@ -17,9 +17,10 @@ Số dòng dưới đây là neo; lệch vài trăm dòng thì grep lại (xem [
 | Group | Nav id | Label | `VIEWS` | Mock | Route (code) | Status |
 |-------|--------|-------|---------|------|--------------|--------|
 | — | `command` | Command Center | `commandView` ~11189 → `VIEWS.command` ~11446 | `DATA` home metrics | `/portal-v2` | **Done** — `CommandWorkspace` |
-| MINING | `mining` | Journey Audit | `VIEWS.mining` ~13287 | `const MINING` ~5109 (`stages`, `opps`, `sources`) | **gap** — chưa có route | **Not ported** |
-| MINING | `experiments` | Experiments | `VIEWS.experiments` ~13581 | `MINING.experiments` | **gap** | **Not ported** |
-| MINING | `sources` | Sources | `VIEWS.sources` ~13370 | `MINING.sources` | **gap** | **Not ported** |
+| AUDIT | `mining` | Journey Audit | prototype riêng (xem ghi chú Journey Audit) | `lib/portal-v2/journey-audit/mock.ts` | `/portal-v2/journey-audit` (`/portal-v2/mining` redirect) | **Done** — `JourneyAuditWorkspace` |
+| AUDIT | `sources` | Sources | prototype riêng | `MOCK_AUDIT_SOURCES` + `MOCK_WIZARDS` | `/portal-v2/sources` | **Done** — `SourcesWorkspace` |
+| AUDIT | `dropoff` | Drop-off | prototype riêng | `MOCK_AUDIT_LEAKS` | `/portal-v2/dropoff` | **Done** — `DropoffWorkspace` |
+| AUDIT | `experiments` | Experiments | `VIEWS.experiments` ~13581 | `lib/portal-v2/experiments/mock.ts` | `/portal-v2/experiments` | **Done** — `ExperimentsWorkspace` |
 | JOURNEY | `brand` | Brand | `brandView` ~12561 → `VIEWS.brand` ~12583 | `const BRAND` ~4433; `BFIELDS`, `BLINES` | `/portal-v2/brand` | **Done** — `BrandWorkspace` |
 | JOURNEY | `journeys` | Journey Builder | `VIEWS.journeys` ~14029 | `DATA.journeys`, `ROLES` / `JKIND` | `/portal-v2/journeys` | **Done** — `JourneysWorkspace` |
 | JOURNEY | `campaigns` | Campaigns | `campaignsView` ~12621 → `VIEWS.campaigns` ~13081 | `DATA.campaigns` | `/portal-v2/campaigns` | **Done** — `CampaignsWorkspace` |
@@ -45,17 +46,34 @@ Số dòng dưới đây là neo; lệch vài trăm dòng thì grep lại (xem [
 
 Dashboard + next actions. Prototype `commandView`. P0: summary cards + mock alerts.
 
-### MINING — Journey Audit (`mining`)
+### AUDIT — Journey Audit (`/portal-v2/journey-audit`)
 
-Audit-first front door: storefront journey **before** ReXeR. Leak map (cùng grammar `chartFunnel` / Pulse), ranked `MINING.opps`, evidence, playbook, Studio hand-off. Confidence derives from source health. **Gap route** — spec rồi hỏi user.
+Đã thay module Mining cũ (Phase 1 UI swap). Nguồn UX canonical là prototype
+live-case `rexer-jlo-live-case*.html` (KHÔNG phải `VIEWS.mining` của demo v3):
+product rail + Experience Pulse + lens Quality/Flow, touchpoint drawer, flow
+map, ghost card theo trạng thái nguồn. Mock shape theo hợp đồng Rx
+`/v1/audit/*` (`services/rexer-v2/types/audit.ts`); `/portal-v2/mining`
+redirect về đây. Code: `organisms/portal-v2/journey-audit/` +
+`lib/portal-v2/journey-audit/`.
 
-### MINING — Experiments
+### AUDIT — Experiments
 
-Every test traces to a mined leak; ships past `SHIP_GATE`. List + detail (`xDetail`). **Gap route**.
+Every test traces to a mined leak; ships past `SHIP_GATE` (95). List + detail.
+Mock riêng `lib/portal-v2/experiments/`; `ExperimentsDataProvider` mount trong
+trang experiments (không còn provider ở layout).
 
-### MINING — Sources
+### AUDIT — Sources
 
-Integrations hub: connected / needs attention / available. Journey coverage meter. Connect flows client-simulated. **Gap route**.
+Integrations hub của Journey Audit: coverage strip 5 stage (✓/!/✕), sections
+Needs attention / Connected / Recommended next / All + search, ConnectWizard
+per-provider chạy demo client-side. Hợp đồng Rx `/v1/sources*`
+(`services/rexer-v2/types/sources.ts`).
+
+### AUDIT — Drop-off (`/portal-v2/dropoff`)
+
+Phễu 3 hàng (funnel · stage responsible · leak badges), leak xếp hạng + chẩn
+đoán + bảng kênh; khoá khi chưa có nguồn analytics. Phase 1 phễu có thể là số
+đo thật từ `intel.funnel` (measured) hoặc traffic model (estimated).
 
 ### JOURNEY — Brand (REFERENCE)
 
