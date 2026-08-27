@@ -114,7 +114,40 @@ export const canvasEditorHref = (experience: ExperienceView): string => {
  * mỗi fork có canvas riêng); người dùng tự biết đánh đổi này.
  */
 export const canEditCanvas = (experience: ExperienceView): boolean =>
-  !experience.externalUrl;
+  !experience.externalUrl && !isExchangeShelf(experience);
+
+/**
+ * Mục nằm ở tab "Exchange" — kệ hàng GỐC, không phải bản làm việc.
+ *
+ * Quyết định SẢN PHẨM, không phải khoá kỹ thuật: sửa được thì vẫn sửa được
+ * (đã đo lại 2026-08-26, `PATCH /v1/pages/{id}` trả 200, canvas mở đủ block).
+ * Chặn vì hệ quả: bản gốc trên kệ là nguồn cho mọi lần Dùng SAU NÀY, nên sửa
+ * nó là âm thầm đổi thứ mà những lần fork tới sẽ nhận — người sửa không thấy
+ * hệ quả đó ở đâu cả.
+ *
+ * Đường đi đúng: bấm "Dùng trải nghiệm này" để lấy một bản thuộc hạng mục của
+ * mình, rồi sửa bản đó. Bản copy chỉ thuộc về một sản phẩm nên sửa an toàn.
+ *
+ * LỊCH SỬ: khoá này từng tồn tại, bị gỡ 2026-08-26 vì hai lỗi làm cớ dựng nó
+ * (đổi tên 404, canvas trắng) đã được chứng minh là không còn. Nay dựng lại
+ * với một lý do KHÁC — lý do ở trên — chứ không phải vì hai lỗi cũ.
+ */
+export const isExchangeShelf = (experience: ExperienceView): boolean =>
+  experience.state === 'unassigned';
+
+/**
+ * Bản copy ĐÃ gắn vào một hạng mục chiến dịch — bản làm việc thật sự.
+ *
+ * Ở đây "Dùng trải nghiệm này" không làm được gì: BE chặn nhân bản từ một row
+ * đã có `campaign_item_id` để không sinh lineage ba tầng (xem
+ * `docs/be-gap-fork-unassigned-experience-2026-08-24.md`). Và kể cả nếu qua
+ * được, bản sinh ra rơi vào kệ Exchange — nơi không sửa được — nên lời hứa
+ * "bản của bạn để sửa" ngay trong hộp đó cũng không thành.
+ *
+ * Việc đúng ở đây là SỬA. Nên nút Dùng ẩn đi, và Sửa lên làm nút chính.
+ */
+export const isWorkingCopy = (experience: ExperienceView): boolean =>
+  experience.state === 'product' || experience.state === 'topic';
 
 /**
  * Xem trước được không.

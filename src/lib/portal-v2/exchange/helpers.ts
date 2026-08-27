@@ -66,13 +66,31 @@ export const resolveActionState = (
   return 'owned';
 };
 
+/**
+ * Toàn văn của một thẻ — tên, tác giả, mô tả, tóm tắt người bán khai, nhóm.
+ *
+ * Cùng bộ trường mà ba nguồn đẩy `q` xuống server đang tìm, nên lọc tại chỗ
+ * và tìm trên server ra cùng một tập trên phần catalog đã tải.
+ */
+const searchTextOf = (r: ExchangeListingView): string =>
+  `${r.name} ${r.author} ${r.description} ${r.meta.summary ?? ''} ${r.category ?? ''}`.toLowerCase();
+
 export const filterListings = (
   listings: ExchangeListingView[],
   filters: ExchangeFilters
 ): ExchangeListingView[] => {
   let reads = [...listings];
 
-  // kind + q are applied server-side when refetching; keep as safety net
+  /*
+   * `q` lọc NGAY TẠI CHỖ trên tập đã tải — gõ tới đâu lưới thu hẹp tới đó,
+   * không chờ mạng và không nháy một lần nào. Server chỉ được hỏi khi người
+   * dùng nhấn Enter (xem `ExchangeWorkspace`), để với tay ra ngoài phần đã tải.
+   */
+  const q = filters.q.trim().toLowerCase();
+  if (q) {
+    reads = reads.filter(r => searchTextOf(r).includes(q));
+  }
+
   if (filters.kind !== 'all') {
     reads = reads.filter(r => r.meta.kind === filters.kind);
   }

@@ -25,6 +25,8 @@ type ExchangeDetailModalProps = {
   onClose: () => void;
   onAction: (listing: ExchangeListingView) => void;
   onPreview: (listing: ExchangeListingView) => void;
+  /** Món đã có trong thư viện — mở thẳng nó ở màn Experiences. */
+  onOpenInLibrary: (listing: ExchangeListingView) => void;
 };
 
 export const ExchangeDetailModal = ({
@@ -33,6 +35,7 @@ export const ExchangeDetailModal = ({
   onClose,
   onAction,
   onPreview,
+  onOpenInLibrary,
 }: ExchangeDetailModalProps) => {
   const t = useTranslations('portalV2.exchange');
 
@@ -63,9 +66,14 @@ export const ExchangeDetailModal = ({
         {t('previewLabel')}
       </Button>
       {action === 'added' ? (
-        <Button variant='ghost' size='sm' disabled>
+        <Button
+          variant='ghost'
+          size='sm'
+          title={t('inLibrary')}
+          onClick={() => onOpenInLibrary(listing)}
+        >
           <Check className='size-3.5' strokeWidth={2.6} aria-hidden />
-          {t('inLibrary')}
+          {t('openInLibrary')}
         </Button>
       ) : null}
       {action === 'owned' ? (

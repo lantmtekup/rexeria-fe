@@ -1,6 +1,6 @@
 'use client';
 
-import { BadgeCheck, Copy, Layers, Trash2 } from 'lucide-react';
+import { BadgeCheck, Copy, Layers, Target, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { KeyboardEvent, MouseEvent } from 'react';
 
@@ -177,6 +177,35 @@ export const ExperienceCard = ({
         </div>
 
         <ExperienceMeta experience={experience} />
+
+        {/*
+          ĐANG PHỤC VỤ CÁI GÌ — chỉ với bản đã gắn hạng mục.
+          Với một bản copy thì đây là danh tính của nó. Thiếu dòng này, tab
+          "Bản copy sản phẩm" bày ra mấy thẻ tên na ná nhau và người dùng phải
+          mở từng cái ra mới biết cái nào thuộc chiến dịch nào.
+        */}
+        {experience.itemId &&
+        (experience.campaignName || experience.subject) ? (
+          <p
+            className='flex min-w-0 items-center gap-1 truncate text-[11.5px] text-[var(--pv2-mut)]'
+            title={[experience.campaignName, experience.subject?.name]
+              .filter(Boolean)
+              .join(' · ')}
+          >
+            <Target className='size-3 shrink-0' strokeWidth={2.2} aria-hidden />
+            <span className='truncate'>
+              {experience.campaignName ?? t('campaignUnknown')}
+              {experience.subject?.name ? (
+                <>
+                  <span className='text-[var(--pv2-faint)]'> · </span>
+                  <span className='font-medium text-[var(--pv2-ink)]'>
+                    {experience.subject.name}
+                  </span>
+                </>
+              ) : null}
+            </span>
+          </p>
+        ) : null}
 
         <div className='mt-auto'>
           <ExperienceEvidence experience={experience} />

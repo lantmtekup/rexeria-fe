@@ -91,6 +91,13 @@ export const v2ToExperienceView = (x: RxExperience): ExperienceView => {
     updatedLabel: formatUpdated(x.updated_at),
 
     state: stateOf(x),
+    // Ba trường này đã nằm sẵn trên dây; bản trước chỉ dùng để suy `state` rồi
+    // bỏ. Giữ lại để màn hình nói được bản copy đang phục vụ cái gì.
+    campaignId: x.campaign_id,
+    // Dây chỉ mang id. Tên tra sau, ở nơi có danh sách chiến dịch.
+    campaignName: null,
+    itemId: x.item_id,
+    subject: x.subject ? { kind: x.subject.kind, name: x.subject.name } : null,
     category: (x.category === 'blocks'
       ? 'blocks'
       : 'collection') as ExperienceCategory,

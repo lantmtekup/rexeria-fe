@@ -41,11 +41,7 @@ export type EvidenceTier = 'high' | 'directional' | 'early' | 'unmeasured';
  * Thiếu trạng thái này thì 55/56 trang của brand không có tab nào chứa.
  */
 export type ExperienceState =
-  | 'template'
-  | 'unassigned'
-  | 'product'
-  | 'topic'
-  | 'block';
+  'template' | 'unassigned' | 'product' | 'topic' | 'block';
 
 /**
  * Một component bên trong block — `GET /v1/experiences/{id}` → `layers[].
@@ -155,6 +151,22 @@ export type ExperienceView = {
   // ── SEEDED from `id` · stable, deterministic, not measured ───────────────
   /** Ownership axis — prototype `expState`. Seeded until lineage exists. */
   state: ExperienceState;
+  /**
+   * Bản copy này đang phục vụ hạng mục nào — `null` khi chưa gắn vào đâu.
+   *
+   * `GET /v1/experiences` trả sẵn cả ba trường này; bản trước đọc chúng CHỈ để
+   * suy ra `state` rồi vứt đi. Nên màn hình biết một mục "là bản copy sản
+   * phẩm" mà không nói được nó thuộc sản phẩm nào — người dùng nhìn ba thẻ tên
+   * na ná nhau và không có cách nào phân biệt.
+   *
+   * `campaignName` KHÔNG có trên dây: chỉ có id, tên phải tra riêng qua danh
+   * sách chiến dịch (xem `withCampaignNames`).
+   */
+  campaignId: string | null;
+  campaignName: string | null;
+  itemId: string | null;
+  /** Sản phẩm hoặc chủ đề mà bản copy này nói về. */
+  subject: { kind: 'product' | 'topic'; name: string } | null;
   category: ExperienceCategory;
   vehicle: ExperienceVehicle;
   objective: ExperienceObjective;

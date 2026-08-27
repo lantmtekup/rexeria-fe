@@ -14,6 +14,7 @@ import {
   type UseTargetItem,
 } from '@/services/portal-v2/experienceUse';
 import { forkReasonKey } from '@/lib/portal-v2/experiences/constants';
+import { isExchangeShelf } from '@/lib/portal-v2/experiences/helpers';
 import type { ExperienceView } from '@/lib/portal-v2/experiences/types';
 import { cn } from '@/lib/cn';
 
@@ -51,8 +52,17 @@ export const UseExperienceModal = ({
   const [itemId, setItemId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  /**
+   * Nguồn nằm trên kệ Exchange ⇒ BẮT BUỘC gắn hạng mục.
+   *
+   * Hai cửa fork không còn tương đương từ 2026-08-24: cửa `campaigns/...` nhận
+   * nguồn `unassigned`, còn cửa `experiences/{id}/use` — cửa mà nhánh "lấy một
+   * bản của mình" đi qua — vẫn trả `cannot fork a copy`. Để mặc định tắt thì
+   * người dùng mở hộp, bấm nút chính, và ăn lỗi ngay ở thao tác đầu tiên.
+   */
+  const mustAttach = isExchangeShelf(experience);
   /** Bật thì mới hỏi chiến dịch — mặc định tắt, vì đó là quyết định để sau. */
-  const [attach, setAttach] = useState(false);
+  const [attach, setAttach] = useState(mustAttach);
 
   useEffect(() => {
     let alive = true;
@@ -204,25 +214,31 @@ export const UseExperienceModal = ({
 
         {/* Điều gì SẼ xảy ra, nói trước khi bấm. */}
         <p className='rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3.5 py-3 text-[12.5px] leading-relaxed text-[var(--pv2-ink)]'>
-          {t('useNoteOwn', { tab: t('stateUnassigned') })}
+          {mustAttach
+            ? t('useNoteShelf')
+            : t('useNoteOwn', { tab: t('stateUnassigned') })}
         </p>
 
-        <label className='flex cursor-pointer items-start gap-2.5'>
-          <input
-            type='checkbox'
-            checked={attach}
-            onChange={e => setAttach(e.target.checked)}
-            className='mt-0.5 size-4 shrink-0 accent-[var(--pv2-electric)]'
-          />
-          <span className='min-w-0'>
-            <span className='block text-[13px] font-semibold text-[var(--pv2-ink)]'>
-              {t('useAttachToggle')}
+        {/* Bắt buộc gắn hạng mục ⇒ giấu công tắc đi. Bày ra một công tắc không
+            tắt được chỉ khiến người dùng thử tắt rồi tự hỏi vì sao không được. */}
+        {mustAttach ? null : (
+          <label className='flex cursor-pointer items-start gap-2.5'>
+            <input
+              type='checkbox'
+              checked={attach}
+              onChange={e => setAttach(e.target.checked)}
+              className='mt-0.5 size-4 shrink-0 accent-[var(--pv2-electric)]'
+            />
+            <span className='min-w-0'>
+              <span className='block text-[13px] font-semibold text-[var(--pv2-ink)]'>
+                {t('useAttachToggle')}
+              </span>
+              <span className='block text-[11.5px] leading-relaxed text-[var(--pv2-mut)]'>
+                {t('useAttachHint')}
+              </span>
             </span>
-            <span className='block text-[11.5px] leading-relaxed text-[var(--pv2-mut)]'>
-              {t('useAttachHint')}
-            </span>
-          </span>
-        </label>
+          </label>
+        )}
 
         {attach ? (
           <section className='border-t border-[var(--pv2-hair)] pt-4'>

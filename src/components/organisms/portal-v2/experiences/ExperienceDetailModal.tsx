@@ -32,6 +32,8 @@ import {
   canPreview,
   formatCount,
   formatLift,
+  isExchangeShelf,
+  isWorkingCopy,
 } from '@/lib/portal-v2/experiences/helpers';
 import { EVIDENCE_TIER_STYLE } from '@/lib/portal-v2/experiences/roleStyles';
 import type {
@@ -253,6 +255,10 @@ export const ExperienceDetailModal = ({
   const tierStyle = EVIDENCE_TIER_STYLE[evidence.tier];
   const previewable = canPreview(experience);
   const editable = canEditCanvas(experience);
+  /* Kệ Exchange: ẩn hẳn đường sửa, không để nút xám câm. */
+  const shelf = isExchangeShelf(experience);
+  /* Bản làm việc đã gắn hạng mục: ẩn Dùng, đẩy Sửa lên nút chính. */
+  const workingCopy = isWorkingCopy(experience);
 
   const subtitleParts = [
     t(CATEGORY_LABEL_KEY[experience.category]),
@@ -306,25 +312,38 @@ export const ExperienceDetailModal = ({
             <Eye className='size-3.5' strokeWidth={2.2} aria-hidden />
             {t('previewLabel')}
           </Button>
-          <Button
-            variant='ghost'
-            size='sm'
-            disabled={!editable}
-            title={editable ? undefined : t('editExternalHint')}
-            onClick={() => onEdit(experience)}
-          >
-            <PenLine className='size-3.5' strokeWidth={2.2} aria-hidden />
-            {t('editExperience')}
-          </Button>
+          {/* Kệ Exchange KHÔNG có nút này — sửa đi qua Dùng rồi sửa bản copy.
+              Trang ngoài thì vẫn bày ra nhưng tắt, kèm lý do: ở đó "không sửa
+              được" là do bản chất trang, không phải luật của kệ. */}
+          {shelf ? null : (
+            <Button
+              /* Bản đã gắn hạng mục: SỬA mới là việc ở đây, nên nó là nút
+                 chính. Trước đây nút chính là Dùng — thứ duy nhất không chạy
+                 được trên tab này. */
+              variant={workingCopy ? 'primary' : 'ghost'}
+              size='sm'
+              disabled={!editable}
+              title={editable ? undefined : t('editExternalHint')}
+              onClick={() => onEdit(experience)}
+            >
+              <PenLine className='size-3.5' strokeWidth={2.2} aria-hidden />
+              {t('editExperience')}
+            </Button>
+          )}
           {/* Nút CHÍNH, theo prototype (`xuse` là `btn-primary`): thứ người ta
               mở thư viện ra để làm là mang một trải nghiệm vào chiến dịch.
               Luôn bật — nếu BE từ chối (vd bản đã là copy), lỗi hiện ngay
               trong UseExperienceModal (xem handleConfirm ở đó), không âm
               thầm nuốt. */}
-          <Button size='sm' onClick={() => onUse(experience)}>
-            <PlusCircle className='size-3.5' strokeWidth={2.2} aria-hidden />
-            {t('useLabel')}
-          </Button>
+          {/* Bản đã gắn hạng mục thì KHÔNG có nút này: BE chặn fork từ một row
+              đã có campaign_item_id, nên đây là nút duy nhất trên màn luôn báo
+              lỗi. Xem `isWorkingCopy`. */}
+          {workingCopy ? null : (
+            <Button size='sm' onClick={() => onUse(experience)}>
+              <PlusCircle className='size-3.5' strokeWidth={2.2} aria-hidden />
+              {t('useLabel')}
+            </Button>
+          )}
         </>
       }
     >
@@ -411,17 +430,21 @@ export const ExperienceDetailModal = ({
                 {experience.name}
               </p>
               <p className='text-[11.5px] text-[var(--pv2-faint)]'>
-                {t('editDetailsHint')}
+                {shelf ? t('shelfReadOnly') : t('editDetailsHint')}
               </p>
             </div>
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={() => setEditingDetails(true)}
-            >
-              <ImageIcon className='size-3.5' strokeWidth={2.2} aria-hidden />
-              {t('editDetails')}
-            </Button>
+            {/* Kệ Exchange giữ nguyên bản gốc — không có nút sửa ở đây, và câu
+                bên trên đã chỉ đúng chỗ sửa: bản fork trong hạng mục. */}
+            {shelf ? null : (
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => setEditingDetails(true)}
+              >
+                <ImageIcon className='size-3.5' strokeWidth={2.2} aria-hidden />
+                {t('editDetails')}
+              </Button>
+            )}
           </div>
         )}
       </div>
