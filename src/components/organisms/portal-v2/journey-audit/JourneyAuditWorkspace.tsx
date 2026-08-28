@@ -3,7 +3,7 @@
 import { PanelLeftOpen, ScanSearch } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
@@ -30,10 +30,6 @@ import {
   type AuditLens,
   type JourneyAuditViewState,
 } from '@/lib/portal-v2/journey-audit/params';
-import {
-  authorizeSource,
-  type AuthorizeOutcome,
-} from '@/lib/portal-v2/journey-audit/authorize';
 import {
   connectAuditSource,
   useAuditSources,
@@ -88,6 +84,18 @@ export const JourneyAuditWorkspace = ({
   const [railOpen, setRailOpen] = useState(true);
   const [headerOpen, setHeaderOpen] = useState(true);
   const [wizardProvider, setWizardProvider] = useState<string | null>(null);
+  const [runStatus, setRunStatus] = useState<'idle' | 'queued' | 'running'>(
+    'idle'
+  );
+  const runStatusRef = useRef<'idle' | 'queued' | 'running'>('idle');
+  /** Rời trang → dừng poll run. */
+  const runCancelRef = useRef(false);
+  useEffect(() => {
+    runCancelRef.current = false;
+    return () => {
+      runCancelRef.current = true;
+    };
+  }, []);
 
   const product =
     bundle.products.find(p => p.id === productId) ?? bundle.products[0];
@@ -136,53 +144,69 @@ export const JourneyAuditWorkspace = ({
     []
   );
 
-  const handleAuthorize = useCallback(
-    async (
-      provider: string,
-      fields: Record<string, string>
-    ): Promise<AuthorizeOutcome | 'error'> => {
-      try {
-        const outcome = await authorizeSource(
-          provider,
-          provider === 'shopify' ? fields['Store domain'] : undefined
-        );
-        if (outcome === 'opened') {
-          toast(tSources('toastAuthorizeOpened', { name: provider }));
-        } else {
-          toast(tSources('toastAuthorizePending', { name: provider }));
-        }
-        return outcome;
-      } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : tSources('actionFailed')
-        );
-        return 'error';
-      }
+  const handleLiveConnected = useCallback(
+    (name: string) => {
+      toast.success(tSources('toastConnectedLive', { name }));
+      router.refresh();
     },
-    [tSources]
+    [tSources, router]
   );
 
+  /**
+   * Run new audit theo dõi ĐẾN CÙNG: POST rồi poll GET /v1/audit/runs/:id
+   * với backoff 3s→10s (trần 3 phút, dừng khi rời trang). Status theo consts
+   * BE: queued|running|succeeded|failed.
+   */
   const handleRunAudit = useCallback(async () => {
     if (!live || !product) {
       toast(t('toastRunQueued'));
       return;
     }
+    if (runStatusRef.current !== 'idle') return;
+    const setRun = (value: 'idle' | 'queued' | 'running') => {
+      runStatusRef.current = value;
+      setRunStatus(value);
+    };
     try {
-      // POST /v1/audit/products/:id/runs rồi poll ngắn GET /v1/audit/runs/:id
-      // — worker là Phase 3 nên thường dừng ở `queued`.
       const run = await rexerV2Api.audit.createRun(product.auditId);
+      if (runCancelRef.current) return;
+      setRun('queued');
       toast(t('toastRunQueued'));
-      for (let attempt = 0; attempt < 3; attempt += 1) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const polled = await rexerV2Api.audit.run(run.id);
-        if (polled.status !== 'queued') {
-          toast(t('runStatus', { status: polled.status }));
-          if (polled.status === 'succeeded') router.refresh();
+      let delay = 3000;
+      const startedAt = Date.now();
+      while (!runCancelRef.current && Date.now() - startedAt < 180000) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+        if (runCancelRef.current) return;
+        let polled;
+        try {
+          polled = await rexerV2Api.audit.run(run.id);
+        } catch {
+          delay = Math.min(10000, Math.round(delay * 1.5));
+          continue;
+        }
+        if (polled.status === 'succeeded') {
+          setRun('idle');
+          toast.success(t('runSucceeded'));
+          router.refresh();
           return;
         }
+        if (polled.status === 'failed') {
+          setRun('idle');
+          const detail =
+            typeof polled.stats?.error === 'string' ? polled.stats.error : '';
+          toast.error(t('runFailed', { message: detail }));
+          return;
+        }
+        setRun(polled.status === 'running' ? 'running' : 'queued');
+        delay = Math.min(10000, Math.round(delay * 1.5));
       }
-      toast(t('runStillQueued'));
+      if (!runCancelRef.current) {
+        // Worker chưa nhặt job trong cửa sổ poll — dừng lịch sự.
+        setRun('idle');
+        toast(t('runStillQueued'));
+      }
     } catch (err) {
+      setRun('idle');
       toast.error(err instanceof Error ? err.message : t('toastRunQueued'));
     }
   }, [live, product, router, t]);
@@ -258,12 +282,17 @@ export const JourneyAuditWorkspace = ({
           ) : null}
           <Button
             variant='primary'
+            disabled={runStatus !== 'idle'}
             onClick={() => {
               void handleRunAudit();
             }}
           >
             <ScanSearch aria-hidden />
-            {t('runAudit')}
+            {runStatus === 'running'
+              ? t('runRunningLabel')
+              : runStatus === 'queued'
+                ? t('runQueuedLabel')
+                : t('runAudit')}
           </Button>
         </div>
       </header>
@@ -442,8 +471,8 @@ export const JourneyAuditWorkspace = ({
         open={Boolean(wizardProvider)}
         live={live}
         onClose={() => setWizardProvider(null)}
-        onAuthorize={handleAuthorize}
         onComplete={handleWizardComplete}
+        onLiveConnected={handleLiveConnected}
         onOpenJourney={() => setWizardProvider(null)}
       />
     </div>

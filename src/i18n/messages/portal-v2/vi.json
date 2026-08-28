@@ -775,8 +775,11 @@
       "storyLoopsTitle": "{count} vòng quay lại · thu hồi {volume}",
       "storyLoopsBody": "{volume} khách quay lại hành trình mỗi tháng qua {names} — bỏ qua mọi touchpoint thu hút phía trên. Đây là lưu lượng rẻ nhất trên bản đồ.",
       "storyNoLoops": "Chưa vòng nào khép. Mỗi lần mua lại đều phải thu hút lại từ đầu — cách tăng trưởng đắt nhất.",
-      "runStatus": "Lượt audit: {status}.",
-      "runStillQueued": "Lượt audit đang xếp hàng — worker quét sẽ nhận trong ít phút."
+      "runStillQueued": "Lượt audit đang xếp hàng — worker quét sẽ nhận trong ít phút.",
+      "runQueuedLabel": "Đang xếp hàng…",
+      "runRunningLabel": "Đang audit…",
+      "runSucceeded": "Audit xong — điểm số và phát hiện vừa làm mới.",
+      "runFailed": "Lượt audit thất bại. {message}"
     },
     "dropoff": {
       "eyebrow": "Khai phá từ các nguồn đã kết nối",
@@ -908,7 +911,16 @@
       "toastSyncQueuedJob": "Đã xếp hàng sync cho {name} (job {id}).",
       "toastSyncedNow": "Đã sync {name} — độ tươi dữ liệu vừa cập nhật.",
       "toastDisconnectedLive": "Đã ngắt {name} — journey chấm lại không có nó. Lịch sử được giữ.",
-      "wizardAuthorizing": "Đang ủy quyền…"
+      "wizardAuthorizing": "Đang ủy quyền…",
+      "wizardWaiting": "Đang chờ ủy quyền trong popup — bước này tự hoàn tất khi connection về.",
+      "wizardWaitingShort": "Đang chờ…",
+      "wizardPopupBlocked": "Trình duyệt đã chặn cửa sổ ủy quyền. Cho phép popup cho trang này rồi thử lại.",
+      "wizardRetry": "Mở lại cửa sổ ủy quyền",
+      "wizardAuthTimeout": "Chưa thấy connection {name} — hoàn tất ủy quyền rồi bấm Sync ngay, hoặc chạy Kết nối lại.",
+      "wizardGa4PickProperty": "GA4 đã ủy quyền — chọn property để hoàn tất.",
+      "wizardLiveMsg": "Kết nối đã hoạt động và chỉ đọc. Dữ liệu về theo lần sync đầu; điểm số làm mới khi touchpoint đọc lại nó.",
+      "wizardLiveStats": "Đã kết nối · đã lên lịch sync đầu",
+      "toastConnectedLive": "Đã kết nối {name} — sources và journey vừa làm mới."
     },
     "brand": {
       "title": "Thương hiệu",

@@ -775,8 +775,11 @@
       "storyLoopsTitle": "{count} return loops · {volume} recovered",
       "storyLoopsBody": "{volume} customers re-enter the journey each month via {names} — skipping every acquisition touchpoint above them. This is the cheapest traffic in the map.",
       "storyNoLoops": "No loop is closing. Every repeat purchase must be re-acquired from the top — the most expensive way to grow.",
-      "runStatus": "Audit run: {status}.",
-      "runStillQueued": "Audit run is queued — the crawl worker picks it up shortly."
+      "runStillQueued": "Audit run is queued — the crawl worker picks it up shortly.",
+      "runQueuedLabel": "Queued…",
+      "runRunningLabel": "Auditing…",
+      "runSucceeded": "Audit finished — scores and findings refreshed.",
+      "runFailed": "Audit run failed. {message}"
     },
     "dropoff": {
       "eyebrow": "Mined from your connected sources",
@@ -908,7 +911,16 @@
       "toastSyncQueuedJob": "Sync queued for {name} (job {id}).",
       "toastSyncedNow": "{name} synced — freshness updated.",
       "toastDisconnectedLive": "{name} disconnected — the journey re-scores without it. History is retained.",
-      "wizardAuthorizing": "Authorizing…"
+      "wizardAuthorizing": "Authorizing…",
+      "wizardWaiting": "Waiting for authorization in the popup — this step finishes on its own once the connection lands.",
+      "wizardWaitingShort": "Waiting…",
+      "wizardPopupBlocked": "The browser blocked the authorize window. Allow popups for this site, then try again.",
+      "wizardRetry": "Open the authorize window again",
+      "wizardAuthTimeout": "No {name} connection detected — finish authorizing, then press Sync now, or run Connect again.",
+      "wizardGa4PickProperty": "GA4 authorized — pick the property to finish.",
+      "wizardLiveMsg": "The connection is live and read-only. Data lands with the first sync; scores refresh as touchpoints re-read it.",
+      "wizardLiveStats": "Connected · first sync scheduled",
+      "toastConnectedLive": "{name} connected — sources and journey refreshed."
     },
     "brand": {
       "title": "Brand",

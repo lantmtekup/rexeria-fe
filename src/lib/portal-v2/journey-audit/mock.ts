@@ -2307,6 +2307,49 @@ export const MOCK_WIZARDS: Record<string, WizardConfig> = {
       },
     ],
   },
+  amazon: {
+    provider: 'amazon',
+    steps: [
+      {
+        kind: 'oauth',
+        title: 'Authorize',
+        cta: 'Authorize',
+        popup: {
+          url: 'sellercentral.amazon.com/apps/authorize/consent?application_id=rexer',
+          brandBg: '#232F3E',
+          brandLetter: 'a',
+          brandName: 'Amazon Seller Central',
+          brandSub:
+            '<b>ReXeR Audit</b> requests read-only Selling Partner API access',
+        },
+        perms: [
+          {
+            title: 'Orders',
+            code: 'sellingpartnerapi::orders.read',
+            desc: "Order volumes per listing, for the funnel's Purchase step",
+          },
+          {
+            title: 'Catalog',
+            code: 'sellingpartnerapi::catalog.read',
+            desc: 'Listing title, bullets and imagery — compared against the DTC page',
+          },
+        ],
+        denyNote: 'ReXeR cannot edit listings, prices or orders.',
+      },
+      {
+        kind: 'sync',
+        title: 'Sync',
+        rows: [
+          ['Reading catalog listings', '1 listing'],
+          ['Backfilling order analytics', '90 days'],
+        ],
+        done: {
+          stats: '1 listing tracked · 90-day order history',
+          msg: 'The marketplace listing is now audited against the DTC page.',
+        },
+      },
+    ],
+  },
   retail_feed: {
     provider: 'retail_feed',
     steps: [

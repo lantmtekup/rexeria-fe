@@ -19,8 +19,8 @@ import {
 } from '@/lib/portal-v2/journey-audit/mock';
 import { crossHref } from '@/lib/portal-v2/journey-audit/params';
 import {
-  authorizeSource,
-  type AuthorizeOutcome,
+  openAuthorizePopup,
+  requestAuthorize,
 } from '@/lib/portal-v2/journey-audit/authorize';
 import {
   connectAuditSource,
@@ -133,34 +133,31 @@ export const SourcesWorkspace = ({
     ? (wizards[wizardProvider] ?? null)
     : null;
 
-  const handleAuthorize = async (
-    provider: string,
-    fields: Record<string, string>
-  ): Promise<AuthorizeOutcome | 'error'> => {
-    const name =
-      sources.find(item => item.provider === provider)?.name ?? provider;
-    try {
-      const outcome = await authorizeSource(
-        provider,
-        provider === 'shopify' ? fields['Store domain'] : undefined
-      );
-      if (outcome === 'opened') {
-        toast(t('toastAuthorizeOpened', { name }));
-      } else {
-        toast(t('toastAuthorizePending', { name }));
-      }
-      return outcome;
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('actionFailed'));
-      return 'error';
-    }
+  /** Connection thật về (wizard poll thấy sau OAuth callback). */
+  const handleLiveConnected = (name: string) => {
+    toast.success(t('toastConnectedLive', { name }));
+    // Refetch để sources + journey ăn connection mới (điểm stage tính lại).
+    router.refresh();
   };
 
   const handleConnect = (providerId: string) => {
     if (!wizards[providerId]) {
       if (live) {
-        // Không có stepper riêng — vẫn đi qua authorize thật.
-        void handleAuthorize(providerId, {});
+        // Provider chưa có stepper riêng — vẫn đi qua authorize thật, không
+        // theo dõi popup (đường hiếm; mọi provider của catalog đều có config).
+        void requestAuthorize(providerId)
+          .then(result => {
+            if (result.kind === 'stub') {
+              toast(t('toastAuthorizePending', { name: providerId }));
+            } else if (openAuthorizePopup(result.url)) {
+              toast(t('toastAuthorizeOpened', { name: providerId }));
+            } else {
+              toast.error(t('wizardPopupBlocked'));
+            }
+          })
+          .catch((err: unknown) => {
+            toast.error(err instanceof Error ? err.message : t('actionFailed'));
+          });
         return;
       }
       connectAuditSource(providerId);
@@ -377,11 +374,11 @@ export const SourcesWorkspace = ({
         open={Boolean(wizardProvider)}
         live={live}
         onClose={() => setWizardProvider(null)}
-        onAuthorize={handleAuthorize}
         onComplete={(provider, doneStats, doneMsg) => {
           connectAuditSource(provider, doneStats);
           toast.success(doneMsg);
         }}
+        onLiveConnected={handleLiveConnected}
         onOpenJourney={() =>
           router.push(crossHref('/portal-v2/journey-audit', {}))
         }
