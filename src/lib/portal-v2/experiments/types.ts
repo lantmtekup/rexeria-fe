@@ -12,10 +12,10 @@ export type ExperimentArm = {
 
 export type Experiment = {
   id: string;
-  /** Option id trong opportunity nguồn. */
+  /** Option id trong opportunity nguồn (mock demo; live: ''). */
   opt: string;
   name: string;
-  /** Opportunity (leak) mà thử nghiệm này sinh ra từ đó. */
+  /** Opportunity (mock) / leak id (live) mà thử nghiệm sinh ra từ đó. */
   from: string;
   status: ExperimentStatus;
   days: number;
@@ -24,12 +24,23 @@ export type Experiment = {
   hypothesis: string;
   a: ExperimentArm;
   b: ExperimentArm;
+  /**
+   * Cặp số theo ngày. Mock: CVR % của control/variant; live: SỐ conversion
+   * (BE trả a_conversions/b_conversions, không có sessions theo ngày để
+   * tính CVR — không bịa).
+   */
   daily: [number, number][];
+  dailyKind?: 'cvr' | 'conversions';
   learning?: string;
   stopped?: {
     day: number;
     sig: number;
   };
+  /** Live: leak nguồn (FR-E4) + product để deep-link về Drop-off. */
+  leakId?: string | null;
+  productId?: string;
+  startedAt?: string | null;
+  endedAt?: string | null;
 };
 
 /** Phần tối thiểu của một playbook option mà màn Experiments cần vẽ. */

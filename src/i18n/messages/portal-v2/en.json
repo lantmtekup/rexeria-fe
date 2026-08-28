@@ -433,7 +433,14 @@
       "toastStopped": "Stopped “{name}” — evidence kept, no verdict.",
       "toastWon": "Concluded “{name}” — variant won.",
       "toastLost": "Concluded “{name}” — control held; learning kept.",
-      "actionFailed": "The experiment changed before this action completed. Refresh and try again."
+      "actionFailed": "The experiment changed before this action completed. Refresh and try again.",
+      "errGateOpen": "Significance is at or above the {gate}% ship gate — this test must be concluded, not stopped.",
+      "errGateClosed": "Significance is still below the {gate}% ship gate — the test cannot be concluded yet.",
+      "economicsNote": "Awaiting measured economics",
+      "fromLeakLive": "From a mined leak — view it in Drop-off",
+      "emptyTitle": "No experiments yet",
+      "emptyBody": "Every test starts from a mined leak. Open Drop-off, pick the biggest leak, and press Create experiment — the draft lands here.",
+      "emptyCta": "Open Drop-off"
     },
     "analytics": {
       "title": "Analytics",
@@ -832,8 +839,6 @@
       "fixTitle": "What to do about it",
       "fixLabel": "Recommended fix",
       "openTpInJourney": "Open “{name}” in the Journey tab",
-      "createOpportunity": "Create opportunity",
-      "toastOpportunity": "Opportunity added to the backlog with the {amount}/mo impact estimate attached.",
       "chanTitle": "Where your visitors come from — and how well each source converts",
       "chanSub": "Buyers per 1,000 visits shows which channel is leaking, not just which is loudest.",
       "chanSource": "Source",
@@ -843,7 +848,12 @@
       "leakFound": "leak found",
       "seeWhy": "see why",
       "chanFoot": "Site average: {avg} buyers per 1,000 visits. A source far below average is sending traffic that doesn't convert — usually a mismatch between what the visitor was promised and what they land on.",
-      "patternsTitle": "What ReXeR is learning across this brand"
+      "patternsTitle": "What ReXeR is learning across this brand",
+      "createExperiment": "Create experiment",
+      "creatingExperiment": "Creating…",
+      "toastExperimentCreated": "Draft experiment “{name}” created from this leak.",
+      "createExperimentFailed": "Could not create the experiment draft.",
+      "toastExperimentDemo": "Demo mode — experiments are created from real leaks once the API is connected."
     },
     "sources": {
       "eyebrow": "Audit inputs · Integrations",

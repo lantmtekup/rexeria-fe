@@ -11,6 +11,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -30,15 +31,25 @@ import {
   getExperimentLift,
   getExperimentRecoveredMonthly,
 } from '@/lib/portal-v2/experiments/helpers';
-import { useExperimentsData } from '@/lib/portal-v2/experiments/ExperimentsDataProvider';
+import { experimentFromRx } from '@/lib/portal-v2/experiments/fromRx';
 import type {
   Experiment,
   ExperimentStatus,
+  ExperimentsData,
 } from '@/lib/portal-v2/experiments/types';
 import { formatCount, formatMoney } from '@/lib/portal-v2/format';
+import { crossHref } from '@/lib/portal-v2/journey-audit/params';
+import { rexerV2Api } from '@/services/rexer-v2/endpoints';
+import { RxApiError } from '@/services/rexer/client';
 
 type ExperimentsWorkspaceProps = {
+  /** Server data (live) hoặc mock demo (BE lỗi) — xem services/experiments. */
+  initialExperiments: Experiment[];
+  /** Kinh tế mock cho các tile tiền + tra opportunity — null khi live. */
+  demoData: ExperimentsData | null;
+  live: boolean;
   initialExperimentId: string | null;
+  initialError: string | null;
 };
 
 const isActiveExperiment = (experiment: Experiment): boolean =>
@@ -85,11 +96,19 @@ const SummaryTile = ({
 );
 
 export const ExperimentsWorkspace = ({
+  initialExperiments,
+  demoData,
+  live,
   initialExperimentId,
+  initialError,
 }: ExperimentsWorkspaceProps) => {
   const t = useTranslations('portalV2.experiments');
-  const { data, stopExperiment, concludeExperiment } = useExperimentsData();
-  const validInitialId = data.experiments.some(
+  const router = useRouter();
+  // Live: props là sự thật của server (mutation → refresh → props mới).
+  // Demo: state cục bộ, mutate như provider mock cũ.
+  const [demoExperiments, setDemoExperiments] = useState(initialExperiments);
+  const experiments = live ? initialExperiments : demoExperiments;
+  const validInitialId = initialExperiments.some(
     experiment => experiment.id === initialExperimentId
   )
     ? initialExperimentId
@@ -98,25 +117,32 @@ export const ExperimentsWorkspace = ({
   const [endModalOpen, setEndModalOpen] = useState(false);
 
   const selected =
-    data.experiments.find(experiment => experiment.id === selectedId) ?? null;
-  const active = data.experiments.filter(isActiveExperiment);
-  const completed = data.experiments.filter(
+    experiments.find(experiment => experiment.id === selectedId) ?? null;
+  const active = experiments.filter(isActiveExperiment);
+  const completed = experiments.filter(
     experiment => !isActiveExperiment(experiment)
   );
-  const recovered = data.experiments
-    .filter(experiment => experiment.status === 'won')
-    .reduce(
-      (total, experiment) =>
-        total + getExperimentRecoveredMonthly(experiment, data),
-      0
-    );
-  const inFlight = data.experiments
-    .filter(experiment => experiment.status === 'running')
-    .reduce(
-      (total, experiment) => total + getExperimentInFlight(experiment, data),
-      0
-    );
-  const runningCount = data.experiments.filter(
+  // Các tile TIỀN cần kinh tế (stage sessions × AOV) — chỉ mock demo có;
+  // live chưa có economics đo được thì hiện "—", không bịa.
+  const recovered = demoData
+    ? experiments
+        .filter(experiment => experiment.status === 'won')
+        .reduce(
+          (total, experiment) =>
+            total + getExperimentRecoveredMonthly(experiment, demoData),
+          0
+        )
+    : null;
+  const inFlight = demoData
+    ? experiments
+        .filter(experiment => experiment.status === 'running')
+        .reduce(
+          (total, experiment) =>
+            total + getExperimentInFlight(experiment, demoData),
+          0
+        )
+    : null;
+  const runningCount = experiments.filter(
     experiment => experiment.status === 'running'
   ).length;
 
@@ -138,34 +164,105 @@ export const ExperimentsWorkspace = ({
     writeExperimentIdParam(null);
   };
 
-  const handleStop = () => {
-    if (!selected) return;
-    const result = stopExperiment(selected.id);
-    if (!result.ok) {
-      toast.error(t('actionFailed'));
-      return;
+  /** GATE_OPEN/GATE_CLOSED của BE → đúng ngữ nghĩa ship gate 95. */
+  const gateErrorMessage = (err: unknown): string => {
+    if (err instanceof RxApiError) {
+      if (err.code === 'GATE_OPEN') {
+        return t('errGateOpen', { gate: EXPERIMENT_SHIP_GATE });
+      }
+      if (err.code === 'GATE_CLOSED') {
+        return t('errGateClosed', { gate: EXPERIMENT_SHIP_GATE });
+      }
+      return err.message;
     }
-    setEndModalOpen(false);
-    toast.success(t('toastStopped', { name: result.experiment.name }));
+    return t('actionFailed');
   };
 
-  const handleConclude = () => {
+  const patchDemo = (id: string, patch: (item: Experiment) => Experiment) =>
+    setDemoExperiments(list =>
+      list.map(item => (item.id === id ? patch(item) : item))
+    );
+
+  const handleStop = async () => {
     if (!selected) return;
-    const result = concludeExperiment(selected.id);
-    if (!result.ok) {
+    if (live) {
+      try {
+        const updated = experimentFromRx(
+          await rexerV2Api.experiments.stop(selected.id)
+        );
+        setEndModalOpen(false);
+        toast.success(t('toastStopped', { name: updated.name }));
+        router.refresh();
+      } catch (err) {
+        toast.error(gateErrorMessage(err));
+      }
+      return;
+    }
+    if (selected.status !== 'running') {
       toast.error(t('actionFailed'));
       return;
     }
+    if (selected.sig >= EXPERIMENT_SHIP_GATE) {
+      toast.error(t('errGateOpen', { gate: EXPERIMENT_SHIP_GATE }));
+      return;
+    }
+    patchDemo(selected.id, item => ({
+      ...item,
+      status: 'stopped',
+      stopped: { day: item.days, sig: item.sig },
+    }));
+    setEndModalOpen(false);
+    toast.success(t('toastStopped', { name: selected.name }));
+  };
+
+  const handleConclude = async () => {
+    if (!selected) return;
+    if (live) {
+      try {
+        const updated = experimentFromRx(
+          await rexerV2Api.experiments.conclude(selected.id, {})
+        );
+        setEndModalOpen(false);
+        toast.success(
+          updated.status === 'won'
+            ? t('toastWon', { name: updated.name })
+            : t('toastLost', { name: updated.name })
+        );
+        router.refresh();
+      } catch (err) {
+        toast.error(gateErrorMessage(err));
+      }
+      return;
+    }
+    if (selected.status !== 'running') {
+      toast.error(t('actionFailed'));
+      return;
+    }
+    if (selected.sig < EXPERIMENT_SHIP_GATE) {
+      toast.error(t('errGateClosed', { gate: EXPERIMENT_SHIP_GATE }));
+      return;
+    }
+    const won = getExperimentLift(selected) > 0;
+    patchDemo(selected.id, item => ({
+      ...item,
+      status: won ? 'won' : 'lost',
+      learning:
+        won || item.learning
+          ? item.learning
+          : 'The variant did not beat control. The evidence stays attached to the leak so the next strategy starts from what this test learned.',
+    }));
     setEndModalOpen(false);
     toast.success(
-      result.experiment.status === 'won'
-        ? t('toastWon', { name: result.experiment.name })
-        : t('toastLost', { name: result.experiment.name })
+      won
+        ? t('toastWon', { name: selected.name })
+        : t('toastLost', { name: selected.name })
     );
   };
 
   const renderRow = (experiment: Experiment) => {
-    const opportunity = findExperimentOpportunity(experiment, data);
+    const opportunity = demoData
+      ? findExperimentOpportunity(experiment, demoData)
+      : null;
     const sessions = experiment.a.sess + experiment.b.sess;
     const lift = getExperimentLift(experiment);
     return (
@@ -181,7 +278,10 @@ export const ExperimentsWorkspace = ({
             {experiment.name}
           </strong>
           <span className='mt-0.5 block truncate text-[10px] text-[var(--pv2-mut)]'>
-            {opportunity?.title ?? t('unknownLeak')}
+            {opportunity?.title ??
+              (live && experiment.metric
+                ? experiment.metric
+                : t('unknownLeak'))}
           </span>
         </span>
         <span className='hidden text-[11px] text-[var(--pv2-mut)] md:block'>
@@ -241,27 +341,54 @@ export const ExperimentsWorkspace = ({
       </header>
 
       <main className='w-full space-y-5 px-5 py-5 md:px-8'>
+        {initialError ? (
+          <p className='rounded-[var(--pv2-r-sm)] border border-[color-mix(in_srgb,var(--pv2-error)_30%,var(--pv2-hair))] bg-[color-mix(in_srgb,var(--pv2-error)_6%,var(--pv2-paper))] px-4 py-2.5 text-xs text-[var(--pv2-error)]'>
+            {initialError}
+          </p>
+        ) : null}
+        {live && experiments.length === 0 ? (
+          <section className='rounded-[var(--pv2-r)] border border-dashed border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-8 py-14 text-center'>
+            <p aria-hidden className='mb-2.5 text-3xl'>
+              🧪
+            </p>
+            <p className='mb-1.5 text-[15px] font-semibold text-[var(--pv2-ink)]'>
+              {t('emptyTitle')}
+            </p>
+            <p className='mx-auto mb-5 max-w-[520px] text-[13px] leading-relaxed text-[var(--pv2-mut)]'>
+              {t('emptyBody')}
+            </p>
+            <Button asChild variant='primary'>
+              <Link href={crossHref('/portal-v2/dropoff', {})}>
+                {t('emptyCta')}
+              </Link>
+            </Button>
+          </section>
+        ) : null}
         <section
           aria-label={t('summaryAria')}
           className='grid overflow-hidden rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-hair)] md:grid-cols-3'
         >
           <SummaryTile
             label={t('shippedRecovery')}
-            value={formatMoney(recovered)}
-            note={t('perMonthRecovered')}
+            value={recovered != null ? formatMoney(recovered) : '—'}
+            note={
+              recovered != null ? t('perMonthRecovered') : t('economicsNote')
+            }
             icon={CheckCircle2}
             tone='success'
           />
           <SummaryTile
             label={t('inFlight')}
-            value={formatMoney(inFlight)}
-            note={t('observedVariantGain')}
+            value={inFlight != null ? formatMoney(inFlight) : '—'}
+            note={
+              inFlight != null ? t('observedVariantGain') : t('economicsNote')
+            }
             icon={TrendingUp}
             tone='electric'
           />
           <SummaryTile
             label={t('activeTests')}
-            value={`${runningCount}/${data.experiments.length}`}
+            value={`${runningCount}/${experiments.length}`}
             note={t('runningOfTotal')}
             icon={FlaskConical}
           />
@@ -302,11 +429,15 @@ export const ExperimentsWorkspace = ({
 
   const detailView = useMemo(() => {
     if (!selected) return null;
-    const opportunity = findExperimentOpportunity(selected, data);
-    const option = findExperimentOption(selected, data);
+    const opportunity = demoData
+      ? findExperimentOpportunity(selected, demoData)
+      : null;
+    const option = demoData ? findExperimentOption(selected, demoData) : null;
     const lift = getExperimentLift(selected);
     const gateOpen = selected.sig >= EXPERIMENT_SHIP_GATE;
-    const recoveredMonthly = getExperimentRecoveredMonthly(selected, data);
+    const recoveredMonthly = demoData
+      ? getExperimentRecoveredMonthly(selected, demoData)
+      : null;
 
     return (
       <>
@@ -323,12 +454,21 @@ export const ExperimentsWorkspace = ({
             <div className='mt-4 flex flex-wrap items-end justify-between gap-4'>
               <div className='min-w-0'>
                 <Link
-                  href='/portal-v2/journey-audit'
+                  href={
+                    live && selected.leakId
+                      ? crossHref('/portal-v2/dropoff', {
+                          product: selected.productId ?? null,
+                          leak: selected.leakId,
+                        })
+                      : '/portal-v2/journey-audit'
+                  }
                   className='text-[10px] font-bold tracking-[0.12em] text-[var(--pv2-electric)] uppercase hover:underline'
                 >
-                  {t('fromLeak', {
-                    leak: opportunity?.title ?? t('unknownLeak'),
-                  })}
+                  {live && selected.leakId
+                    ? t('fromLeakLive')
+                    : t('fromLeak', {
+                        leak: opportunity?.title ?? t('unknownLeak'),
+                      })}
                 </Link>
                 <h1 className='mt-1 font-[family-name:var(--pv2-disp)] text-[1.625rem] font-bold tracking-[-0.03em] text-[var(--pv2-ink)] md:text-[1.75rem]'>
                   {selected.name}
@@ -412,9 +552,11 @@ export const ExperimentsWorkspace = ({
               value={`${selected.sig}%`}
               note={
                 selected.status === 'won'
-                  ? t('recoveredMonthly', {
-                      value: formatMoney(recoveredMonthly),
-                    })
+                  ? recoveredMonthly != null
+                    ? t('recoveredMonthly', {
+                        value: formatMoney(recoveredMonthly),
+                      })
+                    : t('economicsNote')
                   : gateOpen
                     ? t('gateOpen')
                     : t('gateHolding', {
@@ -452,6 +594,7 @@ export const ExperimentsWorkspace = ({
             <div className='pt-4'>
               <ExperimentDailyChart
                 experiment={selected}
+                unit={selected.dailyKind === 'conversions' ? '' : '%'}
                 controlLabel={t('control')}
                 variantLabel={t('variant')}
                 emptyLabel={t('chartEmpty')}
@@ -497,7 +640,7 @@ export const ExperimentsWorkspace = ({
         </main>
       </>
     );
-  }, [data, selected, t]);
+  }, [demoData, live, selected, t]);
 
   return (
     <div className='flex min-h-0 flex-col'>

@@ -4,6 +4,7 @@ import { Database, SquareStack } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { cn } from '@/lib/cn';
@@ -21,6 +22,7 @@ import {
   type DropoffViewState,
 } from '@/lib/portal-v2/journey-audit/params';
 import { useAuditSources } from '@/lib/portal-v2/journey-audit/sourcesStore';
+import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 import type { JourneyAuditBundle } from '@/lib/portal-v2/journey-audit/types';
 import type { DropoffBundle } from '@/services/portal-v2/journeyAudit';
 import { ChannelTable } from '@/components/organisms/portal-v2/dropoff/ChannelTable';
@@ -76,6 +78,7 @@ export const DropoffWorkspace = ({
   const [selectedLeakId, setSelectedLeakId] = useState<string | null>(
     initialState.leakId
   );
+  const [creatingExperiment, setCreatingExperiment] = useState(false);
   const ranked = useMemo(
     () => (dropoff ? [...dropoff.leaks].sort((a, b) => b.usd - a.usd) : []),
     [dropoff]
@@ -100,6 +103,32 @@ export const DropoffWorkspace = ({
     touchpointId
       ? (findTouchpoint(journey, touchpointId)?.stage.name ?? null)
       : null;
+
+  /** FR-E4: leak → draft experiment, điều hướng sang màn Experiments. */
+  const handleCreateExperiment = async () => {
+    if (!selected || !product) return;
+    if (!dropoffBundle.live) {
+      toast(t('toastExperimentDemo'));
+      return;
+    }
+    setCreatingExperiment(true);
+    try {
+      const created = await rexerV2Api.experiments.create({
+        leak_id: selected.id,
+        product_id: product.auditId,
+      });
+      toast.success(
+        t('toastExperimentCreated', { name: created.name || selected.title })
+      );
+      router.push(crossHref('/portal-v2/experiments', { id: created.id }));
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : t('createExperimentFailed')
+      );
+    } finally {
+      setCreatingExperiment(false);
+    }
+  };
 
   const goJourney = (params: Record<string, string | null> = {}) =>
     router.push(
@@ -284,6 +313,10 @@ export const DropoffWorkspace = ({
             tpName={tpNameOf(selected.touchpointId)}
             tpScore={selectedFound?.tp.score ?? null}
             onOpenTouchpoint={() => goJourney({ tp: selected.touchpointId })}
+            onCreateExperiment={() => {
+              void handleCreateExperiment();
+            }}
+            creatingExperiment={creatingExperiment}
           />
         </div>
 

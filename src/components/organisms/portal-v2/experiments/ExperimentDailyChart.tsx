@@ -2,6 +2,8 @@ import type { Experiment } from '@/lib/portal-v2/experiments/types';
 
 type ExperimentDailyChartProps = {
   experiment: Experiment;
+  /** '%' cho CVR (mock), '' cho số conversion tuyệt đối (dữ liệu thật). */
+  unit?: '%' | '';
   controlLabel: string;
   variantLabel: string;
   emptyLabel: string;
@@ -10,6 +12,7 @@ type ExperimentDailyChartProps = {
 
 export const ExperimentDailyChart = ({
   experiment,
+  unit = '%',
   controlLabel,
   variantLabel,
   emptyLabel,
@@ -78,7 +81,8 @@ export const ExperimentDailyChart = ({
                 fill='var(--pv2-faint)'
                 fontSize='10'
               >
-                {value.toFixed(1)}%
+                {value.toFixed(unit === '%' ? 1 : 0)}
+                {unit}
               </text>
             </g>
           );

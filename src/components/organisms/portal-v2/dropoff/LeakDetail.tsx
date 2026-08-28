@@ -1,7 +1,6 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { formatMoney } from '@/lib/portal-v2/format';
@@ -19,6 +18,9 @@ type LeakDetailProps = {
   tpName: string;
   tpScore: number | null;
   onOpenTouchpoint: () => void;
+  /** FR-E4: POST /v1/experiments {leak_id, product_id} rồi mở draft. */
+  onCreateExperiment: () => void;
+  creatingExperiment: boolean;
 };
 
 /** Panel chẩn đoán một leak: meta pills, narrative, evidence theo nguồn, fix. */
@@ -30,6 +32,8 @@ export const LeakDetail = ({
   tpName,
   tpScore,
   onOpenTouchpoint,
+  onCreateExperiment,
+  creatingExperiment,
 }: LeakDetailProps) => {
   const t = useTranslations('portalV2.dropoff');
   const fromLabel = dropoff.steps[leak.fromStep]?.label ?? '';
@@ -132,11 +136,10 @@ export const LeakDetail = ({
         ) : null}
         <Button
           variant='ghost'
-          onClick={() =>
-            toast(t('toastOpportunity', { amount: formatMoney(leak.usd) }))
-          }
+          disabled={creatingExperiment}
+          onClick={onCreateExperiment}
         >
-          {t('createOpportunity')}
+          {creatingExperiment ? t('creatingExperiment') : t('createExperiment')}
         </Button>
       </div>
     </div>
