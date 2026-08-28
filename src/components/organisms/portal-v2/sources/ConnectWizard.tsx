@@ -17,14 +17,47 @@ import type {
   WizardAccount,
   WizardConfig,
 } from '@/lib/portal-v2/journey-audit/types';
+import { statsLine } from '@/lib/portal-v2/journey-audit/sourcesView';
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
-import type { RxGA4Property } from '@/services/rexer-v2/types/sources';
+import type {
+  RxConnectSourceRequest,
+  RxGA4Property,
+} from '@/services/rexer-v2/types/sources';
 import {
   SyncRows,
   WizardStepBody,
 } from '@/components/organisms/portal-v2/sources/wizard-steps';
 
-type AuthState = 'idle' | 'authorizing' | 'waiting' | 'blocked';
+type AuthState = 'idle' | 'authorizing' | 'waiting' | 'blocked' | 'syncing';
+
+/**
+ * Provider credential-based (Phase 4): connect là MỘT request có body — không
+ * popup. Builder đọc giá trị hiệu lực của các field theo label trong config.
+ */
+const CREDENTIAL_BUILDERS: Record<
+  string,
+  (value: (label: string) => string) => RxConnectSourceRequest
+> = {
+  woocommerce: value => ({
+    site_url: value('Site URL'),
+    consumer_key: value('Consumer key'),
+    consumer_secret: value('Consumer secret'),
+  }),
+  retail_feed: value => ({
+    feed_url: value('Feed URL'),
+    schedule: value('Pull schedule'),
+    mapping: {
+      sku: value('SKU column'),
+      price: value('Price column'),
+      name: value('Name column'),
+      bullets: value('Bullets column'),
+    },
+  }),
+  amazon: value => ({ listing_url: value('Listing URL') }),
+};
+
+const isUrlValue = (value: string): boolean =>
+  /^(https?|sftp):\/\/\S+/i.test(value.trim());
 
 type ConnectWizardProps = {
   source: AuditSource | null;
@@ -71,6 +104,8 @@ export const ConnectWizard = ({
   const [liveConnected, setLiveConnected] = useState(false);
   const [authState, setAuthState] = useState<AuthState>('idle');
   const [blockedUrl, setBlockedUrl] = useState<string | null>(null);
+  const [stepError, setStepError] = useState<string | null>(null);
+  const [liveStats, setLiveStats] = useState<string | null>(null);
   const [ga4Properties, setGa4Properties] = useState<RxGA4Property[] | null>(
     null
   );
@@ -91,6 +126,8 @@ export const ConnectWizard = ({
       setLiveConnected(false);
       setAuthState('idle');
       setBlockedUrl(null);
+      setStepError(null);
+      setLiveStats(null);
       setGa4Properties(null);
     }
     return () => {
@@ -162,6 +199,92 @@ export const ConnectWizard = ({
     onLiveConnected(source.name);
   };
 
+  /** Giá trị hiệu lực của một field: user gõ ?? prefill trong config. */
+  const effectiveValue = (label: string): string => {
+    if (fieldValues[label] != null) return fieldValues[label].trim();
+    for (const item of config.steps) {
+      if (item.kind !== 'form') continue;
+      const field = item.fields.find(f => f.label === label);
+      if (field) return field.value.trim();
+    }
+    return '';
+  };
+
+  /** Validate cơ bản bước form: bắt buộc mọi field; label có "URL" → URL. */
+  const validateFormStep = (): boolean => {
+    if (step.kind !== 'form') return true;
+    for (const field of step.fields) {
+      const value = effectiveValue(field.label);
+      if (!value) {
+        setStepError(t('errRequiredFields'));
+        return false;
+      }
+      if (/\bURL\b/i.test(field.label) && !isUrlValue(value)) {
+        setStepError(t('errInvalidUrl', { label: field.label }));
+        return false;
+      }
+    }
+    return true;
+  };
+
+  /**
+   * Connect credential-based (Phase 4): một request có body, không popup.
+   * BE cũ chưa ship connector sẽ trả stub authorize_url → rơi về sync demo
+   * như trước (backward-compat); BE mới trả {status:'connected', connection}.
+   */
+  const connectCredential = async (
+    build: (value: (label: string) => string) => RxConnectSourceRequest
+  ) => {
+    setAuthState('authorizing');
+    try {
+      const result = await requestAuthorize(provider, build(effectiveValue));
+      if (cancelRef.current) return;
+      if (result.kind === 'stub') {
+        toast(t('toastAuthorizePending', { name: source.name }));
+        setAuthState('idle');
+        setStepIndex(index => index + 1); // sync demo như prototype
+        return;
+      }
+      if (result.kind === 'real') {
+        // BE quyết định provider này vẫn cần OAuth — theo flow popup chuẩn.
+        setAuthState('idle');
+        await startAuthorize(result.url);
+        return;
+      }
+      // connected ngay — chờ ngắn cho job sync đầu đổ stats rồi success.
+      authorizedRef.current = true;
+      setLiveStats(
+        statsLine(result.connection.stats, result.connection.external_account)
+      );
+      setAuthState('syncing');
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        if (cancelRef.current) return;
+        try {
+          const items = (await rexerV2Api.sources.list()).items ?? [];
+          const fresh = items.find(item => item.id === result.connection.id);
+          const line = fresh
+            ? statsLine(fresh.stats, fresh.external_account)
+            : null;
+          if (line) {
+            setLiveStats(line);
+            if (Object.keys(fresh?.stats ?? {}).length) break;
+          }
+        } catch {
+          // nhịp sau thử lại
+        }
+      }
+      if (cancelRef.current) return;
+      setAuthState('idle');
+      finishLive();
+    } catch (err) {
+      if (cancelRef.current) return;
+      setAuthState('idle');
+      // Lỗi verify (401/URL sai) đứng lại TẠI BƯỚC, không đi tiếp.
+      setStepError(err instanceof Error ? err.message : t('actionFailed'));
+    }
+  };
+
   /** Authorize thật + theo dõi connection về (mục 1 vòng 3). */
   const startAuthorize = async (retryUrl?: string) => {
     setAuthState('authorizing');
@@ -171,13 +294,26 @@ export const ConnectWizard = ({
       try {
         const result = await requestAuthorize(
           provider,
-          provider === 'shopify' ? fieldValues['Store domain'] : undefined
+          provider === 'shopify' ? { shop: effectiveValue('Store domain') } : {}
         );
         if (cancelRef.current) return;
         if (result.kind === 'stub') {
           toast(t('toastAuthorizePending', { name: source.name }));
           setAuthState('idle');
           setStepIndex(index => index + 1); // sync demo như prototype
+          return;
+        }
+        if (result.kind === 'connected') {
+          // Provider trả connected thẳng (credential-style) — success luôn.
+          authorizedRef.current = true;
+          setLiveStats(
+            statsLine(
+              result.connection.stats,
+              result.connection.external_account
+            )
+          );
+          setAuthState('idle');
+          finishLive();
           return;
         }
         url = result.url;
@@ -225,6 +361,8 @@ export const ConnectWizard = ({
 
   const handleNext = async () => {
     if (step.kind === 'sync') return;
+    setStepError(null);
+    if (!validateFormStep()) return;
     if (ga4Live && step.kind === 'picker') {
       const index = selections[step.accountsKey] ?? 0;
       const chosen = ga4Properties![index];
@@ -250,7 +388,12 @@ export const ConnectWizard = ({
     }
     const next = config.steps[stepIndex + 1];
     if (live && next?.kind === 'sync' && !authorizedRef.current) {
-      await startAuthorize();
+      const build = CREDENTIAL_BUILDERS[provider];
+      if (build) {
+        await connectCredential(build);
+      } else {
+        await startAuthorize();
+      }
       return;
     }
     setStepIndex(index => index + 1);
@@ -296,7 +439,9 @@ export const ConnectWizard = ({
         footer={
           <>
             <span className='text-2xs mr-auto text-[var(--pv2-faint)]'>
-              {liveConnected ? t('wizardLiveStats') : doneStep.done.stats}
+              {liveConnected
+                ? (liveStats ?? t('wizardLiveStats'))
+                : doneStep.done.stats}
             </span>
             <Button variant='ghost' onClick={onClose}>
               {t('wizardClose')}
@@ -323,6 +468,11 @@ export const ConnectWizard = ({
           <p className='mx-auto max-w-[400px] text-xs leading-relaxed text-[var(--pv2-mut)]'>
             {liveConnected ? t('wizardLiveMsg') : doneStep.done.msg}
           </p>
+          {liveConnected && liveStats?.toLowerCase().includes('blocked') ? (
+            <p className='mx-auto mt-3 max-w-[420px] rounded-[var(--pv2-r-sm)] border border-[color-mix(in_srgb,var(--pv2-warning)_40%,var(--pv2-hair))] bg-[color-mix(in_srgb,var(--pv2-warning)_8%,var(--pv2-paper))] px-3 py-2.5 text-left text-xs leading-relaxed text-[color-mix(in_srgb,var(--pv2-warning)_75%,var(--pv2-ink))]'>
+              ⚠️ {t('wizardFetchBlockedNote')}
+            </p>
+          ) : null}
           {source.unlocks ? (
             <p className='mx-auto mt-3.5 max-w-[420px] rounded-[var(--pv2-r-sm)] bg-[color-mix(in_srgb,var(--pv2-success)_8%,var(--pv2-paper))] px-3 py-2.5 text-left text-xs text-[var(--pv2-mut)]'>
               ＋ {source.unlocks}
@@ -333,7 +483,10 @@ export const ConnectWizard = ({
     );
   }
 
-  const busy = authState === 'authorizing' || authState === 'waiting';
+  const busy =
+    authState === 'authorizing' ||
+    authState === 'waiting' ||
+    authState === 'syncing';
 
   return (
     <Modal
@@ -369,7 +522,7 @@ export const ConnectWizard = ({
             >
               {authState === 'authorizing'
                 ? t('wizardAuthorizing')
-                : authState === 'waiting'
+                : authState === 'waiting' || authState === 'syncing'
                   ? t('wizardWaitingShort')
                   : step.cta}
             </Button>
@@ -385,6 +538,20 @@ export const ConnectWizard = ({
             className='inline-block size-[13px] shrink-0 animate-spin rounded-full border-2 border-[var(--pv2-hair)] border-t-[var(--pv2-electric)]'
           />
           {t('wizardWaiting')}
+        </p>
+      ) : null}
+      {authState === 'syncing' ? (
+        <p className='mb-3.5 flex items-center gap-2.5 rounded-[var(--pv2-r-sm)] border border-[color-mix(in_srgb,var(--pv2-success)_30%,var(--pv2-hair))] bg-[color-mix(in_srgb,var(--pv2-success)_6%,var(--pv2-paper))] px-3 py-2.5 text-xs leading-relaxed text-[var(--pv2-ink)]'>
+          <span
+            aria-hidden
+            className='inline-block size-[13px] shrink-0 animate-spin rounded-full border-2 border-[var(--pv2-hair)] border-t-[var(--pv2-success)]'
+          />
+          {t('wizardSyncingLive')}
+        </p>
+      ) : null}
+      {stepError ? (
+        <p className='mb-3.5 rounded-[var(--pv2-r-sm)] border border-[color-mix(in_srgb,var(--pv2-error)_35%,var(--pv2-hair))] bg-[color-mix(in_srgb,var(--pv2-error)_6%,var(--pv2-paper))] px-3 py-2.5 text-xs leading-relaxed text-[var(--pv2-error)]'>
+          {stepError}
         </p>
       ) : null}
       {authState === 'blocked' ? (
@@ -421,9 +588,10 @@ export const ConnectWizard = ({
             setSelections(prev => ({ ...prev, [key]: index }))
           }
           fieldValues={fieldValues}
-          onFieldChange={(label, value) =>
-            setFieldValues(prev => ({ ...prev, [label]: value }))
-          }
+          onFieldChange={(label, value) => {
+            setStepError(null);
+            setFieldValues(prev => ({ ...prev, [label]: value }));
+          }}
         />
       )}
     </Modal>

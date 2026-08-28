@@ -131,7 +131,8 @@ export const relativeSync = (
   return `${Math.round(hours / 24)}d ago`;
 };
 
-const statsLine = (
+/** Dòng tóm tắt account + stats của một connection — dùng cả ở wizard. */
+export const statsLine = (
   stats: Record<string, unknown>,
   account: Record<string, unknown>
 ): string | null => {

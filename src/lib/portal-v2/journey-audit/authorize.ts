@@ -1,7 +1,10 @@
 'use client';
 
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
-import type { RxSourceConnection } from '@/services/rexer-v2/types/sources';
+import type {
+  RxConnectSourceRequest,
+  RxSourceConnection,
+} from '@/services/rexer-v2/types/sources';
 
 /**
  * Vòng OAuth thật của wizard connect.
@@ -18,17 +21,26 @@ import type { RxSourceConnection } from '@/services/rexer-v2/types/sources';
 
 export type AuthorizeRequestResult =
   | { kind: 'stub' }
-  | { kind: 'real'; url: string };
+  | { kind: 'real'; url: string }
+  /** Provider credential-based: connect xong ngay trong một request. */
+  | { kind: 'connected'; connection: RxSourceConnection; syncJobId?: string };
 
 export const requestAuthorize = async (
   provider: string,
-  shop?: string
+  body: RxConnectSourceRequest = {}
 ): Promise<AuthorizeRequestResult> => {
-  const res = await rexerV2Api.sources.connect(provider, shop ? { shop } : {});
-  if (res.authorize_url.includes(`/v1/sources/${provider}/callback`)) {
-    return { kind: 'stub' };
+  const res = await rexerV2Api.sources.connect(provider, body);
+  if ('authorize_url' in res) {
+    if (res.authorize_url.includes(`/v1/sources/${provider}/callback`)) {
+      return { kind: 'stub' };
+    }
+    return { kind: 'real', url: res.authorize_url };
   }
-  return { kind: 'real', url: res.authorize_url };
+  return {
+    kind: 'connected',
+    connection: res.connection,
+    syncJobId: res.sync_job_id,
+  };
 };
 
 export const openAuthorizePopup = (url: string): Window | null =>

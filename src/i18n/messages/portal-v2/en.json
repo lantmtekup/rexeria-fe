@@ -920,7 +920,11 @@
       "wizardGa4PickProperty": "GA4 authorized — pick the property to finish.",
       "wizardLiveMsg": "The connection is live and read-only. Data lands with the first sync; scores refresh as touchpoints re-read it.",
       "wizardLiveStats": "Connected · first sync scheduled",
-      "toastConnectedLive": "{name} connected — sources and journey refreshed."
+      "toastConnectedLive": "{name} connected — sources and journey refreshed.",
+      "errRequiredFields": "Fill in every field to continue.",
+      "errInvalidUrl": "{label} must be a valid URL (https://…).",
+      "wizardSyncingLive": "Connected — the first sync is running, pulling the connector's first numbers…",
+      "wizardFetchBlockedNote": "The listing fetch was blocked by the marketplace — the connection stays live and retries on the next scheduled sync."
     },
     "brand": {
       "title": "Brand",

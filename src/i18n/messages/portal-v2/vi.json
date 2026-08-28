@@ -920,7 +920,11 @@
       "wizardGa4PickProperty": "GA4 đã ủy quyền — chọn property để hoàn tất.",
       "wizardLiveMsg": "Kết nối đã hoạt động và chỉ đọc. Dữ liệu về theo lần sync đầu; điểm số làm mới khi touchpoint đọc lại nó.",
       "wizardLiveStats": "Đã kết nối · đã lên lịch sync đầu",
-      "toastConnectedLive": "Đã kết nối {name} — sources và journey vừa làm mới."
+      "toastConnectedLive": "Đã kết nối {name} — sources và journey vừa làm mới.",
+      "errRequiredFields": "Điền đủ mọi trường để tiếp tục.",
+      "errInvalidUrl": "{label} phải là URL hợp lệ (https://…).",
+      "wizardSyncingLive": "Đã kết nối — sync đầu đang chạy, kéo những con số đầu tiên của connector…",
+      "wizardFetchBlockedNote": "Lượt fetch listing bị marketplace chặn — kết nối vẫn hoạt động và sẽ thử lại ở lần sync theo lịch kế tiếp."
     },
     "brand": {
       "title": "Thương hiệu",

@@ -110,11 +110,11 @@ import type {
   RxAuditTouchpointDetail,
 } from './types/audit';
 import type {
+  RxConnectResponse,
   RxConnectSourceRequest,
   RxGA4PropertyListResponse,
   RxSelectGA4PropertyRequest,
   RxSourceCatalogResponse,
-  RxSourceConnectResponse,
   RxSourceListResponse,
   RxSourceSyncResponse,
 } from './types/sources';
@@ -179,12 +179,16 @@ export const rexerV2Api = {
     catalog: () => rxV2<RxSourceCatalogResponse>('/sources/catalog'),
 
     /**
-     * `POST /v1/sources/{provider}/connect` — trả `authorize_url`. Shopify
-     * BẮT BUỘC body `{shop}` (400 nếu thiếu); provider chưa cấu hình OAuth
-     * trả stub URL trỏ về callback của BE.
+     * `POST /v1/sources/{provider}/connect` — hai kiểu trả lời:
+     * - OAuth (shopify/ga4/tiktokshop/tiktokads/meta/klaviyo):
+     *   `{authorize_url,…}`; stub khi chưa cấu hình. Shopify BẮT BUỘC body
+     *   `{shop}`.
+     * - Credential (woocommerce/retail_feed/amazon — Phase 4): connect ngay,
+     *   trả `{status:'connected', connection, sync_job_id}`; lỗi verify
+     *   (401/URL sai) throw như mọi lỗi khác.
      */
     connect: (provider: string, body: RxConnectSourceRequest = {}) =>
-      rxV2<RxSourceConnectResponse>(`/sources/${provider}/connect`, {
+      rxV2<RxConnectResponse>(`/sources/${provider}/connect`, {
         method: 'POST',
         body,
       }),

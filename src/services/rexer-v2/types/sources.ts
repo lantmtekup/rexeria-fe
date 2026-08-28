@@ -49,9 +49,31 @@ export type RxSourceCatalogResponse = { items: RxSourceCatalogEntry[] };
 
 /* ── POST /v1/sources/:provider/connect ──────────────────────────────────── */
 
-/** Shopify bắt buộc kèm shop domain (bước "Store" của wizard). */
+/** Cột feed → nghĩa (retail_feed): tên cột trong feed của partner. */
+export type RxFeedMapping = {
+  sku: string;
+  price: string;
+  name: string;
+  bullets: string;
+};
+
+/**
+ * Body connect theo provider (Phase 4 — BE nhánh journey-audit-connectors):
+ * - shopify: `shop` (bước Store của wizard)
+ * - woocommerce: `site_url` + `consumer_key` + `consumer_secret`
+ * - retail_feed: `feed_url` + `schedule?` + `mapping`
+ * - amazon: `listing_url`
+ * Provider OAuth khác bỏ trống body.
+ */
 export type RxConnectSourceRequest = {
   shop?: string;
+  site_url?: string;
+  consumer_key?: string;
+  consumer_secret?: string;
+  feed_url?: string;
+  schedule?: string;
+  mapping?: RxFeedMapping;
+  listing_url?: string;
 };
 
 /**
@@ -64,6 +86,22 @@ export type RxSourceConnectResponse = {
   state: string;
   expires_at: string;
 };
+
+/**
+ * Provider credential-based (woocommerce/retail_feed/amazon) connect xong
+ * NGAY trong một request — không authorize_url, không popup; shape trùng
+ * SourceCallbackResponse của BE.
+ */
+export type RxSourceCredentialConnectResponse = {
+  status: 'connected';
+  connection: RxSourceConnection;
+  sync_job_id?: string;
+};
+
+/** Union thật của POST /connect — phân biệt bằng field `authorize_url`. */
+export type RxConnectResponse =
+  | RxSourceConnectResponse
+  | RxSourceCredentialConnectResponse;
 
 /* ── POST /v1/sources/:id/sync ───────────────────────────────────────────── */
 

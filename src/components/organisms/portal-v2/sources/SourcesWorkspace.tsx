@@ -149,6 +149,8 @@ export const SourcesWorkspace = ({
           .then(result => {
             if (result.kind === 'stub') {
               toast(t('toastAuthorizePending', { name: providerId }));
+            } else if (result.kind === 'connected') {
+              handleLiveConnected(providerId);
             } else if (openAuthorizePopup(result.url)) {
               toast(t('toastAuthorizeOpened', { name: providerId }));
             } else {

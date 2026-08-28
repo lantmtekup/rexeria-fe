@@ -2311,27 +2311,15 @@ export const MOCK_WIZARDS: Record<string, WizardConfig> = {
     provider: 'amazon',
     steps: [
       {
-        kind: 'oauth',
-        title: 'Authorize',
-        cta: 'Authorize',
-        popup: {
-          url: 'sellercentral.amazon.com/apps/authorize/consent?application_id=rexer',
-          brandBg: '#232F3E',
-          brandLetter: 'a',
-          brandName: 'Amazon Seller Central',
-          brandSub:
-            '<b>ReXeR Audit</b> requests read-only Selling Partner API access',
-        },
-        perms: [
+        kind: 'form',
+        title: 'Listing',
+        cta: 'Connect listing',
+        lead: 'Point ReXeR at the public marketplace listing. The audit reads title, bullets, imagery and price — compared against the DTC page on every sync.',
+        fields: [
           {
-            title: 'Orders',
-            code: 'sellingpartnerapi::orders.read',
-            desc: "Order volumes per listing, for the funnel's Purchase step",
-          },
-          {
-            title: 'Catalog',
-            code: 'sellingpartnerapi::catalog.read',
-            desc: 'Listing title, bullets and imagery — compared against the DTC page',
+            label: 'Listing URL',
+            value: 'https://www.amazon.com/dp/B0EXAMPLE01',
+            help: 'The public product page (amazon.com/dp/…). No seller credentials needed.',
           },
         ],
         denyNote: 'ReXeR cannot edit listings, prices or orders.',
@@ -2340,11 +2328,11 @@ export const MOCK_WIZARDS: Record<string, WizardConfig> = {
         kind: 'sync',
         title: 'Sync',
         rows: [
-          ['Reading catalog listings', '1 listing'],
-          ['Backfilling order analytics', '90 days'],
+          ['Fetching listing', '1 page'],
+          ['Extracting title, bullets & price', 'vs DTC page'],
         ],
         done: {
-          stats: '1 listing tracked · 90-day order history',
+          stats: '1 listing tracked · re-crawled daily',
           msg: 'The marketplace listing is now audited against the DTC page.',
         },
       },
@@ -2372,26 +2360,30 @@ export const MOCK_WIZARDS: Record<string, WizardConfig> = {
         ],
       },
       {
-        kind: 'mapping',
+        kind: 'form',
         title: 'Mapping',
         cta: 'Confirm mapping',
-        lead: 'ReXeR detected these columns. Confirm what each one means.',
-        rows: [
+        lead: 'Tell ReXeR which feed column carries each meaning. The defaults match the columns detected in the last pull.',
+        fields: [
           {
-            title: 'sku → Product',
-            desc: 'Matched 2 of 2 products in the JLO Beauty catalog',
+            label: 'SKU column',
+            value: 'sku',
+            help: 'Matched against the products in your catalog.',
           },
           {
-            title: 'retail_price → Price',
-            desc: 'Compared against the DTC price at every pull',
+            label: 'Price column',
+            value: 'retail_price',
+            help: 'Compared against the DTC price at every pull.',
           },
           {
-            title: 'display_name → Name',
-            desc: 'Checked for the naming drift already found on Amazon',
+            label: 'Name column',
+            value: 'display_name',
+            help: 'Checked for the naming drift already found on marketplaces.',
           },
           {
-            title: 'bullets → Usage copy',
-            desc: 'Checked against How-To-Use on the product page',
+            label: 'Bullets column',
+            value: 'bullets',
+            help: 'Checked against How-To-Use on the product page.',
           },
         ],
       },
