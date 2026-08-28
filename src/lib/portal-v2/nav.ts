@@ -14,6 +14,7 @@ import {
   Sparkles,
   Store,
   Target,
+  TrendingDown,
   Wand2,
   type LucideIcon,
 } from 'lucide-react';
@@ -53,25 +54,31 @@ export const PORTAL_V2_NAV: PortalV2NavGroup[] = [
     ],
   },
   {
-    groupKey: 'mining',
+    groupKey: 'journeyAudit',
     items: [
       {
-        id: 'mining',
-        href: `${PORTAL_V2_BASE}/mining`,
-        labelKey: 'mining',
+        id: 'journeyAudit',
+        href: `${PORTAL_V2_BASE}/journey-audit`,
+        labelKey: 'journeyAudit',
         icon: ScanSearch,
-      },
-      {
-        id: 'experiments',
-        href: `${PORTAL_V2_BASE}/experiments`,
-        labelKey: 'experiments',
-        icon: FlaskConical,
       },
       {
         id: 'sources',
         href: `${PORTAL_V2_BASE}/sources`,
         labelKey: 'sources',
         icon: DatabaseZap,
+      },
+      {
+        id: 'dropoff',
+        href: `${PORTAL_V2_BASE}/dropoff`,
+        labelKey: 'dropoff',
+        icon: TrendingDown,
+      },
+      {
+        id: 'experiments',
+        href: `${PORTAL_V2_BASE}/experiments`,
+        labelKey: 'experiments',
+        icon: FlaskConical,
       },
     ],
   },

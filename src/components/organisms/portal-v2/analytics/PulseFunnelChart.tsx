@@ -1,7 +1,4 @@
-import {
-  formatMiningCount,
-  formatMiningMoney,
-} from '@/lib/portal-v2/mining/helpers';
+import { formatCount, formatMoney } from '@/lib/portal-v2/format';
 import type { FunnelLeak, FunnelStep } from '@/lib/portal-v2/analytics/types';
 
 type PulseFunnelChartProps = {
@@ -82,7 +79,7 @@ export const PulseFunnelChart = ({
                 fontSize='15'
                 fontWeight='700'
               >
-                {formatMiningCount(step.value)}
+                {formatCount(step.value)}
               </text>
               <rect
                 x={centerX(index) - barWidth / 2}
@@ -144,7 +141,7 @@ export const PulseFunnelChart = ({
                 fontWeight='700'
                 fill={hot ? 'var(--pv2-paper)' : 'var(--pv2-error)'}
               >
-                −{formatMiningMoney(leak.risk)}
+                −{formatMoney(leak.risk)}
               </text>
               <text
                 x={x}

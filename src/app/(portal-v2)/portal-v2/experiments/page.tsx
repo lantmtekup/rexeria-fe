@@ -1,4 +1,5 @@
 import { ExperimentsWorkspace } from '@/components/organisms/portal-v2/experiments/ExperimentsWorkspace';
+import { ExperimentsDataProvider } from '@/lib/portal-v2/experiments/ExperimentsDataProvider';
 import { readExperimentIdParam } from '@/lib/portal-v2/experiments/idParam';
 
 type Props = {
@@ -7,5 +8,9 @@ type Props = {
 
 export default async function PortalV2ExperimentsPage({ searchParams }: Props) {
   const experimentId = readExperimentIdParam(await searchParams);
-  return <ExperimentsWorkspace initialExperimentId={experimentId} />;
+  return (
+    <ExperimentsDataProvider>
+      <ExperimentsWorkspace initialExperimentId={experimentId} />
+    </ExperimentsDataProvider>
+  );
 }

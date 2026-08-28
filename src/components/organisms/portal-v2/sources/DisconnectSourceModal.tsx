@@ -5,19 +5,22 @@ import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
 import { Modal } from '@/components/molecules/portal-v2/Modal';
-import type { MiningSource } from '@/lib/portal-v2/mining/types';
+import type { AuditSource } from '@/lib/portal-v2/journey-audit/types';
 
 type DisconnectSourceModalProps = {
-  source: MiningSource | null;
-  citations: number;
+  source: AuditSource | null;
+  /** Số touchpoint sẽ thành ghost (demo); null = không đếm được (live). */
+  feeds: number | null;
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
 };
 
+/** Xác nhận ngắt kết nối — lịch sử giữ lại, touchpoint mất nguồn thành ghost
+ *  và điểm stage tính lại ngay (FR-D9). */
 export const DisconnectSourceModal = ({
   source,
-  citations,
+  feeds,
   open,
   onClose,
   onConfirm,
@@ -43,9 +46,11 @@ export const DisconnectSourceModal = ({
       }
     >
       <p className='text-[13px] leading-6 text-[var(--pv2-mut)]'>
-        {citations
-          ? t('disconnectCited', { name: source.name, count: citations })
-          : t('disconnectUncited', { name: source.name })}
+        {feeds == null
+          ? t('disconnectBodyLive', { name: source.name })
+          : feeds
+            ? t('disconnectBody', { name: source.name, count: feeds })
+            : t('disconnectBodyNone', { name: source.name })}
       </p>
     </Modal>
   );

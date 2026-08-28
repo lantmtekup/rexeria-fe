@@ -1,7 +1,7 @@
-import type { MiningExperiment } from '@/lib/portal-v2/mining/types';
+import type { Experiment } from '@/lib/portal-v2/experiments/types';
 
 type ExperimentDailyChartProps = {
-  experiment: MiningExperiment;
+  experiment: Experiment;
   controlLabel: string;
   variantLabel: string;
   emptyLabel: string;

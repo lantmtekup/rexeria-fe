@@ -101,6 +101,23 @@ import type {
   RxRunAutomationRequest,
   RxRunAutomationResponse,
 } from './types/automation';
+import type {
+  RxAuditFlow,
+  RxAuditJourney,
+  RxAuditLeaksResponse,
+  RxAuditProductsResponse,
+  RxAuditRun,
+  RxAuditTouchpointDetail,
+} from './types/audit';
+import type {
+  RxConnectResponse,
+  RxConnectSourceRequest,
+  RxGA4PropertyListResponse,
+  RxSelectGA4PropertyRequest,
+  RxSourceCatalogResponse,
+  RxSourceListResponse,
+  RxSourceSyncResponse,
+} from './types/sources';
 
 /**
  * Lát cắt §8 → query string. Bỏ khoá rỗng: `campaign_id=` là 400
@@ -115,6 +132,93 @@ const intelQuery = (q: RxIntelQuery): Record<string, string> => {
 };
 
 export const rexerV2Api = {
+  // ── Journey Audit (`/v1/audit/*`) — BE đang xây song song đúng shape này.
+  // Phase 1: FE phục vụ mock qua services/portal-v2/journeyAudit.ts; các hàm
+  // dưới đây là hợp đồng để lúc nối thật chỉ đổi nguồn, không đổi hình.
+  audit: {
+    /** `GET /v1/audit/products` — danh mục sản phẩm kèm điểm audit. */
+    products: (brandId?: string) =>
+      rxV2<RxAuditProductsResponse>('/audit/products', {
+        ...(brandId ? { query: { brand_id: brandId } } : {}),
+      }),
+
+    /** `GET /v1/audit/products/{id}/journey` — stage × touchpoint + handoffs. */
+    journey: (productId: string) =>
+      rxV2<RxAuditJourney>(`/audit/products/${productId}/journey`),
+
+    /** `GET /v1/audit/touchpoints/{id}` — chi tiết drawer. */
+    touchpoint: (touchpointId: string) =>
+      rxV2<RxAuditTouchpointDetail>(`/audit/touchpoints/${touchpointId}`),
+
+    /** `GET /v1/audit/products/{id}/flow` — DAG dòng chảy giữa touchpoint. */
+    flow: (productId: string) =>
+      rxV2<RxAuditFlow>(`/audit/products/${productId}/flow`),
+
+    /** `GET /v1/audit/products/{id}/leaks` — phễu + leak xếp hạng + kênh. */
+    leaks: (productId: string) =>
+      rxV2<RxAuditLeaksResponse>(`/audit/products/${productId}/leaks`),
+
+    /** `POST /v1/audit/products/{id}/runs` — xếp hàng một lượt audit mới. */
+    createRun: (productId: string) =>
+      rxV2<RxAuditRun>(`/audit/products/${productId}/runs`, {
+        method: 'POST',
+      }),
+
+    /** `GET /v1/audit/runs/{id}` — trạng thái lượt audit. */
+    run: (runId: string) => rxV2<RxAuditRun>(`/audit/runs/${runId}`),
+  },
+
+  // ── Sources (`/v1/sources*`) — hub tích hợp read-only nuôi Journey Audit.
+  // KHÔNG route nào nhận `?brand_id`: brand suy từ principal, platform admin
+  // không brand sẽ nhận ERR_VALIDATION_FAILED — caller phải đỡ.
+  sources: {
+    /** `GET /v1/sources` — CONNECTIONS của brand (connected/attention/off). */
+    list: () => rxV2<RxSourceListResponse>('/sources'),
+
+    /** `GET /v1/sources/catalog` — 9 provider kết nối được + cờ connected. */
+    catalog: () => rxV2<RxSourceCatalogResponse>('/sources/catalog'),
+
+    /**
+     * `POST /v1/sources/{provider}/connect` — hai kiểu trả lời:
+     * - OAuth (shopify/ga4/tiktokshop/tiktokads/meta/klaviyo):
+     *   `{authorize_url,…}`; stub khi chưa cấu hình. Shopify BẮT BUỘC body
+     *   `{shop}`.
+     * - Credential (woocommerce/retail_feed/amazon — Phase 4): connect ngay,
+     *   trả `{status:'connected', connection, sync_job_id}`; lỗi verify
+     *   (401/URL sai) throw như mọi lỗi khác.
+     */
+    connect: (provider: string, body: RxConnectSourceRequest = {}) =>
+      rxV2<RxConnectResponse>(`/sources/${provider}/connect`, {
+        method: 'POST',
+        body,
+      }),
+
+    /**
+     * `POST /v1/sources/{id}/sync` — id là CONNECTION id (uuid), không phải
+     * provider. Provider thật queue job (`queued:true` + job_id); stub chạy
+     * đồng bộ và `last_sync_at` nhích ngay.
+     */
+    sync: (connectionId: string) =>
+      rxV2<RxSourceSyncResponse>(`/sources/${connectionId}/sync`, {
+        method: 'POST',
+      }),
+
+    /** `DELETE /v1/sources/{id}` — 204; row + lịch sử giữ lại (status off). */
+    remove: (connectionId: string) =>
+      rxV2<void>(`/sources/${connectionId}`, { method: 'DELETE' }),
+
+    /** `GET /v1/sources/ga4/properties` — 409 khi connection chưa có creds. */
+    ga4Properties: () =>
+      rxV2<RxGA4PropertyListResponse>('/sources/ga4/properties'),
+
+    /** `POST /v1/sources/ga4/properties` — chốt property + queue sync đầu. */
+    selectGA4Property: (body: RxSelectGA4PropertyRequest) =>
+      rxV2<RxSourceSyncResponse>('/sources/ga4/properties', {
+        method: 'POST',
+        body,
+      }),
+  },
+
   // ── Automation — v2-only. BE tự chấm readiness và tự dựng master draft. ──
   automations: {
     /**

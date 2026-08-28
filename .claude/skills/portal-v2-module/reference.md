@@ -176,7 +176,13 @@ PULSE:   analytics | intelligence
 exchange (hidden:true — header link) | settings (bottom)
 ```
 
-[`PORTAL_V2_NAV`](../../../src/lib/portal-v2/nav.ts) still uses the **old** groups (`plan` / `create` / `publish` / `learn`), lists exchange in the first group, and maps Intelligence to `/portal-v2/ai`. **Do not change `nav.ts`** unless the user confirms. Existing module pages keep current hrefs.
+[`PORTAL_V2_NAV`](../../../src/lib/portal-v2/nav.ts): nhóm đầu sau command đã
+là `journeyAudit` (Journey Audit `/portal-v2/journey-audit` · Sources ·
+Drop-off `/portal-v2/dropoff` · Experiments); các nhóm còn lại vẫn là IA cũ
+(`plan` / `create` / `publish` / `learn`), exchange ở group đầu, Intelligence
+map `/portal-v2/ai`. **Do not change `nav.ts`** unless the user confirms.
+Existing module pages keep current hrefs; `/portal-v2/mining` redirect về
+`/portal-v2/journey-audit`.
 
 Active state: `isPortalV2NavActive(pathname, href)`.
 
@@ -243,7 +249,7 @@ No `intelView`. Old Intelligence screen is Pulse `pulseIntel()`.
 | `const DATA` | ~2783 | org, nav, experiences, campaigns, journeys, assets, products, … |
 | `const BRAND` | ~4433 | Brand workspace |
 | `BFIELDS` / `BLINES` / `BROWS` | ~4576+ | Brand field registry |
-| `const MINING` | ~5109 | Journey Audit, Sources, Experiments (`stages`, `opps`, `sources`, `experiments`) |
+| `const MINING` | ~5109 | superseded — Journey Audit/Sources/Drop-off dùng prototype live-case; Experiments dùng `lib/portal-v2/experiments/mock.ts` |
 
 ### Pulse lenses
 
@@ -255,9 +261,15 @@ PULSE_WS_LENSES = ['overview', 'analytics', 'insights']
 - Rail **Intelligence**: `pulseIntel()` only — no tabs, advice not measurement.
 - CSS hints: `.pulse`, `.pmtabs`, `.pv-wsid`, `.intel-*` (Pulse intel cards — still translate to `--pv2-*`).
 
-### Mining CSS hints
+### Journey Audit
 
-`.mine-page`, `.mine-opp`, `.mine-cov`, `.mine-leak` / leak map SVG, `.mine-src` — layout reference only.
+Module Mining cũ đã bị thay bằng Journey Audit (3 màn `journey-audit` /
+`sources` / `dropoff` + `experiments` giữ lại). UX canonical là prototype
+live-case `rexer-jlo-live-case*.html` — KHÔNG grep `VIEWS.mining` /
+`const MINING` của demo v3 cho các màn này nữa. Code: `lib/portal-v2/
+journey-audit/` (types/mock/helpers/params/sourcesStore), `lib/portal-v2/
+experiments/`, organisms `journey-audit/`, `sources/`, `dropoff/`; hợp đồng BE
+ở `services/rexer-v2/types/{audit,sources}.ts`.
 
 ---
 
