@@ -445,7 +445,14 @@
       "toastStopped": "Đã dừng “{name}” — giữ bằng chứng, không gán kết quả.",
       "toastWon": "Đã kết luận “{name}” — biến thể thắng.",
       "toastLost": "Đã kết luận “{name}” — đối chứng giữ vững; bài học được giữ.",
-      "actionFailed": "Thử nghiệm đã thay đổi trước khi thao tác hoàn tất. Tải lại và thử lại."
+      "actionFailed": "Thử nghiệm đã thay đổi trước khi thao tác hoàn tất. Tải lại và thử lại.",
+      "errGateOpen": "Ý nghĩa thống kê đã chạm ngưỡng ship {gate}% — thử nghiệm này phải được conclude, không phải stop.",
+      "errGateClosed": "Ý nghĩa thống kê còn dưới ngưỡng ship {gate}% — chưa thể conclude thử nghiệm.",
+      "economicsNote": "Chờ số kinh tế đo được",
+      "fromLeakLive": "Từ một điểm rò đã khai phá — xem ở Drop-off",
+      "emptyTitle": "Chưa có thử nghiệm nào",
+      "emptyBody": "Mỗi thử nghiệm bắt đầu từ một điểm rò đã khai phá. Mở Drop-off, chọn điểm rò lớn nhất và bấm Tạo thử nghiệm — bản nháp sẽ về đây.",
+      "emptyCta": "Mở Drop-off"
     },
     "analytics": {
       "title": "Phân tích",
@@ -844,8 +851,6 @@
       "fixTitle": "Nên làm gì",
       "fixLabel": "Cách sửa khuyến nghị",
       "openTpInJourney": "Mở “{name}” ở tab Journey",
-      "createOpportunity": "Tạo cơ hội",
-      "toastOpportunity": "Đã thêm cơ hội vào backlog kèm ước tính tác động {amount}/tháng.",
       "chanTitle": "Khách của bạn đến từ đâu — và mỗi nguồn chuyển đổi tốt đến đâu",
       "chanSub": "Số người mua trên 1.000 lượt ghé cho biết kênh nào đang rò, không chỉ kênh nào ồn nhất.",
       "chanSource": "Nguồn",
@@ -855,7 +860,12 @@
       "leakFound": "có điểm rò",
       "seeWhy": "xem vì sao",
       "chanFoot": "Trung bình site: {avg} người mua trên 1.000 lượt ghé. Nguồn thấp hơn hẳn trung bình đang gửi traffic không chuyển đổi — thường vì lời hứa của quảng cáo lệch với trang khách đáp xuống.",
-      "patternsTitle": "ReXeR đang học được gì trên thương hiệu này"
+      "patternsTitle": "ReXeR đang học được gì trên thương hiệu này",
+      "createExperiment": "Tạo thử nghiệm",
+      "creatingExperiment": "Đang tạo…",
+      "toastExperimentCreated": "Đã tạo nháp thử nghiệm “{name}” từ điểm rò này.",
+      "createExperimentFailed": "Không tạo được bản nháp thử nghiệm.",
+      "toastExperimentDemo": "Chế độ demo — thử nghiệm được tạo từ điểm rò thật khi API đã nối."
     },
     "sources": {
       "eyebrow": "Đầu vào audit · Tích hợp",

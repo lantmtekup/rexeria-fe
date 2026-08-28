@@ -102,6 +102,13 @@ import type {
   RxRunAutomationResponse,
 } from './types/automation';
 import type {
+  RxConcludeExperimentRequest,
+  RxCreateExperimentRequest,
+  RxExperiment,
+  RxExperimentListResponse,
+  RxExperimentStatus,
+} from './types/experiments';
+import type {
   RxAuditFlow,
   RxAuditJourney,
   RxAuditLeaksResponse,
@@ -217,6 +224,49 @@ export const rexerV2Api = {
         method: 'POST',
         body,
       }),
+  },
+
+  // ── Experiments (`/v1/experiments*`) — vòng lặp thử nghiệm của Journey
+  // Audit; BE nhánh journey-audit-experiments xây đúng shape này. Scope theo
+  // principal (brand_id là override kiểu audit).
+  experiments: {
+    /** `GET /v1/experiments?status=` — danh sách của brand. */
+    list: (query: { status?: RxExperimentStatus; brand_id?: string } = {}) =>
+      rxV2<RxExperimentListResponse>('/experiments', {
+        query: {
+          ...(query.status ? { status: query.status } : {}),
+          ...(query.brand_id ? { brand_id: query.brand_id } : {}),
+        },
+      }),
+
+    get: (experimentId: string) =>
+      rxV2<RxExperiment>(`/experiments/${experimentId}`),
+
+    /** `POST /v1/experiments` — có `leak_id` thì BE prefill từ leak (FR-E4). */
+    create: (body: RxCreateExperimentRequest) =>
+      rxV2<RxExperiment>('/experiments', { method: 'POST', body }),
+
+    start: (experimentId: string) =>
+      rxV2<RxExperiment>(`/experiments/${experimentId}/start`, {
+        method: 'POST',
+      }),
+
+    /** BỊ TỪ CHỐI khi sig ≥ 95 — lỗi code `GATE_OPEN` (phải conclude). */
+    stop: (experimentId: string) =>
+      rxV2<RxExperiment>(`/experiments/${experimentId}/stop`, {
+        method: 'POST',
+      }),
+
+    /** CHỈ khi sig ≥ 95 — lỗi code `GATE_CLOSED` nếu chưa; won/lost BE dẫn xuất. */
+    conclude: (experimentId: string, body: RxConcludeExperimentRequest = {}) =>
+      rxV2<RxExperiment>(`/experiments/${experimentId}/conclude`, {
+        method: 'POST',
+        body,
+      }),
+
+    /** Chỉ draft. */
+    remove: (experimentId: string) =>
+      rxV2<void>(`/experiments/${experimentId}`, { method: 'DELETE' }),
   },
 
   // ── Automation — v2-only. BE tự chấm readiness và tự dựng master draft. ──
