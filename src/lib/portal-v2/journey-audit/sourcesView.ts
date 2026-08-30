@@ -132,15 +132,22 @@ export const relativeSync = (
 };
 
 /** Dòng tóm tắt account + stats của một connection — dùng cả ở wizard. */
+const isPrimitive = (value: unknown): value is string | number | boolean =>
+  ['string', 'number', 'boolean'].includes(typeof value);
+
 export const statsLine = (
   stats: Record<string, unknown>,
   account: Record<string, unknown>
 ): string | null => {
+  // Chỉ lấy giá trị primitive — connector thật nhét object lồng nhau vào
+  // external_account/stats và String(object) thành "[object Object]".
   const parts = [
-    ...Object.entries(account ?? {}).map(([, value]) => String(value)),
-    ...Object.entries(stats ?? {}).map(
-      ([key, value]) => `${key.replaceAll('_', ' ')}: ${String(value)}`
-    ),
+    ...Object.values(account ?? {})
+      .filter(isPrimitive)
+      .map(String),
+    ...Object.entries(stats ?? {})
+      .filter(([, value]) => isPrimitive(value))
+      .map(([key, value]) => `${key.replaceAll('_', ' ')}: ${String(value)}`),
   ].filter(Boolean);
   return parts.length ? parts.join(' · ') : null;
 };
