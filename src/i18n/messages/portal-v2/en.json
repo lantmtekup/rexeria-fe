@@ -934,7 +934,14 @@
       "errRequiredFields": "Fill in every field to continue.",
       "errInvalidUrl": "{label} must be a valid URL (https://…).",
       "wizardSyncingLive": "Connected — the first sync is running, pulling the connector's first numbers…",
-      "wizardFetchBlockedNote": "The listing fetch was blocked by the marketplace — the connection stays live and retries on the next scheduled sync."
+      "wizardFetchBlockedNote": "The listing fetch was blocked by the marketplace — the connection stays live and retries on the next scheduled sync.",
+      "wizardStageAuthorize": "Authorize",
+      "wizardStageProperty": "Property",
+      "wizardStageDone": "Done",
+      "wizardOpeningPopup": "Opening {name}'s own sign-in window…",
+      "wizardSelectProperty": "Connect property",
+      "wizardLoadingProperties": "Loading properties from Google Analytics…",
+      "wizardNoProperties": "No properties came back for this Google account — authorize with another account or check its Analytics access, then retry."
     },
     "brand": {
       "title": "Brand",

@@ -30,6 +30,7 @@ import {
   type AuditLens,
   type JourneyAuditViewState,
 } from '@/lib/portal-v2/journey-audit/params';
+import { openBlankPopup } from '@/lib/portal-v2/journey-audit/authorize';
 import {
   connectAuditSource,
   useAuditSources,
@@ -49,6 +50,16 @@ import {
   type DrawerContext,
 } from '@/components/organisms/portal-v2/journey-audit/TouchpointDrawer';
 import { ConnectWizard } from '@/components/organisms/portal-v2/sources/ConnectWizard';
+
+/** Provider OAuth mở popup NGAY khi bấm Connect (không form nào trước đó);
+ *  shopify cần bước Store nên popup mở ở CTA của bước đó trong wizard. */
+const INSTANT_OAUTH_PROVIDERS = new Set([
+  'ga4',
+  'meta',
+  'tiktokads',
+  'tiktokshop',
+  'klaviyo',
+]);
 
 type JourneyAuditWorkspaceProps = {
   bundle: JourneyAuditBundle;
@@ -84,6 +95,8 @@ export const JourneyAuditWorkspace = ({
   const [railOpen, setRailOpen] = useState(true);
   const [headerOpen, setHeaderOpen] = useState(true);
   const [wizardProvider, setWizardProvider] = useState<string | null>(null);
+  const instantPopupRef = useRef<Window | null>(null);
+  const [wizardInstant, setWizardInstant] = useState(false);
   const [runStatus, setRunStatus] = useState<'idle' | 'queued' | 'running'>(
     'idle'
   );
@@ -126,6 +139,14 @@ export const JourneyAuditWorkspace = ({
 
   const openWizard = useCallback(
     (providerId: string) => {
+      if (live && INSTANT_OAUTH_PROVIDERS.has(providerId)) {
+        // Popup trống mở NGAY trong user gesture — chống popup-blocker.
+        instantPopupRef.current = openBlankPopup();
+        setWizardInstant(true);
+        setWizardProvider(providerId);
+        return;
+      }
+      setWizardInstant(false);
       if (!MOCK_WIZARDS[providerId]) {
         connectAuditSource(providerId);
         toast.success(t('toastConnected'));
@@ -133,7 +154,7 @@ export const JourneyAuditWorkspace = ({
       }
       setWizardProvider(providerId);
     },
-    [t]
+    [live, t]
   );
 
   const handleWizardComplete = useCallback(
@@ -470,6 +491,8 @@ export const JourneyAuditWorkspace = ({
         config={wizardConfig}
         open={Boolean(wizardProvider)}
         live={live}
+        instantOAuth={wizardInstant}
+        instantPopup={instantPopupRef.current}
         onClose={() => setWizardProvider(null)}
         onComplete={handleWizardComplete}
         onLiveConnected={handleLiveConnected}

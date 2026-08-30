@@ -46,6 +46,14 @@ export const requestAuthorize = async (
 export const openAuthorizePopup = (url: string): Window | null =>
   window.open(url, '_blank', 'width=680,height=760');
 
+/**
+ * Mở popup TRỐNG đồng bộ NGAY trong user gesture (chống popup-blocker), rồi
+ * caller điều hướng nó tới authorize_url khi response về; BE trả stub thì
+ * đóng lại. Đây là lý do popup phải mở TRƯỚC khi await bất cứ thứ gì.
+ */
+export const openBlankPopup = (): Window | null =>
+  window.open('about:blank', '_blank', 'width=680,height=760');
+
 const sleep = (ms: number): Promise<void> =>
   new Promise(resolve => setTimeout(resolve, ms));
 

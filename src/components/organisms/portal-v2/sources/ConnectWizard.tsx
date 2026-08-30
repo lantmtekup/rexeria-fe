@@ -8,7 +8,7 @@ import { Button } from '@/components/molecules/portal-v2/Button';
 import { Modal } from '@/components/molecules/portal-v2/Modal';
 import { cn } from '@/lib/cn';
 import {
-  openAuthorizePopup,
+  openBlankPopup,
   requestAuthorize,
   waitForConnection,
 } from '@/lib/portal-v2/journey-audit/authorize';
@@ -22,13 +22,24 @@ import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 import type {
   RxConnectSourceRequest,
   RxGA4Property,
+  RxSourceConnection,
 } from '@/services/rexer-v2/types/sources';
 import {
+  AccountRow,
   SyncRows,
   WizardStepBody,
 } from '@/components/organisms/portal-v2/sources/wizard-steps';
 
-type AuthState = 'idle' | 'authorizing' | 'waiting' | 'blocked' | 'syncing';
+type AuthState = 'idle' | 'authorizing' | 'syncing';
+
+/** Trạng thái của flow OAuth THẬT (mode liveOAuth). */
+type LiveStage =
+  | 'authorizing'
+  | 'waiting'
+  | 'blocked'
+  | 'timeout'
+  | 'error'
+  | 'property';
 
 /**
  * Provider credential-based (Phase 4): connect là MỘT request có body — không
@@ -65,6 +76,14 @@ type ConnectWizardProps = {
   open: boolean;
   /** live = có BE thật: bước authorize gọi POST /v1/sources/:key/connect. */
   live: boolean;
+  /**
+   * OAuth THẬT tức thì: caller đã mở popup TRỐNG đồng bộ ngay trong click
+   * "Connect" (chống popup-blocker) — wizard authorize ngay khi mở, KHÔNG đi
+   * qua các bước account/consent mô phỏng.
+   */
+  instantOAuth?: boolean;
+  /** Popup trống caller vừa mở trong user gesture (null = bị chặn). */
+  instantPopup?: Window | null;
   onClose: () => void;
   /** Sync DEMO xong (provider stub) — caller mutate store demo và toast. */
   onComplete: (provider: string, doneStats: string, doneMsg: string) => void;
@@ -75,27 +94,33 @@ type ConnectWizardProps = {
 };
 
 /**
- * Wizard connect per-provider theo SRC_AUTH của prototype.
+ * Wizard connect per-provider.
  *
- * Live mode, bước cuối trước sync:
- * - authorize_url stub → sync demo như prototype (provider chưa cấu hình).
- * - URL thật → mở popup rồi poll `GET /v1/sources` (~3s) tới khi connection
- *   của provider chuyển `connected` (connect mới lẫn Reconnect); popup đóng
- *   thì poll thêm một nhịp cuối. Thấy rồi: GA4 nhảy sang bước chọn property
- *   thật (`GET/POST /v1/sources/ga4/properties`) rồi mới success; provider
- *   khác vào thẳng màn success + refetch. Popup bị chặn → hướng dẫn + retry.
+ * Ba flow theo provider + môi trường:
+ * - OAuth THẬT (mode liveOAuth): popup provider chính chủ mở NGAY trong user
+ *   gesture (blank sync → navigate khi authorize_url về) — KHÔNG màn account/
+ *   consent giả; wizard chỉ còn Authorize → (Property với GA4) → Done, poll
+ *   `GET /v1/sources` tới khi connection về.
+ * - Credential (woocommerce/retail_feed/amazon): form thật, submit một request.
+ * - Demo (không live, hoặc BE trả stub vì provider chưa cấu hình OAuth): các
+ *   bước mô phỏng của prototype giữ nguyên — chế độ trình diễn.
  */
 export const ConnectWizard = ({
   source,
   config,
   open,
   live,
+  instantOAuth = false,
+  instantPopup = null,
   onClose,
   onComplete,
   onLiveConnected,
   onOpenJourney,
 }: ConnectWizardProps) => {
   const t = useTranslations('portalV2.sources');
+  const [mode, setMode] = useState<'config' | 'liveOAuth'>('config');
+  const [liveStage, setLiveStage] = useState<LiveStage>('authorizing');
+  const [liveError, setLiveError] = useState<string | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, number>>({});
   const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
@@ -113,11 +138,19 @@ export const ConnectWizard = ({
   const cancelRef = useRef(false);
   /** Connection thật đã về trong phiên wizard này (đừng authorize lại). */
   const authorizedRef = useRef(false);
+  /** Chỉ auto-start instant OAuth một lần cho mỗi lượt mở wizard. */
+  const instantStartedRef = useRef(false);
+  /** Cầu nối cho effect instant (liveStart định nghĩa sau early-return). */
+  const liveStartRef = useRef<((popup: Window | null) => void) | null>(null);
 
   useEffect(() => {
     if (open) {
       cancelRef.current = false;
       authorizedRef.current = false;
+      instantStartedRef.current = false;
+      setMode('config');
+      setLiveStage('authorizing');
+      setLiveError(null);
       setStepIndex(0);
       setSelections({});
       setFieldValues({});
@@ -141,11 +174,16 @@ export const ConnectWizard = ({
     return last?.kind === 'sync' ? last : null;
   }, [config]);
 
-  // GA4 live: bước picker đọc property thật; lỗi (409 khi chưa có creds sau
-  // handshake stub) thì giữ danh sách demo của config.
+  // GA4: nạp property thật cho bước Property (mode liveOAuth sau authorize,
+  // hoặc bước picker demo khi creds đã có sẵn từ trước).
+  const wantGa4Properties =
+    open &&
+    live &&
+    source?.provider === 'ga4' &&
+    ((mode === 'liveOAuth' && liveStage === 'property') ||
+      (mode === 'config' && step?.kind === 'picker'));
   useEffect(() => {
-    if (!open || !live || source?.provider !== 'ga4') return;
-    if (step?.kind !== 'picker' || ga4Properties !== null) return;
+    if (!wantGa4Properties || ga4Properties !== null) return;
     let cancelled = false;
     rexerV2Api.sources
       .ga4Properties()
@@ -158,11 +196,11 @@ export const ConnectWizard = ({
     return () => {
       cancelled = true;
     };
-  }, [open, live, source?.provider, step?.kind, ga4Properties]);
+  }, [wantGa4Properties, ga4Properties]);
 
   const syncStep = step?.kind === 'sync' ? step : null;
   useEffect(() => {
-    if (!open || !syncStep || finished) return;
+    if (!open || mode !== 'config' || !syncStep || finished) return;
     if (syncDone < syncStep.rows.length) {
       const timer = setTimeout(
         () => setSyncDone(count => count + 1),
@@ -177,7 +215,19 @@ export const ConnectWizard = ({
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [open, syncStep, syncDone, finished, source, onComplete]);
+  }, [open, mode, syncStep, syncDone, finished, source, onComplete]);
+
+  // Instant OAuth: authorize NGAY khi wizard mở — popup trống đã được caller
+  // mở đồng bộ trong click Connect.
+  useEffect(() => {
+    if (!open || !instantOAuth || instantStartedRef.current) return;
+    if (!liveStartRef.current) return;
+    instantStartedRef.current = true;
+    setMode('liveOAuth');
+    liveStartRef.current(instantPopup ?? null);
+    // Cố ý chỉ chạy 1 lần mỗi lượt mở wizard.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, instantOAuth, config?.provider]);
 
   if (!source || !config || !step) return null;
 
@@ -192,8 +242,19 @@ export const ConnectWizard = ({
           sub: `${item.property} · ${item.account}`,
         }))
       : accounts;
+  const ga4PropertyAccounts: WizardAccount[] = (ga4Properties ?? []).map(
+    item => ({
+      bg: '#F9AB00',
+      initials: 'GA',
+      name: item.display_name || item.property,
+      sub: `${item.property} · ${item.account}`,
+    })
+  );
 
-  const finishLive = () => {
+  const finishLive = (connection?: RxSourceConnection) => {
+    if (connection) {
+      setLiveStats(statsLine(connection.stats, connection.external_account));
+    }
     setLiveConnected(true);
     setFinished(true);
     onLiveConnected(source.name);
@@ -227,6 +288,113 @@ export const ConnectWizard = ({
     return true;
   };
 
+  /** Poll connection về trong lúc popup chính chủ đang mở. */
+  const liveWatch = async (popup: Window) => {
+    setLiveStage('waiting');
+    const connection = await waitForConnection(provider, {
+      popupClosed: () => popup.closed,
+      cancelled: () => cancelRef.current,
+    });
+    if (cancelRef.current) return;
+    if (!connection) {
+      setLiveStage('timeout');
+      return;
+    }
+    authorizedRef.current = true;
+    if (provider === 'ga4') {
+      // Connection về → bước chọn property THẬT rồi mới success.
+      setGa4Properties(null);
+      setLiveStage('property');
+      return;
+    }
+    finishLive(connection);
+  };
+
+  /**
+   * Flow OAuth THẬT. `popup` là cửa sổ TRỐNG đã mở đồng bộ trong user gesture
+   * (null = bị chặn); có authorize_url thì điều hướng nó, stub thì đóng lại
+   * và rơi về các bước demo.
+   */
+  const liveStart = async (popup: Window | null, retryUrl?: string) => {
+    setLiveError(null);
+    if (retryUrl) {
+      if (!popup) {
+        setBlockedUrl(retryUrl);
+        setLiveStage('blocked');
+        return;
+      }
+      popup.location.href = retryUrl;
+      await liveWatch(popup);
+      return;
+    }
+    setLiveStage('authorizing');
+    try {
+      const result = await requestAuthorize(
+        provider,
+        provider === 'shopify' ? { shop: effectiveValue('Store domain') } : {}
+      );
+      if (cancelRef.current) {
+        popup?.close();
+        return;
+      }
+      if (result.kind === 'stub') {
+        // Provider chưa cấu hình OAuth trên deployment — demo mode trình diễn.
+        popup?.close();
+        toast(t('toastAuthorizePending', { name: source.name }));
+        setMode('config');
+        if (provider === 'shopify') setStepIndex(index => index + 1);
+        return;
+      }
+      if (result.kind === 'connected') {
+        popup?.close();
+        authorizedRef.current = true;
+        finishLive(result.connection);
+        return;
+      }
+      setBlockedUrl(result.url);
+      if (!popup || popup.closed) {
+        setLiveStage('blocked');
+        return;
+      }
+      popup.location.href = result.url;
+      await liveWatch(popup);
+    } catch (err) {
+      if (cancelRef.current) return;
+      popup?.close();
+      setLiveError(err instanceof Error ? err.message : t('actionFailed'));
+      setLiveStage('error');
+    }
+  };
+
+  liveStartRef.current = popup => {
+    void liveStart(popup);
+  };
+
+  /** Retry của mode liveOAuth — mở popup mới ĐỒNG BỘ trong click. */
+  const handleLiveRetry = () => {
+    const popup = openBlankPopup();
+    void liveStart(popup, blockedUrl ?? undefined);
+  };
+
+  /** Chốt property GA4 (mode liveOAuth) rồi success. */
+  const handleSelectProperty = async () => {
+    const index = selections.liveGa4 ?? 0;
+    const chosen = ga4Properties?.[index];
+    if (!chosen) {
+      finishLive();
+      return;
+    }
+    try {
+      await rexerV2Api.sources.selectGA4Property({
+        property: chosen.property,
+        display_name: chosen.display_name,
+      });
+      finishLive();
+    } catch (err) {
+      setLiveError(err instanceof Error ? err.message : t('actionFailed'));
+    }
+  };
+
   /**
    * Connect credential-based (Phase 4): một request có body, không popup.
    * BE cũ chưa ship connector sẽ trả stub authorize_url → rơi về sync demo
@@ -246,9 +414,13 @@ export const ConnectWizard = ({
         return;
       }
       if (result.kind === 'real') {
-        // BE quyết định provider này vẫn cần OAuth — theo flow popup chuẩn.
+        // BE quyết định provider này vẫn cần OAuth — chuyển sang flow popup.
+        // Không còn user gesture tươi ở đây nên popup có thể bị chặn — mode
+        // liveOAuth sẽ hiện banner + nút retry (retry mở popup trong click).
         setAuthState('idle');
-        await startAuthorize(result.url);
+        setMode('liveOAuth');
+        setBlockedUrl(result.url);
+        setLiveStage('blocked');
         return;
       }
       // connected ngay — chờ ngắn cho job sync đầu đổ stats rồi success.
@@ -285,149 +457,55 @@ export const ConnectWizard = ({
     }
   };
 
-  /** Authorize thật + theo dõi connection về (mục 1 vòng 3). */
-  const startAuthorize = async (retryUrl?: string) => {
-    setAuthState('authorizing');
-    setBlockedUrl(null);
-    let url = retryUrl ?? null;
-    if (!url) {
-      try {
-        const result = await requestAuthorize(
-          provider,
-          provider === 'shopify' ? { shop: effectiveValue('Store domain') } : {}
-        );
-        if (cancelRef.current) return;
-        if (result.kind === 'stub') {
-          toast(t('toastAuthorizePending', { name: source.name }));
-          setAuthState('idle');
-          setStepIndex(index => index + 1); // sync demo như prototype
-          return;
-        }
-        if (result.kind === 'connected') {
-          // Provider trả connected thẳng (credential-style) — success luôn.
-          authorizedRef.current = true;
-          setLiveStats(
-            statsLine(
-              result.connection.stats,
-              result.connection.external_account
-            )
-          );
-          setAuthState('idle');
-          finishLive();
-          return;
-        }
-        url = result.url;
-      } catch (err) {
-        if (cancelRef.current) return;
-        toast.error(err instanceof Error ? err.message : t('actionFailed'));
-        setAuthState('idle');
-        return;
-      }
-    }
-
-    const popup = openAuthorizePopup(url);
-    if (!popup) {
-      setBlockedUrl(url);
-      setAuthState('blocked');
-      return;
-    }
-    setAuthState('waiting');
-    const connection = await waitForConnection(provider, {
-      popupClosed: () => popup.closed,
-      cancelled: () => cancelRef.current,
-    });
-    if (cancelRef.current) return;
-    if (!connection) {
-      setAuthState('idle');
-      toast(t('wizardAuthTimeout', { name: source.name }));
-      return;
-    }
-    setAuthState('idle');
-    authorizedRef.current = true;
-    if (provider === 'ga4') {
-      // Connection về rồi → sang bước chọn property THẬT trước khi success.
-      toast.success(t('wizardGa4PickProperty'));
-      setGa4Properties(null);
-      const pickerIndex = config.steps.findIndex(
-        item => item.kind === 'picker'
-      );
-      if (pickerIndex >= 0) {
-        setStepIndex(pickerIndex);
-        return;
-      }
-    }
-    finishLive();
-  };
-
-  const handleNext = async () => {
+  const handleNext = () => {
     if (step.kind === 'sync') return;
     setStepError(null);
     if (!validateFormStep()) return;
-    if (ga4Live && step.kind === 'picker') {
-      const index = selections[step.accountsKey] ?? 0;
-      const chosen = ga4Properties![index];
-      if (chosen) {
-        try {
-          await rexerV2Api.sources.selectGA4Property({
-            property: chosen.property,
-            display_name: chosen.display_name,
-          });
-        } catch (err) {
-          if (authorizedRef.current) {
-            // Creds thật mà chọn property hỏng thì phải nói, không đi tiếp.
-            toast.error(err instanceof Error ? err.message : t('actionFailed'));
-            return;
-          }
-          // Demo creds — wizard demo vẫn đi tiếp.
-        }
-      }
-      if (authorizedRef.current) {
-        finishLive();
-        return;
-      }
-    }
     const next = config.steps[stepIndex + 1];
-    if (live && next?.kind === 'sync' && !authorizedRef.current) {
-      const build = CREDENTIAL_BUILDERS[provider];
-      if (build) {
-        await connectCredential(build);
-      } else {
-        await startAuthorize();
-      }
+    const isSubmitStep =
+      live && next?.kind === 'sync' && !authorizedRef.current;
+
+    if (isSubmitStep && !CREDENTIAL_BUILDERS[provider]) {
+      // OAuth (shopify sau bước Store): mở popup trống NGAY — đồng bộ trong
+      // click này, TRƯỚC mọi await — rồi authorize thật.
+      const popup = openBlankPopup();
+      setMode('liveOAuth');
+      void liveStart(popup);
       return;
     }
-    setStepIndex(index => index + 1);
-  };
 
-  const stepper = (
-    <div className='mb-4 flex gap-1.5'>
-      {config.steps.map((item, index) => (
-        <span
-          key={item.title}
-          className={cn(
-            'text-3xs flex-1 font-bold tracking-[0.04em] uppercase',
-            index < stepIndex || finished
-              ? 'text-[var(--pv2-success)]'
-              : index === stepIndex
-                ? 'text-[var(--pv2-electric)]'
-                : 'text-[var(--pv2-faint)]'
-          )}
-        >
-          <i
-            className={cn(
-              'mb-1 block h-1 rounded-full',
-              index < stepIndex || finished
-                ? 'bg-[var(--pv2-success)]'
-                : index === stepIndex
-                  ? 'bg-[var(--pv2-electric)]'
-                  : 'bg-[var(--pv2-hair)]'
-            )}
-          />
-          {item.title}
-        </span>
-      ))}
-    </div>
-  );
+    void (async () => {
+      if (ga4Live && step.kind === 'picker') {
+        const index = selections[step.accountsKey] ?? 0;
+        const chosen = ga4Properties![index];
+        if (chosen) {
+          try {
+            await rexerV2Api.sources.selectGA4Property({
+              property: chosen.property,
+              display_name: chosen.display_name,
+            });
+          } catch (err) {
+            if (authorizedRef.current) {
+              toast.error(
+                err instanceof Error ? err.message : t('actionFailed')
+              );
+              return;
+            }
+            // Demo creds — wizard demo vẫn đi tiếp.
+          }
+        }
+        if (authorizedRef.current) {
+          finishLive();
+          return;
+        }
+      }
+      if (isSubmitStep) {
+        await connectCredential(CREDENTIAL_BUILDERS[provider]);
+        return;
+      }
+      setStepIndex(index => index + 1);
+    })();
+  };
 
   if (finished && doneStep) {
     return (
@@ -483,10 +561,164 @@ export const ConnectWizard = ({
     );
   }
 
-  const busy =
-    authState === 'authorizing' ||
-    authState === 'waiting' ||
-    authState === 'syncing';
+  /* ── mode liveOAuth: Authorize → (Property GA4) → Done, không màn giả ──── */
+  if (mode === 'liveOAuth') {
+    const liveSteps = [
+      t('wizardStageAuthorize'),
+      ...(provider === 'ga4' ? [t('wizardStageProperty')] : []),
+      t('wizardStageDone'),
+    ];
+    const liveIndex = liveStage === 'property' ? 1 : 0;
+    const spinnerRow = (label: string, tone: 'electric' | 'success') => (
+      <p
+        className={cn(
+          'mb-3.5 flex items-center gap-2.5 rounded-[var(--pv2-r-sm)] border px-3 py-2.5 text-xs leading-relaxed text-[var(--pv2-ink)]',
+          tone === 'electric'
+            ? 'border-[color-mix(in_srgb,var(--pv2-electric)_25%,var(--pv2-hair))] bg-[var(--pv2-electric-soft)]'
+            : 'border-[color-mix(in_srgb,var(--pv2-success)_30%,var(--pv2-hair))] bg-[color-mix(in_srgb,var(--pv2-success)_6%,var(--pv2-paper))]'
+        )}
+      >
+        <span
+          aria-hidden
+          className={cn(
+            'inline-block size-[13px] shrink-0 animate-spin rounded-full border-2 border-[var(--pv2-hair)]',
+            tone === 'electric'
+              ? 'border-t-[var(--pv2-electric)]'
+              : 'border-t-[var(--pv2-success)]'
+          )}
+        />
+        {label}
+      </p>
+    );
+    const retryButton = (
+      <Button
+        variant='ghost'
+        size='sm'
+        className='mt-2'
+        onClick={handleLiveRetry}
+      >
+        {t('wizardRetry')}
+      </Button>
+    );
+
+    return (
+      <Modal
+        open={open}
+        onClose={onClose}
+        title={t('wizardTitle', { name: source.name })}
+        subtitle={`${source.auth} · ${t('wizardReadOnly')} · ${source.category}`}
+        footer={
+          <>
+            <Button variant='ghost' onClick={onClose}>
+              {t('wizardCancel')}
+            </Button>
+            <span className='text-2xs mr-auto text-[var(--pv2-faint)]'>
+              🔒 {t('wizardFootNote')}
+            </span>
+            {liveStage === 'property' ? (
+              <Button
+                variant='primary'
+                disabled={ga4Properties === null}
+                onClick={() => {
+                  void handleSelectProperty();
+                }}
+              >
+                {t('wizardSelectProperty')}
+              </Button>
+            ) : null}
+          </>
+        }
+      >
+        <div className='mb-4 flex gap-1.5'>
+          {liveSteps.map((title, index) => (
+            <span
+              key={title}
+              className={cn(
+                'text-3xs flex-1 font-bold tracking-[0.04em] uppercase',
+                index < liveIndex
+                  ? 'text-[var(--pv2-success)]'
+                  : index === liveIndex
+                    ? 'text-[var(--pv2-electric)]'
+                    : 'text-[var(--pv2-faint)]'
+              )}
+            >
+              <i
+                className={cn(
+                  'mb-1 block h-1 rounded-full',
+                  index < liveIndex
+                    ? 'bg-[var(--pv2-success)]'
+                    : index === liveIndex
+                      ? 'bg-[var(--pv2-electric)]'
+                      : 'bg-[var(--pv2-hair)]'
+                )}
+              />
+              {title}
+            </span>
+          ))}
+        </div>
+
+        {liveStage === 'authorizing'
+          ? spinnerRow(
+              t('wizardOpeningPopup', { name: source.name }),
+              'electric'
+            )
+          : null}
+        {liveStage === 'waiting'
+          ? spinnerRow(t('wizardWaiting'), 'electric')
+          : null}
+        {liveStage === 'blocked' ? (
+          <div className='mb-3.5 rounded-[var(--pv2-r-sm)] border border-[color-mix(in_srgb,var(--pv2-warning)_40%,var(--pv2-hair))] bg-[color-mix(in_srgb,var(--pv2-warning)_8%,var(--pv2-paper))] px-3 py-2.5 text-xs leading-relaxed text-[color-mix(in_srgb,var(--pv2-warning)_75%,var(--pv2-ink))]'>
+            {t('wizardPopupBlocked')}
+            {retryButton}
+          </div>
+        ) : null}
+        {liveStage === 'timeout' ? (
+          <div className='mb-3.5 rounded-[var(--pv2-r-sm)] border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3 py-2.5 text-xs leading-relaxed text-[var(--pv2-mut)]'>
+            {t('wizardAuthTimeout', { name: source.name })}
+            {retryButton}
+          </div>
+        ) : null}
+        {liveStage === 'error' ? (
+          <div className='mb-3.5 rounded-[var(--pv2-r-sm)] border border-[color-mix(in_srgb,var(--pv2-error)_35%,var(--pv2-hair))] bg-[color-mix(in_srgb,var(--pv2-error)_6%,var(--pv2-paper))] px-3 py-2.5 text-xs leading-relaxed text-[var(--pv2-error)]'>
+            {liveError ?? t('actionFailed')}
+            {retryButton}
+          </div>
+        ) : null}
+        {liveStage === 'property' ? (
+          <div>
+            {liveError ? (
+              <p className='mb-3 rounded-[var(--pv2-r-sm)] border border-[color-mix(in_srgb,var(--pv2-error)_35%,var(--pv2-hair))] bg-[color-mix(in_srgb,var(--pv2-error)_6%,var(--pv2-paper))] px-3 py-2.5 text-xs leading-relaxed text-[var(--pv2-error)]'>
+                {liveError}
+              </p>
+            ) : null}
+            <p className='mb-3.5 text-[13px] leading-relaxed text-[var(--pv2-mut)]'>
+              {t('wizardGa4PickProperty')}
+            </p>
+            {ga4Properties === null ? (
+              spinnerRow(t('wizardLoadingProperties'), 'electric')
+            ) : ga4PropertyAccounts.length ? (
+              ga4PropertyAccounts.map((account, index) => (
+                <AccountRow
+                  key={account.sub}
+                  account={account}
+                  selected={(selections.liveGa4 ?? 0) === index}
+                  onSelect={() =>
+                    setSelections(prev => ({ ...prev, liveGa4: index }))
+                  }
+                />
+              ))
+            ) : (
+              <p className='rounded-[var(--pv2-r-sm)] border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-3 py-2.5 text-xs leading-relaxed text-[var(--pv2-mut)]'>
+                {t('wizardNoProperties')}
+              </p>
+            )}
+          </div>
+        ) : null}
+      </Modal>
+    );
+  }
+
+  const busy = authState === 'authorizing' || authState === 'syncing';
 
   return (
     <Modal
@@ -513,16 +745,10 @@ export const ConnectWizard = ({
             <span className='text-2xs mr-auto text-[var(--pv2-faint)]'>
               🔒 {t('wizardFootNote')}
             </span>
-            <Button
-              variant='primary'
-              disabled={busy}
-              onClick={() => {
-                void handleNext();
-              }}
-            >
+            <Button variant='primary' disabled={busy} onClick={handleNext}>
               {authState === 'authorizing'
                 ? t('wizardAuthorizing')
-                : authState === 'waiting' || authState === 'syncing'
+                : authState === 'syncing'
                   ? t('wizardWaitingShort')
                   : step.cta}
             </Button>
@@ -530,16 +756,33 @@ export const ConnectWizard = ({
         )
       }
     >
-      {stepper}
-      {authState === 'waiting' ? (
-        <p className='mb-3.5 flex items-center gap-2.5 rounded-[var(--pv2-r-sm)] border border-[color-mix(in_srgb,var(--pv2-electric)_25%,var(--pv2-hair))] bg-[var(--pv2-electric-soft)] px-3 py-2.5 text-xs leading-relaxed text-[var(--pv2-ink)]'>
+      <div className='mb-4 flex gap-1.5'>
+        {config.steps.map((item, index) => (
           <span
-            aria-hidden
-            className='inline-block size-[13px] shrink-0 animate-spin rounded-full border-2 border-[var(--pv2-hair)] border-t-[var(--pv2-electric)]'
-          />
-          {t('wizardWaiting')}
-        </p>
-      ) : null}
+            key={item.title}
+            className={cn(
+              'text-3xs flex-1 font-bold tracking-[0.04em] uppercase',
+              index < stepIndex || finished
+                ? 'text-[var(--pv2-success)]'
+                : index === stepIndex
+                  ? 'text-[var(--pv2-electric)]'
+                  : 'text-[var(--pv2-faint)]'
+            )}
+          >
+            <i
+              className={cn(
+                'mb-1 block h-1 rounded-full',
+                index < stepIndex || finished
+                  ? 'bg-[var(--pv2-success)]'
+                  : index === stepIndex
+                    ? 'bg-[var(--pv2-electric)]'
+                    : 'bg-[var(--pv2-hair)]'
+              )}
+            />
+            {item.title}
+          </span>
+        ))}
+      </div>
       {authState === 'syncing' ? (
         <p className='mb-3.5 flex items-center gap-2.5 rounded-[var(--pv2-r-sm)] border border-[color-mix(in_srgb,var(--pv2-success)_30%,var(--pv2-hair))] bg-[color-mix(in_srgb,var(--pv2-success)_6%,var(--pv2-paper))] px-3 py-2.5 text-xs leading-relaxed text-[var(--pv2-ink)]'>
           <span
@@ -553,21 +796,6 @@ export const ConnectWizard = ({
         <p className='mb-3.5 rounded-[var(--pv2-r-sm)] border border-[color-mix(in_srgb,var(--pv2-error)_35%,var(--pv2-hair))] bg-[color-mix(in_srgb,var(--pv2-error)_6%,var(--pv2-paper))] px-3 py-2.5 text-xs leading-relaxed text-[var(--pv2-error)]'>
           {stepError}
         </p>
-      ) : null}
-      {authState === 'blocked' ? (
-        <div className='mb-3.5 rounded-[var(--pv2-r-sm)] border border-[color-mix(in_srgb,var(--pv2-warning)_40%,var(--pv2-hair))] bg-[color-mix(in_srgb,var(--pv2-warning)_8%,var(--pv2-paper))] px-3 py-2.5 text-xs leading-relaxed text-[color-mix(in_srgb,var(--pv2-warning)_75%,var(--pv2-ink))]'>
-          {t('wizardPopupBlocked')}
-          <Button
-            variant='ghost'
-            size='sm'
-            className='mt-2 block'
-            onClick={() => {
-              void startAuthorize(blockedUrl ?? undefined);
-            }}
-          >
-            {t('wizardRetry')}
-          </Button>
-        </div>
       ) : null}
       {step.kind === 'sync' ? (
         <div>

@@ -3,7 +3,7 @@
 import { Search, SquareStack } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
@@ -20,6 +20,7 @@ import {
 import { crossHref } from '@/lib/portal-v2/journey-audit/params';
 import {
   openAuthorizePopup,
+  openBlankPopup,
   requestAuthorize,
 } from '@/lib/portal-v2/journey-audit/authorize';
 import {
@@ -44,6 +45,16 @@ type SourcesWorkspaceProps = {
   live: boolean;
   initialError: string | null;
 };
+
+/** Provider OAuth mở popup NGAY khi bấm Connect (không form nào trước đó);
+ *  shopify cần bước Store nên popup mở ở CTA của bước đó trong wizard. */
+const INSTANT_OAUTH_PROVIDERS = new Set([
+  'ga4',
+  'meta',
+  'tiktokads',
+  'tiktokshop',
+  'klaviyo',
+]);
 
 /** Số touchpoint mà một nguồn nuôi, tính trên mọi journey audit (mock Phase 1). */
 const feedsOf = (sourceId: string): number =>
@@ -73,6 +84,9 @@ export const SourcesWorkspace = ({
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('All');
   const [wizardProvider, setWizardProvider] = useState<string | null>(null);
+  /** Popup trống mở đồng bộ trong click Connect (instant OAuth). */
+  const instantPopupRef = useRef<Window | null>(null);
+  const [wizardInstant, setWizardInstant] = useState(false);
   const [pendingDisconnectId, setPendingDisconnectId] = useState<string | null>(
     null
   );
@@ -141,6 +155,15 @@ export const SourcesWorkspace = ({
   };
 
   const handleConnect = (providerId: string) => {
+    if (live && INSTANT_OAUTH_PROVIDERS.has(providerId)) {
+      // Popup TRỐNG mở NGAY trong user gesture này — wizard sẽ điều hướng nó
+      // tới authorize_url thật (hoặc đóng lại nếu BE trả stub → demo).
+      instantPopupRef.current = openBlankPopup();
+      setWizardInstant(true);
+      setWizardProvider(providerId);
+      return;
+    }
+    setWizardInstant(false);
     if (!wizards[providerId]) {
       if (live) {
         // Provider chưa có stepper riêng — vẫn đi qua authorize thật, không
@@ -375,6 +398,8 @@ export const SourcesWorkspace = ({
         config={wizardConfig}
         open={Boolean(wizardProvider)}
         live={live}
+        instantOAuth={wizardInstant}
+        instantPopup={instantPopupRef.current}
         onClose={() => setWizardProvider(null)}
         onComplete={(provider, doneStats, doneMsg) => {
           connectAuditSource(provider, doneStats);
