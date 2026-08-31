@@ -68,6 +68,9 @@ export type Product = {
   body: string;
   brand: string;
   type: string;
+  /** FK `product_categories` — nguồn thật của "Loại sản phẩm" (dropdown);
+   *  `type` free-text chỉ còn là label kế thừa từ Shopify import. */
+  categoryId: string | null;
   category: string;
   tags: string[];
   status: ProductStatus;

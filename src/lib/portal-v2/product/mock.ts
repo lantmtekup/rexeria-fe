@@ -27,6 +27,7 @@ export const MOCK_PRODUCTS: Product[] = [
     body: 'A serum, a skin tint, and an SPF 40 in one step. Niacinamide and squalane under a mineral sunscreen that leaves no cast.',
     brand: 'Ilia Beauty',
     type: 'Complexion',
+    categoryId: null,
     category:
       'Health & Beauty > Personal Care > Cosmetics > Makeup > Face Makeup > Foundations',
     tags: ['bestseller', 'spf', 'clean', 'hero'],
@@ -149,6 +150,7 @@ export const MOCK_PRODUCTS: Product[] = [
     body: 'Goes on liquid, sets to a soft powder finish. Buildable, blendable, and it will not slide.',
     brand: 'Ilia Beauty',
     type: 'Cheek & Lip',
+    categoryId: null,
     category:
       'Health & Beauty > Personal Care > Cosmetics > Makeup > Face Makeup > Blushes',
     tags: ['blush', 'clean'],
@@ -235,6 +237,7 @@ export const MOCK_PRODUCTS: Product[] = [
     body: 'Lengthens without clumping. Beeswax and shea, no flaking through the day.',
     brand: 'Ilia Beauty',
     type: 'Eye',
+    categoryId: null,
     category:
       'Health & Beauty > Personal Care > Cosmetics > Makeup > Eye Makeup > Mascaras',
     tags: ['mascara', 'clean'],
@@ -283,6 +286,7 @@ export const MOCK_PRODUCTS: Product[] = [
     body: 'A lightweight moisturiser that doubles as a primer. Sits under everything.',
     brand: 'Ilia Skin',
     type: 'Skincare',
+    categoryId: null,
     category:
       'Health & Beauty > Personal Care > Cosmetics > Skin Care > Facial Moisturizers',
     tags: ['skincare', 'primer'],
@@ -343,6 +347,7 @@ export const MOCK_PRODUCTS: Product[] = [
     body: 'A tinted balm with tripeptide. Colour that treats.',
     brand: 'Ilia Beauty',
     type: 'Cheek & Lip',
+    categoryId: null,
     category:
       'Health & Beauty > Personal Care > Cosmetics > Makeup > Lip Makeup > Lip Balms',
     tags: ['lip', 'clean'],
@@ -402,6 +407,7 @@ export const MOCK_PRODUCTS: Product[] = [
     body: 'Vitamin C, ceramides, and hyaluronic acid. The one that does the work overnight.',
     brand: 'Ilia Beauty',
     type: 'Skincare',
+    categoryId: null,
     category:
       'Health & Beauty > Personal Care > Cosmetics > Skin Care > Facial Serums',
     tags: ['skincare', 'vitamin-c', 'hero'],
@@ -439,6 +445,7 @@ export const MOCK_PRODUCTS: Product[] = [
     body: 'The Super Serum formula in a cushion. Tap-on coverage that refreshes over the day, mineral SPF built in.',
     brand: 'Ilia Beauty',
     type: 'Complexion',
+    categoryId: null,
     category:
       'Health & Beauty > Personal Care > Cosmetics > Makeup > Face Makeup > Foundations',
     tags: ['complexion', 'spf', 'clean'],
@@ -495,6 +502,7 @@ export const MOCK_PRODUCTS: Product[] = [
     body: 'A serum that wears like a foundation. Medium coverage, second-skin finish, actives that keep working.',
     brand: 'Ilia Beauty',
     type: 'Complexion',
+    categoryId: null,
     category:
       'Health & Beauty > Personal Care > Cosmetics > Makeup > Face Makeup > Foundations',
     tags: ['complexion', 'serum', 'new'],
@@ -538,6 +546,7 @@ export const MOCK_PRODUCTS: Product[] = [
     body: 'Ceramides and squalane rebuild a stressed barrier overnight. Fragrance-free, for the most reactive skin.',
     brand: 'Ilia Beauty',
     type: 'Skincare',
+    categoryId: null,
     category:
       'Health & Beauty > Personal Care > Cosmetics > Skin Care > Facial Serums',
     tags: ['skincare', 'barrier', 'clean'],
@@ -594,6 +603,7 @@ export const MOCK_PRODUCTS: Product[] = [
     body: 'A stabilised vitamin C that actually brightens, buffered so it never stings.',
     brand: 'Ilia Beauty',
     type: 'Skincare',
+    categoryId: null,
     category:
       'Health & Beauty > Personal Care > Cosmetics > Skin Care > Facial Serums',
     tags: ['skincare', 'brightening', 'new'],
@@ -776,6 +786,7 @@ export const blankProduct = (): Product => ({
   body: '',
   brand: PRODUCT_BRANDS[0],
   type: '',
+  categoryId: null,
   category: '',
   tags: [],
   status: 'draft',

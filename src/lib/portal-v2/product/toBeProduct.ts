@@ -76,6 +76,7 @@ export const toCreateProductRequest = (
   type: p.type?.trim() || undefined,
   brand_name: p.brand?.trim() || undefined,
   brand_id: opts.brandId,
+  category_id: asUuid(p.categoryId),
   category: p.category?.trim() || undefined,
   tags: p.tags?.length ? p.tags : undefined,
   source: p.source,

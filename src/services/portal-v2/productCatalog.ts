@@ -22,6 +22,8 @@ export type ProductCatalogResult = {
   /** Filter options built from what the catalogue actually contains. */
   brands: string[];
   types: string[];
+  /** Brand's product-category taxonomy — the "Loại sản phẩm" dropdown options. */
+  categories: Array<{ id: string; name: string }>;
   /** Server-side total, so the UI can say when the page is truncated. */
   total: number;
   /** Hard failure — the product list itself did not load. */
@@ -73,6 +75,7 @@ export const fetchProductCatalog = async (
     assets: [],
     brands: [],
     types: [],
+    categories: [],
     total: 0,
     error: null,
     softError: null,
@@ -135,6 +138,9 @@ export const fetchProductCatalog = async (
     assets: productAssetsFromBe(items),
     brands: unique(products.map(p => p.brand)),
     types: unique(products.map(p => p.type)),
+    categories: [...categoryName.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
     total: productsResult.value.total ?? products.length,
     error: null,
     softError: softErrors.length ? softErrors.join(' · ') : null,

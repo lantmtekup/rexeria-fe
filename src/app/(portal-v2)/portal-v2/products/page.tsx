@@ -14,8 +14,16 @@ export default async function PortalV2ProductsPage({ searchParams }: Props) {
   try {
     // `brandId` null = admin chưa chọn ⇒ xem chéo mọi brand, đúng vai của họ.
     // Người dùng thường luôn có brand nên danh sách tự giới hạn.
-    const { products, assets, brands, types, total, error, softError } =
-      await fetchProductCatalog({ brandId: scope.brandId });
+    const {
+      products,
+      assets,
+      brands,
+      types,
+      categories,
+      total,
+      error,
+      softError,
+    } = await fetchProductCatalog({ brandId: scope.brandId });
 
     return (
       <div className='flex min-h-0 flex-col'>
@@ -32,6 +40,7 @@ export default async function PortalV2ProductsPage({ searchParams }: Props) {
           brandId={scope.brandId}
           initialBrands={brands}
           initialTypes={types}
+          initialCategories={categories}
           initialTotal={total}
           initialError={error ?? scope.error}
           softError={softError}
