@@ -35,6 +35,8 @@ export type AuditProductRow = {
   name: string;
   sku: string;
   category: string;
+  /** Connector đã sync sản phẩm này (`products.source`): manual|shopify|csv. */
+  source: string;
   icon: string;
   score: number | null;
   touchpointCount: number;

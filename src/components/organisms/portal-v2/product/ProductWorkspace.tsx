@@ -80,6 +80,8 @@ type ProductWorkspaceProps = {
   brandId?: string | null;
   initialBrands?: string[];
   initialTypes?: string[];
+  /** Taxonomy `product_categories` của brand — options cho dropdown "Loại sản phẩm". */
+  initialCategories?: Array<{ id: string; name: string }>;
   /** Server-side total; larger than the list means the page was truncated. */
   initialTotal?: number;
   /** Hard failure — nothing loaded. */
@@ -114,6 +116,7 @@ export const ProductWorkspace = ({
   brandId = null,
   initialBrands = [],
   initialTypes = [],
+  initialCategories = [],
   initialTotal,
   initialError = null,
   softError = null,
@@ -777,6 +780,7 @@ export const ProductWorkspace = ({
           product={activeProduct}
           mode={modal.mode}
           tab={modalTab}
+          categories={initialCategories}
           assets={assets}
           assetsHydrated={hydratedProductIds.has(activeProduct.id)}
           experiences={experienceLinks}

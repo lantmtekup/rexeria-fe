@@ -268,6 +268,7 @@ export const mapBeProductToPortal = (
   // label typed in yet.
   brand: p.brand_name ?? ctx.brandName ?? '',
   type: p.type ?? ctx.typeName ?? '',
+  categoryId: p.category_id ?? null,
   category: p.category ?? '',
   tags: p.template_tags ?? [],
   /* Both unions are `active | draft | archived` — no translation needed. */

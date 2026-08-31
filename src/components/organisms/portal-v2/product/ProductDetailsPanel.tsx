@@ -56,6 +56,8 @@ import type {
 
 type ProductDetailsPanelProps = {
   product: Product;
+  /** Taxonomy `product_categories` của brand — options cho dropdown "Loại sản phẩm". */
+  categories: Array<{ id: string; name: string }>;
   assets: ProductAsset[];
   assetsHydrated: boolean;
   editing: boolean;
@@ -165,6 +167,7 @@ const NumberField = ({
 
 export const ProductDetailsPanel = ({
   product: p,
+  categories,
   assets,
   assetsHydrated,
   editing,
@@ -932,12 +935,36 @@ export const ProductDetailsPanel = ({
 
         <SectionBox title={t('boxOrganization')}>
           <Field label={t('fieldProductType')}>
-            <TextInput
-              value={p.type}
-              readOnly={!editing}
-              placeholder={t('chooseType')}
-              onChange={e => patch({ type: e.target.value })}
-            />
+            {editing ? (
+              <TextSelect
+                value={p.categoryId ?? ''}
+                aria-label={t('fieldProductType')}
+                onChange={e => patch({ categoryId: e.target.value || null })}
+              >
+                <option value=''>{t('chooseType')}</option>
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+                {/* Sản phẩm cũ trỏ tới category đã xoá / ngoài trang lookup:
+                    giữ option ẩn để value không âm thầm nhảy về rỗng. */}
+                {p.categoryId &&
+                !categories.some(c => c.id === p.categoryId) ? (
+                  <option value={p.categoryId}>{p.type || '—'}</option>
+                ) : null}
+              </TextSelect>
+            ) : (
+              <TextInput
+                value={
+                  categories.find(c => c.id === p.categoryId)?.name ||
+                  p.type ||
+                  ''
+                }
+                readOnly
+                placeholder={t('chooseType')}
+              />
+            )}
           </Field>
           <Field label={t('fieldBrand')}>
             <TextInput
