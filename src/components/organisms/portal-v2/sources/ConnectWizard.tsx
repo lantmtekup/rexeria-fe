@@ -30,6 +30,7 @@ import {
   SyncRows,
   WizardStepBody,
 } from '@/components/organisms/portal-v2/sources/wizard-steps';
+import { StubNotice } from '@/components/organisms/portal-v2/sources/StubNotice';
 
 type AuthState = 'idle' | 'authorizing' | 'syncing';
 
@@ -135,6 +136,9 @@ export const ConnectWizard = ({
   const [ga4Properties, setGa4Properties] = useState<RxGA4Property[] | null>(
     null
   );
+  /** BE trả authorize stub (provider chưa cấu hình) → màn cảnh báo, KHÔNG
+   *  tự chạy demo — demo chỉ chạy khi user bấm "Xem demo flow" (UAT). */
+  const [stubNotice, setStubNotice] = useState(false);
   /** Wizard đóng/unmount → watcher dừng ngay, không đụng state nữa. */
   const cancelRef = useRef(false);
   /** Connection thật đã về trong phiên wizard này (đừng authorize lại). */
@@ -163,6 +167,7 @@ export const ConnectWizard = ({
       setStepError(null);
       setLiveStats(null);
       setGa4Properties(null);
+      setStubNotice(false);
     }
     return () => {
       cancelRef.current = true;
@@ -233,6 +238,28 @@ export const ConnectWizard = ({
   if (!source || !config || !step) return null;
 
   const provider = source.provider;
+
+  /** User chủ động xem demo từ màn stub — tiếp tục các bước mô phỏng như cũ
+   *  (shopify/credential đang đứng ở bước form nên demo đi tiếp bước sau). */
+  const handleViewDemo = () => {
+    setStubNotice(false);
+    setMode('config');
+    if (CREDENTIAL_BUILDERS[provider] || provider === 'shopify') {
+      setStepIndex(index => index + 1);
+    }
+  };
+
+  if (stubNotice) {
+    return (
+      <StubNotice
+        source={source}
+        open={open}
+        onClose={onClose}
+        onViewDemo={handleViewDemo}
+      />
+    );
+  }
+
   const ga4Live = live && provider === 'ga4' && !!ga4Properties?.length;
   const pickerAccounts = (accounts: WizardAccount[]): WizardAccount[] =>
     ga4Live
@@ -374,11 +401,10 @@ export const ConnectWizard = ({
         return;
       }
       if (result.kind === 'stub') {
-        // Provider chưa cấu hình OAuth trên deployment — demo mode trình diễn.
+        // Provider chưa cấu hình OAuth trên deployment — KHÔNG tự chạy demo:
+        // hiện màn "chưa cấu hình"; demo chỉ chạy khi user bấm nút (UAT).
         popup?.close();
-        toast(t('toastAuthorizePending', { name: source.name }));
-        setMode('config');
-        if (provider === 'shopify') setStepIndex(index => index + 1);
+        setStubNotice(true);
         return;
       }
       if (result.kind === 'connected') {
@@ -446,9 +472,9 @@ export const ConnectWizard = ({
       const result = await requestAuthorize(provider, build(effectiveValue));
       if (cancelRef.current) return;
       if (result.kind === 'stub') {
-        toast(t('toastAuthorizePending', { name: source.name }));
+        // BE cũ chưa ship connector — màn "chưa cấu hình", demo opt-in.
         setAuthState('idle');
-        setStepIndex(index => index + 1); // sync demo như prototype
+        setStubNotice(true);
         return;
       }
       if (result.kind === 'real') {

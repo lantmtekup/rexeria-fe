@@ -916,7 +916,7 @@
       "wizardMappingAria": "Detected feed columns and their meaning",
       "attentionIssue": "Connection lost access — reconnect to keep its touchpoints scoring live.",
       "disconnectBodyLive": "Touchpoints fed by {name} become ghosts and stage scores recalculate on the next load — audited history is retained.",
-      "toastAuthorizePending": "{name} OAuth is not configured on this deployment — continuing in demo mode.",
+      "toastAuthorizePending": "{name} is not configured on this server — an administrator needs to set up the connector.",
       "toastAuthorizeOpened": "Authorize {name} in the window that just opened — the connection appears once the callback completes.",
       "toastSyncQueuedJob": "Sync queued for {name} (job {id}).",
       "toastSyncedNow": "{name} synced — freshness updated.",
@@ -941,7 +941,12 @@
       "wizardOpeningPopup": "Opening {name}'s own sign-in window…",
       "wizardSelectProperty": "Connect property",
       "wizardLoadingProperties": "Loading properties from Google Analytics…",
-      "wizardNoProperties": "No properties came back for this Google account — authorize with another account or check its Analytics access, then retry."
+      "wizardNoProperties": "No properties came back for this Google account — authorize with another account or check its Analytics access, then retry.",
+      "wizardStubTitle": "{name} is not configured on this server",
+      "wizardStubOAuthDesc": "An administrator needs to register an OAuth app for {name} and set these environment variables on the server before real connections can run:",
+      "wizardStubCredentialDesc": "{name} needs no OAuth configuration — this server's backend does not ship the {name} connector yet. Ask an administrator to update the backend.",
+      "wizardStubDemoNote": "The demo walks through simulated steps with sample data — nothing really connects.",
+      "wizardStubDemoCta": "View demo flow"
     },
     "brand": {
       "title": "Brand",

@@ -916,7 +916,7 @@
       "wizardMappingAria": "Các cột feed đã nhận diện và ý nghĩa của chúng",
       "attentionIssue": "Kết nối mất quyền truy cập — kết nối lại để các touchpoint của nó tiếp tục được chấm bằng dữ liệu thật.",
       "disconnectBodyLive": "Các touchpoint mà {name} nuôi sẽ thành ghost và điểm giai đoạn tính lại ở lần tải sau — lịch sử đã audit được giữ.",
-      "toastAuthorizePending": "OAuth của {name} chưa cấu hình trên deployment này — tiếp tục ở chế độ demo.",
+      "toastAuthorizePending": "{name} chưa được cấu hình trên server này — cần quản trị viên cấu hình connector.",
       "toastAuthorizeOpened": "Ủy quyền {name} trong cửa sổ vừa mở — kết nối xuất hiện khi callback hoàn tất.",
       "toastSyncQueuedJob": "Đã xếp hàng sync cho {name} (job {id}).",
       "toastSyncedNow": "Đã sync {name} — độ tươi dữ liệu vừa cập nhật.",
@@ -941,7 +941,12 @@
       "wizardOpeningPopup": "Đang mở cửa sổ đăng nhập chính chủ của {name}…",
       "wizardSelectProperty": "Kết nối property",
       "wizardLoadingProperties": "Đang tải property từ Google Analytics…",
-      "wizardNoProperties": "Tài khoản Google này không trả về property nào — ủy quyền bằng tài khoản khác hoặc kiểm tra quyền Analytics rồi thử lại."
+      "wizardNoProperties": "Tài khoản Google này không trả về property nào — ủy quyền bằng tài khoản khác hoặc kiểm tra quyền Analytics rồi thử lại.",
+      "wizardStubTitle": "{name} chưa được cấu hình trên server này",
+      "wizardStubOAuthDesc": "Cần quản trị viên đăng ký OAuth app cho {name} và cấu hình các biến môi trường sau trên server trước khi kết nối thật chạy được:",
+      "wizardStubCredentialDesc": "{name} không cần cấu hình OAuth — backend của server này chưa hỗ trợ connector {name}. Hãy nhờ quản trị viên cập nhật backend.",
+      "wizardStubDemoNote": "Demo chạy các bước mô phỏng với dữ liệu mẫu — không kết nối thật.",
+      "wizardStubDemoCta": "Xem demo flow"
     },
     "brand": {
       "title": "Thương hiệu",
