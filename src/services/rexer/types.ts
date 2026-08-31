@@ -548,6 +548,11 @@ export interface MediaAsset {
   checksum?: string;
   created_at: string;
   created_by: string;
+  alt?: string | null;
+  caption?: string | null;
+  /** Facet `use` §10.1 do BE derive per trang list (product/campaign/
+   *  experience/brand) — cùng predicate với filter `?use=`. */
+  uses?: string[];
 }
 export interface MediaListResponse {
   items: MediaAsset[];

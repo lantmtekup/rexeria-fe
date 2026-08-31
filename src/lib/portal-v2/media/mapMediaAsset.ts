@@ -5,6 +5,7 @@ import type {
   MediaAsset,
   MediaKindId,
   MediaStatusId,
+  MediaUseId,
 } from '@/lib/portal-v2/media/types';
 
 /**
@@ -60,6 +61,17 @@ const deriveDims = (be: RexerMediaAsset): string => {
   return '—';
 };
 
+const KNOWN_USES: MediaUseId[] = ['product', 'campaign', 'experience', 'brand'];
+
+/** `uses` do BE derive (§10.1) — rỗng nghĩa là chưa gắn đâu cả = unlinked,
+ *  để tab/filter "Chưa liên kết" đếm đúng cùng semantics với `?use=unlinked`. */
+const deriveUses = (be: RexerMediaAsset): MediaUseId[] => {
+  const uses = (be.uses ?? []).filter((u): u is MediaUseId =>
+    KNOWN_USES.includes(u as MediaUseId)
+  );
+  return uses.length ? uses : ['unlinked'];
+};
+
 const deriveUpdated = (be: RexerMediaAsset): string => {
   const date = new Date(be.created_at);
   return Number.isNaN(date.getTime())
@@ -81,8 +93,8 @@ export const mapRexerMediaAssetToUi = (be: RexerMediaAsset): MediaAsset => ({
   version: 1,
   owner: be.created_by,
   updated: deriveUpdated(be),
-  alt: '',
-  caption: '',
+  alt: be.alt ?? '',
+  caption: be.caption ?? '',
   tags: be.tags ?? [],
   rights: {
     licence: '',
@@ -92,7 +104,7 @@ export const mapRexerMediaAssetToUi = (be: RexerMediaAsset): MediaAsset => ({
     expires: null,
     territories: '',
   },
-  uses: [],
+  uses: deriveUses(be),
   links: [],
   assisted: null,
 });
