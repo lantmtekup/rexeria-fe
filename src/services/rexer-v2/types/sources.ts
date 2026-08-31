@@ -67,6 +67,9 @@ export type RxFeedMapping = {
  */
 export type RxConnectSourceRequest = {
   shop?: string;
+  /** Cách callback trả lời browser: popup (postMessage + tự đóng) hay
+   *  redirect (302 về app khi popup bị chặn). BE mặc định popup. */
+  mode?: 'popup' | 'redirect';
   site_url?: string;
   consumer_key?: string;
   consumer_secret?: string;

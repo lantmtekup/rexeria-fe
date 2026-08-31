@@ -43,8 +43,55 @@ export const requestAuthorize = async (
   };
 };
 
+export type OAuthMessage =
+  | { type: string; connectionId?: string; shop?: string }
+  | { type: string; code?: string; message?: string };
+
+/**
+ * Fast-path của popup: BE postMessage `{provider}:connected` /
+ * `{provider}:error` về tab cha ngay khi callback xong (spec Shopify OAuth) —
+ * nhanh hơn vòng poll 3s. Trả cleanup; chỉ nhận message đúng origin app.
+ */
+/** Origin của trang callback (BE) — nguồn hợp lệ của postMessage. Khi BE
+ *  khác domain FE (deployment thường), e.origin là origin BE chứ không phải
+ *  origin app; chấp nhận cả hai để same-origin setup vẫn chạy. */
+const beOrigin = (): string => {
+  const api =
+    process.env.NEXT_PUBLIC_REXER_API_V2 ?? process.env.NEXT_PUBLIC_REXER_API;
+  if (!api) return window.location.origin;
+  try {
+    return new URL(api).origin;
+  } catch {
+    return window.location.origin;
+  }
+};
+
+export const listenForOAuthMessage = (
+  provider: string,
+  onMessage: (msg: OAuthMessage) => void
+): (() => void) => {
+  const expected = beOrigin();
+  const handler = (e: MessageEvent) => {
+    if (e.origin !== expected && e.origin !== window.location.origin) return;
+    const type = (e.data as { type?: string } | null)?.type;
+    if (type === `${provider}:connected` || type === `${provider}:error`) {
+      onMessage(e.data as OAuthMessage);
+    }
+  };
+  window.addEventListener('message', handler);
+  return () => window.removeEventListener('message', handler);
+};
+
 export const openAuthorizePopup = (url: string): Window | null =>
   window.open(url, '_blank', 'width=680,height=760');
+
+/**
+ * Mở popup TRỐNG đồng bộ NGAY trong user gesture (chống popup-blocker), rồi
+ * caller điều hướng nó tới authorize_url khi response về; BE trả stub thì
+ * đóng lại. Đây là lý do popup phải mở TRƯỚC khi await bất cứ thứ gì.
+ */
+export const openBlankPopup = (): Window | null =>
+  window.open('about:blank', '_blank', 'width=680,height=760');
 
 const sleep = (ms: number): Promise<void> =>
   new Promise(resolve => setTimeout(resolve, ms));
