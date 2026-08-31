@@ -19,6 +19,7 @@ import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
+import { Modal } from '@/components/molecules/portal-v2/Modal';
 import {
   Field,
   TextInput,
@@ -58,6 +59,10 @@ type ProductDetailsPanelProps = {
   product: Product;
   /** Taxonomy `product_categories` của brand — options cho dropdown "Loại sản phẩm". */
   categories: Array<{ id: string; name: string }>;
+  /** Tạo loại mới từ popup cạnh dropdown; null = thất bại (nơi gọi đã toast). */
+  onCreateCategory: (
+    name: string
+  ) => Promise<{ id: string; name: string } | null>;
   assets: ProductAsset[];
   assetsHydrated: boolean;
   editing: boolean;
@@ -168,6 +173,7 @@ const NumberField = ({
 export const ProductDetailsPanel = ({
   product: p,
   categories,
+  onCreateCategory,
   assets,
   assetsHydrated,
   editing,
@@ -193,6 +199,22 @@ export const ProductDetailsPanel = ({
   const patch = (partial: Partial<Product>) => onChange({ ...p, ...partial });
 
   const [tagDraft, setTagDraft] = useState('');
+  /** Popup tạo loại sản phẩm mới ngay cạnh dropdown. */
+  const [typeDialogOpen, setTypeDialogOpen] = useState(false);
+  const [typeDraft, setTypeDraft] = useState('');
+  const [typeSaving, setTypeSaving] = useState(false);
+
+  const submitNewType = async () => {
+    const name = typeDraft.trim();
+    if (!name || typeSaving) return;
+    setTypeSaving(true);
+    const created = await onCreateCategory(name);
+    setTypeSaving(false);
+    if (!created) return;
+    patch({ categoryId: created.id });
+    setTypeDraft('');
+    setTypeDialogOpen(false);
+  };
   // Đổi sang sản phẩm khác trong khi panel này vẫn còn mounted (view → edit
   // rồi mở sản phẩm khác) không được để lại chữ đang gõ dở của sản phẩm cũ.
   useEffect(() => setTagDraft(''), [p.id]);
@@ -936,24 +958,36 @@ export const ProductDetailsPanel = ({
         <SectionBox title={t('boxOrganization')}>
           <Field label={t('fieldProductType')}>
             {editing ? (
-              <TextSelect
-                value={p.categoryId ?? ''}
-                aria-label={t('fieldProductType')}
-                onChange={e => patch({ categoryId: e.target.value || null })}
-              >
-                <option value=''>{t('chooseType')}</option>
-                {categories.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-                {/* Sản phẩm cũ trỏ tới category đã xoá / ngoài trang lookup:
-                    giữ option ẩn để value không âm thầm nhảy về rỗng. */}
-                {p.categoryId &&
-                !categories.some(c => c.id === p.categoryId) ? (
-                  <option value={p.categoryId}>{p.type || '—'}</option>
-                ) : null}
-              </TextSelect>
+              <span className='flex items-center gap-1.5'>
+                <TextSelect
+                  value={p.categoryId ?? ''}
+                  aria-label={t('fieldProductType')}
+                  className='min-w-0 flex-1'
+                  onChange={e => patch({ categoryId: e.target.value || null })}
+                >
+                  <option value=''>{t('chooseType')}</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                  {/* Sản phẩm cũ trỏ tới category đã xoá / ngoài trang lookup:
+                      giữ option ẩn để value không âm thầm nhảy về rỗng. */}
+                  {p.categoryId &&
+                  !categories.some(c => c.id === p.categoryId) ? (
+                    <option value={p.categoryId}>{p.type || '—'}</option>
+                  ) : null}
+                </TextSelect>
+                <button
+                  type='button'
+                  onClick={() => setTypeDialogOpen(true)}
+                  title={t('addType')}
+                  aria-label={t('addType')}
+                  className='grid size-9 shrink-0 cursor-pointer place-items-center rounded-[var(--pv2-r-sm)] border border-[var(--pv2-hair)] text-[var(--pv2-mut)] hover:border-[var(--pv2-electric)] hover:text-[var(--pv2-electric)]'
+                >
+                  <Plus className='size-4' strokeWidth={2.2} aria-hidden />
+                </button>
+              </span>
             ) : (
               <TextInput
                 value={
@@ -1082,6 +1116,45 @@ export const ProductDetailsPanel = ({
           ) : null}
         </SectionBox>
       </div>
+
+      {/* Popup tạo loại mới — mount sau cùng nên nổi trên ProductModal
+          (các Modal Portal V2 chung một z-index, DOM sau thắng). */}
+      <Modal
+        open={typeDialogOpen}
+        onClose={() => setTypeDialogOpen(false)}
+        title={t('addTypeTitle')}
+        subtitle={t('addTypeSub')}
+        footer={
+          <>
+            <Button variant='ghost' onClick={() => setTypeDialogOpen(false)}>
+              {t('cancel')}
+            </Button>
+            <span className='flex-1' />
+            <Button
+              variant='primary'
+              disabled={!typeDraft.trim() || typeSaving}
+              onClick={() => {
+                void submitNewType();
+              }}
+            >
+              {typeSaving ? <Loader2 className='size-4 animate-spin' /> : null}
+              {t('addTypeSave')}
+            </Button>
+          </>
+        }
+      >
+        <Field label={t('addTypeName')}>
+          <TextInput
+            autoFocus
+            value={typeDraft}
+            placeholder={t('addTypePlaceholder')}
+            onChange={e => setTypeDraft(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') void submitNewType();
+            }}
+          />
+        </Field>
+      </Modal>
     </div>
   );
 };

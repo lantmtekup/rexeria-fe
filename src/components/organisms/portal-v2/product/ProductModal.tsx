@@ -29,6 +29,10 @@ type ProductModalProps = {
   tab: ProductModalTab;
   /** Options dropdown "Loại sản phẩm" — taxonomy `product_categories` của brand. */
   categories: Array<{ id: string; name: string }>;
+  /** Tạo loại mới từ popup cạnh dropdown; null = tạo thất bại (đã toast). */
+  onCreateCategory: (
+    name: string
+  ) => Promise<{ id: string; name: string } | null>;
   assets: ProductAsset[];
   assetsHydrated: boolean;
   experiences: ProductExperienceLink[];
@@ -52,6 +56,7 @@ export const ProductModal = ({
   mode,
   tab,
   categories,
+  onCreateCategory,
   assets,
   assetsHydrated,
   experiences,
@@ -211,6 +216,7 @@ export const ProductModal = ({
         {activeTab === 'details' ? (
           <ProductDetailsPanel
             categories={categories}
+            onCreateCategory={onCreateCategory}
             onUploadMedia={onUploadMedia}
             onPickFromLibrary={onPickFromLibrary}
             onPickCover={onPickCover}
