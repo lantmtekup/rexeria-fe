@@ -52,12 +52,27 @@ export type OAuthMessage =
  * `{provider}:error` về tab cha ngay khi callback xong (spec Shopify OAuth) —
  * nhanh hơn vòng poll 3s. Trả cleanup; chỉ nhận message đúng origin app.
  */
+/** Origin của trang callback (BE) — nguồn hợp lệ của postMessage. Khi BE
+ *  khác domain FE (deployment thường), e.origin là origin BE chứ không phải
+ *  origin app; chấp nhận cả hai để same-origin setup vẫn chạy. */
+const beOrigin = (): string => {
+  const api =
+    process.env.NEXT_PUBLIC_REXER_API_V2 ?? process.env.NEXT_PUBLIC_REXER_API;
+  if (!api) return window.location.origin;
+  try {
+    return new URL(api).origin;
+  } catch {
+    return window.location.origin;
+  }
+};
+
 export const listenForOAuthMessage = (
   provider: string,
   onMessage: (msg: OAuthMessage) => void
 ): (() => void) => {
+  const expected = beOrigin();
   const handler = (e: MessageEvent) => {
-    if (e.origin !== window.location.origin) return;
+    if (e.origin !== expected && e.origin !== window.location.origin) return;
     const type = (e.data as { type?: string } | null)?.type;
     if (type === `${provider}:connected` || type === `${provider}:error`) {
       onMessage(e.data as OAuthMessage);
