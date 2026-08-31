@@ -157,3 +157,11 @@ export const addProductTags = async (
   }
   return { updated, failed };
 };
+
+/** Tạo một loại sản phẩm (product category) mới cho brand đang đăng nhập. */
+export const createProductCategory = async (
+  name: string
+): Promise<{ id: string; name: string }> => {
+  const category = await rexerApi.productCategories.create({ name });
+  return { id: category.id, name: category.name };
+};

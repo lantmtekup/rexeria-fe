@@ -19,6 +19,7 @@ import type { WriteFailure } from '@/services/portal-v2/productWrite';
 import {
   addProductTags,
   createProduct,
+  createProductCategory,
   deleteProducts,
   duplicateProduct as duplicateProductApi,
   setProductsStatus,
@@ -124,6 +125,31 @@ export const ProductWorkspace = ({
   const t = useTranslations('portalV2.products');
 
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  /** Taxonomy cho dropdown "Loại sản phẩm" — lớn dần khi user tạo loại mới
+   *  ngay trong form (không refetch cả catalogue). */
+  const [categories, setCategories] = useState(initialCategories);
+
+  const handleCreateCategory = async (
+    name: string
+  ): Promise<{ id: string; name: string } | null> => {
+    try {
+      const created = await createProductCategory(name);
+      setCategories(prev =>
+        [...prev.filter(c => c.id !== created.id), created].sort((a, b) =>
+          a.name.localeCompare(b.name)
+        )
+      );
+      toast.success(t('toastTypeCreated', { name: created.name }));
+      return created;
+    } catch (err) {
+      toast.error(
+        err instanceof Error && err.message
+          ? err.message
+          : t('toastTypeCreateFailed')
+      );
+      return null;
+    }
+  };
   /** Đang gọi API — khoá nút để không gửi trùng. */
   const [saving, setSaving] = useState(false);
   /** Đang tải ảnh lên — khoá ô chọn file để không gửi trùng. */
@@ -780,7 +806,8 @@ export const ProductWorkspace = ({
           product={activeProduct}
           mode={modal.mode}
           tab={modalTab}
-          categories={initialCategories}
+          categories={categories}
+          onCreateCategory={handleCreateCategory}
           assets={assets}
           assetsHydrated={hydratedProductIds.has(activeProduct.id)}
           experiences={experienceLinks}
