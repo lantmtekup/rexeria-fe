@@ -43,6 +43,30 @@ export const requestAuthorize = async (
   };
 };
 
+export type OAuthMessage =
+  | { type: string; connectionId?: string; shop?: string }
+  | { type: string; code?: string; message?: string };
+
+/**
+ * Fast-path của popup: BE postMessage `{provider}:connected` /
+ * `{provider}:error` về tab cha ngay khi callback xong (spec Shopify OAuth) —
+ * nhanh hơn vòng poll 3s. Trả cleanup; chỉ nhận message đúng origin app.
+ */
+export const listenForOAuthMessage = (
+  provider: string,
+  onMessage: (msg: OAuthMessage) => void
+): (() => void) => {
+  const handler = (e: MessageEvent) => {
+    if (e.origin !== window.location.origin) return;
+    const type = (e.data as { type?: string } | null)?.type;
+    if (type === `${provider}:connected` || type === `${provider}:error`) {
+      onMessage(e.data as OAuthMessage);
+    }
+  };
+  window.addEventListener('message', handler);
+  return () => window.removeEventListener('message', handler);
+};
+
 export const openAuthorizePopup = (url: string): Window | null =>
   window.open(url, '_blank', 'width=680,height=760');
 

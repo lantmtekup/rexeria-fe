@@ -3,7 +3,7 @@
 import { Search, SquareStack } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/molecules/portal-v2/Button';
@@ -79,6 +79,27 @@ export const SourcesWorkspace = ({
 }: SourcesWorkspaceProps) => {
   const t = useTranslations('portalV2.sources');
   const router = useRouter();
+
+  // Return leg của OAuth mode=redirect (popup bị chặn): callback 302 về
+  // /portal-v2/sources?connected=<id> | ?error=<code> — toast rồi dọn URL.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const connectedId = params.get('connected');
+    const errorCode = params.get('error');
+    if (!connectedId && !errorCode) return;
+    if (connectedId) toast.success(t('toastConnected'));
+    if (errorCode) toast.error(errorCode);
+    params.delete('connected');
+    params.delete('error');
+    const rest = params.toString();
+    window.history.replaceState(
+      null,
+      '',
+      window.location.pathname + (rest ? `?${rest}` : '')
+    );
+    router.refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const sources = useAuditSources(initialSources);
 
   const [query, setQuery] = useState('');

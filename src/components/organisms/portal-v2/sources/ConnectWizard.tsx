@@ -11,6 +11,7 @@ import {
   openBlankPopup,
   requestAuthorize,
   waitForConnection,
+  listenForOAuthMessage,
 } from '@/lib/portal-v2/journey-audit/authorize';
 import type {
   AuditSource,
@@ -288,14 +289,46 @@ export const ConnectWizard = ({
     return true;
   };
 
-  /** Poll connection về trong lúc popup chính chủ đang mở. */
+  /** Poll connection về trong lúc popup chính chủ đang mở — kèm fast-path
+   *  postMessage từ callback (spec Shopify OAuth: `{provider}:connected` /
+   *  `{provider}:error` về ngay, khỏi đợi nhịp poll). */
   const liveWatch = async (popup: Window) => {
     setLiveStage('waiting');
-    const connection = await waitForConnection(provider, {
-      popupClosed: () => popup.closed,
-      cancelled: () => cancelRef.current,
+    let messageError: { code?: string; message?: string } | null = null;
+    let resolveMessaged: (c: RxSourceConnection | null) => void = () => {};
+    const messaged = new Promise<RxSourceConnection | null>(resolve => {
+      resolveMessaged = resolve;
     });
+    const stopListen = listenForOAuthMessage(provider, async msg => {
+      if (msg.type === `${provider}:error`) {
+        messageError = msg as { code?: string; message?: string };
+        resolveMessaged(null);
+        return;
+      }
+      // connected: đọc lại list để lấy row đầy đủ theo connectionId.
+      try {
+        const items = (await rexerV2Api.sources.list()).items ?? [];
+        const id = (msg as { connectionId?: string }).connectionId;
+        resolveMessaged(items.find(item => item.id === id) ?? null);
+      } catch {
+        resolveMessaged(null); // poll nhặt sau
+      }
+    });
+    const connection = await Promise.race([
+      waitForConnection(provider, {
+        popupClosed: () => popup.closed,
+        cancelled: () => cancelRef.current,
+      }),
+      messaged,
+    ]);
+    stopListen();
     if (cancelRef.current) return;
+    if (messageError) {
+      const me = messageError as { code?: string; message?: string };
+      setLiveError(me.message ?? me.code ?? t('actionFailed'));
+      setLiveStage('error');
+      return;
+    }
     if (!connection) {
       setLiveStage('timeout');
       return;
@@ -329,10 +362,13 @@ export const ConnectWizard = ({
     }
     setLiveStage('authorizing');
     try {
-      const result = await requestAuthorize(
-        provider,
-        provider === 'shopify' ? { shop: effectiveValue('Store domain') } : {}
-      );
+      const result = await requestAuthorize(provider, {
+        ...(provider === 'shopify'
+          ? { shop: effectiveValue('Store domain') }
+          : {}),
+        // Popup bị chặn (mobile) → xin callback kiểu redirect cả tab.
+        mode: popup && !popup.closed ? 'popup' : 'redirect',
+      });
       if (cancelRef.current) {
         popup?.close();
         return;
@@ -353,7 +389,9 @@ export const ConnectWizard = ({
       }
       setBlockedUrl(result.url);
       if (!popup || popup.closed) {
-        setLiveStage('blocked');
+        // Fallback chuẩn spec: redirect cả tab, callback 302 về
+        // /portal-v2/sources?connected=… (hoặc ?error=…).
+        window.location.href = result.url;
         return;
       }
       popup.location.href = result.url;
