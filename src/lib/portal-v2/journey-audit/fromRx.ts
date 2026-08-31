@@ -52,6 +52,7 @@ export const auditProductFromRx = (rx: RxAuditProduct): AuditProductRow => ({
   name: rx.name,
   sku: rx.sku,
   category: rx.category,
+  source: rx.source ?? 'manual',
   icon: AUDIT_PRODUCT_ICONS[rx.id] ?? '📦',
   score: rx.score,
   touchpointCount: rx.touchpoint_count,

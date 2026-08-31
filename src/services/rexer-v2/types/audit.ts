@@ -28,6 +28,8 @@ export type RxAuditProduct = {
   name: string;
   sku: string;
   category: string;
+  /** Connector đã sync sản phẩm này về (`products.source`): manual|shopify|csv. */
+  source?: string;
   /** null = chưa touchpoint non-off nào có điểm. */
   score: number | null;
   touchpoint_count: number;

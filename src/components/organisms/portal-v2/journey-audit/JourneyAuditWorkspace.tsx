@@ -46,6 +46,10 @@ import { FlowCanvas } from '@/components/organisms/portal-v2/journey-audit/FlowC
 import { JourneyBoard } from '@/components/organisms/portal-v2/journey-audit/JourneyBoard';
 import { ProductRail } from '@/components/organisms/portal-v2/journey-audit/ProductRail';
 import {
+  PRODUCT_SOURCE_BY_PROVIDER,
+  SourceGate,
+} from '@/components/organisms/portal-v2/journey-audit/SourceGate';
+import {
   TouchpointDrawer,
   type DrawerContext,
 } from '@/components/organisms/portal-v2/journey-audit/TouchpointDrawer';
@@ -87,6 +91,12 @@ export const JourneyAuditWorkspace = ({
     const found = bundle.products.find(p => p.id === initialState.productId);
     return found?.id ?? bundle.products[0]?.id ?? '';
   });
+  /** Nguồn dữ liệu đã chọn ở màn mở đầu: null = chưa chọn (hiện SourceGate),
+   *  'all' = mọi sản phẩm, còn lại = provider. Deep-link ?product= bỏ qua
+   *  gate để link chia sẻ vẫn vào thẳng board. Chỉ áp dụng live mode. */
+  const [srcPick, setSrcPick] = useState<string | null>(() =>
+    !bundle.live || initialState.productId ? 'all' : null
+  );
   const [lens, setLens] = useState<AuditLens>(initialState.lens);
   const [drawerTpId, setDrawerTpId] = useState<string | null>(
     initialState.touchpointId
@@ -110,8 +120,18 @@ export const JourneyAuditWorkspace = ({
     };
   }, []);
 
+  /** Rail lọc theo nguồn đã chọn. Provider đo lường (ga4, meta…) không sở
+   *  hữu sản phẩm — chọn nó nghĩa là audit toàn bộ danh mục. */
+  const filteredProducts = useMemo(() => {
+    if (!live || !srcPick || srcPick === 'all') return bundle.products;
+    const src = PRODUCT_SOURCE_BY_PROVIDER[srcPick];
+    if (!src) return bundle.products;
+    const hits = bundle.products.filter(p => p.source === src);
+    return hits.length ? hits : bundle.products;
+  }, [live, srcPick, bundle.products]);
+
   const product =
-    bundle.products.find(p => p.id === productId) ?? bundle.products[0];
+    filteredProducts.find(p => p.id === productId) ?? filteredProducts[0];
   const journey = product ? bundle.journeys[product.auditId] : undefined;
   const flow = product ? bundle.flows[product.auditId] : undefined;
   const dropoff = product ? (dropoffs[product.auditId] ?? null) : null;
@@ -130,6 +150,37 @@ export const JourneyAuditWorkspace = ({
       touchpointId: drawerTpId,
     });
   }, [product?.id, lens, drawerTpId]);
+
+  /** Banner provenance: demo giữ copy "LIVE CASE" của prototype; live chỉ
+   *  hiện khi journey còn số ước tính, copy đổi theo trạng thái GA (chưa
+   *  connect → mời connect; connect rồi → mời chạy audit mới), hết ước tính
+   *  thì ẩn hẳn. */
+  const hasEstimates = useMemo(
+    () =>
+      (journey?.stages.some(stage =>
+        stage.touchpoints.some(tp => tp.traffic?.estimated)
+      ) ??
+        false) ||
+      (flow?.estimated ?? false),
+    [journey, flow]
+  );
+  const gaConnected = useMemo(
+    () =>
+      sources.some(
+        source => source.provider === 'ga4' && source.status === 'connected'
+      ),
+    [sources]
+  );
+  const provenance = !live
+    ? { tag: 'provenanceTag' as const, body: 'provenanceBody' as const }
+    : hasEstimates
+      ? {
+          tag: 'provenanceLiveTag' as const,
+          body: gaConnected
+            ? ('provenanceLiveSyncedBody' as const)
+            : ('provenanceLiveBody' as const),
+        }
+      : null;
 
   const wizardSource =
     sources.find(source => source.provider === wizardProvider) ?? null;
@@ -240,6 +291,22 @@ export const JourneyAuditWorkspace = ({
     );
   const goSources = () => router.push(crossHref('/portal-v2/sources', {}));
 
+  const gateOpen = live && srcPick === null;
+  const pickSource = (key: string) => {
+    setSrcPick(key);
+    setDrawerTpId(null);
+    setFlowSel(null);
+    const src = PRODUCT_SOURCE_BY_PROVIDER[key];
+    if (key !== 'all' && src) {
+      const first = bundle.products.find(p => p.source === src);
+      if (first) setProductId(first.id);
+    }
+  };
+  const srcPickLabel =
+    srcPick && srcPick !== 'all'
+      ? (sources.find(s => s.provider === srcPick)?.name ?? srcPick)
+      : t('srcGateAll');
+
   const stats = {
     productName: product.name,
     score: productScore(journey, statuses),
@@ -279,11 +346,30 @@ export const JourneyAuditWorkspace = ({
           <span className='text-[10px] font-bold tracking-[0.16em] text-[var(--pv2-electric)] uppercase'>
             {t('eyebrow')}
           </span>
-          <span className='mx-2 text-[var(--pv2-hair)]'>›</span>
-          <b className='font-semibold text-[var(--pv2-ink)]'>{product.name}</b>
+          {gateOpen ? null : (
+            <>
+              <span className='mx-2 text-[var(--pv2-hair)]'>›</span>
+              <b className='font-semibold text-[var(--pv2-ink)]'>
+                {product.name}
+              </b>
+            </>
+          )}
         </p>
+        {live && !gateOpen ? (
+          <button
+            type='button'
+            onClick={() => setSrcPick(null)}
+            title={t('srcChipChange')}
+            className='text-2xs flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[var(--pv2-hair)] px-2.5 py-1 font-semibold text-[var(--pv2-mut)] hover:border-[var(--pv2-electric)] hover:text-[var(--pv2-electric)]'
+          >
+            {srcPickLabel}
+            <span aria-hidden className='text-[var(--pv2-faint)]'>
+              ⇄
+            </span>
+          </button>
+        ) : null}
         <div className='ml-auto flex items-center gap-2.5'>
-          {stats.score != null ? (
+          {!gateOpen && stats.score != null ? (
             <span className='flex items-center gap-2 rounded-full border border-[var(--pv2-hair)] py-1 pr-3 pl-1.5 text-xs text-[var(--pv2-mut)]'>
               <span
                 className='text-2xs grid size-[26px] place-items-center rounded-full font-semibold text-[var(--pv2-paper)]'
@@ -301,20 +387,22 @@ export const JourneyAuditWorkspace = ({
               {t('experienceScore')}
             </span>
           ) : null}
-          <Button
-            variant='primary'
-            disabled={runStatus !== 'idle'}
-            onClick={() => {
-              void handleRunAudit();
-            }}
-          >
-            <ScanSearch aria-hidden />
-            {runStatus === 'running'
-              ? t('runRunningLabel')
-              : runStatus === 'queued'
-                ? t('runQueuedLabel')
-                : t('runAudit')}
-          </Button>
+          {gateOpen ? null : (
+            <Button
+              variant='primary'
+              disabled={runStatus !== 'idle'}
+              onClick={() => {
+                void handleRunAudit();
+              }}
+            >
+              <ScanSearch aria-hidden />
+              {runStatus === 'running'
+                ? t('runRunningLabel')
+                : runStatus === 'queued'
+                  ? t('runQueuedLabel')
+                  : t('runAudit')}
+            </Button>
+          )}
         </div>
       </header>
 
@@ -324,11 +412,21 @@ export const JourneyAuditWorkspace = ({
         </p>
       ) : null}
 
-      <div className='relative flex min-h-0 flex-1'>
+      {gateOpen ? (
+        <SourceGate
+          sources={sources}
+          products={bundle.products}
+          onPick={pickSource}
+          onOpenSources={goSources}
+        />
+      ) : null}
+
+      <div className={cn('relative flex min-h-0 flex-1', gateOpen && 'hidden')}>
         {railOpen ? (
           <ProductRail
-            products={bundle.products}
+            products={filteredProducts}
             activeId={product.id}
+            live={live}
             onSelect={id => {
               setProductId(id);
               setDrawerTpId(null);
@@ -349,14 +447,16 @@ export const JourneyAuditWorkspace = ({
         )}
 
         <main className='flex min-w-0 flex-1 flex-col'>
-          <div className='mx-5 mt-3.5 flex items-start gap-3 rounded-[var(--pv2-r)] border border-[color-mix(in_srgb,var(--pv2-warning)_35%,var(--pv2-hair))] bg-[color-mix(in_srgb,var(--pv2-warning)_6%,var(--pv2-paper))] px-4 py-2.5'>
-            <span className='mt-0.5 shrink-0 rounded-[6px] bg-[color-mix(in_srgb,var(--pv2-warning)_20%,var(--pv2-paper))] px-2 py-1 text-[9.5px] font-bold tracking-[0.1em] text-[color-mix(in_srgb,var(--pv2-warning)_80%,var(--pv2-ink))]'>
-              {t('provenanceTag')}
-            </span>
-            <p className='text-xs leading-relaxed text-[color-mix(in_srgb,var(--pv2-warning)_60%,var(--pv2-ink))]'>
-              {t('provenanceBody')}
-            </p>
-          </div>
+          {provenance ? (
+            <div className='mx-5 mt-3.5 flex items-start gap-3 rounded-[var(--pv2-r)] border border-[color-mix(in_srgb,var(--pv2-warning)_35%,var(--pv2-hair))] bg-[color-mix(in_srgb,var(--pv2-warning)_6%,var(--pv2-paper))] px-4 py-2.5'>
+              <span className='mt-0.5 shrink-0 rounded-[6px] bg-[color-mix(in_srgb,var(--pv2-warning)_20%,var(--pv2-paper))] px-2 py-1 text-[9.5px] font-bold tracking-[0.1em] text-[color-mix(in_srgb,var(--pv2-warning)_80%,var(--pv2-ink))]'>
+                {t(provenance.tag)}
+              </span>
+              <p className='text-xs leading-relaxed text-[color-mix(in_srgb,var(--pv2-warning)_60%,var(--pv2-ink))]'>
+                {t(provenance.body)}
+              </p>
+            </div>
+          ) : null}
 
           {headerOpen ? (
             <>

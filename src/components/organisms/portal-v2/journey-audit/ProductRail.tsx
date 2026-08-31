@@ -11,6 +11,9 @@ import type { AuditProductRow } from '@/lib/portal-v2/journey-audit/types';
 type ProductRailProps = {
   products: AuditProductRow[];
   activeId: string;
+  /** true = dữ liệu `/v1/audit/*` thật — note provenance bỏ ngày cứng của
+   *  prototype (25 Aug 2026) vốn chỉ đúng cho demo live-case. */
+  live: boolean;
   onSelect: (id: string) => void;
   onCollapse: () => void;
 };
@@ -19,6 +22,7 @@ type ProductRailProps = {
 export const ProductRail = ({
   products,
   activeId,
+  live,
   onSelect,
   onCollapse,
 }: ProductRailProps) => {
@@ -26,12 +30,15 @@ export const ProductRail = ({
   const categories = useMemo(() => {
     const byCategory = new Map<string, AuditProductRow[]>();
     products.forEach(product => {
-      const list = byCategory.get(product.category) ?? [];
+      // Category rỗng (BE chưa có tên danh mục) → nhóm nhãn "Chưa phân loại"
+      // thay vì một header trống trơ chevron.
+      const key = product.category.trim() || t('uncategorized');
+      const list = byCategory.get(key) ?? [];
       list.push(product);
-      byCategory.set(product.category, list);
+      byCategory.set(key, list);
     });
     return [...byCategory.entries()];
-  }, [products]);
+  }, [products, t]);
   const [closed, setClosed] = useState<Record<string, boolean>>({});
 
   return (
@@ -124,8 +131,10 @@ export const ProductRail = ({
       })}
 
       <p className='mt-4 rounded-[var(--pv2-r)] border border-dashed border-[var(--pv2-hair)] p-3 text-xs leading-relaxed text-[var(--pv2-faint)]'>
-        <strong className='text-[var(--pv2-mut)]'>{t('railNoteTitle')}</strong>{' '}
-        {t('railNoteBody')}
+        <strong className='text-[var(--pv2-mut)]'>
+          {t(live ? 'railNoteLiveTitle' : 'railNoteTitle')}
+        </strong>{' '}
+        {t(live ? 'railNoteLiveBody' : 'railNoteBody')}
       </p>
     </aside>
   );
