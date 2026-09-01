@@ -12,7 +12,11 @@
 
 /** Prototype `CAMP_TYPES` (rexer-demo-v3.html :15610). */
 export type CampaignType =
-  'launch' | 'seasonal' | 'sale' | 'always' | 'retention';
+  | 'launch'
+  | 'seasonal'
+  | 'sale'
+  | 'always'
+  | 'retention';
 
 /** The commercial intent — distinct from `brief.objective`, which is prose. */
 export type CampaignGoal = 'awareness' | 'traffic' | 'conversion' | 'retention';
@@ -43,7 +47,11 @@ export type CampaignPhase = 'plan' | 'build' | 'run' | 'learn';
 
 /** Plan §mod-campaigns: "Not started → In build → In review → Ready → Live". */
 export type CampaignItemStatus =
-  'todo' | 'building' | 'review' | 'ready' | 'live';
+  | 'todo'
+  | 'building'
+  | 'review'
+  | 'ready'
+  | 'live';
 
 /** "hạng mục theo sản phẩm hoặc chủ đề" — a SKU or a topic with no SKU behind it. */
 export type CampaignSubjectKind = 'product' | 'topic';
@@ -255,7 +263,11 @@ export type CampaignVerdict = {
 };
 
 export type CampaignHealthState =
-  'healthy' | 'valuable' | 'delayed' | 'risk' | 'complete';
+  | 'healthy'
+  | 'valuable'
+  | 'delayed'
+  | 'risk'
+  | 'complete';
 
 export type CampaignHealth = {
   state: CampaignHealthState;
