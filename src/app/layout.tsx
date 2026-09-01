@@ -132,6 +132,16 @@ export default async function RootLayout({
           crossOrigin='anonymous'
         />
         <link rel='stylesheet' href={GOOGLE_FONTS_HREF} />
+        {/* AdSense verification + Auto ads — Google yêu cầu thẻ raw trong
+            <head> trên mọi trang; next/script chèn vào body kèm data-nscript
+            nên crawler không nhận. Chỉ gắn cho landing host. */}
+        {isLandingHost && (
+          <script
+            async
+            src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1811029775923526'
+            crossOrigin='anonymous'
+          />
+        )}
       </head>
       <body
         className={`${inter.variable} bg-background antialiased`}
