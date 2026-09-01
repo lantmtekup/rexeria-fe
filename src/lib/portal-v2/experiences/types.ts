@@ -41,7 +41,11 @@ export type EvidenceTier = 'high' | 'directional' | 'early' | 'unmeasured';
  * Thiếu trạng thái này thì 55/56 trang của brand không có tab nào chứa.
  */
 export type ExperienceState =
-  'template' | 'unassigned' | 'product' | 'topic' | 'block';
+  | 'template'
+  | 'unassigned'
+  | 'product'
+  | 'topic'
+  | 'block';
 
 /**
  * Một component bên trong block — `GET /v1/experiences/{id}` → `layers[].
