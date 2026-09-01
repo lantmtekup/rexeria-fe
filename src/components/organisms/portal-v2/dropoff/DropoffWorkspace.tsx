@@ -207,7 +207,7 @@ export const DropoffWorkspace = ({
     );
   }
 
-  if (!dropoff || !selected) {
+  if (!dropoff) {
     return (
       <div className='w-full px-5 pt-7 pb-16 md:px-8'>
         <div className='mx-auto w-full max-w-[1240px]'>
@@ -223,7 +223,7 @@ export const DropoffWorkspace = ({
   const total = dropoff.steps[0]?.count ?? 0;
   const buyers = dropoff.steps[dropoff.steps.length - 1]?.count ?? 0;
   const risk = ranked.reduce((sum, leak) => sum + leak.usd, 0);
-  const selectedFound = selected.touchpointId
+  const selectedFound = selected?.touchpointId
     ? findTouchpoint(journey, selected.touchpointId)
     : null;
 
@@ -237,7 +237,25 @@ export const DropoffWorkspace = ({
           </p>
         ) : null}
 
-        <div className='mb-5 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-5 py-4'>
+        {/* Phễu đo được nhưng chưa có leak nào định giá được (chưa có
+            conversion trong GA) — nói rõ vì sao thay vì giấu cả phễu. */}
+        {!selected ? (
+          <div className='mb-5 rounded-[var(--pv2-r)] border border-[color-mix(in_srgb,var(--pv2-warning)_35%,var(--pv2-hair))] bg-[color-mix(in_srgb,var(--pv2-warning)_6%,var(--pv2-paper))] px-5 py-4'>
+            <p className='mb-1 text-[14px] font-semibold text-[var(--pv2-ink)]'>
+              {t('noLeaksTitle')}
+            </p>
+            <p className='text-[13px] leading-relaxed text-[color-mix(in_srgb,var(--pv2-warning)_55%,var(--pv2-ink))]'>
+              {t('noLeaksBody')}
+            </p>
+          </div>
+        ) : null}
+
+        <div
+          className={cn(
+            'mb-5 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-5 py-4',
+            !selected && 'hidden'
+          )}
+        >
           <p className='text-base leading-relaxed text-[var(--pv2-mut)] [&_b]:font-bold [&_b]:text-[var(--pv2-ink)]'>
             {t.rich('storyLine', {
               total: formatCount(total),
@@ -286,7 +304,7 @@ export const DropoffWorkspace = ({
               name: stage.name,
               auditedCount: auditedTouchpoints(stage, statuses).length,
             }))}
-            selectedLeakId={selected.id}
+            selectedLeakId={selected?.id ?? null}
             tpNameOf={tpNameOf}
             onSelectLeak={setSelectedLeakId}
             onOpenStage={() => goJourney()}
@@ -296,31 +314,37 @@ export const DropoffWorkspace = ({
           </p>
         </div>
 
-        <StepHeading n={2}>{t('step2')}</StepHeading>
-        <div className='mb-5 grid items-start gap-4 lg:grid-cols-[minmax(320px,420px)_1fr]'>
-          <LeakList
-            leaks={ranked}
-            selectedId={selected.id}
-            stageNameOf={stageNameOf}
-            tpNameOf={tpNameOf}
-            onSelect={setSelectedLeakId}
-          />
-          <LeakDetail
-            leak={selected}
-            dropoff={dropoff}
-            sources={sources}
-            stageName={stageNameOf(selected.touchpointId)}
-            tpName={tpNameOf(selected.touchpointId)}
-            tpScore={selectedFound?.tp.score ?? null}
-            onOpenTouchpoint={() => goJourney({ tp: selected.touchpointId })}
-            onCreateExperiment={() => {
-              void handleCreateExperiment();
-            }}
-            creatingExperiment={creatingExperiment}
-          />
-        </div>
+        {selected ? (
+          <>
+            <StepHeading n={2}>{t('step2')}</StepHeading>
+            <div className='mb-5 grid items-start gap-4 lg:grid-cols-[minmax(320px,420px)_1fr]'>
+              <LeakList
+                leaks={ranked}
+                selectedId={selected.id}
+                stageNameOf={stageNameOf}
+                tpNameOf={tpNameOf}
+                onSelect={setSelectedLeakId}
+              />
+              <LeakDetail
+                leak={selected}
+                dropoff={dropoff}
+                sources={sources}
+                stageName={stageNameOf(selected.touchpointId)}
+                tpName={tpNameOf(selected.touchpointId)}
+                tpScore={selectedFound?.tp.score ?? null}
+                onOpenTouchpoint={() =>
+                  goJourney({ tp: selected.touchpointId })
+                }
+                onCreateExperiment={() => {
+                  void handleCreateExperiment();
+                }}
+                creatingExperiment={creatingExperiment}
+              />
+            </div>
+          </>
+        ) : null}
 
-        <StepHeading n={3}>{t('step3')}</StepHeading>
+        <StepHeading n={selected ? 3 : 2}>{t('step3')}</StepHeading>
         <ChannelTable dropoff={dropoff} />
 
         {dropoffBundle.patterns.length ? (

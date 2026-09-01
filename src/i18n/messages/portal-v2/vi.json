@@ -828,6 +828,8 @@
       "lockedBody": "Drop-off được khai phá từ dữ liệu phễu của bạn. Kết nối {sources} để thấy khách bị mất ở đâu.",
       "lockedCta": "Mở Nguồn dữ liệu",
       "noFunnel": "Chưa khai phá được dữ liệu phễu cho sản phẩm này.",
+      "noLeaksTitle": "Đã đo được phễu — nhưng chưa định giá được điểm rò",
+      "noLeaksBody": "Google Analytics chưa ghi nhận conversion event nào cho brand, nên số khách rơi chưa quy được ra tiền. Đánh dấu key event (ví dụ generate_lead hoặc purchase) trong GA4, để traffic thật kích hoạt, rồi sync lại — các điểm rò sẽ được xếp hạng theo doanh thu thu hồi được.",
       "storyLine": "Mỗi tháng <b>{total} người</b> khám phá {product}. <b>{buyers}</b> trong số họ mua. <b>{lost}</b> còn lại rời đi đâu đó dọc đường — và <red>{risk} mỗi tháng</red> trong số đó sửa được, truy về {count} touchpoint cụ thể.",
       "bridgeJourneyLabel": "Tab Journey",
       "bridgeJourneyDesc": "các touchpoint bạn dựng",

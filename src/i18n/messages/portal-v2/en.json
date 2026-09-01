@@ -828,6 +828,8 @@
       "lockedBody": "Drop-off intelligence is mined from your funnel data. Connect {sources} to see where customers are lost.",
       "lockedCta": "Open Sources",
       "noFunnel": "No funnel data mined for this product yet.",
+      "noLeaksTitle": "Funnel measured — but no leak has a value yet",
+      "noLeaksBody": "Google Analytics has not recorded a conversion event for this brand, so lost sessions can't be priced. Mark a key event (e.g. generate_lead or purchase) in GA4, let real traffic trigger it, then sync again — leaks will rank by recoverable revenue.",
       "storyLine": "Every month <b>{total} people</b> discover {product}. <b>{buyers}</b> of them buy. The other <b>{lost}</b> leave somewhere along the way — and <red>{risk} per month</red> of that is fixable, traced to {count} specific touchpoints.",
       "bridgeJourneyLabel": "Journey tab",
       "bridgeJourneyDesc": "the touchpoints you built",
