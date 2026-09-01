@@ -273,8 +273,9 @@ export const mapBeProductToPortal = (
   tags: p.template_tags ?? [],
   /* Both unions are `active | draft | archived` — no translation needed. */
   status: p.status ?? 'draft',
-  /* The BE tracks no provenance; everything it holds was entered through it. */
-  source: 'manual',
+  /* `source` là cột thật từ migration 000057 (manual|shopify|csv) — connector
+   * sync và CSV import ghi nó; hàng cũ/thiếu quy về manual. */
+  source: p.source ?? 'manual',
   updated: relativeUpdated(p.updated_at ?? p.created_at, ctx.now),
   // Id THẬT trước: `cover_media_id` là thứ BE lưu và `core.AutoSlots` chấm.
   // Chỉ khi không có mới lùi về id tổng hợp, để lưới còn thứ gì đó mà vẽ từ

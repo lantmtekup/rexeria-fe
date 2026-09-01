@@ -1566,6 +1566,8 @@
       "filterBrandAria": "Brand",
       "allTypes": "All types",
       "allBrands": "All brands",
+      "allSources": "All sources",
+      "filterSourceAria": "Filter by data source",
       "viewTable": "Table view",
       "viewGrid": "Grid view",
       "emptyTitle": "No product matches",

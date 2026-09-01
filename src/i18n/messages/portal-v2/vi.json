@@ -1566,6 +1566,8 @@
       "filterBrandAria": "Thương hiệu",
       "allTypes": "Tất cả loại",
       "allBrands": "Tất cả thương hiệu",
+      "allSources": "Tất cả nguồn",
+      "filterSourceAria": "Lọc theo nguồn dữ liệu",
       "viewTable": "Dạng bảng",
       "viewGrid": "Dạng lưới",
       "emptyTitle": "Không có sản phẩm nào khớp",

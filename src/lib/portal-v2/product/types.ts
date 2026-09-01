@@ -148,6 +148,8 @@ export type ProductFilters = {
   status: ProductStatus | 'all';
   type: string;
   brand: string;
+  /** Nguồn sync (products.source): all | shopify | csv | manual. */
+  source: ProductSource | 'all';
   view: ProductViewMode;
 };
 

@@ -180,6 +180,7 @@ export const PRODUCT_DEFAULT_FILTERS: ProductFilters = {
   status: 'all',
   type: 'all',
   brand: 'all',
+  source: 'all',
   view: 'table',
 };
 
