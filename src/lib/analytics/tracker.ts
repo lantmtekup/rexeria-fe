@@ -29,6 +29,9 @@ const SESSION_IDLE_MS = 30 * 60 * 1000; // 30 min
 const BATCH_LIMIT = 10;
 const FLUSH_DEBOUNCE_MS = 5_000;
 const INGEST_URL = '/api/rexer/analytics/events';
+/** Retry ingest khi 5xx/lỗi mạng — xem chú thích ở `send()`. */
+const RETRY_LIMIT = 2;
+const RETRY_DELAY_MS = 4_000;
 
 function uuid(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
@@ -159,12 +162,31 @@ class Tracker {
       clearTimeout(this.flushTimer);
       this.flushTimer = null;
     }
-    const payload = JSON.stringify(batch.length === 1 ? batch[0] : batch);
     if (useBeacon && typeof navigator !== 'undefined' && navigator.sendBeacon) {
+      const payload = JSON.stringify(batch.length === 1 ? batch[0] : batch);
       const blob = new Blob([payload], { type: 'application/json' });
       navigator.sendBeacon(INGEST_URL, blob);
       return;
     }
+    this.send(batch, 0);
+  }
+
+  /**
+   * POST một batch, retry khi hạ tầng nuốt request. Đo thật 2026-09-01:
+   * proxy Worker thi thoảng 503 thoáng qua ngay sau deploy (cold start) —
+   * fire-and-forget thuần là mất vĩnh viễn batch đó, analytics đếm thiếu.
+   * Retry CHỈ với 5xx/lỗi mạng (4xx là payload/ rate limit — gửi lại vô ích),
+   * tối đa RETRY_LIMIT lần, giãn RETRY_DELAY_MS mỗi lần.
+   */
+  private send(batch: AnalyticsEventInput[], attempt: number): void {
+    const payload = JSON.stringify(batch.length === 1 ? batch[0] : batch);
+    const retry = () => {
+      if (attempt >= RETRY_LIMIT) return;
+      setTimeout(
+        () => this.send(batch, attempt + 1),
+        RETRY_DELAY_MS * (attempt + 1)
+      );
+    };
     fetch(INGEST_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -172,10 +194,11 @@ class Tracker {
       // Fire-and-forget — don't await, don't block render.
       keepalive: true,
       credentials: 'omit',
-    }).catch(() => {
-      // Best-effort: re-queue on transient failure isn't worth the complexity
-      // for visitor analytics. BE will tolerate gaps.
-    });
+    })
+      .then(res => {
+        if (res.status >= 500) retry();
+      })
+      .catch(retry);
   }
 
   /** Test/debug — wipes queue + timer but keeps identity. */
