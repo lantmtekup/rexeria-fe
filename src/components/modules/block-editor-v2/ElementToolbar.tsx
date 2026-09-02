@@ -31,6 +31,7 @@ import {
   previewColor,
 } from '@/lib/brand-kit';
 import { cn } from '@/lib/cn';
+import { resolveWestlyResidences } from '@/components/modules/block-editor/blocks/westlyResidencesData';
 import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { AIBlockType } from '@/services/rexer/types';
@@ -185,6 +186,8 @@ import {
   type PnjDetailsContent,
   type PnjHeroContent,
   type PnjHeroHotspot,
+  type WestlyResidenceHotspot,
+  type WestlyResidencesContent,
   type PnjVariantContent,
   type PnjVariantItem,
   type PnjStickyMenuContent,
@@ -558,6 +561,13 @@ export function ElementToolbar({
         {kind === 'delvauxHotspots' && (
           <DelvauxHotspotsControls
             content={content as DelvauxProductContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'westlyResidenceHotspots' && (
+          <WestlyResidenceHotspotsControls
+            content={content as WestlyResidencesContent}
+            selectedKey={selectedKey}
             onContentChange={onContentChange}
           />
         )}
@@ -7019,5 +7029,157 @@ function ColorSwatch({
         )}
       />
     </div>
+  );
+}
+
+// ─────────────────────────────── WESTLY RESIDENCES (hotspot bản vẽ)
+function WestlyResidenceHotspotsControls({
+  content,
+  selectedKey,
+  onContentChange,
+}: {
+  content: WestlyResidencesContent;
+  selectedKey: string;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const match = selectedKey.match(/^residences\[(\d+)\]\.hotspots$/);
+  const idx = match ? Number(match[1]) : 0;
+  // resolve có fallback: content rỗng thì lần chỉnh đầu materialize bộ mặc
+  // định vào content (copy-on-write).
+  const residences = resolveWestlyResidences(content);
+  const hotspots = residences[idx]?.hotspots ?? [];
+
+  const commit = (next: WestlyResidenceHotspot[]) =>
+    onContentChange({
+      ...content,
+      residences: residences.map((r, i) =>
+        i === idx ? { ...r, hotspots: next } : r
+      ),
+    } as BlockContent);
+
+  const updateSpot = (i: number, patch: Partial<WestlyResidenceHotspot>) =>
+    commit(hotspots.map((h, hi) => (hi === i ? { ...h, ...patch } : h)));
+  const removeSpot = (i: number) =>
+    commit(hotspots.filter((_, hi) => hi !== i));
+  const addSpot = () =>
+    commit([
+      ...hotspots,
+      {
+        id: `hs_${Date.now().toString(36)}`,
+        name: 'Điểm mới',
+        x: 50,
+        y: 50,
+        specs: [{ label: 'Dimension', value: '' }],
+      },
+    ]);
+
+  const updateSpec = (
+    i: number,
+    si: number,
+    patch: Partial<{ label: string; value: string }>
+  ) =>
+    updateSpot(i, {
+      specs: (hotspots[i]?.specs ?? []).map((sp, spi) =>
+        spi === si ? { ...sp, ...patch } : sp
+      ),
+    });
+  const addSpec = (i: number) =>
+    updateSpot(i, {
+      specs: [...(hotspots[i]?.specs ?? []), { label: '', value: '' }],
+    });
+  const removeSpec = (i: number, si: number) =>
+    updateSpot(i, {
+      specs: (hotspots[i]?.specs ?? []).filter((_, spi) => spi !== si),
+    });
+
+  return (
+    <PopoverTrigger
+      label={`Hotspot — ${residences[idx]?.title ?? `Căn ${idx + 1}`}`}
+      preview={`${hotspots.length} hotspot`}
+      width={480}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {hotspots.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có hotspot trên bản vẽ này.
+          </p>
+        ) : null}
+        {hotspots.map((h, i) => (
+          <div
+            key={h.id || i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={h.name ?? ''}
+                onChange={e => updateSpot(i, { name: e.target.value })}
+                placeholder='Tên phòng'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => removeSpot(i)}
+                aria-label='Xoá hotspot'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <div className='flex items-center gap-2'>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+                X%
+                <Input
+                  type='number'
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  value={h.x ?? 0}
+                  onChange={e => updateSpot(i, { x: Number(e.target.value) })}
+                  className='h-8 border-neutral-200 bg-white text-xs'
+                />
+              </label>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+                Y%
+                <Input
+                  type='number'
+                  min={0}
+                  max={100}
+                  step={0.5}
+                  value={h.y ?? 0}
+                  onChange={e => updateSpot(i, { y: Number(e.target.value) })}
+                  className='h-8 border-neutral-200 bg-white text-xs'
+                />
+              </label>
+            </div>
+            {(h.specs ?? []).map((sp, si) => (
+              <div key={si} className='flex items-center gap-1.5'>
+                <Input
+                  value={sp.label ?? ''}
+                  onChange={e => updateSpec(i, si, { label: e.target.value })}
+                  placeholder='Nhãn (Dimension…)'
+                  className='h-7 border-neutral-200 bg-white text-xs'
+                />
+                <Input
+                  value={sp.value ?? ''}
+                  onChange={e => updateSpec(i, si, { value: e.target.value })}
+                  placeholder='Giá trị'
+                  className='h-7 border-neutral-200 bg-white text-xs'
+                />
+                <button
+                  type='button'
+                  onClick={() => removeSpec(i, si)}
+                  aria-label='Xoá dòng spec'
+                  className='flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+                >
+                  <Trash2 className='size-3' />
+                </button>
+              </div>
+            ))}
+            <AddRow onAdd={() => addSpec(i)} label='Thêm dòng spec' />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={addSpot} label='Thêm hotspot' />
+    </PopoverTrigger>
   );
 }

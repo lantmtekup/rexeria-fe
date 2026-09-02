@@ -162,6 +162,14 @@ export type BlockType =
   | 'q80_menu'
   // ── Cool Hunter (editorial, port từ apps/cool-hunter) ──
   | 'cool_hunter_hero'
+  | 'westly_hero'
+  | 'westly_showcase'
+  | 'westly_scene'
+  | 'westly_residences'
+  | 'westly_reveal'
+  | 'westly_product_reveal'
+  | 'westly_footer'
+  | 'westly_header'
   | 'cool_hunter_section_progress'
   | 'cool_hunter_story'
   | 'cool_hunter_gallery'
@@ -727,6 +735,214 @@ export interface CoolHunterHeroContent {
   titleLines?: string[];
   imageUrl?: string;
   imageAlt?: string;
+}
+
+/**
+ * The Westly hero — sân thượng penthouse 3 lớp parallax (mây xa / mây gần /
+ * cảnh), chữ nấp sau lớp cảnh, veil bàn giao sang section sau.
+ * Port apps/the-westly Hero.tsx.
+ */
+export interface WestlyHeroContent {
+  title?: string;
+  subtitle?: string;
+  ctaText?: string;
+  /** Link token (4 dạng LinkControls); rỗng → CTA cuộn qua hết track hero. */
+  ctaHref?: string;
+  /** Lớp cảnh sân thượng (che chữ ở desktop). */
+  sceneUrl?: string;
+  sceneAlt?: string;
+  /** Lớp mây xa — full khung, sau cùng. */
+  cloudsFarUrl?: string;
+  /** Lớp mây gần — dải nổi giữa khung. */
+  cloudsMidUrl?: string;
+  /** Màu veil bàn giao — nên trùng màu nền section ngay sau hero. */
+  veilColor?: string;
+}
+
+/**
+ * The Westly showcase — card 3 lớp ảnh (sketch + overlay drift + photo ẩn) với
+ * toggle reveal, panel copy trôi ngược khi scroll, veil bàn giao.
+ * Port apps/the-westly ProductShowcase.tsx.
+ */
+export interface WestlyShowcaseContent {
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+  /** Lớp bản vẽ (mặc định hiển thị). */
+  sketchUrl?: string;
+  sketchAlt?: string;
+  /** Lớp overlay trôi parallax trên bản vẽ. */
+  overlayUrl?: string;
+  /** Ảnh thật — hiện khi bấm card (reveal). */
+  photoUrl?: string;
+  photoAlt?: string;
+  /** Nhãn badge góc khi đang xem sketch (xuống dòng bằng \n). */
+  revealShowLabel?: string;
+  /** Nhãn badge góc khi đang xem ảnh thật. */
+  revealHideLabel?: string;
+  /** Màu nền — nên trùng veilColor của block đứng trước để liền mạch. */
+  bgColor?: string;
+  /** Màu veil bàn giao — nên trùng màu nền block ngay sau. */
+  veilColor?: string;
+}
+
+/**
+ * The Westly scene — bản vẽ phòng 2 lớp nét chì quét ngược chiều khi scroll +
+ * mouse parallax có clamp, bấm nút lật sang ảnh thật, veil bàn giao.
+ * Port apps/the-westly SceneParallax.tsx.
+ */
+export interface WestlySceneContent {
+  eyebrow?: string;
+  title?: string;
+  /** Nhãn nút khi đang xem sketch. */
+  revealShowLabel?: string;
+  /** Nhãn nút khi đang xem ảnh thật. */
+  revealHideLabel?: string;
+  /** Lớp nét chì trước (quét nhanh hơn). */
+  nearUrl?: string;
+  nearAlt?: string;
+  /** Lớp nét chì sau (quét ngược chiều, chậm hơn). */
+  farUrl?: string;
+  /** Ảnh thật — hiện khi bấm nút reveal. */
+  photoUrl?: string;
+  photoAlt?: string;
+  /** Màu nền — nên trùng veilColor của block đứng trước. */
+  bgColor?: string;
+  /** Màu veil bàn giao — nên trùng màu nền block ngay sau. */
+  veilColor?: string;
+}
+
+/** Một dòng spec trong card hotspot của Westly Residences. */
+export interface WestlyResidenceSpec {
+  label?: string;
+  value?: string;
+}
+
+/** Hotspot trên bản vẽ — toạ độ theo % của khung bản vẽ. */
+export interface WestlyResidenceHotspot {
+  id?: string;
+  name?: string;
+  x?: number;
+  y?: number;
+  specs?: WestlyResidenceSpec[];
+}
+
+/** Bảng INFORMATION của một căn. */
+export interface WestlyResidenceDetails {
+  bedBath?: string;
+  intExt?: string;
+  price?: string;
+  monthlyCc?: string;
+  reTax?: string;
+  status?: string;
+  exposure?: string;
+}
+
+/** Một căn hộ (tab) trong Westly Residences. */
+export interface WestlyResidenceItem {
+  id?: string;
+  title?: string;
+  planUrl?: string;
+  planAlt?: string;
+  /** Tỉ lệ tự nhiên của file bản vẽ, dạng 'W / H' — vd '1944 / 730'. */
+  planRatio?: string;
+  hotspots?: WestlyResidenceHotspot[];
+  details?: WestlyResidenceDetails;
+  listingUrl?: string;
+  floorPlanUrl?: string;
+}
+
+/**
+ * The Westly residences — tabs 3 căn cuối: bản vẽ floor plan với hotspot
+ * bung card spec + zoom vào phòng, cột INFORMATION, veil bàn giao.
+ * Port apps/the-westly FinalResidences.tsx.
+ * details/hotspots sửa qua AI edit hoặc JSON — LayersPanel chỉ expose
+ * title/plan/link mỗi căn.
+ */
+export interface WestlyResidencesContent {
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  residences?: WestlyResidenceItem[];
+  /** Màu nền — nên trùng veilColor của block đứng trước. */
+  bgColor?: string;
+  /** Màu veil bàn giao — nên trùng màu nền block ngay sau. */
+  veilColor?: string;
+}
+
+/**
+ * The Westly reveal — cảnh bếp 2 lớp nét chì, chữ nằm giữa hai lớp (hiện qua
+ * lỗ kính), click cả section lật sang ảnh thật (chữ đổi chỗ + đổi màu).
+ * Port apps/the-westly SceneReveal.tsx.
+ */
+export interface WestlyRevealContent {
+  eyebrow?: string;
+  title?: string;
+  /** Lớp nét chì trước — che phần chữ tràn ngoài ô kính. */
+  nearUrl?: string;
+  nearAlt?: string;
+  /** Lớp nét chì sau — nằm sau khối chữ. */
+  farUrl?: string;
+  /** Ảnh thật — hiện khi click section. */
+  photoUrl?: string;
+  photoAlt?: string;
+  /** Màu nền — nên trùng veilColor của block đứng trước. */
+  bgColor?: string;
+  /** Màu veil bàn giao — nên trùng màu nền block ngay sau. */
+  veilColor?: string;
+}
+
+/**
+ * The Westly product reveal — stack 4 lớp (photo ẩn / skyline / dải mây / nét
+ * vẽ trời trong suốt) click lật sang ảnh hoàn thiện; drift + mouse parallax.
+ * Section chốt chuỗi — không sticky, không veil.
+ * Port apps/the-westly ProductReveal.tsx.
+ */
+export interface WestlyProductRevealContent {
+  eyebrow?: string;
+  title?: string;
+  description?: string;
+  /** Nét vẽ sân thượng (trời trong suốt) — lớp trên cùng. */
+  foregroundUrl?: string;
+  foregroundAlt?: string;
+  /** Dải mây neo góc trên-phải, trôi theo scroll. */
+  cloudsUrl?: string;
+  /** Skyline thành phố — lớp sau cùng, thấy qua khoảng trời. */
+  skylineUrl?: string;
+  /** Ảnh hoàn thiện — hiện khi click stack. */
+  photoUrl?: string;
+  photoAlt?: string;
+  /** Màu nền — nên trùng veilColor của block đứng trước. */
+  bgColor?: string;
+}
+
+/**
+ * The Westly footer — logo + tiêu đề mời đăng ký + nút SIGN UP, hai dải mây
+ * trang trí hai bên. Port apps/the-westly Footer.tsx.
+ */
+export interface WestlyFooterContent {
+  title?: string;
+  ctaText?: string;
+  /** Link token (4 dạng LinkControls). */
+  ctaHref?: string;
+  logoUrl?: string;
+  logoAlt?: string;
+  /** Dải mây trái (decoration, ẩn ở container hẹp). */
+  leftImageUrl?: string;
+  /** Dải mây phải (decoration). */
+  rightImageUrl?: string;
+  bgColor?: string;
+}
+
+/**
+ * The Westly header — logo giữa nổi fixed trên mọi section, nền radial
+ * gradient trắng tan dần. Port apps/the-westly Header.tsx.
+ */
+export interface WestlyHeaderContent {
+  logoUrl?: string;
+  logoAlt?: string;
+  /** Link token (4 dạng LinkControls) — rỗng thì logo không phải link. */
+  logoHref?: string;
 }
 
 /** Belgo hero — video nền + tiêu đề Bebas nhiều dòng. Port apps/belgo Hero.tsx. */
@@ -4099,6 +4315,14 @@ export type BlockContent =
   | MintDiscoverContent
   | PnjHeroContent
   | CoolHunterHeroContent
+  | WestlyHeroContent
+  | WestlyShowcaseContent
+  | WestlySceneContent
+  | WestlyResidencesContent
+  | WestlyRevealContent
+  | WestlyProductRevealContent
+  | WestlyFooterContent
+  | WestlyHeaderContent
   | BelgoHeroContent
   | BelgoAboutProductContent
   | BelgoBrewingProcessContent
@@ -5305,6 +5529,150 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'hero Cool Hunter: logo + tiêu đề serif, khung ảnh scrub phóng to phủ chữ (chữ đổi đen ↔ trắng)',
     aiLabelEn:
       'Cool Hunter hero: logo + serif title, image frame scrubs to full bleed over the copy (title flips black ↔ white)',
+  },
+  westly_hero: {
+    type: 'westly_hero',
+    category: 'hero',
+    style: 'minimal',
+    tags: ['westly', 'hero', 'parallax', 'sticky', 'scrub', 'real-estate'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-02',
+    label: 'The Westly · Hero',
+    accent: '#6E7A6F',
+    adminLabel: 'The Westly Hero',
+    gradient: 'from-stone-500 to-stone-700',
+    defaultName: 'The Westly Hero',
+    aiLabelVi:
+      'hero The Westly: sân thượng penthouse sticky, mây parallax theo chuột, chữ nấp sau cảnh, veil bàn giao sang section sau',
+    aiLabelEn:
+      'The Westly hero: sticky penthouse terrace, mouse-parallax clouds, copy tucked behind the scene, veil hand-off into the next section',
+  },
+  westly_showcase: {
+    type: 'westly_showcase',
+    category: 'feature',
+    style: 'minimal',
+    tags: ['westly', 'showcase', 'sticky', 'scrub', 'reveal', 'real-estate'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-02',
+    label: 'The Westly · Showcase',
+    accent: '#6E7A6F',
+    adminLabel: 'The Westly Showcase',
+    gradient: 'from-stone-400 to-stone-600',
+    defaultName: 'The Westly Showcase',
+    aiLabelVi:
+      'showcase The Westly: card bản vẽ 3 lớp bấm để lật sang ảnh thật, panel copy trôi ngược khi scroll, veil bàn giao',
+    aiLabelEn:
+      'The Westly showcase: layered sketch card that flips to the real photo on click, copy panel drifting on scroll, veil hand-off',
+  },
+  westly_scene: {
+    type: 'westly_scene',
+    category: 'interactive',
+    style: 'minimal',
+    tags: ['westly', 'scene', 'parallax', 'sticky', 'reveal', 'real-estate'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-02',
+    label: 'The Westly · Scene',
+    accent: '#6E7A6F',
+    adminLabel: 'The Westly Scene',
+    gradient: 'from-stone-300 to-stone-500',
+    defaultName: 'The Westly Scene',
+    aiLabelVi:
+      'scene The Westly: bản vẽ phòng 2 lớp nét chì quét ngược chiều khi scroll + parallax chuột, bấm nút lật sang ảnh thật, veil bàn giao',
+    aiLabelEn:
+      'The Westly scene: two-layer pencil sketch sweeping on scroll with mouse parallax, button flips to the real photo, veil hand-off',
+  },
+  westly_residences: {
+    type: 'westly_residences',
+    category: 'floorplan',
+    style: 'minimal',
+    tags: ['westly', 'floorplan', 'hotspot', 'tabs', 'zoom', 'real-estate'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-02',
+    label: 'The Westly · Residences',
+    accent: '#6E7A6F',
+    adminLabel: 'The Westly Residences',
+    gradient: 'from-stone-200 to-stone-400',
+    defaultName: 'The Westly Residences',
+    aiLabelVi:
+      'residences The Westly: tabs các căn hộ, bản vẽ floor plan có hotspot bung card thông số + zoom vào phòng, cột INFORMATION, veil bàn giao',
+    aiLabelEn:
+      'The Westly residences: apartment tabs, floor plan with hotspots opening spec cards + room zoom, INFORMATION column, veil hand-off',
+  },
+  westly_reveal: {
+    type: 'westly_reveal',
+    category: 'interactive',
+    style: 'minimal',
+    tags: ['westly', 'reveal', 'parallax', 'sticky', 'kitchen', 'real-estate'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-02',
+    label: 'The Westly · Reveal',
+    accent: '#6E7A6F',
+    adminLabel: 'The Westly Reveal',
+    gradient: 'from-stone-100 to-stone-300',
+    defaultName: 'The Westly Reveal',
+    aiLabelVi:
+      'reveal The Westly: cảnh bếp 2 lớp nét chì với chữ nấp trong ô kính, click cả section lật sang ảnh thật, veil bàn giao',
+    aiLabelEn:
+      'The Westly reveal: two-layer kitchen sketch with copy tucked behind a window, click anywhere flips to the real photo, veil hand-off',
+  },
+  westly_product_reveal: {
+    type: 'westly_product_reveal',
+    category: 'feature',
+    style: 'minimal',
+    tags: ['westly', 'rooftop', 'reveal', 'parallax', 'real-estate'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-02',
+    label: 'The Westly · Rooftop',
+    accent: '#6E7A6F',
+    adminLabel: 'The Westly Rooftop',
+    gradient: 'from-stone-50 to-stone-200',
+    defaultName: 'The Westly Rooftop',
+    aiLabelVi:
+      'rooftop The Westly: stack nét vẽ + mây + skyline, click lật sang ảnh hoàn thiện, panel copy trôi ngược khi scroll',
+    aiLabelEn:
+      'The Westly rooftop: sketch + clouds + skyline stack, click flips to the finished photo, copy panel drifting on scroll',
+  },
+  westly_footer: {
+    type: 'westly_footer',
+    category: 'footer',
+    style: 'minimal',
+    tags: ['westly', 'footer', 'signup', 'real-estate'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-02',
+    label: 'The Westly · Footer',
+    accent: '#6E7A6F',
+    adminLabel: 'The Westly Footer',
+    gradient: 'from-neutral-100 to-neutral-300',
+    defaultName: 'The Westly Footer',
+    aiLabelVi:
+      'footer The Westly: logo + tiêu đề mời đăng ký + nút SIGN UP, hai dải mây trang trí',
+    aiLabelEn:
+      'The Westly footer: logo + sign-up invitation headline + SIGN UP button, cloud decorations',
+  },
+  westly_header: {
+    type: 'westly_header',
+    category: 'header',
+    style: 'minimal',
+    tags: ['westly', 'header', 'logo', 'overlay', 'real-estate'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-02',
+    label: 'The Westly · Header',
+    accent: '#6E7A6F',
+    adminLabel: 'The Westly Header',
+    gradient: 'from-white to-neutral-200',
+    defaultName: 'The Westly Header',
+    aiLabelVi:
+      'header The Westly: logo giữa nổi fixed trên mọi section, nền gradient trắng tan dần',
+    aiLabelEn:
+      'The Westly header: centered logo fixed above every section on a fading white gradient',
   },
   belgo_hero: {
     type: 'belgo_hero',

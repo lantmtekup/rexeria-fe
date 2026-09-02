@@ -154,6 +154,14 @@ import { mintV2ProcessDef } from './defs/mintV2Process';
 import { mintV2ServicesDef } from './defs/mintV2Services';
 import { mintV2WorksDef } from './defs/mintV2Works';
 import { coolHunterHeroDef } from './defs/coolHunterHero';
+import { westlyHeroDef } from './defs/westlyHero';
+import { westlyShowcaseDef } from './defs/westlyShowcase';
+import { westlySceneDef } from './defs/westlyScene';
+import { westlyResidencesDef } from './defs/westlyResidences';
+import { westlyRevealDef } from './defs/westlyReveal';
+import { westlyProductRevealDef } from './defs/westlyProductReveal';
+import { westlyFooterDef } from './defs/westlyFooter';
+import { westlyHeaderDef } from './defs/westlyHeader';
 import { belgoHeroDef } from './defs/belgoHero';
 import { belgoAboutProductDef } from './defs/belgoAboutProduct';
 import { belgoScrollFramesDef } from './defs/belgoScrollFrames';
@@ -182,6 +190,14 @@ import { brightedgeHeroDef } from './defs/brightedgeHero';
 
 export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   cool_hunter_hero: coolHunterHeroDef as BlockDef,
+  westly_hero: westlyHeroDef as BlockDef,
+  westly_showcase: westlyShowcaseDef as BlockDef,
+  westly_scene: westlySceneDef as BlockDef,
+  westly_residences: westlyResidencesDef as BlockDef,
+  westly_reveal: westlyRevealDef as BlockDef,
+  westly_product_reveal: westlyProductRevealDef as BlockDef,
+  westly_footer: westlyFooterDef as BlockDef,
+  westly_header: westlyHeaderDef as BlockDef,
   belgo_hero: belgoHeroDef as BlockDef,
   belgo_about_product: belgoAboutProductDef as BlockDef,
   belgo_scroll_frames: belgoScrollFramesDef as BlockDef,
