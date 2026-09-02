@@ -5,6 +5,7 @@ import { useLayoutEffect, useRef } from 'react';
 import {
   gsap,
   Observer,
+  ScrollTrigger,
   MOTION_CONDITIONS,
   type MotionConditions,
 } from '../lib/motion';
@@ -18,9 +19,15 @@ const BLEED = { x: 16, y: 5 } as const;
 // Stage = max(100cqw, 100cqh·1440/820) — portrait mobile bị chiều cao quyết định,
 // nên sizes phải theo vh thay vì vw kẻo Next serve variant quá nhỏ (mờ).
 const STAGE_RATIO = 1440 / 820;
-const LAYER_SIZES = `calc(max(100vw, ${Math.round(STAGE_RATIO * 100)}vh) * ${
-  (100 + BLEED.x * 2) / 100
-})`;
+// Dưới `md` stage bị chặn ở 160vw (xem class của [data-stage]): cover theo chiều
+// cao trên máy dọc phải phóng ~3.8× nên chỉ còn thấy một góc phòng. Hai con số
+// 160 này phải đi cùng nhau — Tailwind không nội suy được nên đành lặp lại.
+const STAGE_WIDTH = `max(100vw, ${Math.round(STAGE_RATIO * 100)}vh)`;
+const BLEED_SCALE = (100 + BLEED.x * 2) / 100;
+const LAYER_SIZES = [
+  `(max-width: 767px) calc(min(160vw, ${STAGE_WIDTH}) * ${BLEED_SCALE})`,
+  `calc(${STAGE_WIDTH} * ${BLEED_SCALE})`,
+].join(', ');
 const LAYER_INSET = {
   top: `-${BLEED.y}%`,
   right: `-${BLEED.x}%`,
@@ -31,6 +38,11 @@ const LAYER_INSET = {
 const LABELS = {
   show: 'VIEW PENTHOUSE B',
   hide: 'BACK TO SKETCH',
+} as const;
+
+const COPY = {
+  eyebrow: 'APARTMENT SPACE',
+  title: 'Classic New Your charm with welcomed modern twists.',
 } as const;
 
 export default function SceneParallax() {
@@ -55,6 +67,7 @@ export default function SceneParallax() {
         ctx.conditions as MotionConditions;
       const cleanups: Array<() => void> = [];
 
+      const bg = section.querySelector<HTMLElement>('[data-layer="bg"]');
       const photo = section.querySelector<HTMLElement>('[data-layer="photo"]');
       const far = section.querySelector<HTMLElement>('[data-layer="far"]');
       const near = section.querySelector<HTMLElement>('[data-layer="near"]');
@@ -62,26 +75,130 @@ export default function SceneParallax() {
       const stage = section.querySelector<HTMLElement>('[data-stage]');
       const reveal = section.querySelector<HTMLButtonElement>('[data-reveal]');
       const label = section.querySelector<HTMLElement>('[data-reveal-label]');
-      if (!photo || !far || !near || !veil || !reveal || !label) return;
+      const copyWrap = section.querySelector<HTMLElement>('[data-copy]');
+      const copyItems =
+        section.querySelectorAll<HTMLElement>('[data-copy-item]');
+      if (!photo || !far || !near || !veil || !reveal || !label || !stage)
+        return;
 
       gsap.set(photo, { autoAlpha: 0 });
-      gsap.set([far, near, reveal], { autoAlpha: 0 });
+      // far/near hiện/ẩn theo cổng [data-stage] bên dưới, không tự tắt bật —
+      // để không giẫm chân trạng thái reveal.
+      gsap.set([far, near], { autoAlpha: 1 });
+      gsap.set(reveal, { autoAlpha: 0 });
+      gsap.set(copyItems, { autoAlpha: 0 });
 
+      // MÉP TAN — thứ giữ cho section trườn lên không thành một nhát cắt.
+      // Section full-bleed: mép trên của nó quét ngang màn hình, nét vẽ bị chặt
+      // cụt ngay tại đó. Mask cho dải ngay dưới mép trong suốt rồi đục dần, dài
+      // đúng bằng khoảng cách từ mép tới đỉnh màn — nên tại mép section không
+      // vẽ gì cả, không có bậc nào để mắt bắt thành đường.
+      // Là MASK chứ không phải một lớp trắng phủ lên: nó hoà vào đúng thứ đang
+      // nằm dưới, nên vẫn sạch cả lúc ProductShowcase chưa bạc trắng hẳn.
+      // KHÔNG scrub: mask phải bám đúng vị trí mép thật, trễ một nhịp là hở
+      // bậc. Phủ kín màn thì gỡ hẳn mask, khỏi ôm thêm một lớp composite suốt
+      // phần còn lại của trang.
+      if (!reduce) {
+        const paintFeather = (progress: number) => {
+          const px = Math.round(window.innerHeight * (1 - progress));
+          const mask =
+            px > 1
+              ? `linear-gradient(to bottom, transparent 0px, #000 ${px}px)`
+              : '';
+          section.style.maskImage = mask;
+          section.style.webkitMaskImage = mask;
+        };
+
+        const feather = ScrollTrigger.create({
+          trigger: wrap,
+          start: 'top bottom',
+          end: 'top top',
+          onUpdate: self => paintFeather(self.progress),
+          onLeave: () => paintFeather(1),
+          onLeaveBack: () => paintFeather(0),
+          onRefresh: self => paintFeather(self.progress),
+        });
+
+        cleanups.push(() => {
+          feather.kill();
+          section.style.maskImage = '';
+          section.style.webkitMaskImage = '';
+        });
+      }
+
+      if (bg && !reduce) {
+        // ProductShowcase bị ghim vẫn nằm ngay dưới section này cho tới khi nền
+        // đục hẳn. Nền ship sẵn đục trong markup (không JS vẫn đúng) và chỉ mờ
+        // dần vào SAU khi veil của section đó đã kín (mốc 65%) — tức là chồng
+        // trắng lên trắng, không nhìn thấy gì, nên không có mép cứng quét qua.
+        gsap.fromTo(
+          bg,
+          { opacity: 0 },
+          {
+            opacity: 1,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: wrap,
+              start: 'top 64%',
+              end: 'top 52%',
+              scrub: 0.4,
+            },
+          }
+        );
+      }
+
+      // CỔNG — bản vẽ chỉ được hiện khi bên dưới đã là một mảng trắng phẳng.
+      // Hiện sớm hơn là hai lớp nét chì chồng lên nhau (card Penthouse B còn
+      // nguyên, phòng ngấm qua nó) — rối mắt. Mốc 50% nằm sau veil (65%) và nền
+      // (52%), nên lúc bản vẽ vào thì showcase đã bạc hẳn. Vẫn còn nửa màn nữa
+      // để nó trườn lên, thấy rõ từng nấc.
+      // Là scrub nên cuộn ngược lên nó tan ngược y hệt — chỗ `once` không lo
+      // được. Gác ở hai cái bọc [data-stage]/[data-copy] mà không tween nào
+      // khác đụng tới, nên trạng thái reveal bên trong không bị giẫm.
+      const gate: HTMLElement[] = copyWrap ? [stage, copyWrap] : [stage];
+      if (reduce) {
+        gsap.set(gate, { autoAlpha: 1 });
+      } else {
+        gsap.fromTo(
+          gate,
+          { autoAlpha: 0 },
+          {
+            autoAlpha: 1,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: wrap,
+              start: 'top 62%',
+              end: 'top 50%',
+              scrub: 0.4,
+            },
+          }
+        );
+      }
+
+      // Entrance chỉ lo phần "an vị" (scale nhả ra, copy so le) và chạy đúng
+      // lúc cổng mở — phần hiện/ẩn là việc của cổng.
       const enter = gsap.timeline({
         defaults: { ease: 'power3.out', duration: reduce ? 0 : 1.1 },
-        scrollTrigger: { trigger: wrap, start: 'top 80%', once: true },
+        scrollTrigger: { trigger: wrap, start: 'top 50%', once: true },
       });
       enter
-        .fromTo(
-          [far, near],
-          { autoAlpha: 0, scale: reduce ? 1 : 1.06 },
-          { autoAlpha: 1, scale: 1 }
-        )
+        .fromTo([far, near], { scale: reduce ? 1 : 1.06 }, { scale: 1 })
         .fromTo(
           photo,
           { scale: reduce ? 1 : 1.04 },
           { scale: 1, duration: reduce ? 0 : 1.2 },
           0
+        )
+        .fromTo(
+          copyItems,
+          { autoAlpha: 0, y: reduce ? 0 : 16 },
+          {
+            autoAlpha: 1,
+            y: 0,
+            duration: reduce ? 0 : 0.9,
+            stagger: reduce ? 0 : 0.12,
+          },
+          reduce ? 0 : '-=0.6'
         )
         .fromTo(
           reveal,
@@ -126,21 +243,26 @@ export default function SceneParallax() {
         // Every from state is explicit — an empty one lets GSAP capture
         // whatever is current at first render, and a refresh mid-scroll then
         // records autoAlpha 0 as the start, so scrolling back never restores it.
+        //
+        // Kết ở 'top 65%' như cặp ProductShowcase → section này: bản vẽ phòng
+        // phải bạc hết TRƯỚC khi chữ và card của FinalResidences hiện lên, kẻo
+        // hai lớp chồng nhau. Bên đó canh theo đúng mốc này (nền 64%, nội dung
+        // 50%).
         gsap
           .timeline({
             defaults: { ease: 'none' },
             scrollTrigger: {
               trigger: next,
               start: 'top bottom',
-              end: 'top 15%',
+              end: 'top 65%',
               scrub: 0.4,
             },
           })
           .fromTo(
             veil,
             { opacity: 0 },
-            { opacity: 1, duration: 0.57, immediateRender: false },
-            0.25
+            { opacity: 1, duration: 0.85, immediateRender: false },
+            0
           )
           .fromTo(
             reveal,
@@ -193,6 +315,8 @@ export default function SceneParallax() {
           ease: 'power2.inOut',
           stagger: 0.06,
         });
+        // Copy đứng yên qua cả hai chế độ — nó nói về căn hộ chứ không phải về
+        // riêng bản sketch, nên chỉ lớp ảnh bên dưới đổi.
         label.textContent = revealed ? LABELS.hide : LABELS.show;
         reveal.setAttribute('aria-pressed', String(revealed));
         reveal.setAttribute('aria-label', revealed ? LABELS.hide : LABELS.show);
@@ -348,11 +472,18 @@ export default function SceneParallax() {
   return (
     <section
       ref={sectionRef}
-      className='[container-type:size] sticky top-0 z-0 h-svh min-h-120 w-full overflow-hidden bg-white md:min-h-150'
+      className='[container-type:size] sticky top-0 z-0 h-svh min-h-120 w-full overflow-hidden md:min-h-150'
     >
+      {/* Nền tách thành lớp riêng để mờ dần lên trên ProductShowcase đang ghim. */}
+      <div
+        data-layer='bg'
+        aria-hidden
+        className='absolute inset-0 -z-10 bg-white'
+      />
+
       <div
         data-stage
-        className='pointer-events-none absolute top-1/2 left-1/2 aspect-[1440/820] w-[max(100cqw,calc(100cqh*1440/820))] -translate-x-1/2 -translate-y-1/2 overflow-hidden'
+        className='pointer-events-none absolute top-1/2 left-1/2 aspect-[1440/820] w-[min(160cqw,max(100cqw,calc(100cqh*1440/820)))] -translate-x-1/2 -translate-y-1/2 overflow-hidden mask-[linear-gradient(to_bottom,transparent,#000_8%,#000_92%,transparent)] md:w-[max(100cqw,calc(100cqh*1440/820))] md:mask-none'
       >
         <div
           data-layer='photo'
@@ -397,16 +528,39 @@ export default function SceneParallax() {
         </div>
       </div>
 
-      <button
-        data-reveal
-        data-cursor-id='scene-parallax'
-        type='button'
-        aria-pressed='false'
-        aria-label={LABELS.show}
-        className='invisible absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 cursor-pointer border border-neutral-200 bg-white px-6 py-2.5 text-[11px] font-medium tracking-[0.2em] whitespace-nowrap text-neutral-700 shadow-sm transition-colors hover:border-[#6E7A6F] hover:bg-[#6E7A6F] hover:text-white md:px-10 md:tracking-[0.35em]'
+      {/* Copy + CTA ride together as one centred stack, so the group stays
+          optically centred on the stage instead of the button alone. The
+          wrapper is inert — only the button takes the pointer, which keeps the
+          mobile drag Observer working across the whole section. */}
+      <div
+        data-copy
+        className='pointer-events-none absolute inset-x-0 top-1/2 z-10 flex -translate-y-1/2 flex-col items-center px-6 text-center'
       >
-        <span data-reveal-label>{LABELS.show}</span>
-      </button>
+        <p
+          data-copy-item
+          className='font-ui invisible text-xs leading-none font-medium tracking-[0.2em] text-[#6E7A6F] uppercase'
+        >
+          {COPY.eyebrow}
+        </p>
+
+        <h2
+          data-copy-item
+          className='invisible max-w-[min(100%,44rem)] text-[28px] leading-tight font-medium text-[#6E7A6F] sm:text-[36px] lg:text-5xl'
+        >
+          {COPY.title}
+        </h2>
+
+        <button
+          data-reveal
+          data-cursor-id='scene-parallax'
+          type='button'
+          aria-pressed='false'
+          aria-label={LABELS.show}
+          className='pointer-events-auto invisible mt-10 cursor-pointer border border-neutral-200 bg-white px-6 py-2.5 text-[11px] font-medium tracking-[0.2em] whitespace-nowrap text-neutral-700 shadow-sm transition-colors hover:border-[#6E7A6F] hover:bg-[#6E7A6F] hover:text-white md:px-10 md:tracking-[0.35em] lg:mt-14'
+        >
+          <span data-reveal-label>{LABELS.show}</span>
+        </button>
+      </div>
 
       {/* Blend veil — same colour as FinalResidences, so this section
           dissolves into it instead of being cut off by a hard edge. */}

@@ -10,9 +10,10 @@ import {
 } from '../lib/motion';
 
 const SHOWCASE = {
-  title: 'THE TERRACE',
+  eyebrow: 'ROOFTOP',
+  title: 'A Private Rooftop Above the Upper West Side',
   description:
-    'More than a thousand square feet of private sky, wrapped around the corner of the building where the city opens in three directions. A place to plant, to gather, to watch the light move across the park below. Tap the drawing to see it finished.',
+    'Designed for memorable gatherings and quiet mornings alike, this is the outdoor space the Upper West Side has never been able to offer, until now. It is not an amenity. It is an extension of the home.',
   images: {
     // Foreground terrace line-drawing (transparent sky) — sits on top.
     foreground: { src: '/s6-p1.png', alt: 'The Terrace interior sketch' },
@@ -334,15 +335,21 @@ export default function ProductReveal() {
           data-layer='copy'
           className='relative z-10 -mt-8 w-[min(100%,28rem)] self-center border border-[#6E7A6F33] bg-white px-6 py-8 shadow-[0_20px_50px_-28px_rgba(0,0,0,0.22)] will-change-transform max-lg:mx-auto max-lg:-mt-5 max-lg:w-[min(calc(100%-0.5rem),26rem)] max-lg:px-5 max-lg:py-7 sm:-mt-10 sm:px-8 sm:py-10 sm:max-lg:-mt-7 sm:max-lg:w-[min(100%,28rem)] md:max-lg:-mt-9 lg:-bottom-24 lg:-left-10 lg:mt-0 lg:w-full lg:max-w-140 lg:self-auto lg:p-20'
         >
+          <p
+            data-ui
+            className='font-ui text-xs leading-none font-medium tracking-[0.2em] text-[#6E7A6F] uppercase'
+          >
+            {SHOWCASE.eyebrow}
+          </p>
           <h2
             data-ui
-            className='text-3xl font-medium text-[#6E7A6F] max-sm:text-[1.75rem] max-sm:leading-tight sm:text-4xl lg:text-5xl'
+            className='mt-3 text-3xl font-medium text-[#6E7A6F] max-sm:mt-2.5 max-sm:text-[1.75rem] max-sm:leading-tight sm:text-4xl lg:mt-5 lg:text-5xl'
           >
             {SHOWCASE.title}
           </h2>
           <p
             data-ui
-            className='mt-5 text-[15px] leading-relaxed text-[#6E7A6F] max-sm:mt-4 max-sm:text-[14px] sm:mt-6 lg:mt-12.5 lg:text-base'
+            className='font-ui mt-5 text-[15px] leading-relaxed text-[#6E7A6F] max-sm:mt-4 max-sm:text-[14px] sm:mt-6 lg:mt-8 lg:text-base'
           >
             {SHOWCASE.description}
           </p>

@@ -46,7 +46,15 @@ FROM unnest(ARRAY[
   'gambit_brand_heritage',
   'gambit_related_products',
   'gambit_product_details',
-  'gambit_section_nav'
+  'gambit_section_nav',
+  'westly_hero',
+  'westly_showcase',
+  'westly_scene',
+  'westly_residences',
+  'westly_reveal',
+  'westly_product_reveal',
+  'westly_footer',
+  'westly_header'
 ]::text[]) AS code
 WHERE NOT EXISTS (SELECT 1 FROM public.blocks b WHERE b.type_code = code AND b.archived_at IS NULL);
 

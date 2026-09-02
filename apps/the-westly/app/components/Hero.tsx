@@ -9,6 +9,7 @@ import {
 import {
   gsap,
   Observer,
+  ScrollTrigger,
   MOTION_CONDITIONS,
   scrollToTarget,
   type MotionConditions,
@@ -80,21 +81,48 @@ export default function Hero() {
       // same autoAlpha. Land on the end state instead.
       if (window.scrollY > 0) tl.progress(1);
 
+      // Cùng cái bẫy đó nhưng ở scroll 0: range exit bắt đầu ngay tại đầu trang
+      // (hero cao đúng 100svh), nên cuộn trong lúc entrance còn chạy là hai
+      // tween giành nhau scale/autoAlpha của cùng các layer mỗi frame — hình
+      // giật. Người dùng đã cuộn thì entrance coi như xong.
+      const finishEntranceOnScroll = () => {
+        if (tl.progress() < 1) tl.progress(1);
+      };
+      window.addEventListener('scroll', finishEntranceOnScroll, {
+        passive: true,
+        once: true,
+      });
+      cleanups.push(() =>
+        window.removeEventListener('scroll', finishEntranceOnScroll)
+      );
+
       if (!reduce) {
         // Ambient cloud drift (x only — yPercent belongs to the scroll parallax)
-        gsap.to(farDrift, {
-          x: '+=12',
-          duration: 26,
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut',
-        });
-        gsap.to(midDrift, {
-          x: '-=18',
-          duration: 18,
-          repeat: -1,
-          yoyo: true,
-          ease: 'sine.inOut',
+        const driftTweens = [
+          gsap.to(farDrift, {
+            x: '+=12',
+            duration: 26,
+            repeat: -1,
+            yoyo: true,
+            ease: 'sine.inOut',
+          }),
+          gsap.to(midDrift, {
+            x: '-=18',
+            duration: 18,
+            repeat: -1,
+            yoyo: true,
+            ease: 'sine.inOut',
+          }),
+        ];
+
+        // Hero bị veil phủ kín từ mốc kết của exit (top 15%) — từ đó trở đi
+        // hai tween drift vô hạn chỉ bắt compositor vẽ lại các layer đã vô
+        // hình trong suốt phần còn lại của trang. Ngủ khi bị che.
+        ScrollTrigger.create({
+          trigger: next,
+          start: 'top 15%',
+          onEnter: () => driftTweens.forEach(t => t.pause()),
+          onLeaveBack: () => driftTweens.forEach(t => t.play()),
         });
 
         // Exit — the hero is sticky, so it does not scroll away: instead the
@@ -179,9 +207,35 @@ export default function Hero() {
 
       if (finePointer && !reduce) {
         // Mouse parallax — frame-lerped (smoother than quickTo per mousemove event)
+        // Biên độ bị chặn bởi phần bleed inset-[-5%] của scene/far: đẩy quá
+        // mức đó là lộ mép ảnh (5% stage 1440×960 ≈ 72px ngang / 48px dọc).
+        // Đẩy đủ mạnh để khối chữ (nấp sau sân thượng, md:z-[1]) ló ra đọc được.
+        // copy = lớp chữ, trôi CÙNG hướng chuột (ngược scene) — cộng dồn với
+        // scene thành ~136px ngang / 70px dọc chuyển động tương đối: đưa chuột
+        // hẳn sang trái/phải là chữ trượt ra khỏi cây/sân thượng, đọc được
+        // trọn dòng. Chữ không có mép ảnh nên không bị trần bleed giới hạn.
+        const PUSH = {
+          scene: { x: 56, y: 30 },
+          far: { x: 22, y: 11 },
+          mid: { x: 48, y: 22 },
+          copy: { x: 80, y: 40 },
+        } as const;
         const pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
         const LERP = 0.09;
         let bounds = section.getBoundingClientRect();
+        // Đứng yên thì thôi ghi style — set transform mỗi frame giữ 3 layer
+        // full-viewport luôn dirty, compositor vẽ lại cả khi chuột bất động
+        // (kể cả trong lúc scroll) — một nguồn giật.
+        let settled = true;
+
+        // quickSetter thay cho gsap.set trong ticker: không cấp phát tween mới
+        // mỗi frame (60 tween/s × 3 layer chỉ để ghi một transform).
+        const setScene = gsap.quickSetter(scene, 'css');
+        const setFar = gsap.quickSetter(far, 'css');
+        const setMid = gsap.quickSetter(mid, 'css');
+        const copyDrift =
+          section.querySelector<HTMLElement>('[data-copy-drift]');
+        const setCopy = copyDrift ? gsap.quickSetter(copyDrift, 'css') : null;
 
         const refreshBounds = () => {
           bounds = section.getBoundingClientRect();
@@ -190,13 +244,16 @@ export default function Hero() {
         const onMove = (e: MouseEvent) => {
           pointer.targetX = ((e.clientX - bounds.left) / bounds.width) * 2 - 1;
           pointer.targetY = ((e.clientY - bounds.top) / bounds.height) * 2 - 1;
+          settled = false;
         };
         const onLeave = () => {
           pointer.targetX = 0;
           pointer.targetY = 0;
+          settled = false;
         };
 
         const onTick = () => {
+          if (settled) return;
           const t = 1 - Math.pow(1 - LERP, gsap.ticker.deltaRatio());
           pointer.x += (pointer.targetX - pointer.x) * t;
           pointer.y += (pointer.targetY - pointer.y) * t;
@@ -209,14 +266,19 @@ export default function Hero() {
           ) {
             pointer.x = 0;
             pointer.y = 0;
+            settled = true; // ghi nốt frame 0 này rồi im
           }
 
-          gsap.set(scene, {
-            x: -pointer.x * 28,
-            y: -pointer.y * 14,
+          setScene({
+            x: -pointer.x * PUSH.scene.x,
+            y: -pointer.y * PUSH.scene.y,
           });
-          gsap.set(far, { x: pointer.x * 11, y: pointer.y * 5.5 });
-          gsap.set(mid, { x: pointer.x * 25, y: pointer.y * 11 });
+          setFar({ x: pointer.x * PUSH.far.x, y: pointer.y * PUSH.far.y });
+          setMid({ x: pointer.x * PUSH.mid.x, y: pointer.y * PUSH.mid.y });
+          setCopy?.({
+            x: pointer.x * PUSH.copy.x,
+            y: pointer.y * PUSH.copy.y,
+          });
         };
 
         gsap.ticker.add(onTick);
@@ -228,7 +290,10 @@ export default function Hero() {
           section.removeEventListener('mousemove', onMove);
           section.removeEventListener('mouseleave', onLeave);
           window.removeEventListener('resize', refreshBounds);
-          gsap.set([scene, far, mid], { x: 0, y: 0 });
+          gsap.set(
+            copyDrift ? [scene, far, mid, copyDrift] : [scene, far, mid],
+            { x: 0, y: 0 }
+          );
         });
       }
 
@@ -329,18 +394,31 @@ export default function Hero() {
   return (
     <section
       ref={sectionRef}
-      className='[container-type:size] sticky top-0 z-0 h-svh min-h-120 w-full overflow-hidden bg-white md:min-h-150'
+      // min-h không được vượt quá màn hình: điện thoại xoay ngang chỉ cao 390px,
+      // min-h-150 (600px) đẩy nút EXPLORE xuống dưới mép dưới mà section thì
+      // sticky nên không bao giờ cuộn tới được.
+      className='[container-type:size] sticky top-0 z-0 h-svh min-h-[min(30rem,100svh)] w-full overflow-hidden bg-white md:min-h-[min(37.5rem,100svh)]'
     >
       {/* Stage: fixed 3:2 design frame (1440×960) that covers the section —
           layers keep their design-frame percentages so they scale uniformly
-          and stay aligned; the section crops the edges on other aspects. */}
-      <div className='pointer-events-none absolute top-1/2 left-1/2 aspect-[3/2] w-[max(100cqw,150cqh)] -translate-x-1/2 -translate-y-1/2'>
-        {/* Pan layer — mobile drag offsets this; outer stays CSS-centered. */}
-        <div data-pan className='absolute inset-0 will-change-transform'>
-          {/* Far clouds — full frame */}
+          and stay aligned; the section crops the edges on other aspects.
+          Phủ kín một khung 3:2 trên màn dọc đòi hỏi phóng 3.25× (stage 1266px
+          trên máy 390px): còn thấy đúng cái cây, mất sạch sân thượng. Dưới `md`
+          chặn ở 220cqw và chấp nhận chừa dải trắng trên/dưới — nền section vốn
+          trắng và mảng trời của bản vẽ cũng trắng nên mép trên không thành
+          đường cắt; chỉ mép dưới (sàn gạch) cần mask cho tan đi — mask nằm ở
+          từng lớp ảnh chứ không ở stage, vì khối chữ nhô lên trên mép stage và
+          mask của stage sẽ xoá luôn dòng đầu. */}
+      <div className='pointer-events-none absolute top-1/2 left-1/2 aspect-[3/2] w-[min(220cqw,max(100cqw,150cqh))] -translate-x-1/2 -translate-y-1/2 md:w-[max(100cqw,150cqh)]'>
+        {/* Pan layer — mốc đo cho mobile drag (drag ghi x vào từng layer con,
+            không transform chính nó — đừng thêm will-change vào đây, chỉ tốn
+            một layer composite full-stage vô ích). */}
+        <div data-pan className='absolute inset-0'>
+          {/* Far clouds — full frame. inset-[-5%] = biên độ tối đa cho mouse
+              parallax; đổi số này thì chỉnh PUSH trong effect theo. */}
           <div
             data-layer='clouds-far'
-            className='invisible absolute inset-[-2%] opacity-0 will-change-transform'
+            className='invisible absolute inset-[-5%] mask-[linear-gradient(to_bottom,#000_84%,transparent)] opacity-0 will-change-transform md:mask-none'
           >
             <div data-drift className='absolute inset-0'>
               <Image
@@ -369,21 +447,33 @@ export default function Hero() {
             </div>
           </div>
 
+          {/* Copy stays inside the stage — nó phải nằm cùng stacking context
+              với lớp cảnh mới có hiệu ứng chữ nấp sau sân thượng ở desktop.
+              Nhưng mọi số đo thì tính theo SECTION chứ không theo stage: bề
+              ngang bằng cqw (stage rộng hơn màn, `w-full` sẽ đẩy chữ ra ngoài
+              hai mép), và dưới `md` cả `top` cũng bằng cqh — stage co giãn theo
+              tỉ lệ màn nên lấy % của stage thì chữ trôi lung tung mỗi khổ. */}
           <div
             data-ui
-            className='invisible absolute top-[20%] left-1/2 z-[1] w-full max-w-5xl -translate-x-1/2 px-5 text-center opacity-0'
+            className='invisible absolute top-[calc(50%+12cqh-50cqh)] left-1/2 z-[3] w-[min(100cqw,64rem)] -translate-x-1/2 px-6 text-center opacity-0 [@media(max-height:520px)]:top-[calc(50%+28cqh-50cqh)] md:[@media(min-height:521px)]:top-[20%] md:[@media(min-height:521px)]:z-[1]'
           >
-            <h1 className='text-[56px] leading-[1.15] font-medium text-[#6E7A6F]'>
-              The Master Penthouse.
-            </h1>
-            <p className='text-[56px] leading-[1.15] font-medium text-[#6E7A6F]'>
-              Your Home above the Everything else.
-            </p>
+            {/* Lớp drift riêng cho mouse parallax — KHÔNG ghi transform lên
+                data-ui: entrance đang tween y của data-ui, hai bên giành nhau
+                sẽ giật lúc mới load. Chữ trôi ngược hướng scene nên độ hở
+                tương đối ~gấp đôi biên độ scene mà không cần nới bleed. */}
+            <div data-copy-drift>
+              <h1 className='text-[28px] leading-[1.15] font-medium text-balance text-[#6E7A6F] sm:text-[36px] md:text-[46px] lg:text-[56px] [@media(max-height:520px)]:text-[30px]'>
+                The Master Penthouse.
+              </h1>
+              <p className='text-[28px] leading-[1.15] font-medium text-balance text-[#6E7A6F] sm:text-[36px] md:text-[46px] lg:text-[56px] [@media(max-height:520px)]:text-[30px]'>
+                Your Home above the Everything else.
+              </p>
+            </div>
           </div>
 
           <div
             data-layer='scene'
-            className='invisible absolute inset-[-2%] z-[2] opacity-0 will-change-transform'
+            className='invisible absolute inset-[-5%] z-[2] mask-[linear-gradient(to_bottom,#000_84%,transparent)] opacity-0 will-change-transform md:mask-none'
           >
             {/* WebP (~5× smaller than the 2.4MB PNG) — raw PNG often fails on
                 real devices over ngrok / slow links. unoptimized skips the
@@ -405,17 +495,19 @@ export default function Hero() {
         data-ui
         href='#explore'
         onClick={handleExploreClick}
-        className='invisible absolute bottom-10 left-1/2 z-10 -translate-x-1/2 border border-neutral-200 bg-white px-10 py-2.5 text-[11px] font-medium tracking-[0.35em] text-neutral-700 opacity-0 shadow-sm transition-colors hover:border-[#6E7A6F] hover:bg-[#6E7A6F] hover:text-white'
+        className='invisible absolute bottom-8 left-1/2 z-10 -translate-x-1/2 border border-neutral-200 bg-white px-8 py-2.5 text-[10px] font-medium tracking-[0.28em] text-neutral-700 opacity-0 shadow-sm transition-colors hover:border-[#6E7A6F] hover:bg-[#6E7A6F] hover:text-white sm:bottom-10 sm:px-10 sm:text-[11px] sm:tracking-[0.35em]'
       >
         EXPLORE
       </a>
 
       {/* Blend veil — same colour as the next section's background, so the
-          hero dissolves into it instead of being cut off by a hard edge. */}
+          hero dissolves into it instead of being cut off by a hard edge.
+          will-change-[opacity]: scrub đổi opacity mỗi frame trên một mảng
+          full-viewport — cho nó layer riêng để khỏi repaint cả cảnh bên dưới. */}
       <div
         data-layer='veil'
         aria-hidden
-        className='pointer-events-none absolute inset-0 z-20 bg-[#F3F1EA] opacity-0'
+        className='pointer-events-none absolute inset-0 z-20 bg-[#F3F1EA] opacity-0 will-change-[opacity]'
       />
     </section>
   );

@@ -186,6 +186,11 @@ const STICKY_SCROLL_BLOCK_TYPES = new Set<Block['blockType']>([
   'gambit_brand_heritage',
   'gambit_related_products',
   'cool_hunter_hero',
+  'westly_hero',
+  'westly_showcase',
+  'westly_scene',
+  'westly_residences',
+  'westly_reveal',
   'cool_hunter_story',
   'cool_hunter_gallery',
   'cool_hunter_product',
@@ -196,6 +201,7 @@ const STICKY_SCROLL_BLOCK_TYPES = new Set<Block['blockType']>([
 
 /** Overlay chrome (header/nav) — canvas căn top, không center tạo khoảng hở. */
 const OVERLAY_TOP_BLOCK_TYPES = new Set<Block['blockType']>([
+  'westly_header',
   'pnj_header',
   'belgo_header',
   'delvaux_header',

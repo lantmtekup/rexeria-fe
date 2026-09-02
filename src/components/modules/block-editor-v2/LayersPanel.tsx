@@ -52,6 +52,7 @@ import { ExtraElementsList } from './ExtraElementsList';
 import { resolvePnjParagraphs } from '@/components/modules/block-editor/blocks/PnjDetails';
 import { resolvePnjHeroTitleLines } from '@/components/modules/block-editor/blocks/pnjHeroTitleLines';
 import { resolvePnjVariants } from '@/components/modules/block-editor/blocks/pnjVariantContent';
+import { resolveWestlyResidences } from '@/components/modules/block-editor/blocks/westlyResidencesData';
 import { realEstateHeroStatElements } from '@/components/modules/block-editor/blocks/_registry/defs/realEstateHero';
 import { realEstateHighlightItemElements } from '@/components/modules/block-editor/blocks/_registry/defs/realEstateHighlights';
 import {
@@ -196,6 +197,7 @@ import {
   type MintV2WorkCard,
   type MintVaultCoin,
   type MintVaultCraftItem,
+  type WestlyResidencesContent,
 } from '@/components/modules/block-editor/types';
 
 export interface LayerElement {
@@ -795,6 +797,55 @@ export function elementsForType(
   content?: Record<string, unknown> | null
 ): LayerElement[] {
   const def = getBlockDef(type);
+  if (type === 'westly_residences') {
+    const items = resolveWestlyResidences(
+      (content ?? {}) as unknown as WestlyResidencesContent
+    );
+    return [
+      BACKGROUND_LAYER,
+      ...(def?.elements ?? []),
+      ...items.flatMap((item, i) => {
+        const name = item.title || `Căn ${i + 1}`;
+        return [
+          {
+            key: `residences[${i}].title`,
+            label: 'Tên căn',
+            icon: Type,
+            fieldType: 'text' as const,
+            groupId: `residence-${i}`,
+            groupLabel: name,
+          },
+          {
+            key: `residences[${i}].planUrl`,
+            label: 'Bản vẽ floor plan',
+            icon: ImageIcon,
+            fieldType: 'image' as const,
+            groupId: `residence-${i}`,
+          },
+          {
+            key: `residences[${i}].listingUrl`,
+            label: 'Link listing',
+            icon: Link2,
+            fieldType: 'link' as const,
+            groupId: `residence-${i}`,
+          },
+          {
+            key: `residences[${i}].floorPlanUrl`,
+            label: 'Link floor plan (PDF)',
+            icon: Link2,
+            fieldType: 'link' as const,
+            groupId: `residence-${i}`,
+          },
+          {
+            key: `residences[${i}].hotspots`,
+            label: `Hotspot bản vẽ (${item.hotspots?.length ?? 0})`,
+            icon: ListChecks,
+            groupId: `residence-${i}`,
+          },
+        ];
+      }),
+    ];
+  }
   if (type === 'pnj_details') {
     // Same normalize as canvas/toolbar — tránh layers lệch khi còn legacy paragraph1/2.
     const list = resolvePnjParagraphs(

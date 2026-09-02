@@ -3,6 +3,9 @@
 @theme {
   --font-sans:
     var(--font-cormorant), ui-serif, Georgia, 'Times New Roman', serif;
+  /* `font-ui` — Inter for labels/eyebrows where the design specs a sans. */
+  --font-ui:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 /* Prefer GSAP ScrollTo for CTA scrolls. Keep native smooth off the root —

@@ -130,12 +130,12 @@ export default function CustomPointer({ targets }: CustomPointerProps) {
         gsap.set(labelEl, { autoAlpha: 0, scale: 0.92 });
 
         const xTo = gsap.quickTo(root, 'x', {
-          duration: 0.55,
-          ease: 'power3.out',
+          duration: 0.38,
+          ease: 'power2.out',
         });
         const yTo = gsap.quickTo(root, 'y', {
-          duration: 0.55,
-          ease: 'power3.out',
+          duration: 0.38,
+          ease: 'power2.out',
         });
 
         let currentKey: string | null = null;
@@ -152,7 +152,7 @@ export default function CustomPointer({ targets }: CustomPointerProps) {
             height: style.size,
             backgroundColor: style.wash,
             borderColor: style.border,
-            duration: 0.5,
+            duration: 0.42,
             ease: 'power2.out',
             overwrite: 'auto',
           });
@@ -161,7 +161,7 @@ export default function CustomPointer({ targets }: CustomPointerProps) {
             autoAlpha: style.hub,
             scale: style.hub ? 1 : 0.6,
             backgroundColor: style.hubColor,
-            duration: 0.35,
+            duration: 0.34,
             ease: 'power2.out',
             overwrite: 'auto',
           });
@@ -174,7 +174,7 @@ export default function CustomPointer({ targets }: CustomPointerProps) {
               {
                 autoAlpha: 1,
                 scale: 1,
-                duration: 0.4,
+                duration: 0.34,
                 ease: 'power2.out',
                 overwrite: 'auto',
               }
@@ -183,7 +183,7 @@ export default function CustomPointer({ targets }: CustomPointerProps) {
             gsap.to(labelEl, {
               autoAlpha: 0,
               scale: 0.92,
-              duration: 0.25,
+              duration: 0.24,
               ease: 'power2.in',
               overwrite: 'auto',
             });
@@ -229,7 +229,7 @@ export default function CustomPointer({ targets }: CustomPointerProps) {
           visible = true;
           gsap.to(root, {
             autoAlpha: 1,
-            duration: 0.35,
+            duration: 0.34,
             ease: 'power2.out',
             overwrite: 'auto',
           });
@@ -241,7 +241,7 @@ export default function CustomPointer({ targets }: CustomPointerProps) {
           currentKey = null;
           gsap.to(root, {
             autoAlpha: 0,
-            duration: 0.25,
+            duration: 0.24,
             ease: 'power2.in',
             overwrite: 'auto',
           });

@@ -37,6 +37,14 @@ import { citeFlowContactFormDef } from '@/components/modules/block-editor/blocks
 import { citeFlowSignatureDef } from '@/components/modules/block-editor/blocks/_registry/defs/citeFlowSignature';
 import { scrollMattisDef } from '@/components/modules/block-editor/blocks/_registry/defs/scrollMattis';
 import { coolHunterHeroDef } from '@/components/modules/block-editor/blocks/_registry/defs/coolHunterHero';
+import { westlyHeroDef } from '@/components/modules/block-editor/blocks/_registry/defs/westlyHero';
+import { westlyShowcaseDef } from '@/components/modules/block-editor/blocks/_registry/defs/westlyShowcase';
+import { westlySceneDef } from '@/components/modules/block-editor/blocks/_registry/defs/westlyScene';
+import { westlyResidencesDef } from '@/components/modules/block-editor/blocks/_registry/defs/westlyResidences';
+import { westlyRevealDef } from '@/components/modules/block-editor/blocks/_registry/defs/westlyReveal';
+import { westlyProductRevealDef } from '@/components/modules/block-editor/blocks/_registry/defs/westlyProductReveal';
+import { westlyFooterDef } from '@/components/modules/block-editor/blocks/_registry/defs/westlyFooter';
+import { westlyHeaderDef } from '@/components/modules/block-editor/blocks/_registry/defs/westlyHeader';
 import { belgoBrewingProcessDef } from '@/components/modules/block-editor/blocks/_registry/defs/belgoBrewingProcess';
 import { belgoFooterDef } from '@/components/modules/block-editor/blocks/_registry/defs/belgoFooter';
 import { belgoHeroDef } from '@/components/modules/block-editor/blocks/_registry/defs/belgoHero';
@@ -2211,6 +2219,14 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   mint_variants: MINT_VARIANTS_VI,
   mint_discover: mintDiscoverDef.defaultContent.vi,
   cool_hunter_hero: coolHunterHeroDef.defaultContent.vi,
+  westly_hero: westlyHeroDef.defaultContent.vi,
+  westly_showcase: westlyShowcaseDef.defaultContent.vi,
+  westly_scene: westlySceneDef.defaultContent.vi,
+  westly_residences: westlyResidencesDef.defaultContent.vi,
+  westly_reveal: westlyRevealDef.defaultContent.vi,
+  westly_product_reveal: westlyProductRevealDef.defaultContent.vi,
+  westly_footer: westlyFooterDef.defaultContent.vi,
+  westly_header: westlyHeaderDef.defaultContent.vi,
   belgo_hero: belgoHeroDef.defaultContent.vi,
   belgo_about_product: belgoAboutProductDef.defaultContent.vi,
   belgo_scroll_frames: belgoScrollFramesDef.defaultContent.vi,
@@ -2443,6 +2459,14 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   mint_variants: MINT_VARIANTS_VI,
   mint_discover: mintDiscoverDef.defaultContent.en,
   cool_hunter_hero: coolHunterHeroDef.defaultContent.en,
+  westly_hero: westlyHeroDef.defaultContent.en,
+  westly_showcase: westlyShowcaseDef.defaultContent.en,
+  westly_scene: westlySceneDef.defaultContent.en,
+  westly_residences: westlyResidencesDef.defaultContent.en,
+  westly_reveal: westlyRevealDef.defaultContent.en,
+  westly_product_reveal: westlyProductRevealDef.defaultContent.en,
+  westly_footer: westlyFooterDef.defaultContent.en,
+  westly_header: westlyHeaderDef.defaultContent.en,
   belgo_hero: belgoHeroDef.defaultContent.en,
   belgo_about_product: belgoAboutProductDef.defaultContent.en,
   belgo_scroll_frames: belgoScrollFramesDef.defaultContent.en,

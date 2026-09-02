@@ -19,6 +19,7 @@ export type ElementKind =
   | 'interactiveAd'
   | 'mintVariants'
   | 'mintTabs'
+  | 'westlyResidenceHotspots'
   | 'pnjParagraphs'
   | 'pnjTitleLines'
   | 'pnjVariants'
@@ -297,6 +298,17 @@ export function resolveKind(
     if (/^navLinks\[\d+\]\.(label|href)$/.test(key)) {
       return key.endsWith('.href') ? 'link' : 'text';
     }
+  }
+  // Westly residences: link/image/text theo key lồng residences[i].*
+  if (blockType === 'westly_residences') {
+    if (/^residences\[\d+\]\.hotspots$/.test(key)) {
+      return 'westlyResidenceHotspots';
+    }
+    if (/^residences\[\d+\]\.(listingUrl|floorPlanUrl)$/.test(key)) {
+      return 'link';
+    }
+    if (/^residences\[\d+\]\.planUrl$/.test(key)) return 'image';
+    if (/^residences\[\d+\]\.(title|planAlt)$/.test(key)) return 'text';
   }
   // Gambit related: `products` là list manager; `backHref` mở link picker.
   if (blockType === 'gambit_related_products') {
@@ -2144,6 +2156,8 @@ export function resolveSiblingLinkKey(
   if (blockType === 'gambit_related_products' && key === 'backLabel') {
     return 'backHref';
   }
+  if (blockType === 'westly_hero' && key === 'ctaText') return 'ctaHref';
+  if (blockType === 'westly_footer' && key === 'ctaText') return 'ctaHref';
   return null;
 }
 
@@ -2184,6 +2198,9 @@ export function resolveLinkAnchorKey(
     return 'backLabel';
   }
   if (blockType === 'pnj_header' && key === 'logoHref') return 'logoUrl';
+  if (blockType === 'westly_header' && key === 'logoHref') return 'logoUrl';
+  if (blockType === 'westly_hero' && key === 'ctaHref') return 'ctaText';
+  if (blockType === 'westly_footer' && key === 'ctaHref') return 'ctaText';
   return key;
 }
 
