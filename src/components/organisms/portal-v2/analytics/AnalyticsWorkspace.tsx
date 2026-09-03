@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Tabs } from '@/components/molecules/portal-v2/Tabs';
 import { AnalyticsDrillPanel } from '@/components/organisms/portal-v2/analytics/AnalyticsDrillPanel';
 import { OverviewPanel } from '@/components/organisms/portal-v2/analytics/OverviewPanel';
+import { PagesPanel } from '@/components/organisms/portal-v2/analytics/PagesPanel';
 import { RankingsPanel } from '@/components/organisms/portal-v2/analytics/RankingsPanel';
 import { PULSE_TABS } from '@/lib/portal-v2/analytics/constants';
 import { writePulseViewState } from '@/lib/portal-v2/analytics/params';
@@ -115,6 +116,7 @@ export const AnalyticsWorkspace = ({
             blocks={blocks}
           />
         ) : null}
+        {state.lens === 'pages' ? <PagesPanel /> : null}
         {state.lens === 'analytics' ? (
           <AnalyticsDrillPanel
             state={state}

@@ -15,7 +15,12 @@ export const ITYPE_PARAM = 'itype';
 export const IOBJ_PARAM = 'iobj';
 
 const parseLens = (raw: string | undefined): PulseLens => {
-  if (raw === 'overview' || raw === 'analytics' || raw === 'insights') {
+  if (
+    raw === 'overview' ||
+    raw === 'pages' ||
+    raw === 'analytics' ||
+    raw === 'insights'
+  ) {
     return raw;
   }
   return 'overview';

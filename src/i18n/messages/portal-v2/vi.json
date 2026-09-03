@@ -465,6 +465,8 @@
         "aria": "Các lăng kính phân tích",
         "overview": "Tổng quan",
         "overviewSub": "Nhìn nhanh toàn bộ — tổng danh mục, phễu rò tiền và mọi chiến dịch một chỗ.",
+        "pages": "Trang",
+        "pagesSub": "Mọi trang đã xuất bản — tổng lượt xem, click và độ sâu cuộn; bấm một trang để xem chi tiết.",
         "analytics": "Phân tích",
         "analyticsSub": "Theo một chiến dịch xuống từng cấp — chỗ nào đang rò?",
         "rankings": "Xếp hạng",
@@ -593,6 +595,36 @@
         "directional": "định hướng",
         "early": "mẫu sớm",
         "unmeasured": "chưa đo"
+      },
+      "pages": {
+        "statusLive": "Live",
+        "statusDraft": "Nháp",
+        "kpi": {
+          "views": "Lượt xem",
+          "uniques": "Khách unique",
+          "clicks": "Click",
+          "ctr": "CTR trung bình",
+          "conversions": "Chuyển đổi",
+          "scroll": "Độ sâu cuộn TB"
+        },
+        "listTitle": "{count} trang đã xuất bản",
+        "listNote": "14 ngày gần nhất · so với kỳ trước",
+        "colPage": "Trang",
+        "colViews": "Lượt xem",
+        "colUniques": "Khách unique",
+        "colClicks": "Click",
+        "colCtr": "CTR",
+        "colUpdated": "Cập nhật",
+        "back": "Danh sách trang",
+        "viewPage": "Xem trang",
+        "trendTitle": "Xu hướng 14 ngày",
+        "legendViews": "Lượt xem",
+        "legendClicks": "Click",
+        "sourcesTitle": "Nguồn truy cập",
+        "blocksTitle": "Hiệu quả theo block",
+        "blocksNote": "block nào được xem & bấm nhiều nhất",
+        "colBlock": "Block",
+        "colDwell": "Dwell TB"
       }
     },
     "intelligence": {
