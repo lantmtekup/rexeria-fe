@@ -1,6 +1,12 @@
 'use client';
 
-import { CheckCircle2, Copy, Image as ImageIcon, Sparkles } from 'lucide-react';
+import {
+  CheckCircle2,
+  Copy,
+  ExternalLink,
+  Image as ImageIcon,
+  Sparkles,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -20,6 +26,45 @@ import type {
 
 type LiveDetailTab = 'publish' | 'content';
 
+/**
+ * Biến thể UTM để test "Nguồn truy cập" — mở link là tracker ghi
+ * `utm_source` vào event, tab Analytics/Trang gộp theo source. `utm_source`
+ * là khoá gộp ở BE (`analytics_events.dimensions->>'utm_source'`), nên hai
+ * link cùng source (fb feed + fb story) cộng dồn thành một dòng — đúng thực tế.
+ */
+const UTM_VARIANTS: {
+  key: string;
+  label: string;
+  source: string;
+  medium: string;
+}[] = [
+  {
+    key: 'fb-feed',
+    label: 'Facebook · feed',
+    source: 'facebook',
+    medium: 'social',
+  },
+  {
+    key: 'fb-story',
+    label: 'Facebook · story',
+    source: 'facebook',
+    medium: 'story',
+  },
+  { key: 'ig', label: 'Instagram', source: 'instagram', medium: 'social' },
+  {
+    key: 'tt-video',
+    label: 'TikTok · video',
+    source: 'tiktok',
+    medium: 'social',
+  },
+  { key: 'tt-bio', label: 'TikTok · bio', source: 'tiktok', medium: 'bio' },
+];
+
+const buildUtmLink = (base: string, source: string, medium: string): string => {
+  const sep = base.includes('?') ? '&' : '?';
+  return `${base}${sep}utm_source=${source}&utm_medium=${medium}&utm_campaign=test`;
+};
+
 type LiveRowDetailModalProps = {
   row: LiveDeployRow;
   onClose: () => void;
@@ -38,6 +83,7 @@ export const LiveRowDetailModal = ({
   const t = useTranslations('portalV2.deploy');
   const [tab, setTab] = useState<LiveDetailTab>('publish');
   const [urlCopied, setUrlCopied] = useState(false);
+  const [copiedShareKey, setCopiedShareKey] = useState<string | null>(null);
 
   const [media, setMedia] = useState<ProductAsset[] | null>(null);
   const [loadingMedia, setLoadingMedia] = useState(false);
@@ -62,6 +108,17 @@ export const LiveRowDetailModal = ({
         setUrlCopied(true);
         toast.success(t('liveDetailUrlCopiedToast'));
         window.setTimeout(() => setUrlCopied(false), 1500);
+      },
+      () => toast.error(t('liveDetailUrlCopyFailToast'))
+    );
+  };
+
+  const copyShareLink = (key: string, link: string) => {
+    navigator.clipboard.writeText(link).then(
+      () => {
+        setCopiedShareKey(key);
+        toast.success(t('liveDetailUrlCopiedToast'));
+        window.setTimeout(() => setCopiedShareKey(null), 1500);
       },
       () => toast.error(t('liveDetailUrlCopyFailToast'))
     );
@@ -155,6 +212,63 @@ export const LiveRowDetailModal = ({
               {t('liveDetailUrlMissing')}
             </p>
           )}
+
+          {row.publicUrl ? (
+            <div className='mt-5'>
+              <p className='mb-1 text-[10.5px] font-bold tracking-[0.06em] text-[var(--pv2-faint)] uppercase'>
+                {t('liveShareLabel')}
+              </p>
+              <p className='mb-2.5 text-[11.5px] leading-relaxed text-[var(--pv2-mut)]'>
+                {t('liveShareHint')}
+              </p>
+              <div className='flex flex-col gap-1.5'>
+                {UTM_VARIANTS.map(v => {
+                  const link = buildUtmLink(
+                    row.publicUrl as string,
+                    v.source,
+                    v.medium
+                  );
+                  return (
+                    <div
+                      key={v.key}
+                      className='flex items-center gap-2 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-canvas)] px-2.5 py-2'
+                    >
+                      <span className='w-[104px] shrink-0 text-[11.5px] font-semibold text-[var(--pv2-ink)]'>
+                        {v.label}
+                      </span>
+                      <span className='min-w-0 flex-1 truncate font-mono text-[11px] text-[var(--pv2-mut)]'>
+                        {link}
+                      </span>
+                      <a
+                        href={link}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        title={t('liveShareOpen')}
+                        className='grid size-7 shrink-0 place-items-center rounded-[6px] text-[var(--pv2-mut)] transition-colors hover:bg-white hover:text-[var(--pv2-ink)]'
+                      >
+                        <ExternalLink className='size-3.5' aria-hidden />
+                      </a>
+                      <button
+                        type='button'
+                        onClick={() => copyShareLink(v.key, link)}
+                        title={t('liveDetailCopyUrl')}
+                        className='grid size-7 shrink-0 place-items-center rounded-[6px] text-[var(--pv2-mut)] transition-colors hover:bg-white hover:text-[var(--pv2-ink)]'
+                      >
+                        {copiedShareKey === v.key ? (
+                          <CheckCircle2
+                            className='size-3.5 text-[var(--pv2-success)]'
+                            aria-hidden
+                          />
+                        ) : (
+                          <Copy className='size-3.5' aria-hidden />
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
