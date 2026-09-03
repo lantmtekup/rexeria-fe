@@ -10,15 +10,14 @@
  *   `[data-element-id]`. Call it once near the top of the page, after blocks
  *   are rendered.
  *
- * OPT-IN GATING (2026-08-14). Every block/element-level event now requires
- * explicit `block.signal` config — the same config the editor's "Signal" tab
- * writes into `canvas_blueprint.blocks[].signal`. A block with no `signal` at
- * all, or `signal.track !== true`, emits nothing beyond the page-level
- * `page_view`. This is a deliberate coverage change: most blocks in
- * production have no signal config yet, so `block_view`/`block_dwell`/
- * per-element `click` will go quiet on unconfigured pages until content
- * owners opt blocks in via the Signal panel. `page_view` is unaffected — it
- * is not attached to any block.
+ * DEFAULT-ON BASIC SIGNALS (2026-09-03, đảo lại opt-in 2026-08-14). Mọi block
+ * MẶC ĐỊNH đo các tín hiệu CƠ BẢN cấp block (`dwell`/`scroll`/`tap` theo
+ * `DEFAULT_BASIC_SIGNALS`) mà không cần cấu hình — một block không có `signal`
+ * vẫn phát `block_view`/`block_dwell`. Chủ nội dung chỉ cần chạm vào Signal
+ * panel khi muốn TẮT (đặt `track:false`) hoặc bật `complete`/`exit`, hoặc gắn
+ * điểm đo CHI TIẾT cấp element. Điểm đo per-element (`click` theo
+ * `data-element-key`) vẫn OPT-IN: chỉ phát khi component đó được bật riêng.
+ * `page_view` không gắn block nên không đổi.
  *
  * `signalByBlockId` may arrive after mount (e.g. `_legacy-token-view.tsx`
  * loads its canvas async) — it is read through a ref inside the listeners
@@ -39,24 +38,41 @@ import { tracker } from './tracker';
 
 /* ---------------- signal gating ---------------- */
 
-/** Master switch for a block — `undefined`/`false` means "born untracked". */
+/**
+ * Mặc định cấp block khi block CHƯA từng chạm Signal panel. Đồng bộ với
+ * `DEFAULT_BLOCK_SIGNALS` trong `block-editor-v2/signal/vocabulary.ts` — để đây
+ * bản cục bộ vì tracker chạy trên trang public, không kéo cả module editor vào
+ * bundle.
+ */
+const DEFAULT_BASIC_SIGNALS: Record<string, boolean> = {
+  dwell: true,
+  scroll: true,
+  tap: true,
+  complete: false,
+  exit: false,
+};
+
+/**
+ * Master switch cho một block. MẶC ĐỊNH BẬT: `undefined` (chưa cấu hình) coi
+ * như đang đo. Chỉ `track === false` (chủ nội dung tắt tường minh) mới im.
+ */
 function blockIsTrackable(signal: BlockSignalConfig | undefined): boolean {
-  return signal?.track === true;
+  return signal?.track !== false;
 }
 
 /**
- * Does this block want a given mechanical signal (`dwell`/`scroll`/`tap`/...)?
- * Once `track` is on, an omitted key in `signals` defaults to on — matches
- * `DEFAULT_BLOCK_SIGNALS` in `block-editor-v2/signal/vocabulary.ts`, which
- * seeds `dwell`/`scroll`/`tap` true the moment the master toggle is first
- * turned on.
+ * Block có muốn một tín hiệu cơ học (`dwell`/`scroll`/`tap`/...) không? Key đã
+ * đặt tường minh thì theo đúng giá trị; key chưa đặt (block chưa cấu hình) rơi
+ * về `DEFAULT_BASIC_SIGNALS` — nên `complete`/`exit` KHÔNG tự bật, chỉ cơ bản.
  */
 function blockWantsSignal(
   signal: BlockSignalConfig | undefined,
   key: string
 ): boolean {
   if (!blockIsTrackable(signal)) return false;
-  return signal?.signals?.[key] !== false;
+  const explicit = signal?.signals?.[key];
+  if (explicit !== undefined) return explicit === true;
+  return DEFAULT_BASIC_SIGNALS[key] === true;
 }
 
 /** A tracking point's config, only if its own toggle is actually on. */

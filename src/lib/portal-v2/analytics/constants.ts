@@ -11,6 +11,11 @@ export const PULSE_TABS: {
     subtitleKey: 'tabs.overviewSub',
   },
   {
+    id: 'pages',
+    labelKey: 'tabs.pages',
+    subtitleKey: 'tabs.pagesSub',
+  },
+  {
     id: 'analytics',
     labelKey: 'tabs.analytics',
     subtitleKey: 'tabs.analyticsSub',

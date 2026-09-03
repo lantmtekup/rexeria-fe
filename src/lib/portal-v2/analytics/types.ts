@@ -1,5 +1,7 @@
-/** Workspace tab lenses — prototype `PULSE_WS_LENSES`. */
-export type PulseLens = 'overview' | 'analytics' | 'insights';
+/** Workspace tab lenses — prototype `PULSE_WS_LENSES`. `pages` = danh sách
+ * trang đã xuất bản + drill analytics từng trang (không có trong prototype;
+ * thêm theo yêu cầu "xem tổng view mỗi trang → bấm vào xem chi tiết"). */
+export type PulseLens = 'overview' | 'pages' | 'analytics' | 'insights';
 
 /** Rankings component type — prototype `INS_TYPES`. */
 export type InsightType = 'experiences' | 'products' | 'journeys' | 'blocks';

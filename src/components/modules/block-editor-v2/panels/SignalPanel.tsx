@@ -57,7 +57,10 @@ export function SignalPanel({ block, allBlocks, onEdit }: SignalPanelProps) {
     [allBlocks]
   );
 
-  const tracked = block.signal?.track === true;
+  // Default-on: block chưa cấu hình vẫn đang đo tín hiệu cơ bản. Chỉ
+  // `track === false` (tắt tường minh) mới coi là off. Đồng bộ blockIsTrackable
+  // trong use-tracker.ts.
+  const tracked = block.signal?.track !== false;
   const signals = block.signal?.signals ?? DEFAULT_BLOCK_SIGNALS;
   const enabledSignals = Object.values(signals).filter(Boolean).length;
   const trackedComps = elements.filter(
@@ -66,25 +69,38 @@ export function SignalPanel({ block, allBlocks, onEdit }: SignalPanelProps) {
 
   const toggleBlockTrack = () => {
     onEdit(b => {
-      if (b.signal?.track) {
-        b.signal.track = false;
-        return;
-      }
-      // Bật lần đầu seed mặc định; bật lại giữ nguyên cấu hình cũ.
+      // Default-on: đang đo (undefined hoặc track!==false) ⇒ tắt tường minh.
+      const effectivelyOn = b.signal?.track !== false;
       b.signal = {
-        track: true,
+        track: !effectivelyOn,
         signals: b.signal?.signals ?? { ...DEFAULT_BLOCK_SIGNALS },
         components: b.signal?.components ?? {},
       };
     });
   };
 
+  /**
+   * Bảo đảm `b.signal` tồn tại trước khi chỉnh tín hiệu/điểm đo. Cần vì
+   * default-on: block đang đo nhưng `signal === undefined` — không seed thì
+   * toggle rơi vào no-op và người dùng bấm không thấy gì (bug đã gặp).
+   */
+  const ensureSignal = (b: Block) => {
+    if (!b.signal) {
+      b.signal = {
+        track: true,
+        signals: { ...DEFAULT_BLOCK_SIGNALS },
+        components: {},
+      };
+    }
+    return b.signal;
+  };
+
   const toggleBlockSignal = (key: string) => {
     onEdit(b => {
-      if (!b.signal?.track) return;
-      const next = { ...(b.signal.signals ?? DEFAULT_BLOCK_SIGNALS) };
+      const sig = ensureSignal(b);
+      const next = { ...(sig.signals ?? DEFAULT_BLOCK_SIGNALS) };
       next[key] = !next[key];
-      b.signal.signals = next;
+      sig.signals = next;
     });
   };
 
@@ -95,13 +111,13 @@ export function SignalPanel({ block, allBlocks, onEdit }: SignalPanelProps) {
   ) => {
     const turningOn = block.signal?.components?.[key]?.track !== true;
     onEdit(b => {
-      if (!b.signal?.track) return;
-      const comps = b.signal.components ?? {};
+      const sig = ensureSignal(b);
+      const comps = sig.components ?? {};
       const cur = comps[key];
       comps[key] = turningOn
         ? { ...ensureComponentSignal(cur, kind), track: true }
         : { ...cur, track: false };
-      b.signal.components = comps;
+      sig.components = comps;
     });
     if (turningOn) {
       const cfg = ensureComponentSignal(block.signal?.components?.[key], kind);
