@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: #1a1a1a;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/**
+ * Gutter ngang dùng chung cho 3 panel của section Product Story.
+ * Figma vẽ mỗi panel một mốc x riêng (Design 118, Details 48, Products 119) nên khi cuộn
+ * qua nhau mép nội dung bị nhảy — ở đây thống nhất về một biến duy nhất.
+ * `%` quy chiếu theo containing block của chỗ dùng; cả 3 panel đều rộng đúng bằng pane
+ * phải nên ra cùng một số px. 4.4% ≈ 48px @1440 (đúng mốc list của Details trong Figma).
+ */
+#story {
+  --story-gutter: clamp(24px, 4.4%, 64px);
+}
+
+/* Strip cuộn ngang (DesignPanel) và hàng thumbnail mobile (ProductsPanel) */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
