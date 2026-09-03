@@ -84,12 +84,22 @@ export type DeployDomainStatus =
 
 /** The brand's own domain — mapped from `BrandDomain`
  *  (`@/services/rexer/types`) the same way `/portal/profile/domains` does. */
+/** Một DNS record BE yêu cầu user cắm (từ `dns_records` của create response). */
+export type DeployDnsRecord = {
+  type: string;
+  name: string;
+  value: string;
+};
+
 export type DeployBrandDomain = {
   id: string;
   domain: string;
   status: DeployDomainStatus;
   verificationToken: string;
   failureReason: string | null;
+  /** DNS records THẬT từ BE (chỉ có sau khi create); vắng → UI tự dựng từ
+   *  DEPLOY_DNS_CNAME_TARGET + token (list endpoint không trả records). */
+  dnsRecords?: DeployDnsRecord[];
 };
 
 export type DeploySubjectKind = 'product' | 'topic';

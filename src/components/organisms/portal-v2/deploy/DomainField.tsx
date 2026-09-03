@@ -146,7 +146,8 @@ const DnsRecordRow = ({
   name,
   value,
 }: {
-  kind: 'CNAME' | 'TXT';
+  // Chấp nhận string vì `dns_records` từ BE có thể là type khác CNAME/TXT.
+  kind: string;
   name: string;
   value: string;
 }) => {
@@ -212,16 +213,31 @@ const DnsRecordsPanel = ({ domain }: { domain: DeployBrandDomain }) => {
         {t('dnsRecordsTitle')}
       </p>
       <div className='grid gap-2 sm:grid-cols-2'>
-        <DnsRecordRow
-          kind='CNAME'
-          name={host}
-          value={DEPLOY_DNS_CNAME_TARGET}
-        />
-        <DnsRecordRow
-          kind='TXT'
-          name={`_rexer-verify.${domain.domain}`}
-          value={`rexer-verify=${domain.verificationToken}`}
-        />
+        {domain.dnsRecords?.length ? (
+          // DNS records THẬT từ BE (create response).
+          domain.dnsRecords.map(r => (
+            <DnsRecordRow
+              key={`${r.type}-${r.name}`}
+              kind={r.type}
+              name={r.name}
+              value={r.value}
+            />
+          ))
+        ) : (
+          // Fallback: list endpoint không trả records → FE tự dựng.
+          <>
+            <DnsRecordRow
+              kind='CNAME'
+              name={host}
+              value={DEPLOY_DNS_CNAME_TARGET}
+            />
+            <DnsRecordRow
+              kind='TXT'
+              name={`_rexer-verify.${domain.domain}`}
+              value={`rexer-verify=${domain.verificationToken}`}
+            />
+          </>
+        )}
       </div>
       <p className='mt-2 text-[11px] leading-relaxed text-[var(--pv2-mut)]'>
         {t('dnsHint')}

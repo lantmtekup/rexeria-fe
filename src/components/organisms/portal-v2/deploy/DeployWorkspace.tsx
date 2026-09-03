@@ -337,7 +337,9 @@ export const DeployWorkspace = ({
           target_type: 'landing',
           page_id: null,
         });
-        const created = mapBrandDomain(res.domain);
+        // Dùng `dns_records` THẬT từ BE thay vì FE tự dựng — nếu BE đổi edge
+        // host / phương thức verify thì UI vẫn đúng.
+        const created = mapBrandDomain(res.domain, res.dns_records);
         setDomains(prev => [created, ...prev]);
         toast.success(t('domainAddedToast', { domain: created.domain }));
         return created;

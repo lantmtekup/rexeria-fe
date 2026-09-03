@@ -41,7 +41,7 @@ const loadDomains = async (brandId: string | null) => {
   try {
     const res = await rexerApi.brands.domains.list(brandId);
     return {
-      items: (res.items ?? []).map(mapBrandDomain),
+      items: (res.items ?? []).map(d => mapBrandDomain(d)),
       source: 'live' as const,
     };
   } catch {

@@ -17,7 +17,7 @@ import type {
   RxLiveItemView,
   RxReadyItemView,
 } from '@/services/rexer-v2/types/deploy';
-import type { BrandDomain } from '@/services/rexer/types';
+import type { BrandDomain, BrandDomainDnsRecord } from '@/services/rexer/types';
 import type {
   DeployBrandDomain,
   DeployCampaignGroup,
@@ -183,7 +183,10 @@ export const isValidDomain = (value: string): boolean =>
  *  does for `/portal/profile/domains`. `tls_status` is deliberately not read
  *  here: `DeployDomainStatus` only distinguishes what this route shows, and
  *  TLS finishing is not something the connect flow blocks on. */
-export const mapBrandDomain = (d: BrandDomain): DeployBrandDomain => {
+export const mapBrandDomain = (
+  d: BrandDomain,
+  dnsRecords?: BrandDomainDnsRecord[]
+): DeployBrandDomain => {
   const status: DeployDomainStatus =
     d.status === 'verifying'
       ? 'verifying'
@@ -199,6 +202,16 @@ export const mapBrandDomain = (d: BrandDomain): DeployBrandDomain => {
     status,
     verificationToken: d.verification_token,
     failureReason: d.failure_reason,
+    // Chỉ create trả `dns_records`; list không → để undefined, UI fallback.
+    ...(dnsRecords?.length
+      ? {
+          dnsRecords: dnsRecords.map(r => ({
+            type: r.type,
+            name: r.name,
+            value: r.value,
+          })),
+        }
+      : {}),
   };
 };
 
