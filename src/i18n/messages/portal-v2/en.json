@@ -602,7 +602,10 @@
           "uniques": "Unique visitors",
           "clicks": "Clicks",
           "ctr": "Avg. CTR",
-          "conversions": "Conversions"
+          "conversions": "Conversions",
+          "sessions": "Sessions (v2)",
+          "cvr": "Conversion rate",
+          "tier": "Confidence"
         },
         "listTitle": "{count} live pages",
         "listNote": "recent",
@@ -629,7 +632,9 @@
         "blocksNote": "which block is viewed & clicked most",
         "blocksEmpty": "No block data yet.",
         "colBlock": "Block",
-        "colDwell": "Avg. dwell"
+        "colDwell": "Avg. dwell",
+        "colSessions": "Sessions",
+        "colCvr": "CVR"
       }
     },
     "intelligence": {

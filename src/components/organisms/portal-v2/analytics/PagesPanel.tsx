@@ -20,6 +20,9 @@ const ctr = (clicks: number | null, views: number | null): string =>
     : '—';
 const dwellLabel = (ms: number | null): string =>
   ms == null ? '—' : `${(ms / 1000).toFixed(1)}s`;
+/** cvr là tỷ lệ 0..1 từ intel. */
+const pct = (ratio: number | null): string =>
+  ratio == null ? '—' : `${(ratio * 100).toFixed(1)}%`;
 
 /** Area chart cho màn chi tiết — visits (đặc) + leads (nét đứt). */
 const TrendChart = ({
@@ -232,6 +235,8 @@ const PagesList = ({
               <tr className='bg-[var(--pv2-canvas)]'>
                 <HeadCell align='left'>{t('colPage')}</HeadCell>
                 <HeadCell>{t('colViews')}</HeadCell>
+                <HeadCell>{t('colSessions')}</HeadCell>
+                <HeadCell hide>{t('colCvr')}</HeadCell>
                 <HeadCell hide>{t('colUniques')}</HeadCell>
                 <HeadCell>{t('colClicks')}</HeadCell>
                 <HeadCell>{t('colCtr')}</HeadCell>
@@ -269,6 +274,12 @@ const PagesList = ({
                   </td>
                   <td className='px-4 py-3.5 text-right font-[family-name:var(--pv2-disp)] text-[15px] font-semibold text-[var(--pv2-ink)] tabular-nums md:px-5'>
                     {fmt(r.pageViews)}
+                  </td>
+                  <td className='px-4 py-3.5 text-right text-[var(--pv2-ink)] tabular-nums md:px-5'>
+                    {fmt(r.sessions)}
+                  </td>
+                  <td className='hidden px-4 py-3.5 text-right text-[var(--pv2-mut)] tabular-nums md:px-5 lg:table-cell'>
+                    {pct(r.cvr)}
                   </td>
                   <td className='hidden px-4 py-3.5 text-right text-[var(--pv2-mut)] tabular-nums md:px-5 lg:table-cell'>
                     {fmt(r.uniqueVisitors)}
@@ -396,6 +407,17 @@ const PageDetail = ({
               value={fmt(detail.conversions)}
             />
           </div>
+
+          {row.sessions != null && (
+            <div className='grid grid-cols-3 gap-px overflow-hidden rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-hair)]'>
+              <KpiCell label={t('kpi.sessions')} value={fmt(row.sessions)} />
+              <KpiCell label={t('kpi.cvr')} value={pct(row.cvr)} />
+              <KpiCell
+                label={t('kpi.tier')}
+                value={row.confidenceTier || '—'}
+              />
+            </div>
+          )}
 
           <div className='grid gap-4 lg:grid-cols-[1.6fr_1fr]'>
             <div className='overflow-hidden rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
