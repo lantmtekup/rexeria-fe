@@ -35,6 +35,12 @@ export interface SignalTypeDef {
 }
 
 export const SIGNAL_TYPES: Record<string, SignalTypeDef> = {
+  INTERACTION: {
+    n: 'Interaction',
+    r: 'EXP',
+    d: 'Họ bấm vào nó',
+    say: 'đã bấm vào',
+  },
   EXPOSURE: {
     n: 'Exposure',
     r: 'ATT',
@@ -100,12 +106,30 @@ export const FUNNEL_STAGE_LABEL: Record<string, string> = {
   CON: 'CONVERT',
 };
 
-/** Type nào áp dụng được cho kind nào. */
+/**
+ * Type nào áp dụng được cho kind nào. Phần tử ĐẦU là default (xem
+ * `ensureComponentSignal`). Điểm đo thành phần giờ chỉ là click point
+ * (nút/ảnh/link/sản phẩm) nên `INTERACTION` = "đã bấm vào" đứng đầu.
+ */
 export const TYPES_FOR: Record<SignalComponentKind, string[]> = {
   text: ['EXPOSURE', 'ENGAGEMENT', 'TRUST'],
-  media: ['EXPOSURE', 'ENGAGEMENT', 'EXPLORATION', 'PREFERENCE', 'TRUST'],
-  product: ['EXPOSURE', 'EXPLORATION', 'PREFERENCE', 'COMPARISON', 'ACTION'],
-  button: ['ACTION', 'CONVERSION', 'FRICTION'],
+  media: [
+    'INTERACTION',
+    'EXPOSURE',
+    'ENGAGEMENT',
+    'EXPLORATION',
+    'PREFERENCE',
+    'TRUST',
+  ],
+  product: [
+    'INTERACTION',
+    'EXPOSURE',
+    'EXPLORATION',
+    'PREFERENCE',
+    'COMPARISON',
+    'ACTION',
+  ],
+  button: ['INTERACTION', 'ACTION', 'CONVERSION', 'FRICTION'],
 };
 
 /** Trigger events theo kind (mechanics — cái máy đo, không phải ý nghĩa). */
@@ -119,7 +143,7 @@ export const COMP_EVENTS: Record<SignalComponentKind, string[]> = {
 export const DEFAULT_EVENT: Record<SignalComponentKind, string> = {
   text: 'Dwell',
   button: 'Tap',
-  media: 'View',
+  media: 'Tap',
   product: 'Tap',
 };
 
@@ -178,10 +202,16 @@ export const DEFAULT_BLOCK_SIGNALS: Record<string, boolean> = {
 export const THRESHOLD_MIN = 1;
 export const THRESHOLD_MAX = 30;
 
+/** Kind được coi là điểm bấm/tương tác: nút/link, ảnh, sản phẩm — KHÔNG gồm
+ *  text thuần (heading/paragraph). Điểm đo thành phần là setting CLICK. */
+const CLICK_TRACKABLE_KIND =
+  /link|image|photo|product|coins|variant|gallery|slides|media|cta|button|hotspot/i;
+
 /**
- * Element nào của block đủ tư cách làm tracking point: mọi element registry
- * trừ layer nền và các surface trang trí (fill) — chúng không mang nội dung
- * để khai nghĩa.
+ * Element nào của block đủ tư cách làm tracking point CLICK: chỉ **button /
+ * link (nội dung có link) / hình ảnh / sản phẩm**. Bỏ layer nền, fill trang
+ * trí, và mọi text thuần — điểm đo thành phần đo hành vi BẤM, nên heading /
+ * đoạn văn không phải điểm đo. (Tín hiệu đọc/cuộn đã có ở tầng cấp block.)
  */
 export function signalElementsOf(block: Block): LayerElement[] {
   const content =
@@ -191,8 +221,15 @@ export function signalElementsOf(block: Block): LayerElement[] {
     content as Record<string, unknown> | undefined
   ).filter(el => {
     if (el.key === BACKGROUND_LAYER_KEY) return false;
+    // fieldType do LayersPanel gắn — nguồn tin cậy nhất cho link/ảnh.
+    if (el.fieldType === 'link' || el.fieldType === 'image') return true;
+    if (el.fieldType === 'text' || el.fieldType === 'textarea') return false;
+    // Không có fieldType → suy từ kind registry.
     const kind = resolveElementMeta(block.blockType, el.key).kind;
-    return kind !== 'background' && kind !== 'fill';
+    if (kind === 'background' || kind === 'fill' || kind === 'text') {
+      return false;
+    }
+    return CLICK_TRACKABLE_KIND.test(kind);
   });
 }
 
@@ -226,9 +263,9 @@ export function ensureComponentSignal(
     track: existing?.track ?? false,
     type: existing?.type ?? TYPES_FOR[kind][0],
     event: existing?.event ?? DEFAULT_EVENT[kind],
-    object:
-      existing?.object ??
-      (kind === 'product' ? 'product' : kind === 'button' ? 'none' : 'content'),
+    // 'none' ⇒ câu nghĩa gọi thẳng tên element ("đã bấm vào ảnh banner") thay
+    // vì "nội dung" chung chung. Sản phẩm giữ object 'product' để nuôi subject.
+    object: existing?.object ?? (kind === 'product' ? 'product' : 'none'),
     threshold: existing?.threshold ?? (kind === 'text' ? 3 : 1),
     strength: existing?.strength ?? 2,
     crm: existing?.crm ?? CRM_ACTIONS[0],
@@ -274,7 +311,10 @@ export function blockSignalCoverage(blocks: Block[]): SignalCoverageSummary {
   let trackedComps = 0;
   let trackedBlocks = 0;
   for (const b of blocks) {
-    if (b.signal?.track === true) trackedBlocks += 1;
+    // Default-on: block chưa cấu hình (undefined) vẫn đang đo tín hiệu cơ bản;
+    // chỉ `track === false` tường minh mới coi là tắt. Đồng bộ blockIsTrackable
+    // trong use-tracker.ts.
+    if (b.signal?.track !== false) trackedBlocks += 1;
     for (const el of signalElementsOf(b)) {
       comps += 1;
       if (b.signal?.components?.[el.key]?.track) trackedComps += 1;
