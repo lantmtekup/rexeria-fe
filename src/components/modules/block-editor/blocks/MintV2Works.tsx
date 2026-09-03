@@ -653,7 +653,15 @@ export function MintV2Works({
   const isMobile = useContainerMobile(rootRef);
   const { scroller, requestRefresh } = useLandingMotion();
   const cards = React.useMemo(
-    () => (content.cards ?? []).map(normalizeWorkCard),
+    // Guard non-array: `?? []` chỉ chặn null/undefined. Draft/canvas_blueprint
+    // đôi khi giữ `cards` ở dạng object (không phải mảng) — khi đó `.map` nổ
+    // và kéo sập cả editor (không có error boundary bao quanh block). Fallback
+    // về [] để block render rỗng thay vì crash. Cùng pattern với
+    // `normalizeWorkCard` đã dùng cho `thumbs`.
+    () =>
+      (Array.isArray(content.cards) ? content.cards : []).map(
+        normalizeWorkCard
+      ),
     [content.cards]
   );
   const [active, setActive] = React.useState<LightItem | null>(null);
