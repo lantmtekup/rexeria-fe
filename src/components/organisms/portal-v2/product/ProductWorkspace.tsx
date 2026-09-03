@@ -168,6 +168,14 @@ export const ProductWorkspace = ({
   const [filters, setFilters] = useState<ProductFilters>(
     PRODUCT_DEFAULT_FILTERS
   );
+  /** Nguồn có mặt thật trong catalogue — option ma là ngõ cụt của bộ lọc. */
+  const availableSources = useMemo(
+    () =>
+      [...new Set(products.map(p => p.source))].sort() as Array<
+        Product['source']
+      >,
+    [products]
+  );
   const [selected, setSelected] = useState<string[]>([]);
   const [modal, setModal] = useState<ModalState>(null);
   const [draft, setDraft] = useState<Product | null>(null);
@@ -739,6 +747,7 @@ export const ProductWorkspace = ({
               onChange={patchFilters}
               brands={initialBrands}
               types={initialTypes}
+              sources={availableSources}
             />
 
             {truncated ? (

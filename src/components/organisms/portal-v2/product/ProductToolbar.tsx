@@ -7,10 +7,12 @@ import { TextSelect } from '@/components/molecules/portal-v2/brand-form';
 import { cn } from '@/lib/cn';
 import {
   PRODUCT_BRANDS,
+  PRODUCT_SOURCE,
   PRODUCT_TYPES,
 } from '@/lib/portal-v2/product/constants';
 import type {
   ProductFilters,
+  ProductSource,
   ProductViewMode,
 } from '@/lib/portal-v2/product/types';
 
@@ -23,6 +25,8 @@ type ProductToolbarProps = {
    */
   brands?: string[];
   types?: string[];
+  /** Nguồn sync có mặt trong catalogue (shopify/csv/manual) — cùng nguyên tắc. */
+  sources?: ProductSource[];
 };
 
 const viewButtonClass = (on: boolean) =>
@@ -39,6 +43,7 @@ export const ProductToolbar = ({
   onChange,
   brands,
   types,
+  sources,
 }: ProductToolbarProps) => {
   const t = useTranslations('portalV2.products');
 
@@ -94,6 +99,26 @@ export const ProductToolbar = ({
           </option>
         ))}
       </TextSelect>
+
+      {/* Đổi nguồn dữ liệu — cùng mô-típ với màn Journey Audit: chọn nguồn
+          nào thì danh sách chỉ còn sản phẩm sync từ nguồn đó. */}
+      {sources?.length ? (
+        <TextSelect
+          value={filters.source}
+          onChange={e =>
+            onChange({ source: e.target.value as ProductFilters['source'] })
+          }
+          aria-label={t('filterSourceAria')}
+          className='w-auto min-w-[150px] py-2 text-[12.5px]'
+        >
+          <option value='all'>{t('allSources')}</option>
+          {sources.map(x => (
+            <option key={x} value={x}>
+              {PRODUCT_SOURCE[x].name}
+            </option>
+          ))}
+        </TextSelect>
+      ) : null}
 
       <span className='ml-auto flex items-center gap-0.5 rounded-[10px] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] p-0.5'>
         <button

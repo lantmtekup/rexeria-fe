@@ -73,6 +73,7 @@ export const visibleProducts = (
       (filters.status === 'all' || p.status === filters.status) &&
       (filters.type === 'all' || p.type === filters.type) &&
       (filters.brand === 'all' || p.brand === filters.brand) &&
+      (filters.source === 'all' || p.source === filters.source) &&
       (!q ||
         p.title.toLowerCase().includes(q) ||
         p.handle.includes(q) ||
