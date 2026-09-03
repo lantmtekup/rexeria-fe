@@ -602,7 +602,10 @@
           "uniques": "Khách unique",
           "clicks": "Click",
           "ctr": "CTR trung bình",
-          "conversions": "Chuyển đổi"
+          "conversions": "Chuyển đổi",
+          "sessions": "Phiên (đo v2)",
+          "cvr": "Tỷ lệ chuyển đổi",
+          "tier": "Độ tin cậy"
         },
         "listTitle": "{count} trang đang live",
         "listNote": "gần đây",
@@ -629,7 +632,9 @@
         "blocksNote": "block nào được xem & bấm nhiều nhất",
         "blocksEmpty": "Chưa có dữ liệu block.",
         "colBlock": "Block",
-        "colDwell": "Dwell TB"
+        "colDwell": "Dwell TB",
+        "colSessions": "Phiên",
+        "colCvr": "CVR"
       }
     },
     "intelligence": {

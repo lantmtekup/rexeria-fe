@@ -35,9 +35,9 @@ export default async function PortalV2AnalyticsPage({ searchParams }: Props) {
       .blocksRank('', scope.brandId ? { brand_id: scope.brandId } : {})
       .then(res => res.items.map(blockRowOf))
       .catch(() => []),
-    // Tab "Trang" — trang đã live + tổng view. Tự bọc lỗi (rows/error), không
-    // kéo sập cả màn analytics.
-    fetchLivePages(),
+    // Tab "Trang" — trang đã live + tổng view (v1) + phiên/cvr (v2 theo
+    // brand). Tự bọc lỗi (rows/error), không kéo sập cả màn analytics.
+    fetchLivePages(scope.brandId),
   ]);
 
   return (
