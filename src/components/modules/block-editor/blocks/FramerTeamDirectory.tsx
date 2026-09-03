@@ -86,7 +86,7 @@ export function FramerTeamDirectory({
       positionStyle(positions, key)
     );
 
-  const members = content.members ?? [];
+  const members = Array.isArray(content.members) ? content.members : [];
   const avatarSize = 'clamp(40px, 4.5cqi, 64px)';
 
   return (

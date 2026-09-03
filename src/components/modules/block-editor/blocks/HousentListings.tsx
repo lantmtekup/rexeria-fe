@@ -48,8 +48,8 @@ export function HousentListings({
       orderStyle(order, key),
       positionStyle(positions, key)
     );
-  const items = content.items ?? [];
-  const filters = content.filters ?? [];
+  const items = Array.isArray(content.items) ? content.items : [];
+  const filters = Array.isArray(content.filters) ? content.filters : [];
 
   return (
     <div

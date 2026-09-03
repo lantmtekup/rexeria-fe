@@ -64,7 +64,10 @@ export function ImageExplosion({
 
   const rootRef = React.useRef<HTMLDivElement>(null);
   const stageRef = React.useRef<HTMLDivElement>(null);
-  const images = React.useMemo(() => content.images ?? [], [content.images]);
+  const images = React.useMemo(
+    () => (Array.isArray(content.images) ? content.images : []),
+    [content.images]
+  );
 
   React.useEffect(() => {
     const root = rootRef.current;

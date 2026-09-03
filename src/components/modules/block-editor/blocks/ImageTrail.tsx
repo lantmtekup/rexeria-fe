@@ -190,7 +190,10 @@ export function ImageTrail({
     );
 
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const images = React.useMemo(() => content.images ?? [], [content.images]);
+  const images = React.useMemo(
+    () => (Array.isArray(content.images) ? content.images : []),
+    [content.images]
+  );
   const threshold = content.threshold ?? 100;
   const lifespan = content.lifespan ?? 750;
   const inDuration = content.inDuration ?? 750;

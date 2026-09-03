@@ -63,7 +63,7 @@ export function ProtectionScrollytelling({
 
   const frameCount = content.frameCount || 240;
   const framePattern = content.framePattern || '';
-  const sections = content.sections ?? [];
+  const sections = Array.isArray(content.sections) ? content.sections : [];
   const yellow = content.accent || '#FCC200';
 
   React.useEffect(() => {

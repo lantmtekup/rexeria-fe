@@ -69,7 +69,7 @@ export function FlipGallery({
 
   const rootRef = React.useRef<HTMLDivElement>(null);
   const [spread, setSpread] = React.useState(false);
-  const images = content.images ?? [];
+  const images = Array.isArray(content.images) ? content.images : [];
 
   // Áp rotation cho state stack (sau khi layout đổi xong cũng giữ).
   const applyRotation = (toGrid: boolean) => {

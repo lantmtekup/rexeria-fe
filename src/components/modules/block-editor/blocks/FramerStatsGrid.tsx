@@ -72,7 +72,7 @@ export function FramerStatsGrid({
       positionStyle(positions, key)
     );
 
-  const stats = content.stats ?? [];
+  const stats = Array.isArray(content.stats) ? content.stats : [];
 
   return (
     <div

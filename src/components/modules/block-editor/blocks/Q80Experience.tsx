@@ -157,7 +157,7 @@ export function Q80Experience({
   const [soundOn, setSoundOn] = React.useState(false);
 
   const suites = React.useMemo<Q80SuiteItem[]>(
-    () => content.suites ?? [],
+    () => (Array.isArray(content.suites) ? content.suites : []),
     [content.suites]
   );
   const totalDots = suites.length + 2; // home + suites + contact
@@ -228,8 +228,10 @@ export function Q80Experience({
           hdrUrl: content.hdrUrl,
           cloudTintUrl: content.cloudTintUrl,
           introCloudUrl: content.introCloudUrl,
-          layerUrls: content.layerUrls ?? [],
-          buildingUrls: content.buildingUrls ?? [],
+          layerUrls: Array.isArray(content.layerUrls) ? content.layerUrls : [],
+          buildingUrls: Array.isArray(content.buildingUrls)
+            ? content.buildingUrls
+            : [],
           flare1Url: content.flare1Url,
           flare2Url: content.flare2Url,
         },
@@ -1473,7 +1475,10 @@ export function Q80Experience({
                 {suites[plansFloor]?.title ?? content.overviewLabel}
               </h4>
               <dl style={{ marginTop: 14 }}>
-                {(content.infoItems ?? []).map(it => (
+                {(Array.isArray(content.infoItems)
+                  ? content.infoItems
+                  : []
+                ).map(it => (
                   <div
                     key={it.title}
                     className='flex items-baseline justify-between'
@@ -1520,19 +1525,21 @@ export function Q80Experience({
                 Features
               </div>
               <ul style={{ marginTop: 8 }}>
-                {(content.features ?? []).map(f => (
-                  <li
-                    key={f}
-                    style={{
-                      fontFamily: Q80_FONT_SANS,
-                      fontSize: 13,
-                      lineHeight: 1.7,
-                      color: '#4c4a45',
-                    }}
-                  >
-                    {f}
-                  </li>
-                ))}
+                {(Array.isArray(content.features) ? content.features : []).map(
+                  f => (
+                    <li
+                      key={f}
+                      style={{
+                        fontFamily: Q80_FONT_SANS,
+                        fontSize: 13,
+                        lineHeight: 1.7,
+                        color: '#4c4a45',
+                      }}
+                    >
+                      {f}
+                    </li>
+                  )
+                )}
               </ul>
             </div>
           </div>

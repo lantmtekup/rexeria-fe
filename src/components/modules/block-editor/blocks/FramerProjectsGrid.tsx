@@ -87,7 +87,7 @@ export function FramerProjectsGrid({
       positionStyle(positions, key)
     );
 
-  const projects = content.projects ?? [];
+  const projects = Array.isArray(content.projects) ? content.projects : [];
 
   return (
     <div

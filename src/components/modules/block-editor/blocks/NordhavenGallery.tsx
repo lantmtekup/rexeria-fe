@@ -43,7 +43,7 @@ export function NordhavenGallery({
       orderStyle(order, k),
       positionStyle(positions, k)
     );
-  const images = content.images ?? [];
+  const images = Array.isArray(content.images) ? content.images : [];
   return (
     <div
       style={blockBackgroundStyle(background)}

@@ -44,7 +44,7 @@ export function FirmaServices({
       orderStyle(order, k),
       positionStyle(positions, k)
     );
-  const items = content.items ?? [];
+  const items = Array.isArray(content.items) ? content.items : [];
   return (
     <div
       style={blockBackgroundStyle(background)}

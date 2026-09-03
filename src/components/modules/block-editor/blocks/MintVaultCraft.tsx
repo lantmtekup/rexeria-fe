@@ -49,7 +49,7 @@ export function MintVaultCraft({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
-  const items = content.items ?? [];
+  const items = Array.isArray(content.items) ? content.items : [];
 
   const isCanvas = useIsCanvasEdit(rootRef);
 

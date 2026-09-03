@@ -39,7 +39,7 @@ export function LineaPortfolio({
 }: BlockRenderProps<LineaPortfolioContent>) {
   const rootRef = React.useRef<HTMLElement>(null);
   const isCanvas = useIsCanvasEdit(rootRef);
-  const items = content.items ?? [];
+  const items = Array.isArray(content.items) ? content.items : [];
   const bgColor = content.bgColor || '#ffffff';
   const textColor = content.textColor || '#121212';
 

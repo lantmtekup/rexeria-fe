@@ -32,7 +32,7 @@ export function InteractiveGrid({
   background,
   className,
 }: InteractiveGridProps) {
-  const images = content.images ?? [];
+  const images = Array.isArray(content.images) ? content.images : [];
   const [hover, setHover] = React.useState<number | null>(null);
 
   return (

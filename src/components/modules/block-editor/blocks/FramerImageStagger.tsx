@@ -82,7 +82,7 @@ export function FramerImageStagger({
       positionStyle(positions, key)
     );
 
-  const images = content.images ?? [];
+  const images = Array.isArray(content.images) ? content.images : [];
 
   return (
     <div

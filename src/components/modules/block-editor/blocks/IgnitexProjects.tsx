@@ -107,7 +107,7 @@ export function IgnitexProjects({
       orderStyle(order, k),
       positionStyle(positions, k)
     );
-  const items = content.items ?? [];
+  const items = Array.isArray(content.items) ? content.items : [];
 
   return (
     <div

@@ -83,7 +83,7 @@ export function RealEstateUtilities({
   const isMobile = useContainerMobile(rootRef);
   const tier = isMobile ? TIER.mobile : TIER.wide;
   const cols = tier.cols;
-  const items = content.items ?? [];
+  const items = Array.isArray(content.items) ? content.items : [];
 
   const styleOf = (key: string) =>
     composeStyle(

@@ -159,55 +159,57 @@ export function RealEstateHero({
             gap: tier.statsGap,
           }}
         >
-          {(content.stats ?? []).map((stat, i) => {
-            const labelKey = `stats[${i}].label`;
-            const valueKey = `stats[${i}].value`;
-            return (
-              <div
-                key={i}
-                className={cn(
-                  'flex flex-col whitespace-pre',
-                  tier.statsAlign === 'start' ? 'items-start' : 'items-center'
-                )}
-              >
-                <span
-                  data-element-key={labelKey}
-                  className={selectableClass(activeKey === labelKey)}
-                  style={composeStyle(
-                    {
-                      fontFamily: FONT_BODY,
-                      fontSize: tier.labelSize,
-                      lineHeight: 2.218,
-                      letterSpacing: '0.03em',
-                      color: 'rgb(255, 255, 255)',
-                      textAlign: tier.statsAlign,
-                    },
-                    styleOf(labelKey)
+          {(Array.isArray(content.stats) ? content.stats : []).map(
+            (stat, i) => {
+              const labelKey = `stats[${i}].label`;
+              const valueKey = `stats[${i}].value`;
+              return (
+                <div
+                  key={i}
+                  className={cn(
+                    'flex flex-col whitespace-pre',
+                    tier.statsAlign === 'start' ? 'items-start' : 'items-center'
                   )}
                 >
-                  {stat.label}
-                </span>
-                <span
-                  data-element-key={valueKey}
-                  className={selectableClass(activeKey === valueKey)}
-                  style={composeStyle(
-                    {
-                      fontFamily: FONT_HEADING,
-                      fontSize: tier.valueSize,
-                      lineHeight: 1.2675,
-                      letterSpacing: '0.03em',
-                      color: 'rgb(255, 255, 255)',
-                      fontWeight: 400,
-                      textAlign: tier.statsAlign,
-                    },
-                    styleOf(valueKey)
-                  )}
-                >
-                  {stat.value}
-                </span>
-              </div>
-            );
-          })}
+                  <span
+                    data-element-key={labelKey}
+                    className={selectableClass(activeKey === labelKey)}
+                    style={composeStyle(
+                      {
+                        fontFamily: FONT_BODY,
+                        fontSize: tier.labelSize,
+                        lineHeight: 2.218,
+                        letterSpacing: '0.03em',
+                        color: 'rgb(255, 255, 255)',
+                        textAlign: tier.statsAlign,
+                      },
+                      styleOf(labelKey)
+                    )}
+                  >
+                    {stat.label}
+                  </span>
+                  <span
+                    data-element-key={valueKey}
+                    className={selectableClass(activeKey === valueKey)}
+                    style={composeStyle(
+                      {
+                        fontFamily: FONT_HEADING,
+                        fontSize: tier.valueSize,
+                        lineHeight: 1.2675,
+                        letterSpacing: '0.03em',
+                        color: 'rgb(255, 255, 255)',
+                        fontWeight: 400,
+                        textAlign: tier.statsAlign,
+                      },
+                      styleOf(valueKey)
+                    )}
+                  >
+                    {stat.value}
+                  </span>
+                </div>
+              );
+            }
+          )}
         </div>
       </div>
     </div>

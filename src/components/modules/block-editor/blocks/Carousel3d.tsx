@@ -46,7 +46,7 @@ export function Carousel3d({
   activeKey,
   className,
 }: Carousel3dProps) {
-  const slides = content.slides ?? [];
+  const slides = Array.isArray(content.slides) ? content.slides : [];
   const [index, setIndex] = React.useState(0);
   const perspective = content.perspectivePx ?? 1200;
 

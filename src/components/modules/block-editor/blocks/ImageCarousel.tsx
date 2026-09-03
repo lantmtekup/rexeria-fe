@@ -46,7 +46,7 @@ export function ImageCarousel({
   activeKey,
   className,
 }: ImageCarouselProps) {
-  const slides = content.slides ?? [];
+  const slides = Array.isArray(content.slides) ? content.slides : [];
   const showNav = content.showNavArrows ?? true;
   const showPag = content.showPagination ?? true;
   const autoplayMs = content.autoplayMs ?? 0;

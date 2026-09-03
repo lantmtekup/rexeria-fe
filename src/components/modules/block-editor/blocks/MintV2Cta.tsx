@@ -50,7 +50,7 @@ export function MintV2Cta({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
-  const contacts = content.contacts ?? [];
+  const contacts = Array.isArray(content.contacts) ? content.contacts : [];
   const [form, setForm] = React.useState({
     name: '',
     email: '',

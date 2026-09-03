@@ -61,7 +61,7 @@ export function WheelGallery({
 
   const rootRef = React.useRef<HTMLDivElement>(null);
   const wheelRef = React.useRef<HTMLDivElement>(null);
-  const images = content.images ?? [];
+  const images = Array.isArray(content.images) ? content.images : [];
   const n = images.length;
 
   useGSAP(

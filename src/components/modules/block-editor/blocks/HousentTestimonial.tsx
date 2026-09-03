@@ -47,7 +47,7 @@ export function HousentTestimonial({
       orderStyle(order, k),
       positionStyle(positions, k)
     );
-  const items = content.items ?? [];
+  const items = Array.isArray(content.items) ? content.items : [];
   const scrollerRef = React.useRef<HTMLDivElement>(null);
   const scrollBy = (dir: number) => {
     const el = scrollerRef.current;

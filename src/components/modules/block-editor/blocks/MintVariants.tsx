@@ -59,7 +59,7 @@ export function MintVariants({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
-  const variants = content.variants ?? [];
+  const variants = Array.isArray(content.variants) ? content.variants : [];
   const [active, setActive] = React.useState(variants[0]?.key ?? '');
   const [discoverOpen, setDiscoverOpen] = React.useState(false);
   const activeIdx = Math.max(

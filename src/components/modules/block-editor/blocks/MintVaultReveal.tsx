@@ -49,7 +49,7 @@ export function MintVaultReveal({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
-  const images = content.images ?? [];
+  const images = Array.isArray(content.images) ? content.images : [];
 
   const isCanvas = useIsCanvasEdit(rootRef);
 

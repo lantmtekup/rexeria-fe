@@ -65,7 +65,7 @@ export function Flipbook({
   const sTitle = styleOf('title');
   const sPages = styleOf('pages');
 
-  const pages = content.pages ?? [];
+  const pages = Array.isArray(content.pages) ? content.pages : [];
   const [page, setPage] = React.useState(0);
   const aspectClass = ASPECT_CLASS[content.aspect ?? '3/4'];
 
