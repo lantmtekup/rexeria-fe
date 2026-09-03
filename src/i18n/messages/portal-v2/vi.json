@@ -597,32 +597,37 @@
         "unmeasured": "chưa đo"
       },
       "pages": {
-        "statusLive": "Live",
-        "statusDraft": "Nháp",
         "kpi": {
           "views": "Lượt xem",
           "uniques": "Khách unique",
           "clicks": "Click",
           "ctr": "CTR trung bình",
-          "conversions": "Chuyển đổi",
-          "scroll": "Độ sâu cuộn TB"
+          "conversions": "Chuyển đổi"
         },
-        "listTitle": "{count} trang đã xuất bản",
-        "listNote": "14 ngày gần nhất · so với kỳ trước",
+        "listTitle": "{count} trang đang live",
+        "listNote": "gần đây",
         "colPage": "Trang",
         "colViews": "Lượt xem",
         "colUniques": "Khách unique",
         "colClicks": "Click",
         "colCtr": "CTR",
-        "colUpdated": "Cập nhật",
+        "colConversions": "Chuyển đổi",
+        "unmeasured": "Chưa đo",
+        "emptyTitle": "Chưa có trang nào đang live",
+        "emptyBody": "Deploy một trang ở mục Deploy để bắt đầu đo lường.",
+        "loadError": "Không tải được dữ liệu",
+        "loading": "Đang tải chi tiết…",
         "back": "Danh sách trang",
         "viewPage": "Xem trang",
-        "trendTitle": "Xu hướng 14 ngày",
-        "legendViews": "Lượt xem",
-        "legendClicks": "Click",
+        "trendTitle": "Xu hướng theo ngày",
+        "legendVisits": "Lượt truy cập",
+        "legendLeads": "Lead",
+        "trendEmpty": "Chưa đủ dữ liệu theo ngày.",
         "sourcesTitle": "Nguồn truy cập",
+        "sourcesEmpty": "Chưa có dữ liệu nguồn.",
         "blocksTitle": "Hiệu quả theo block",
         "blocksNote": "block nào được xem & bấm nhiều nhất",
+        "blocksEmpty": "Chưa có dữ liệu block.",
         "colBlock": "Block",
         "colDwell": "Dwell TB"
       }
@@ -2313,7 +2318,10 @@
       "liveDetailGenerateCaption": "AI sinh caption",
       "liveDetailGeneratingCaption": "Đang sinh caption…",
       "liveDetailCaptionCopiedToast": "Đã copy caption",
-      "liveDetailCaptionFailedToast": "Không sinh được caption"
+      "liveDetailCaptionFailedToast": "Không sinh được caption",
+      "liveShareLabel": "Link test nguồn truy cập",
+      "liveShareHint": "Copy hoặc mở mỗi link ở tab/máy khác để tạo lượt truy cập theo nguồn — xem kết quả ở Analytics › Trang › Nguồn truy cập.",
+      "liveShareOpen": "Mở thử"
     },
     "settings": {
       "title": "Cài đặt",

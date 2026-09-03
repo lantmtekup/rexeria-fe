@@ -15,12 +15,15 @@ import { writePulseViewState } from '@/lib/portal-v2/analytics/params';
 import type { PulseBlockRow } from '@/lib/portal-v2/analytics/pulseView';
 import type { PulseViewState } from '@/lib/portal-v2/analytics/types';
 import type { PulseOverviewData } from '@/services/portal-v2/analyticsPulse';
+import type { LivePagesResult } from '@/services/portal-v2/livePages';
 
 type AnalyticsWorkspaceProps = {
   initialState: PulseViewState;
   /** Nạp ở server — tab đầu tiên không chớp một khung rỗng rồi mới có số. */
   overview: PulseOverviewData;
   blocks: PulseBlockRow[];
+  /** Trang đã live + tổng view — nạp ở server cho tab "Trang". */
+  livePages: LivePagesResult;
   brandId: string | null;
 };
 
@@ -28,6 +31,7 @@ export const AnalyticsWorkspace = ({
   initialState,
   overview,
   blocks,
+  livePages,
   brandId,
 }: AnalyticsWorkspaceProps) => {
   const t = useTranslations('portalV2.analytics');
@@ -116,7 +120,7 @@ export const AnalyticsWorkspace = ({
             blocks={blocks}
           />
         ) : null}
-        {state.lens === 'pages' ? <PagesPanel /> : null}
+        {state.lens === 'pages' ? <PagesPanel data={livePages} /> : null}
         {state.lens === 'analytics' ? (
           <AnalyticsDrillPanel
             state={state}

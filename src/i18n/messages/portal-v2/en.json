@@ -597,32 +597,37 @@
         "unmeasured": "unmeasured"
       },
       "pages": {
-        "statusLive": "Live",
-        "statusDraft": "Draft",
         "kpi": {
           "views": "Page views",
           "uniques": "Unique visitors",
           "clicks": "Clicks",
           "ctr": "Avg. CTR",
-          "conversions": "Conversions",
-          "scroll": "Avg. scroll depth"
+          "conversions": "Conversions"
         },
-        "listTitle": "{count} published pages",
-        "listNote": "Last 14 days · vs previous period",
+        "listTitle": "{count} live pages",
+        "listNote": "recent",
         "colPage": "Page",
         "colViews": "Views",
         "colUniques": "Unique",
         "colClicks": "Clicks",
         "colCtr": "CTR",
-        "colUpdated": "Updated",
+        "colConversions": "Conversions",
+        "unmeasured": "No data yet",
+        "emptyTitle": "No pages are live yet",
+        "emptyBody": "Deploy a page from Deploy to start measuring.",
+        "loadError": "Couldn't load data",
+        "loading": "Loading details…",
         "back": "Pages list",
         "viewPage": "View page",
-        "trendTitle": "14-day trend",
-        "legendViews": "Views",
-        "legendClicks": "Clicks",
+        "trendTitle": "Daily trend",
+        "legendVisits": "Visits",
+        "legendLeads": "Leads",
+        "trendEmpty": "Not enough daily data yet.",
         "sourcesTitle": "Traffic sources",
+        "sourcesEmpty": "No source data yet.",
         "blocksTitle": "Performance by block",
         "blocksNote": "which block is viewed & clicked most",
+        "blocksEmpty": "No block data yet.",
         "colBlock": "Block",
         "colDwell": "Avg. dwell"
       }
@@ -2313,7 +2318,10 @@
       "liveDetailGenerateCaption": "AI-generate caption",
       "liveDetailGeneratingCaption": "Generating caption…",
       "liveDetailCaptionCopiedToast": "Caption copied",
-      "liveDetailCaptionFailedToast": "Could not generate a caption"
+      "liveDetailCaptionFailedToast": "Could not generate a caption",
+      "liveShareLabel": "Traffic-source test links",
+      "liveShareHint": "Copy or open each link in a separate tab/device to generate visits per source — see them in Analytics › Pages › Traffic sources.",
+      "liveShareOpen": "Open"
     },
     "settings": {
       "title": "Settings",

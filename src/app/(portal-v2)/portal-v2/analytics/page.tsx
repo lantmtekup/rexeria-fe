@@ -3,6 +3,7 @@ import { AnalyticsWorkspace } from '@/components/organisms/portal-v2/analytics/A
 import { readPulseViewState } from '@/lib/portal-v2/analytics/params';
 import { blockRowOf } from '@/lib/portal-v2/analytics/pulseView';
 import { fetchPulseOverview } from '@/services/portal-v2/analyticsPulse';
+import { fetchLivePages } from '@/services/portal-v2/livePages';
 import { resolvePortalScope } from '@/services/portal-v2/scope';
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 
@@ -28,12 +29,15 @@ export default async function PortalV2AnalyticsPage({ searchParams }: Props) {
   // "tốt nhất", chỉ là 2 cái đầu tiên gặp phải. `blocksRank` role rỗng = không
   // lọc theo vai (`roleFilter != ""` ở BE `intel.go`), vẫn sort theo
   // `ContributionScore` rồi cắt top 3 — đúng thứ cần cho widget tổng quan này.
-  const [overview, blocks] = await Promise.all([
+  const [overview, blocks, livePages] = await Promise.all([
     fetchPulseOverview({ brandId: scope.brandId }),
     rexerV2Api.intel
       .blocksRank('', scope.brandId ? { brand_id: scope.brandId } : {})
       .then(res => res.items.map(blockRowOf))
       .catch(() => []),
+    // Tab "Trang" — trang đã live + tổng view. Tự bọc lỗi (rows/error), không
+    // kéo sập cả màn analytics.
+    fetchLivePages(),
   ]);
 
   return (
@@ -46,6 +50,7 @@ export default async function PortalV2AnalyticsPage({ searchParams }: Props) {
         initialState={initialState}
         overview={scope.error ? { ...overview, error: scope.error } : overview}
         blocks={blocks}
+        livePages={livePages}
         brandId={scope.brandId}
       />
     </div>
