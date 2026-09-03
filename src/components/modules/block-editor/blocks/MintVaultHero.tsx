@@ -110,7 +110,10 @@ export function MintVaultHero({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
-  const images = React.useMemo(() => content.images ?? [], [content.images]);
+  const images = React.useMemo(
+    () => (Array.isArray(content.images) ? content.images : []),
+    [content.images]
+  );
 
   const isCanvas = useIsCanvasEdit(rootRef);
 

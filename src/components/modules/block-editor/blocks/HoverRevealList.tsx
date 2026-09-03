@@ -57,7 +57,10 @@ export function HoverRevealList({
 
   const rootRef = React.useRef<HTMLDivElement>(null);
   const previewRef = React.useRef<HTMLImageElement>(null);
-  const items = React.useMemo(() => content.items ?? [], [content.items]);
+  const items = React.useMemo(
+    () => (Array.isArray(content.items) ? content.items : []),
+    [content.items]
+  );
 
   React.useEffect(() => {
     const root = rootRef.current;

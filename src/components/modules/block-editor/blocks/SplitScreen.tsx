@@ -55,7 +55,7 @@ export function SplitScreen({
   const sDescription = styleOf('description');
   const sViews = styleOf('views');
 
-  const views = content.views ?? [];
+  const views = Array.isArray(content.views) ? content.views : [];
   const [activeIdx, setActiveIdx] = React.useState(
     Math.max(0, Math.min(views.length - 1, content.defaultIndex ?? 0))
   );

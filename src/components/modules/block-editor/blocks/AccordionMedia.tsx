@@ -47,7 +47,7 @@ export function AccordionMedia({
   keyPrefix,
   styleOf,
 }: AccordionMediaProps) {
-  const items = content.items ?? [];
+  const items = Array.isArray(content.items) ? content.items : [];
   const [active, setActive] = React.useState(0);
   const editable = !!keyPrefix;
   const resolve = styleOf ?? (() => undefined);

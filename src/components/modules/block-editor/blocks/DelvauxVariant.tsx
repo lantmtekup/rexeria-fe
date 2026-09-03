@@ -134,8 +134,8 @@ export function DelvauxVariant({
   const [mounted, setMounted] = React.useState(false);
   const [portalHost, setPortalHost] = React.useState<HTMLElement | null>(null);
 
-  const variants = content.variants ?? [];
-  const faqs = content.faqs ?? [];
+  const variants = Array.isArray(content.variants) ? content.variants : [];
+  const faqs = Array.isArray(content.faqs) ? content.faqs : [];
   const activeVariant = variants[active] ?? variants[0];
   const hasSku = Boolean(content.skuName || content.skuMediaUrl);
   const skuLines = (content.skuName || '').split('\n');

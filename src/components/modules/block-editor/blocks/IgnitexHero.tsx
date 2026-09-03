@@ -44,7 +44,7 @@ export function IgnitexHero({
       orderStyle(order, k),
       positionStyle(positions, k)
     );
-  const services = content.services ?? [];
+  const services = Array.isArray(content.services) ? content.services : [];
   return (
     <div
       style={blockBackgroundStyle(background)}

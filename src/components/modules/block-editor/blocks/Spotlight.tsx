@@ -44,7 +44,7 @@ export function Spotlight({
   className,
 }: SpotlightProps) {
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const lines = content.lines ?? [];
+  const lines = Array.isArray(content.lines) ? content.lines : [];
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),

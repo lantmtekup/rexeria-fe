@@ -47,7 +47,7 @@ export function HousentStats({
       orderStyle(order, key),
       positionStyle(positions, key)
     );
-  const stats = content.stats ?? [];
+  const stats = Array.isArray(content.stats) ? content.stats : [];
 
   return (
     <div

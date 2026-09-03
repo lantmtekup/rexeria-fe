@@ -43,7 +43,7 @@ export function FirmaTestimonial({
       orderStyle(order, k),
       positionStyle(positions, k)
     );
-  const authors = content.authors ?? [];
+  const authors = Array.isArray(content.authors) ? content.authors : [];
   return (
     <div
       style={blockBackgroundStyle(background)}

@@ -123,7 +123,7 @@ export function DelvauxSubnav({
     };
   }, [isCanvas]);
 
-  const links = content.links ?? [];
+  const links = Array.isArray(content.links) ? content.links : [];
   const linkTargetsKey = links.map(l => l.targetId).join('|');
 
   React.useEffect(() => {

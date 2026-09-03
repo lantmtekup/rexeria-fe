@@ -286,7 +286,7 @@ export function Q80Menu({
               marginLeft: 'clamp(24px, 8cqi, 120px)',
             }}
           >
-            {(content.links ?? []).map((l, i) => (
+            {(Array.isArray(content.links) ? content.links : []).map((l, i) => (
               <button
                 key={l.target + i}
                 type='button'
@@ -440,7 +440,7 @@ export function Q80Menu({
               marginTop: 'clamp(18px, 3cqi, 40px)',
             }}
           >
-            {(content.credits ?? []).map(c => (
+            {(Array.isArray(content.credits) ? content.credits : []).map(c => (
               <div key={c.title}>
                 <div
                   style={{

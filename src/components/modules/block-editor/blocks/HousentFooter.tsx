@@ -47,7 +47,7 @@ export function HousentFooter({
       orderStyle(order, key),
       positionStyle(positions, key)
     );
-  const columns = content.columns ?? [];
+  const columns = Array.isArray(content.columns) ? content.columns : [];
 
   return (
     <div

@@ -45,7 +45,7 @@ export function NordhavenFaq({
       orderStyle(order, k),
       positionStyle(positions, k)
     );
-  const items = content.items ?? [];
+  const items = Array.isArray(content.items) ? content.items : [];
   const [open, setOpen] = React.useState(0);
   return (
     <div

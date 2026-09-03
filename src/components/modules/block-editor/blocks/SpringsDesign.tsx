@@ -87,7 +87,7 @@ export function SpringsDesign({
   activeKey,
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
-  const slides = content.slides ?? [];
+  const slides = Array.isArray(content.slides) ? content.slides : [];
 
   const styleOf = (key: string) =>
     composeStyle(

@@ -138,7 +138,10 @@ export function PnjStickyMenu({
     null
   );
 
-  const items = React.useMemo(() => content.items ?? [], [content.items]);
+  const items = React.useMemo(
+    () => (Array.isArray(content.items) ? content.items : []),
+    [content.items]
+  );
   const ctaText = content.ctaText?.trim() || 'Buy now';
   const ctaLink = content.ctaLink?.trim() || 'contact';
 

@@ -55,7 +55,7 @@ export function ProductSpecSheet({
     );
 
   const [open, setOpen] = React.useState(false);
-  const specs = content.specs ?? [];
+  const specs = Array.isArray(content.specs) ? content.specs : [];
 
   return (
     <div

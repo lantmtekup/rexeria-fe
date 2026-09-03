@@ -157,7 +157,7 @@ export function DelvauxProduct({
       positionStyle(positions, key)
     );
 
-  const hotspots = content.hotspots ?? [];
+  const hotspots = Array.isArray(content.hotspots) ? content.hotspots : [];
   const isOpen = openIdx !== null;
   const openSpot = openIdx !== null ? (hotspots[openIdx] ?? null) : null;
   const glow = content.glowColor || '#a77c63';

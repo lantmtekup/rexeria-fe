@@ -221,23 +221,25 @@ export function BrightedgeHero({
               className={selectableClass(activeKey === 'avatars', 'flex')}
               style={styleOf('avatars')}
             >
-              {(content.avatars ?? []).map((a, i) => (
-                <div
-                  key={a.id}
-                  className='size-11 shrink-0 overflow-hidden rounded-full ring-2 ring-[#fcfcfc]'
-                  style={{
-                    marginLeft: i === 0 ? 0 : -14,
-                    backgroundImage: a.imageUrl
-                      ? `url("${a.imageUrl.replace(/"/g, '%22')}")`
-                      : undefined,
-                    backgroundColor: a.imageUrl ? undefined : '#e5e5e5',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    zIndex: content.avatars.length - i,
-                    position: 'relative',
-                  }}
-                />
-              ))}
+              {(Array.isArray(content.avatars) ? content.avatars : []).map(
+                (a, i) => (
+                  <div
+                    key={a.id}
+                    className='size-11 shrink-0 overflow-hidden rounded-full ring-2 ring-[#fcfcfc]'
+                    style={{
+                      marginLeft: i === 0 ? 0 : -14,
+                      backgroundImage: a.imageUrl
+                        ? `url("${a.imageUrl.replace(/"/g, '%22')}")`
+                        : undefined,
+                      backgroundColor: a.imageUrl ? undefined : '#e5e5e5',
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                      zIndex: content.avatars.length - i,
+                      position: 'relative',
+                    }}
+                  />
+                )
+              )}
             </div>
             <a
               data-element-key='ctaLabel'

@@ -43,7 +43,7 @@ export function IgnitexAbout({
       orderStyle(order, k),
       positionStyle(positions, k)
     );
-  const stats = content.stats ?? [];
+  const stats = Array.isArray(content.stats) ? content.stats : [];
   return (
     <div
       style={blockBackgroundStyle(background)}

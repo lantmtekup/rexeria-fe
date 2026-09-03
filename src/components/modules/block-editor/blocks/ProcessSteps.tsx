@@ -44,7 +44,7 @@ export function ProcessSteps({
   className,
 }: ProcessStepsProps) {
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const steps = content.steps ?? [];
+  const steps = Array.isArray(content.steps) ? content.steps : [];
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),

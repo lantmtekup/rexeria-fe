@@ -100,7 +100,7 @@ export function InteractiveAdWidget({
   activeKey,
   className,
 }: InteractiveAdWidgetProps) {
-  const slides = content.slides ?? [];
+  const slides = Array.isArray(content.slides) ? content.slides : [];
   const autoplayMs = content.autoplayMs ?? 0;
   const closeable = content.closeable ?? true;
 

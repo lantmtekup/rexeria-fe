@@ -59,10 +59,13 @@ export function Quiz({
   // useMemo giữ identity ổn định — questions/results là dep của các useMemo
   // scoring bên dưới, mảng mới mỗi render làm chúng recompute vô ích.
   const questions = React.useMemo(
-    () => content.questions ?? [],
+    () => (Array.isArray(content.questions) ? content.questions : []),
     [content.questions]
   );
-  const results = React.useMemo(() => content.results ?? [], [content.results]);
+  const results = React.useMemo(
+    () => (Array.isArray(content.results) ? content.results : []),
+    [content.results]
+  );
   const [step, setStep] = React.useState(0);
   // answers[i] = option id chosen for questions[i]
   const [answers, setAnswers] = React.useState<Record<string, string>>({});

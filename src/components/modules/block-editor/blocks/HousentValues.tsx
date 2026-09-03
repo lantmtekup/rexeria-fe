@@ -45,7 +45,7 @@ export function HousentValues({
       orderStyle(order, k),
       positionStyle(positions, k)
     );
-  const items = content.items ?? [];
+  const items = Array.isArray(content.items) ? content.items : [];
   const cards: (typeof items)[] = [];
   for (let i = 0; i < items.length; i += 2) {
     cards.push(items.slice(i, i + 2));

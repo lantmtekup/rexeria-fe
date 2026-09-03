@@ -58,7 +58,7 @@ export function LightboxFlip({
   const rootRef = React.useRef<HTMLDivElement>(null);
   const overlayRef = React.useRef<HTMLDivElement>(null);
   const animating = React.useRef(false);
-  const images = content.images ?? [];
+  const images = Array.isArray(content.images) ? content.images : [];
   const columns = content.columns ?? 4;
   const duration = content.duration ?? 0.6;
 

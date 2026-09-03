@@ -36,7 +36,7 @@ export function SeamlessScrollGallery({
   activeKey,
   className,
 }: SeamlessScrollGalleryProps) {
-  const images = content.images ?? [];
+  const images = Array.isArray(content.images) ? content.images : [];
   const seconds = content.seconds ?? 30;
 
   return (

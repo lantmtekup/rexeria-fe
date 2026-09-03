@@ -44,7 +44,7 @@ export function LumeaFooter({
       orderStyle(order, k),
       positionStyle(positions, k)
     );
-  const links = content.links ?? [];
+  const links = Array.isArray(content.links) ? content.links : [];
   return (
     <div
       style={blockBackgroundStyle(background)}

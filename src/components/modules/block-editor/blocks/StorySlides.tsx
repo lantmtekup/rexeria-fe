@@ -44,7 +44,7 @@ export function StorySlides({
   activeKey,
   className,
 }: StorySlidesProps) {
-  const slides = content.slides ?? [];
+  const slides = Array.isArray(content.slides) ? content.slides : [];
   const duration = content.duration ?? 4000;
   const [active, setActive] = React.useState(0);
   const [reduced, setReduced] = React.useState(false);

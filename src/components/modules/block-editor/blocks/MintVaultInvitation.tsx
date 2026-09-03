@@ -110,7 +110,7 @@ export function MintVaultInvitation({
   const [status, setStatus] = React.useState<'idle' | 'loading' | 'done'>(
     'idle'
   );
-  const images = content.images ?? [];
+  const images = Array.isArray(content.images) ? content.images : [];
 
   const isCanvas = useIsCanvasEdit(rootRef);
 

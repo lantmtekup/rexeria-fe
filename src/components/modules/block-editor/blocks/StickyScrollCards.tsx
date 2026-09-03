@@ -60,7 +60,7 @@ export function StickyScrollCards({
     );
 
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const cards = content.cards ?? [];
+  const cards = Array.isArray(content.cards) ? content.cards : [];
   const finalScale = content.finalScale ?? 0.5;
   const rotateDeg = content.rotateDeg ?? 10;
   const imageZoom = content.imageZoom ?? 1.5;

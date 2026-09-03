@@ -55,7 +55,10 @@ export function ParallaxHero({
     );
 
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const layers = React.useMemo(() => content.layers ?? [], [content.layers]);
+  const layers = React.useMemo(
+    () => (Array.isArray(content.layers) ? content.layers : []),
+    [content.layers]
+  );
   const marqueeText = content.marqueeText;
   const marqueeSeconds = content.marqueeSeconds ?? 40;
 

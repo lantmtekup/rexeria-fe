@@ -102,7 +102,7 @@ export function PnjHero({
   const lastStepRef = React.useRef(-1);
   const inPinRef = React.useRef(false);
 
-  const hotspots = content.hotspots ?? [];
+  const hotspots = Array.isArray(content.hotspots) ? content.hotspots : [];
   const titleLines = React.useMemo(
     () => resolvePnjHeroTitleLines(content),
     [content.titleLines, content.titleLine1, content.titleLine2]

@@ -73,7 +73,7 @@ export function Gallery3dDepth({
     );
 
   const rootRef = React.useRef<HTMLDivElement>(null);
-  const images = content.images ?? [];
+  const images = Array.isArray(content.images) ? content.images : [];
   const stagger = content.stagger ?? 0.25;
   const duration = content.duration ?? 2;
 
