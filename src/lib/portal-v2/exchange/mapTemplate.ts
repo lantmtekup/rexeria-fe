@@ -51,7 +51,11 @@ const authorOf = (t: Template): string => {
   return 'ReXeR';
 };
 
-export const mapTemplateToListing = (t: Template): ExchangeListingView => {
+export const mapTemplateToListing = (
+  t: Template,
+  /** Slug from a published page the caller can list — used when BE omits `preview_slug`. */
+  publishedSlug?: string
+): ExchangeListingView => {
   const meta: ExchangeListingMeta = {
     // Kho nền tảng — dùng được, không phải mua. `0` ở đây là giá THẬT.
     price: 0,
@@ -65,15 +69,18 @@ export const mapTemplateToListing = (t: Template): ExchangeListingView => {
     // evidence / coverage bỏ trống: chưa ai đo trải nghiệm gốc này trên chợ.
   };
 
+  const slug = t.preview_slug || publishedSlug;
+
   return {
     id: `tpl-${t.id}`,
     source: 'page',
     templateId: t.id,
-    // Xem trước đi qua `/p/{slug}` của trang nguồn. Trải nghiệm gốc không có slug
-    // riêng, và FE của một brand không tra nổi trang thuộc brand khác — nên
-    // slug này do BE giải sẵn (`preview_slug`).
-    ...(t.preview_slug ? { slug: t.preview_slug } : {}),
+    // Xem trước đi qua `/p/{slug}`. Template không có slug riêng. BE *nên*
+    // giải `preview_slug`; swagger hiện tại chưa có field đó, nên catalog
+    // truyền thêm slug page đã publish (nếu tài khoản này list được).
+    ...(slug ? { slug } : {}),
     templateVersionId: t.current_version_id,
+    ...(t.code ? { templateCode: t.code } : {}),
     name: t.name || t.code || 'Untitled',
     author: authorOf(t),
     description: t.description || '',

@@ -359,6 +359,11 @@ export interface Template {
    * publish. Template không có slug của riêng nó — slug thuộc về trang.
    */
   preview_slug?: string;
+  /**
+   * Page this template was promoted from (swagger `promoted_from_page_id`).
+   * Inverse of preview_slug — BE serializes the id, not the slug.
+   */
+  promoted_from_page_id?: string;
   category?: string;
   tags?: string[];
   /** Spec §4.3.1 discriminator (mig 132). 'landing' | 'ad' | 'curate' | 'email'. */

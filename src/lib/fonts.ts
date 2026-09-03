@@ -146,6 +146,14 @@ export const FONTS: FontDef[] = [
     category: 'serif',
     weights: [400, 700, 900],
   },
+  {
+    id: 'cormorant-infant',
+    label: 'Cormorant Infant',
+    family: `'Cormorant Infant', ${SYSTEM_FALLBACK_SERIF}`,
+    category: 'serif',
+    weights: [300, 400, 500, 600, 700],
+    note: 'The Westly — display serif',
+  },
 
   // ── Display ──────────────────────────────────────────────────────────
   {

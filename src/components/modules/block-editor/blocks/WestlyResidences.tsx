@@ -22,7 +22,9 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useWestlyPointer } from './WestlyPointer';
 import { useContainerMobile } from './useContainerMobile';
+import { WESTLY_FONT_DISPLAY, WESTLY_FONT_UI } from './westlyTheme';
 import {
   resolveWestlyResidences,
   westlyPlanRatio,
@@ -71,6 +73,7 @@ const DEFAULT_VEIL = '#ffffff';
 
 const UI_LABEL_STYLE: React.CSSProperties = {
   margin: 0,
+  fontFamily: WESTLY_FONT_UI,
   fontSize: 'clamp(11px, 1.2cqi, 12px)',
   lineHeight: 1,
   fontWeight: 500,
@@ -184,6 +187,7 @@ export function WestlyResidences({
   const isMobile = useContainerMobile(rootRef);
   const isWide = useContainerWide(rootRef);
   const isCanvas = useIsCanvasEdit(rootRef);
+  const pointer = useWestlyPointer(isCanvas);
   const { scroller, requestRefresh } = useLandingMotion();
 
   const residences = React.useMemo(
@@ -867,6 +871,7 @@ export function WestlyResidences({
           {
             margin: 0,
             marginTop: 'clamp(20px, 2.2cqi, 32px)',
+            fontFamily: WESTLY_FONT_UI,
             fontSize: 'clamp(14px, 1.6cqi, 16px)',
             lineHeight: 1.6,
             color: ACCENT,
@@ -885,10 +890,15 @@ export function WestlyResidences({
     return (
       <section
         ref={rootRef}
+        data-westly-scope=''
         data-canvas-edit='true'
         className={cn('@container relative w-full', className)}
         style={composeStyle(
-          { backgroundColor: bgColor, padding: '40px 24px' },
+          {
+            fontFamily: WESTLY_FONT_DISPLAY,
+            backgroundColor: bgColor,
+            padding: '40px 24px',
+          },
           blockBackgroundStyle(background)
         )}
       >
@@ -1077,12 +1087,14 @@ export function WestlyResidences({
   return (
     <section
       ref={rootRef}
+      data-westly-scope=''
       className={cn('@container relative w-full', className)}
       style={composeStyle(
-        { backgroundColor: bgColor },
+        { fontFamily: WESTLY_FONT_DISPLAY, backgroundColor: bgColor },
         blockBackgroundStyle(background)
       )}
     >
+      {pointer}
       {/* Nội dung ghim (top âm do JS) — giữ nguyên màn cuối cho veil chạy. */}
       <div
         ref={stickyRef}
@@ -1396,6 +1408,7 @@ export function WestlyResidences({
                                 display: 'block',
                                 paddingRight: 14,
                                 paddingLeft: 2,
+                                fontFamily: WESTLY_FONT_UI,
                                 fontSize: 10,
                                 lineHeight: 1,
                                 fontWeight: 500,
@@ -1433,6 +1446,7 @@ export function WestlyResidences({
                             <p
                               style={{
                                 margin: 0,
+                                fontFamily: WESTLY_FONT_UI,
                                 fontSize: 10,
                                 lineHeight: 1.3,
                                 fontWeight: 500,
@@ -1479,6 +1493,7 @@ export function WestlyResidences({
                                 <p
                                   style={{
                                     margin: 0,
+                                    fontFamily: WESTLY_FONT_UI,
                                     fontSize: 9,
                                     lineHeight: 1,
                                     letterSpacing: '0.1em',
@@ -1491,6 +1506,7 @@ export function WestlyResidences({
                                 <p
                                   style={{
                                     margin: '4px 0 0',
+                                    fontFamily: WESTLY_FONT_UI,
                                     fontSize: 11,
                                     lineHeight: 1.3,
                                     fontWeight: 500,
@@ -1516,6 +1532,7 @@ export function WestlyResidences({
                   style={{
                     margin: '8px 0 0',
                     textAlign: 'center',
+                    fontFamily: WESTLY_FONT_UI,
                     fontSize: 12,
                     color: `${ACCENT}b3`,
                   }}

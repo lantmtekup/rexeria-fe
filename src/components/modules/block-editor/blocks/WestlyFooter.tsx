@@ -19,7 +19,9 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useWestlyPointer } from './WestlyPointer';
 import { useContainerMobile } from './useContainerMobile';
+import { WESTLY_FONT_DISPLAY } from './westlyTheme';
 
 interface WestlyFooterProps {
   content: WestlyFooterContent;
@@ -57,6 +59,7 @@ export function WestlyFooter({
   const rootRef = React.useRef<HTMLElement>(null);
   const isMobile = useContainerMobile(rootRef);
   const isCanvas = useIsCanvasEdit(rootRef);
+  const pointer = useWestlyPointer(isCanvas);
   const [hovered, setHovered] = React.useState(false);
 
   const styleOf = (key: string) =>
@@ -105,9 +108,11 @@ export function WestlyFooter({
   return (
     <footer
       ref={rootRef}
+      data-westly-scope=''
       className={cn('@container relative w-full overflow-hidden', className)}
       style={composeStyle(
         {
+          fontFamily: WESTLY_FONT_DISPLAY,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -118,6 +123,7 @@ export function WestlyFooter({
         blockBackgroundStyle(background)
       )}
     >
+      {pointer}
       <div
         style={{
           position: 'relative',

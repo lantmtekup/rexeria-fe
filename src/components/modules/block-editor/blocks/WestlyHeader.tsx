@@ -31,6 +31,7 @@ import {
   selectableClass,
 } from './applyStyle';
 import { isPnjExternalLink } from './PnjStickyMenu';
+import { WESTLY_FONT_DISPLAY } from './westlyTheme';
 
 /** Gradient trắng tan từ mép trên — chữ ký của header Westly. */
 const HEADER_GRADIENT =
@@ -133,10 +134,14 @@ export function WestlyHeader({
       </span>
     );
 
+  // Font đặt trên `bar` chứ không phải root: bar dùng chung cho cả 3 nhánh —
+  // kể cả nhánh portal (thoát khỏi rootRef nên không inherit được) — còn dòng
+  // hint tiếng Việt dưới canvas là chrome của editor, giữ font host.
   const bar = (
     <div
       className='pointer-events-none flex w-full justify-center'
       style={{
+        fontFamily: WESTLY_FONT_DISPLAY,
         paddingTop: 'clamp(24px, 3.2cqi, 32px)',
         paddingBottom: 40,
         background: HEADER_GRADIENT,
@@ -158,6 +163,7 @@ export function WestlyHeader({
     return (
       <section
         ref={rootRef}
+        data-westly-scope=''
         className={cn(
           '@container relative m-0 h-0 min-h-0 w-full overflow-visible border-0 p-0',
           className
@@ -170,6 +176,7 @@ export function WestlyHeader({
               inFrame ? 'absolute' : 'fixed'
             )}
             data-westly-header-fixed
+            data-westly-scope=''
           >
             {bar}
           </div>,
@@ -184,6 +191,7 @@ export function WestlyHeader({
     return (
       <section
         ref={rootRef}
+        data-westly-scope=''
         className={cn(
           '@container relative m-0 h-0 min-h-0 w-full overflow-visible border-0 p-0',
           className
@@ -196,6 +204,7 @@ export function WestlyHeader({
   return (
     <section
       ref={rootRef}
+      data-westly-scope=''
       data-canvas-edit='true'
       className={cn(
         '@container relative m-0 w-full overflow-hidden border-0 p-0',

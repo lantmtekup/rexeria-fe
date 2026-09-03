@@ -21,7 +21,9 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useWestlyPointer, westlyCursorToggle } from './WestlyPointer';
 import { useContainerMobile } from './useContainerMobile';
+import { WESTLY_FONT_DISPLAY, WESTLY_FONT_UI } from './westlyTheme';
 
 interface WestlySceneProps {
   content: WestlySceneContent;
@@ -98,6 +100,7 @@ export function WestlyScene({
   const rootRef = React.useRef<HTMLElement>(null);
   const isMobile = useContainerMobile(rootRef);
   const isCanvas = useIsCanvasEdit(rootRef);
+  const pointer = useWestlyPointer(isCanvas);
   const [revealed, setRevealed] = React.useState(false);
   // Motion effect đọc qua ref để không phải nằm trong deps (toggle không được
   // rebuild toàn bộ ScrollTrigger).
@@ -177,6 +180,7 @@ export function WestlyScene({
         style={composeStyle(
           {
             margin: 0,
+            fontFamily: WESTLY_FONT_UI,
             fontSize: 'clamp(11px, 1.2cqi, 12px)',
             lineHeight: 1,
             fontWeight: 500,
@@ -263,10 +267,15 @@ export function WestlyScene({
     return (
       <section
         ref={rootRef}
+        data-westly-scope=''
         data-canvas-edit='true'
         className={cn('@container relative w-full', className)}
         style={composeStyle(
-          { backgroundColor: bgColor, padding: '40px 24px' },
+          {
+            fontFamily: WESTLY_FONT_DISPLAY,
+            backgroundColor: bgColor,
+            padding: '40px 24px',
+          },
           blockBackgroundStyle(background)
         )}
       >
@@ -389,9 +398,11 @@ export function WestlyScene({
   return (
     <section
       ref={rootRef}
+      data-westly-scope=''
       className={cn('@container relative w-full', className)}
       style={composeStyle(
         {
+          fontFamily: WESTLY_FONT_DISPLAY,
           // 100dvh stage + dwell (ngân sách sweep: 100dvh desktop / 60dvh
           // mobile như apps) + 35dvh veil.
           height: isMobile ? '195dvh' : '235dvh',
@@ -400,6 +411,7 @@ export function WestlyScene({
         blockBackgroundStyle(background)
       )}
     >
+      {pointer}
       <div
         data-wsc='viewport'
         style={{
@@ -489,6 +501,7 @@ export function WestlyScene({
           <button
             data-wsc='reveal'
             type='button'
+            {...westlyCursorToggle}
             aria-pressed={revealed}
             aria-label={revealed ? revealHideLabel : revealShowLabel}
             onClick={onReveal}
