@@ -21,7 +21,9 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useWestlyPointer, westlyCursorToggle } from './WestlyPointer';
 import { useContainerMobile } from './useContainerMobile';
+import { WESTLY_FONT_DISPLAY, WESTLY_FONT_UI } from './westlyTheme';
 
 interface WestlyRevealProps {
   content: WestlyRevealContent;
@@ -105,6 +107,7 @@ export function WestlyReveal({
   const rootRef = React.useRef<HTMLElement>(null);
   const isMobile = useContainerMobile(rootRef);
   const isCanvas = useIsCanvasEdit(rootRef);
+  const pointer = useWestlyPointer(isCanvas);
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -136,6 +139,7 @@ export function WestlyReveal({
         style={composeStyle(
           {
             margin: 0,
+            fontFamily: WESTLY_FONT_UI,
             fontSize: 12,
             lineHeight: 1,
             fontWeight: 500,
@@ -192,10 +196,15 @@ export function WestlyReveal({
     return (
       <section
         ref={rootRef}
+        data-westly-scope=''
         data-canvas-edit='true'
         className={cn('@container relative w-full', className)}
         style={composeStyle(
-          { backgroundColor: bgColor, padding: '40px 24px' },
+          {
+            fontFamily: WESTLY_FONT_DISPLAY,
+            backgroundColor: bgColor,
+            padding: '40px 24px',
+          },
           blockBackgroundStyle(background)
         )}
       >
@@ -292,9 +301,11 @@ export function WestlyReveal({
   return (
     <section
       ref={rootRef}
+      data-westly-scope=''
       className={cn('@container relative w-full', className)}
       style={composeStyle(
         {
+          fontFamily: WESTLY_FONT_DISPLAY,
           // 100dvh stage + dwell (100/60) + 85dvh veil (range gốc → top 15%).
           height: isMobile ? '245dvh' : '285dvh',
           backgroundColor: bgColor,
@@ -302,11 +313,13 @@ export function WestlyReveal({
         blockBackgroundStyle(background)
       )}
     >
+      {pointer}
       {/* Cả hộp sticky là nút toggle — click bất kỳ đâu lật sketch ↔ ảnh. */}
       <div
         data-wv='viewport'
         role='button'
         tabIndex={0}
+        {...westlyCursorToggle}
         aria-pressed='false'
         aria-label='Toggle interior view'
         style={{

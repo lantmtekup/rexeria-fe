@@ -31,6 +31,7 @@ import {
   resolveActionState,
 } from '@/lib/portal-v2/exchange/helpers';
 import { writeExchangePreviewParam } from '@/lib/portal-v2/exchange/previewParam';
+import { resolveExchangePreviewSlug } from '@/lib/portal-v2/exchange/previewSlug';
 import { writeExchangeTabParam } from '@/lib/portal-v2/exchange/tabParam';
 import { experienceOpenHref } from '@/lib/portal-v2/experiences/openParam';
 import { PORTAL_V2_BASE } from '@/lib/portal-v2/nav';
@@ -244,18 +245,7 @@ export const ExchangeWorkspace = ({
     setPreviewReturnToDetail(false);
   }, []);
 
-  const canOpenPreview = useCallback(
-    (listing: ExchangeListingView): boolean => {
-      if (isPreviewable(listing)) return true;
-      toast.error(
-        listing.source === 'page'
-          ? t('previewMissingSlug')
-          : t('previewMissingBlockId')
-      );
-      return false;
-    },
-    [t]
-  );
+  const resolvingPreviewRef = useRef<string | null>(null);
 
   const openPreview = useCallback((listing: ExchangeListingView) => {
     setPreviewReturnToDetail(modalModeRef.current === 'detail');
@@ -263,12 +253,49 @@ export const ExchangeWorkspace = ({
     setModalMode('preview');
   }, []);
 
-  const handlePreview = useCallback(
-    (listing: ExchangeListingView) => {
-      if (!canOpenPreview(listing)) return;
-      openPreview(listing);
+  /**
+   * Template listing often has no `preview_slug` on the wire. Resolve the
+   * published `/p/{slug}` before opening, instead of toasting immediately.
+   */
+  const ensurePreviewable = useCallback(
+    async (
+      listing: ExchangeListingView
+    ): Promise<ExchangeListingView | null> => {
+      if (isPreviewable(listing)) return listing;
+      if (listing.source !== 'page') {
+        toast.error(t('previewMissingBlockId'));
+        return null;
+      }
+      if (resolvingPreviewRef.current === listing.id) return null;
+      resolvingPreviewRef.current = listing.id;
+      const toastId = toast.loading(t('previewLoading'));
+      try {
+        const slug = await resolveExchangePreviewSlug(listing);
+        if (!slug) {
+          toast.error(t('previewMissingSlug'));
+          return null;
+        }
+        return { ...listing, slug };
+      } catch {
+        toast.error(t('previewMissingSlug'));
+        return null;
+      } finally {
+        toast.dismiss(toastId);
+        if (resolvingPreviewRef.current === listing.id) {
+          resolvingPreviewRef.current = null;
+        }
+      }
     },
-    [canOpenPreview, openPreview]
+    [t]
+  );
+
+  const handlePreview = useCallback(
+    async (listing: ExchangeListingView) => {
+      const next = await ensurePreviewable(listing);
+      if (!next) return;
+      openPreview(next);
+    },
+    [ensurePreviewable, openPreview]
   );
 
   const handleClosePreview = useCallback(() => {
@@ -281,11 +308,12 @@ export const ExchangeWorkspace = ({
   }, [previewReturnToDetail, activeListing, handleCloseModal]);
 
   const handlePreviewNavigate = useCallback(
-    (listing: ExchangeListingView) => {
-      if (!canOpenPreview(listing)) return;
-      setActiveListing(listing);
+    async (listing: ExchangeListingView) => {
+      const next = await ensurePreviewable(listing);
+      if (!next) return;
+      setActiveListing(next);
     },
-    [canOpenPreview]
+    [ensurePreviewable]
   );
 
   /** Address bar follows the open preview, so the URL can be copied and pasted back. */

@@ -21,7 +21,9 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useWestlyPointer, westlyCursorToggle } from './WestlyPointer';
 import { useContainerMobile } from './useContainerMobile';
+import { WESTLY_FONT_DISPLAY, WESTLY_FONT_UI } from './westlyTheme';
 
 interface WestlyProductRevealProps {
   content: WestlyProductRevealContent;
@@ -47,7 +49,9 @@ interface WestlyProductRevealProps {
  * - Entrance chữ: toggleActions 'restart none restart reverse' thay cặp
  *   playUi/resetUi + ScrollTrigger.create.
  * - Reveal imperative trong effect (production không re-render → aria-pressed
- *   setAttribute an toàn); bỏ data-cursor-id (chrome của app).
+ *   setAttribute an toàn).
+ * - Con trỏ tùy biến: `westlyCursorToggle` trên stack + `useWestlyPointer`
+ *   (xem WestlyPointer.tsx — app mount ở page-level, host mount theo block).
  */
 
 const ACCENT = '#6E7A6F';
@@ -78,6 +82,7 @@ export function WestlyProductReveal({
   const rootRef = React.useRef<HTMLElement>(null);
   const isMobile = useContainerMobile(rootRef);
   const isCanvas = useIsCanvasEdit(rootRef);
+  const pointer = useWestlyPointer(isCanvas);
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -112,6 +117,7 @@ export function WestlyProductReveal({
         style={composeStyle(
           {
             margin: 0,
+            fontFamily: WESTLY_FONT_UI,
             fontSize: 'clamp(11px, 1.2cqi, 12px)',
             lineHeight: 1,
             fontWeight: 500,
@@ -150,6 +156,7 @@ export function WestlyProductReveal({
           {
             margin: 0,
             marginTop: 'clamp(16px, 2.2cqi, 32px)',
+            fontFamily: WESTLY_FONT_UI,
             fontSize: 'clamp(14px, 1.6cqi, 16px)',
             lineHeight: 1.625,
             color: ACCENT,
@@ -182,10 +189,15 @@ export function WestlyProductReveal({
     return (
       <section
         ref={rootRef}
+        data-westly-scope=''
         data-canvas-edit='true'
         className={cn('@container relative w-full', className)}
         style={composeStyle(
-          { backgroundColor: bgColor, padding: '40px 24px' },
+          {
+            fontFamily: WESTLY_FONT_DISPLAY,
+            backgroundColor: bgColor,
+            padding: '40px 24px',
+          },
           blockBackgroundStyle(background)
         )}
       >
@@ -285,9 +297,11 @@ export function WestlyProductReveal({
   return (
     <section
       ref={rootRef}
+      data-westly-scope=''
       className={cn('@container relative w-full', className)}
       style={composeStyle(
         {
+          fontFamily: WESTLY_FONT_DISPLAY,
           backgroundColor: bgColor,
           overflow: 'hidden',
           ...(isMobile
@@ -302,6 +316,7 @@ export function WestlyProductReveal({
         blockBackgroundStyle(background)
       )}
     >
+      {pointer}
       <div
         style={{
           width: '100%',
@@ -318,6 +333,7 @@ export function WestlyProductReveal({
           data-wp='stack'
           role='button'
           tabIndex={0}
+          {...westlyCursorToggle}
           aria-pressed='false'
           aria-label='Toggle the finished view'
           style={{

@@ -21,7 +21,9 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useWestlyPointer } from './WestlyPointer';
 import { useContainerMobile } from './useContainerMobile';
+import { WESTLY_FONT_DISPLAY } from './westlyTheme';
 
 interface WestlyHeroProps {
   content: WestlyHeroContent;
@@ -116,6 +118,7 @@ export function WestlyHero({
   const stageRef = React.useRef<HTMLDivElement>(null);
   const isMobile = useContainerMobile(rootRef);
   const isCanvas = useIsCanvasEdit(rootRef);
+  const pointer = useWestlyPointer(isCanvas);
   const { scroller } = useLandingMotion();
   const [ctaHovered, setCtaHovered] = React.useState(false);
 
@@ -259,10 +262,15 @@ export function WestlyHero({
     return (
       <section
         ref={rootRef}
+        data-westly-scope=''
         data-canvas-edit='true'
         className={cn('@container relative w-full', className)}
         style={composeStyle(
-          { backgroundColor: '#ffffff', padding: '40px 24px' },
+          {
+            fontFamily: WESTLY_FONT_DISPLAY,
+            backgroundColor: '#ffffff',
+            padding: '40px 24px',
+          },
           blockBackgroundStyle(background)
         )}
       >
@@ -358,12 +366,18 @@ export function WestlyHero({
   return (
     <section
       ref={rootRef}
+      data-westly-scope=''
       className={cn('@container relative w-full', className)}
       style={composeStyle(
-        { height: '185dvh', backgroundColor: '#ffffff' },
+        {
+          fontFamily: WESTLY_FONT_DISPLAY,
+          height: '185dvh',
+          backgroundColor: '#ffffff',
+        },
         blockBackgroundStyle(background)
       )}
     >
+      {pointer}
       <div ref={stageRef} style={STAGE_STYLE}>
         {/* Khung thiết kế 3:2 (1440×960) phủ stage — các lớp giữ % theo khung
             để scale đồng bộ; stage crop mép ở khổ khác. Dưới mobile chặn

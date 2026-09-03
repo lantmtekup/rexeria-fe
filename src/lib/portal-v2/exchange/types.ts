@@ -58,6 +58,8 @@ export type ExchangeListingView = {
   slug?: string;
   /** Seed version when installing a landing listing into a workspace. */
   templateVersionId?: string;
+  /** Template.code — guess `/p/{slug}` when BE omits preview_slug. */
+  templateCode?: string;
   /**
    * Id của TRẢI NGHIỆM GỐC nguồn. `POST /workspaces/{ws}/pages` nhận `template_id`,
    * KHÔNG nhận `template_version_id` (`models/page.go:118`) — gửi nhầm trường

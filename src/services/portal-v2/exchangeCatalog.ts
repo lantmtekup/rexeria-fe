@@ -3,6 +3,11 @@ import { mapAdFormatToListing } from '@/lib/portal-v2/exchange/mapAdFormat';
 import { mapBlockToListing } from '@/lib/portal-v2/exchange/mapBlock';
 import { mapExchangeItemToListing } from '@/lib/portal-v2/exchange/mapExchangeItem';
 import { mapTemplateToListing } from '@/lib/portal-v2/exchange/mapTemplate';
+import {
+  collectPublishedLandings,
+  fillMissingPreviewSlugs,
+  publishedPreviewSlugByTemplate,
+} from '@/lib/portal-v2/exchange/previewSlug';
 import type { ExchangeListingView } from '@/lib/portal-v2/exchange/types';
 import { enrichBlocksWithThumbnailUrls } from '@/lib/pages/resolve-thumbnails';
 import { rexerApi } from '@/services/rexer/endpoints';
@@ -51,8 +56,10 @@ const LIMIT = 200;
  *      `EnforceBrandOrSystem`) nên bản clone của chính người bấm "Thêm" lọt
  *      ngược vào catalog của họ ở lần tải sau — nhìn như bị nhân đôi.
  *
- * `GET /pages` CỐ Ý không nằm trong danh sách: nó là endpoint duy nhất trong
- * ba nguồn cũ không thể trả cùng một kết quả cho hai loại tài khoản.
+ * `GET /pages` CỐ Ý không nằm trong CATALOG: nó phân biệt admin/brand, nên
+ * không được biến thành thẻ. Vẫn gọi song song chỉ để gắn `slug` lên template
+ * đã có — iframe preview cần `/p/{slug}`, mà `GET /templates` hiện không trả
+ * `preview_slug`. Hỏng lượt này thì catalog vẫn nguyên, chỉ mất preview.
  *
  * Một nguồn hỏng thì các nguồn còn lại vẫn hiện, và lỗi đi ra `softError`.
  */
@@ -87,12 +94,13 @@ export const fetchExchangeCatalog = async (
       sort_order: 'desc',
       ...(q ? { q } : {}),
     }),
+    collectPublishedLandings(),
   ]);
 
   const errors: string[] = [];
   const catalog: ExchangeListingView[] = [];
 
-  const [listed, templates, blocks] = settled;
+  const [listed, templates, blocks, publishedPages] = settled;
 
   if (listed.status === 'fulfilled') {
     catalog.push(...(listed.value.items ?? []).map(mapExchangeItemToListing));
@@ -101,7 +109,15 @@ export const fetchExchangeCatalog = async (
   }
 
   if (templates.status === 'fulfilled') {
-    catalog.push(...(templates.value.items ?? []).map(mapTemplateToListing));
+    const items = templates.value.items ?? [];
+    const slugs = publishedPreviewSlugByTemplate(
+      items,
+      publishedPages.status === 'fulfilled' ? publishedPages.value : []
+    );
+    await fillMissingPreviewSlugs(items, slugs);
+    catalog.push(
+      ...items.map(item => mapTemplateToListing(item, slugs.get(item.id)))
+    );
   } else {
     errors.push(reasonOf(templates.reason, 'Failed to load templates'));
   }
