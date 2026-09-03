@@ -8,7 +8,10 @@ export function parseContentPath(key: string): Array<string | number> {
   let match: RegExpExecArray | null;
   while ((match = re.exec(key)) !== null) {
     if (match[1] !== undefined) {
-      segments.push(match[1]);
+      // Dot-index (`items.0.name`) phải thành SỐ như bracket (`items[0]`) —
+      // nếu để chuỗi '0', setContentAt spread mảng thành object {0:..,1:..}
+      // (mất array) → trang public .map nổ. Đây là root cause của lỗi đó.
+      segments.push(/^\d+$/.test(match[1]) ? Number(match[1]) : match[1]);
     } else if (match[2] !== undefined) {
       segments.push(Number(match[2]));
     }
@@ -70,7 +73,11 @@ export function setContentAt(
       return arr;
     }
 
-    const obj = { ...(current as Record<string, unknown>) };
+    // Giữ arrayness khi clone: `{...mảng}` biến array thành object index-keyed
+    // (mất array). Phòng thủ kép cùng fix parseContentPath ở trên.
+    const obj: Record<string, unknown> = Array.isArray(current)
+      ? ([...current] as unknown as Record<string, unknown>)
+      : { ...(current as Record<string, unknown>) };
     const child = obj[part];
     // Indexing into a string (mishaped array field) — wrap so we don't wipe siblings.
     const nextCurrent =
