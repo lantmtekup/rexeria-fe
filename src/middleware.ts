@@ -152,6 +152,20 @@ export async function middleware(request: NextRequest) {
     host.endsWith(ROOT_DOMAIN_SUFFIX) ||
     isDevOrPreviewHost;
 
+  // Subdomain landing `{slug}.rexerstudio.com` phục vụ ĐÚNG trang của slug đó
+  // cho MỌI path, y như custom domain ở nhánh dưới. Trước đây chỉ `/` được
+  // rewrite, còn mọi path khác rơi xuống luồng thường — nghĩa là
+  // `{slug}.rexerstudio.com/sign-in` render cả trang đăng nhập. Đó là bề mặt
+  // ngoài ý muốn: đăng nhập Google ở đó luôn hỏng (`auth/unauthorized-domain`,
+  // và Firebase KHÔNG nhận wildcard nên không thể khai `*.rexerstudio.com`),
+  // còn portal thì lộ ra trên tên miền mà brand coi là trang của họ.
+  // Path không thuộc trang nào → 404 từ chính route `/p/[id]/[...path]`.
+  if (isExperienceHost) {
+    const slug = host.slice(0, -ROOT_DOMAIN_SUFFIX.length);
+    const rest = pathname === '/' ? '' : pathname;
+    return NextResponse.rewrite(new URL(`/p/${slug}${rest}`, request.url));
+  }
+
   if (host && !isPlatformHost) {
     const slug = await resolveCustomDomainSlug(host);
     if (!slug) {
@@ -162,10 +176,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname === '/') {
-    if (isExperienceHost) {
-      const slug = host.slice(0, -ROOT_DOMAIN_SUFFIX.length);
-      return NextResponse.rewrite(new URL(`/p/${slug}`, request.url));
-    }
+    // `isExperienceHost` đã được xử lý trọn vẹn ở trên (mọi path, không riêng `/`).
     if (!isPortalHost) {
       return NextResponse.rewrite(new URL('/rexer', request.url));
     }
