@@ -7,6 +7,10 @@
     "a11y_switchToVietnamese": "Chuyển sang tiếng Việt",
     "landingPickerLoading": "Đang tải landing…",
     "landingPickerNone": "— Không gắn landing —",
-    "landingPickerCurrent": "Landing hiện tại ({id}…)"
+    "landingPickerCurrent": "Landing hiện tại ({id}…)",
+    "consentTitle": "Cookie đo lường",
+    "consentBody": "Chúng tôi dùng Google Analytics để hiểu cách trang được sử dụng. Bạn có thể từ chối mà không ảnh hưởng gì tới trải nghiệm.",
+    "consentAccept": "Đồng ý",
+    "consentReject": "Từ chối"
   }
 }
