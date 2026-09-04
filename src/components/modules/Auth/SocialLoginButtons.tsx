@@ -132,7 +132,12 @@ export function SocialLoginButtons() {
           setBusy(false);
           return;
         }
-        setError(`FIREBASE_${fb.code.replace('auth/', '').toUpperCase()}`);
+        // `fb.code` dạng 'auth/unauthorized-domain' → key i18n dùng gạch DƯỚI
+        // (FIREBASE_UNAUTHORIZED_DOMAIN). Thiếu bước đổi '-' → '_' thì mọi
+        // thông báo lỗi Firebase đều trượt key và hiện MISSING_MESSAGE.
+        setError(
+          `FIREBASE_${fb.code.replace('auth/', '').replace(/-/g, '_').toUpperCase()}`
+        );
       } else if (err instanceof RxApiError) {
         // Surface BE error message directly (vd FIREBASE_TOKEN_INVALID,
         // ERR_INTERNAL, ...) thay vì che bằng generic.

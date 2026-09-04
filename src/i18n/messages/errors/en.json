@@ -51,6 +51,7 @@
     "AUTH_OLD_PASSWORD_INVALID": "Current password is incorrect",
     "GOOGLE_OAUTH_DISABLED": "Google sign-in is not enabled",
     "GOOGLE_OAUTH_FAILED": "Google sign-in failed",
+    "FIREBASE_UNAUTHORIZED_DOMAIN": "This domain is not authorized in Firebase Authentication",
     "FIREBASE_NOT_CONFIGURED": "Firebase is not configured on the client",
     "FIREBASE_AUTH_DISABLED": "Firebase auth is not enabled on the server",
     "FIREBASE_TOKEN_INVALID": "Invalid Firebase session, please retry",
