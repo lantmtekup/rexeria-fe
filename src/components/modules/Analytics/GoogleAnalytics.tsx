@@ -7,7 +7,6 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import {
   GA_MEASUREMENT_ID,
   isGaEnabled,
-  hasAnyGaConfig,
   gaPageview,
   syncStoredConsent,
 } from '@/lib/analytics/ga';
@@ -24,11 +23,12 @@ function PageviewTracker() {
   // Phát lại consent đã lưu TRƯỚC lượt xem đầu tiên — khai báo trước nên effect
   // này chạy trước effect page_view bên dưới.
   React.useEffect(() => {
-    if (!hasAnyGaConfig()) return;
+    if (!isGaEnabled()) return;
     syncStoredConsent();
   }, []);
 
   React.useEffect(() => {
+    if (!isGaEnabled()) return;
     const qs = searchParams.toString();
     gaPageview(qs ? `${pathname}?${qs}` : pathname);
   }, [pathname, searchParams]);
@@ -48,22 +48,18 @@ function PageviewTracker() {
  * `PageviewTracker` bắn — để gtag tự bắn sẽ nhân đôi lượt xem trang đầu.
  */
 export function GoogleAnalytics() {
+  if (!isGaEnabled()) return null;
+
   return (
     <>
-      {isGaEnabled() && (
-        <>
-          <Script
-            id='ga-lib'
-            strategy='afterInteractive'
-            src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-          />
-          <Script id='ga-config' strategy='afterInteractive'>
-            {`gtag('config', '${GA_MEASUREMENT_ID}', { send_page_view: false });`}
-          </Script>
-        </>
-      )}
-      {/* Tracker chạy kể cả khi nền tảng không bật GA: trang công khai có thể
-          chỉ mang property của brand, và lượt xem vẫn phải được bắn. */}
+      <Script
+        id='ga-lib'
+        strategy='afterInteractive'
+        src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+      />
+      <Script id='ga-config' strategy='afterInteractive'>
+        {`gtag('config', '${GA_MEASUREMENT_ID}', { send_page_view: false });`}
+      </Script>
       <React.Suspense fallback={null}>
         <PageviewTracker />
       </React.Suspense>

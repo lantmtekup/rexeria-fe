@@ -2512,12 +2512,7 @@
       "toastInvited": "Đã mời {email}",
       "toastRemoveFailed": "Không gỡ được thành viên",
       "removeMember": "Gỡ khỏi thương hiệu",
-      "toastInvitedNoMail": "Đã tạo tài khoản cho {email} nhưng CHƯA gửi được thư. Mật khẩu tạm: {password} — hãy chuyển tay và bảo họ đổi ngay.",
-      "boxBrandGa": "Google Analytics của thương hiệu",
-      "noteBrandGa": "Số liệu trang công khai chảy về property GA4 của chính bạn",
-      "fieldGaMeasurementId": "Measurement ID",
-      "hintBrandGa": "Dán ID dạng G-XXXXXXXXXX từ GA4 (Quản trị → Luồng dữ liệu). Thẻ được nhúng vào mọi trang landing đã xuất bản của thương hiệu, kể cả khi chạy trên tên miền riêng. Để trống để gỡ thẻ.",
-      "errGaMeasurementId": "Sai định dạng — ID phải có dạng G-XXXXXXXXXX"
+      "toastInvitedNoMail": "Đã tạo tài khoản cho {email} nhưng CHƯA gửi được thư. Mật khẩu tạm: {password} — hãy chuyển tay và bảo họ đổi ngay."
     },
     "media": {
       "title": "Media",

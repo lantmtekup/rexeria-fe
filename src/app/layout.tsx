@@ -15,6 +15,7 @@ import {
 import { seoConfigService } from '@/server/services/seoConfig.service';
 import { GoogleAnalytics } from '@/components/modules/Analytics/GoogleAnalytics';
 import { ConsentBanner } from '@/components/modules/Analytics/ConsentBanner';
+import { GA_MEASUREMENT_ID } from '@/lib/analytics/ga';
 import type { LocalizedText } from '@/types/common';
 
 import '../styles/globals.css';
@@ -140,11 +141,7 @@ export default async function RootLayout({
             với mặc định "granted" của Google và cookie đã được đặt.
             `wait_for_update` cho banner 500ms để nâng consent trước khi
             gtag chốt trạng thái. */}
-        {/* Render VÔ ĐIỀU KIỆN: trang công khai của brand có thể chỉ mang GA
-            của brand (env nền tảng rỗng), mà mặc định consent vẫn phải được
-            khai trước mọi thẻ gtag. Không có GA nào thì đoạn này chỉ tạo một
-            mảng rỗng, vô hại. */}
-        {
+        {GA_MEASUREMENT_ID && (
           <script
             dangerouslySetInnerHTML={{
               __html:
@@ -157,7 +154,7 @@ export default async function RootLayout({
                 "gtag('js',new Date());",
             }}
           />
-        }
+        )}
         {/* AdSense verification + Auto ads — Google yêu cầu thẻ raw trong
             <head> trên mọi trang; next/script chèn vào body kèm data-nscript
             nên crawler không nhận. Chỉ gắn cho landing host. */}

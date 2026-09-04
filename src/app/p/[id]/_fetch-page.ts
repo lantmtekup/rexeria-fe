@@ -48,11 +48,6 @@ export interface PublicPageResponse {
   brand_kit?: BrandKitData;
   /** Active motion kit — animation scale + page-transition style. */
   motion_kit?: MotionKitData;
-  /**
-   * GA4 measurement id của brand sở hữu trang (`brands.ga_measurement_id`,
-   * migration 000105) — layout nhúng thẻ gtag thứ hai bằng id này.
-   */
-  ga_measurement_id?: string;
 }
 
 /**

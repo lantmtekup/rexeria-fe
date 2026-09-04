@@ -40,13 +40,6 @@ export type SettingsGeneral = {
 
 /** The Measurement Bible's dials — every verdict on every screen derives here. */
 export type SettingsMeasurement = {
-  /**
-   * GA4 measurement id của brand ("G-XXXXXXXXXX"), nhúng vào landing CÔNG KHAI
-   * của brand. Rỗng = không nhúng. KHÁC governance: field này nằm ở bảng
-   * `brands` (migration 000105) nên lưu bằng `brands.update`, không đi qua
-   * `PUT /org/governance` như mấy ngưỡng bên dưới.
-   */
-  gaMeasurementId: string;
   highFloor: number;
   dirFloor: number;
   blkGapPts: number;

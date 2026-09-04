@@ -7,10 +7,6 @@
 import './public-transitions.css';
 import './public-entrance.css';
 
-import { BrandGoogleAnalytics } from '@/components/modules/Analytics/BrandGoogleAnalytics';
-
-import { fetchPublicPage } from './_fetch-page';
-
 /**
  * Bật gate ẩn-trước-paint cho `[data-entrance]`. Đặt class ở đây (JS) chứ
  * không hard-code trong CSS để JS tắt / script lỗi ⇒ nội dung vẫn hiện đầy đủ.
@@ -25,25 +21,14 @@ const ENTRANCE_GATE =
   "document.documentElement.classList.add('rx-motion');" +
   "setTimeout(function(){document.documentElement.classList.remove('rx-motion')},4000);";
 
-export default async function PublicLandingLayout({
+export default function PublicLandingLayout({
   children,
-  params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ id: string }>;
 }) {
-  // Thẻ GA4 của brand gắn ở LAYOUT chứ không ở page: `page.tsx` có bốn nhánh
-  // render (code template / block / iframe legacy / notFound) và route con
-  // `[...path]` dùng chung layout này — đặt ở đây là chèn đúng một lần cho mọi
-  // nhánh. `fetchPublicPage` bọc React `cache()` nên lần gọi này dùng lại đúng
-  // kết quả của page, không phát sinh round-trip tới BE.
-  const { id: slug } = await params;
-  const pub = await fetchPublicPage(slug);
-
   return (
     <>
       <script dangerouslySetInnerHTML={{ __html: ENTRANCE_GATE }} />
-      <BrandGoogleAnalytics measurementId={pub?.ga_measurement_id} />
       {children}
     </>
   );

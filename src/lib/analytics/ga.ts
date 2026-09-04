@@ -14,29 +14,9 @@
 export const GA_MEASUREMENT_ID =
   process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? '';
 
-/** GA của NỀN TẢNG. Thiếu env thì phần này là no-op (brand vẫn có thể có GA riêng). */
+/** Chỉ bật khi có measurement id — thiếu env thì mọi thứ ở đây là no-op. */
 export function isGaEnabled(): boolean {
   return GA_MEASUREMENT_ID.length > 0;
-}
-
-/**
- * Có bất kỳ property GA nào đang cấu hình trên trang này không — của nền tảng
- * HOẶC của brand (thẻ brand tự chèn `config` lúc parse HTML, xem
- * `BrandGoogleAnalytics`).
- *
- * Cần thiết vì trang công khai của brand có thể chỉ có GA của brand: khi đó
- * banner consent và bộ bắn page_view vẫn phải hoạt động, dù env nền tảng rỗng.
- */
-export function hasAnyGaConfig(): boolean {
-  if (isGaEnabled()) return true;
-  if (typeof window === 'undefined') return false;
-  // Entry trong dataLayer là đối tượng `arguments`, KHÔNG phải Array — dùng
-  // Array.isArray ở đây thì luôn ra false và trang chỉ-có-GA-của-brand sẽ mất
-  // cả banner consent lẫn page_view.
-  return (window.dataLayer ?? []).some(entry => {
-    if (entry === null || typeof entry !== 'object') return false;
-    return (entry as { 0?: unknown })[0] === 'config';
-  });
 }
 
 /** Key lưu lựa chọn consent. Đổi hậu tố khi danh mục consent thay đổi để hỏi lại. */
@@ -137,7 +117,7 @@ export function syncStoredConsent(): void {
  * chuyển route sau đó sẽ mất nếu không gọi tay.
  */
 export function gaPageview(path: string): void {
-  if (!hasAnyGaConfig()) return;
+  if (!isGaEnabled()) return;
   gtag('event', 'page_view', {
     page_path: path,
     page_location: typeof window !== 'undefined' ? window.location.href : path,
@@ -147,6 +127,6 @@ export function gaPageview(path: string): void {
 
 /** Bắn event tuỳ ý (vd `gaEvent('sign_up', { method: 'google' })`). */
 export function gaEvent(name: string, params?: Record<string, unknown>): void {
-  if (!hasAnyGaConfig()) return;
+  if (!isGaEnabled()) return;
   gtag('event', name, params);
 }
