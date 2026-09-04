@@ -28,6 +28,7 @@ import {
   disconnectAuditSource,
   useAuditSources,
 } from '@/lib/portal-v2/journey-audit/sourcesStore';
+import { FEATURE_EVENT, trackFeature } from '@/lib/analytics/featureEvents';
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 import type {
   AuditSource,
@@ -220,6 +221,9 @@ export const SourcesWorkspace = ({
     }
     try {
       const res = await rexerV2Api.sources.sync(source.id);
+      // Chỉ đếm khi đã thành công — lẫn lần thất bại vào thì con số không còn
+      // phân biệt được "tính năng có người dùng" với "tính năng đang hỏng".
+      trackFeature(FEATURE_EVENT.sourceSync, { provider: source.provider });
       toast.success(
         res.queued
           ? t('toastSyncQueuedJob', { name: source.name, id: res.job_id ?? '' })
@@ -236,6 +240,9 @@ export const SourcesWorkspace = ({
     if (live) {
       try {
         await rexerV2Api.sources.remove(pendingDisconnect.id);
+        trackFeature(FEATURE_EVENT.sourceDisconnect, {
+          provider: pendingDisconnect.provider,
+        });
         setPendingDisconnectId(null);
         toast.success(
           t('toastDisconnectedLive', { name: pendingDisconnect.name })

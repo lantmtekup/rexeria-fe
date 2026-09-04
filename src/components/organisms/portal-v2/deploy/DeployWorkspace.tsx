@@ -45,6 +45,7 @@ import {
   fetchDeployReady,
   pauseCampaignItem,
 } from '@/services/portal-v2/deployBoard';
+import { FEATURE_EVENT, trackFeature } from '@/lib/analytics/featureEvents';
 import { rexerApi } from '@/services/rexer/endpoints';
 import type { RxDeployKPIsResponse } from '@/services/rexer-v2/types/deploy';
 import { cn } from '@/lib/cn';
@@ -348,6 +349,7 @@ export const DeployWorkspace = ({
           target_type: 'landing',
           page_id: pageId,
         });
+        trackFeature(FEATURE_EVENT.domainAdd);
         // Dùng `dns_records` THẬT từ BE thay vì FE tự dựng — nếu BE đổi edge
         // host / phương thức verify thì UI vẫn đúng.
         const created = mapBrandDomain(res.domain, res.dns_records);
@@ -406,6 +408,9 @@ export const DeployWorkspace = ({
       try {
         const res = await rexerApi.brands.domains.verify(brandId, domainId);
         const updated = mapBrandDomain(res.domain);
+        // Nhãn thô: verify đạt hay chưa. Không kèm tên miền — đó là dữ liệu của
+        // khách, không đẩy sang GA.
+        trackFeature(FEATURE_EVENT.domainVerify, { status: updated.status });
         setDomains(prev => prev.map(d => (d.id === domainId ? updated : d)));
       } catch (err) {
         toast.error(t('domainVerifyFailedToast'), {
