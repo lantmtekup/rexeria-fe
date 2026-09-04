@@ -28,6 +28,16 @@
     { "pattern": "rexerstudio.com", "custom_domain": true },
     { "pattern": "portal.rexerstudio.com", "custom_domain": true },
     { "pattern": "*.rexerstudio.com/*", "zone_name": "rexerstudio.com" },
+    // Custom domain của brand (Cloudflare for SaaS, 2026-09-04): traffic tới một
+    // custom hostname đi qua fallback origin `fallback.rexerstudio.com`. CF KHÔNG
+    // chạy Worker ở bước origin-pull đó — không có route phủ, request rơi vào
+    // fallback như origin server thật, không ai trả lời → 522. Route `*/*` trên
+    // zone (CF docs "Workers as your fallback origin") phủ cả custom hostname nên
+    // Worker chặn trước, middleware resolve host → /p/{slug}.
+    // PHẢI nằm trong file này: `wrangler deploy` ghi đè trigger list về đúng mảng
+    // routes ở đây — thêm tay trên dashboard sẽ bị deploy sau xoá mất (đã dính
+    // 2026-09-04). Route cụ thể hơn vẫn thắng nên subdomain/apex/portal không đổi.
+    { "pattern": "*/*", "zone_name": "rexerstudio.com" },
   ],
   // Build-time public env được inline lúc `next build` (đọc .env/.env.production).
   // Runtime SECRETS (JWT_SECRET…) KHÔNG để đây — set bằng:
