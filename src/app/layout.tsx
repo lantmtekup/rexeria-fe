@@ -13,6 +13,9 @@ import {
   getValueSettled,
 } from '@/helpers/transformation/objectTransforms';
 import { seoConfigService } from '@/server/services/seoConfig.service';
+import { GoogleAnalytics } from '@/components/modules/Analytics/GoogleAnalytics';
+import { ConsentBanner } from '@/components/modules/Analytics/ConsentBanner';
+import { GA_MEASUREMENT_ID } from '@/lib/analytics/ga';
 import type { LocalizedText } from '@/types/common';
 
 import '../styles/globals.css';
@@ -132,6 +135,26 @@ export default async function RootLayout({
           crossOrigin='anonymous'
         />
         <link rel='stylesheet' href={GOOGLE_FONTS_HREF} />
+        {/* GA4 Consent Mode v2 — PHẢI là thẻ thô chạy trước gtag.js: tạo
+            dataLayer và đặt mặc định TỪ CHỐI mọi storage. next/script dù ở
+            chiến lược nào cũng chèn muộn hơn, lúc đó gtag đã xử lý hàng đợi
+            với mặc định "granted" của Google và cookie đã được đặt.
+            `wait_for_update` cho banner 500ms để nâng consent trước khi
+            gtag chốt trạng thái. */}
+        {GA_MEASUREMENT_ID && (
+          <script
+            dangerouslySetInnerHTML={{
+              __html:
+                'window.dataLayer=window.dataLayer||[];' +
+                'function gtag(){dataLayer.push(arguments);}' +
+                "gtag('consent','default',{" +
+                "ad_storage:'denied',ad_user_data:'denied'," +
+                "ad_personalization:'denied',analytics_storage:'denied'," +
+                'wait_for_update:500});' +
+                "gtag('js',new Date());",
+            }}
+          />
+        )}
         {/* AdSense verification + Auto ads — Google yêu cầu thẻ raw trong
             <head> trên mọi trang; next/script chèn vào body kèm data-nscript
             nên crawler không nhận. Chỉ gắn cho landing host. */}
@@ -150,7 +173,9 @@ export default async function RootLayout({
         <Providers locale={locale} messages={messages} timezone={timezone}>
           {children}
           <Toaster position='bottom-right' />
+          <ConsentBanner />
         </Providers>
+        <GoogleAnalytics />
       </body>
     </html>
   );
