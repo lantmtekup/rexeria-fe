@@ -17,7 +17,7 @@ import type {
   RxLiveItemView,
   RxReadyItemView,
 } from '@/services/rexer-v2/types/deploy';
-import type { BrandDomain } from '@/services/rexer/types';
+import type { BrandDomain, BrandDomainDnsRecord } from '@/services/rexer/types';
 import type {
   DeployBrandDomain,
   DeployCampaignGroup,
@@ -183,7 +183,14 @@ export const isValidDomain = (value: string): boolean =>
  *  does for `/portal/profile/domains`. `tls_status` is deliberately not read
  *  here: `DeployDomainStatus` only distinguishes what this route shows, and
  *  TLS finishing is not something the connect flow blocks on. */
-export const mapBrandDomain = (d: BrandDomain): DeployBrandDomain => {
+export const mapBrandDomain = (
+  d: BrandDomain,
+  dnsRecords?: BrandDomainDnsRecord[]
+): DeployBrandDomain => {
+  // Ưu tiên records truyền vào (create response), rồi tới records nhúng trong
+  // chính domain (list giờ đã trả `dns_records`). Chỉ khi cả hai vắng UI mới
+  // fallback tự dựng.
+  const records = dnsRecords ?? d.dns_records;
   const status: DeployDomainStatus =
     d.status === 'verifying'
       ? 'verifying'
@@ -199,6 +206,21 @@ export const mapBrandDomain = (d: BrandDomain): DeployBrandDomain => {
     status,
     verificationToken: d.verification_token,
     failureReason: d.failure_reason,
+    // Per-page binding + TLS detail — the Domains manager reads these; the
+    // legacy Web-channel DomainField ignores them (fields are optional).
+    pageId: d.page_id ?? null,
+    targetType: d.target_type,
+    tlsStatus: d.tls_status,
+    verifiedAt: d.verified_at ?? null,
+    ...(records?.length
+      ? {
+          dnsRecords: records.map(r => ({
+            type: r.type,
+            name: r.name,
+            value: r.value,
+          })),
+        }
+      : {}),
   };
 };
 
@@ -206,6 +228,40 @@ export const findDomain = (
   domains: DeployBrandDomain[],
   id: string
 ): DeployBrandDomain | null => domains.find(d => d.id === id) ?? null;
+
+/** The registrable root of a hostname — the last two labels. `site1.tekup.vn`
+ *  and `blog.tekup.vn` share `tekup.vn`, so the Domains manager can group a
+ *  brand's many subdomains under the one domain they own. Naive on purpose
+ *  (no public-suffix list): a multi-part TLD like `co.uk` groups one label
+ *  too shallow, which only ever over-groups the header — never mis-routes a
+ *  domain, since routing keys on the full host, not this. */
+export const rootDomain = (domain: string): string => {
+  const parts = domain.trim().toLowerCase().split('.').filter(Boolean);
+  return parts.length <= 2 ? parts.join('.') : parts.slice(-2).join('.');
+};
+
+/** Group a brand's domains by their registrable root, preserving first-seen
+ *  order of both the roots and the rows within each. */
+export const groupDomainsByRoot = (
+  domains: DeployBrandDomain[]
+): { root: string; items: DeployBrandDomain[] }[] => {
+  const order: string[] = [];
+  const byRoot = new Map<string, DeployBrandDomain[]>();
+  for (const d of domains) {
+    const root = rootDomain(d.domain);
+    const bucket = byRoot.get(root);
+    if (bucket) {
+      bucket.push(d);
+    } else {
+      order.push(root);
+      byRoot.set(root, [d]);
+    }
+  }
+  return order.flatMap(root => {
+    const items = byRoot.get(root);
+    return items ? [{ root, items }] : [];
+  });
+};
 
 /* ── domain, fallback-only ──────────────────────────────────────────────────
    Everything below this line exists for exactly one situation: brandId could

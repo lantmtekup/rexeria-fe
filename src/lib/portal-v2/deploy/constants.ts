@@ -26,6 +26,7 @@ export const DEPLOY_TABS: {
   { id: 'live', labelKey: 'tabLive', questionKey: 'questionLive' },
   { id: 'ready', labelKey: 'tabReady', questionKey: 'questionReady' },
   { id: 'channels', labelKey: 'tabChannels', questionKey: 'questionChannels' },
+  { id: 'domains', labelKey: 'tabDomains', questionKey: 'questionDomains' },
 ];
 
 /**
@@ -142,12 +143,12 @@ export const DEPLOY_DOMAIN_STATUS: Record<
 /** The only channel kind hosted on a domain of its own. */
 export const DEPLOY_WEB_CHANNEL_KIND: DeployChannelKind = 'web';
 
-/** The CNAME target every connected domain points at. `/portal/profile/domains`
- *  hardcodes this exact same value client-side — the BE's `verify` response
- *  carries `dns_records` but that page ignores them and reconstructs the
- *  record from convention, so this route does the same rather than disagree
- *  with the page a person may already have this domain open in. */
-export const DEPLOY_DNS_CNAME_TARGET = 'edge.rexer-edge.com.';
+/** CNAME target dùng cho fallback khi list endpoint không trả `dns_records`.
+ *  PHẢI khớp đúng BE (`custom_domain` usecase `edgeCNAME` mặc định
+ *  `edge.rexer-edge.com`, KHÔNG có dấu chấm cuối) — trước đây để
+ *  `edge.rexer-edge.com.` gây lệch với record thật. Khi có `dns_records`
+ *  từ create thì UI ưu tiên dùng records thật, không đụng hằng này. */
+export const DEPLOY_DNS_CNAME_TARGET = 'edge.rexer-edge.com';
 
 export type DeployChannelKindStyle = {
   /** Two-character mark for the square badge. */

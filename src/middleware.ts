@@ -67,6 +67,40 @@ const isAuthRoute = (pathname: string): boolean =>
 const isPublicRoute = (pathname: string): boolean =>
   publicRoutes.some(route => pathname.startsWith(route));
 
+/** BE origin for the anonymous custom-domain resolver — the same env the public
+ *  landing fetch (`/p/[id]`) reads. */
+const REXER_API_BASE = (
+  process.env.NEXT_PUBLIC_REXER_API ??
+  process.env.REXER_API ??
+  ''
+).replace(/\/+$/, '');
+
+/**
+ * A brand's own custom domain (e.g. `shop.brand.com`) → the slug of the landing
+ * page it is bound to, or `null` when the host is not a live custom domain.
+ * Asks the BE (`GET /v1/public/domains/resolve`), which mirrors the exact
+ * verified+bound check the BE's own host-router uses. Best-effort: any failure
+ * (endpoint down, timeout, unknown host) resolves to `null` so the edge 404s
+ * rather than throwing — never serves the marketing site on someone else's
+ * domain.
+ */
+const resolveCustomDomainSlug = async (
+  host: string
+): Promise<string | null> => {
+  if (!REXER_API_BASE) return null;
+  try {
+    const res = await fetch(
+      `${REXER_API_BASE}/v1/public/domains/resolve?host=${encodeURIComponent(host)}`,
+      { headers: { accept: 'application/json' } }
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { slug?: string };
+    return data.slug ?? null;
+  } catch {
+    return null;
+  }
+};
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -94,6 +128,38 @@ export async function middleware(request: NextRequest) {
     !isPortalHost &&
     host !== 'www.rexerstudio.com' &&
     host.endsWith(ROOT_DOMAIN_SUFFIX);
+
+  // ── Custom brand domains (Cloudflare for SaaS, 2026-09) ──────────────────
+  // A host that is neither the platform's own (portal / *.rexerstudio.com) nor
+  // a dev/preview host is a BRAND'S OWN domain, routed here through the SaaS
+  // fallback origin. Resolve it to the bound landing's slug (BE
+  // `/v1/public/domains/resolve`) and serve that page for EVERY path — the
+  // Framer/Webflow model the BE host-router already uses. Assets, `/api` and
+  // `/p/` short-circuited above (isPublicRoute), so this only ever rewrites a
+  // page navigation. An unknown or not-yet-live host 404s — never the
+  // marketing site on a domain that isn't ours.
+  const isDevOrPreviewHost =
+    host.startsWith('localhost') ||
+    host.startsWith('127.0.0.1') ||
+    host.startsWith('[::1]') ||
+    host.endsWith('.vercel.app') ||
+    host.endsWith('.workers.dev') ||
+    host.endsWith('.pages.dev');
+  const isPlatformHost =
+    isPortalHost ||
+    host === 'rexerstudio.com' ||
+    host === 'www.rexerstudio.com' ||
+    host.endsWith(ROOT_DOMAIN_SUFFIX) ||
+    isDevOrPreviewHost;
+
+  if (host && !isPlatformHost) {
+    const slug = await resolveCustomDomainSlug(host);
+    if (!slug) {
+      return new NextResponse(null, { status: 404 });
+    }
+    const rest = pathname === '/' ? '' : pathname;
+    return NextResponse.rewrite(new URL(`/p/${slug}${rest}`, request.url));
+  }
 
   if (pathname === '/') {
     if (isExperienceHost) {

@@ -34,8 +34,10 @@
  *     row's `health` after the fact.
  */
 
-/** The three tabs, in the order a person actually works. */
-export type DeployTabId = 'live' | 'ready' | 'channels';
+/** The tabs, in the order a person actually works. `domains` (2026-09) is the
+ *  brand's custom-domain manager — many domains/subdomains, each bound to one
+ *  landing page — lifted out of the Web channel's single-domain connect flow. */
+export type DeployTabId = 'live' | 'ready' | 'channels' | 'domains';
 
 /**
  * `core.DeploymentHealth` (spec §11.3). Operational, not analytical: is the
@@ -84,12 +86,33 @@ export type DeployDomainStatus =
 
 /** The brand's own domain — mapped from `BrandDomain`
  *  (`@/services/rexer/types`) the same way `/portal/profile/domains` does. */
+/** Một DNS record BE yêu cầu user cắm (từ `dns_records` của create response). */
+export type DeployDnsRecord = {
+  type: string;
+  name: string;
+  value: string;
+};
+
 export type DeployBrandDomain = {
   id: string;
   domain: string;
   status: DeployDomainStatus;
   verificationToken: string;
   failureReason: string | null;
+  /** DNS records THẬT từ BE (create response VÀ list — sau khi bật Cloudflare
+   *  for SaaS, list cũng trả `dns_records`); vắng → UI tự dựng từ
+   *  DEPLOY_DNS_CNAME_TARGET + token. */
+  dnsRecords?: DeployDnsRecord[];
+  /** `BrandDomain.page_id` — trang landing domain này trỏ tới. `null` =
+   *  chưa gán (domain sẽ 404 tới khi bind). Bind/rebind qua `domains.update`.
+   *  Cũ (ChannelDetailModal/DomainField) không đọc field này → optional. */
+  pageId?: string | null;
+  /** `BrandDomain.target_type` — 'landing' | 'curate_cdn' | 'tracking'. */
+  targetType?: string;
+  /** `BrandDomain.tls_status` — '' | 'pending' | 'active'. 'active' = SSL đã cấp. */
+  tlsStatus?: string;
+  /** `BrandDomain.verified_at` — ISO time domain cleared verification, hoặc null. */
+  verifiedAt?: string | null;
 };
 
 export type DeploySubjectKind = 'product' | 'topic';

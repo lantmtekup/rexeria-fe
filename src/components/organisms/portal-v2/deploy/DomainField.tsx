@@ -117,7 +117,7 @@ const TimelineConnector = ({ active }: { active: boolean }) => (
 );
 
 /** `pending → verifying → connected`, or a failed DNS step on `error`. */
-const DomainTimeline = ({ status }: { status: DeployDomainStatus }) => {
+export const DomainTimeline = ({ status }: { status: DeployDomainStatus }) => {
   const t = useTranslations('portalV2.deploy');
   const dnsDone = status === 'connected';
   const dnsFailed = status === 'error';
@@ -146,7 +146,8 @@ const DnsRecordRow = ({
   name,
   value,
 }: {
-  kind: 'CNAME' | 'TXT';
+  // Chấp nhận string vì `dns_records` từ BE có thể là type khác CNAME/TXT.
+  kind: string;
   name: string;
   value: string;
 }) => {
@@ -202,7 +203,7 @@ const DnsRecordRow = ({
   );
 };
 
-const DnsRecordsPanel = ({ domain }: { domain: DeployBrandDomain }) => {
+export const DnsRecordsPanel = ({ domain }: { domain: DeployBrandDomain }) => {
   const t = useTranslations('portalV2.deploy');
   const host = domain.domain.split('.').slice(0, -2).join('.') || '@';
 
@@ -212,16 +213,37 @@ const DnsRecordsPanel = ({ domain }: { domain: DeployBrandDomain }) => {
         {t('dnsRecordsTitle')}
       </p>
       <div className='grid gap-2 sm:grid-cols-2'>
-        <DnsRecordRow
-          kind='CNAME'
-          name={host}
-          value={DEPLOY_DNS_CNAME_TARGET}
-        />
-        <DnsRecordRow
-          kind='TXT'
-          name={`_rexer-verify.${domain.domain}`}
-          value={`rexer-verify=${domain.verificationToken}`}
-        />
+        {domain.dnsRecords?.length ? (
+          // DNS records THẬT từ BE (create response).
+          domain.dnsRecords.map(r => (
+            <DnsRecordRow
+              key={`${r.type}-${r.name}`}
+              kind={r.type}
+              name={r.name}
+              value={r.value}
+            />
+          ))
+        ) : (
+          // Fallback: list endpoint không trả records → FE tự dựng.
+          <>
+            <DnsRecordRow
+              kind='CNAME'
+              name={host}
+              value={DEPLOY_DNS_CNAME_TARGET}
+            />
+            <DnsRecordRow
+              kind='TXT'
+              // Name tương đối `_rexer-verify` (khớp BE + create-path). Ghi
+              // FQDN `_rexer-verify.<domain>` dễ bị nhà cung cấp DNS nối thêm
+              // zone → `_rexer-verify.<domain>.<domain>`.
+              name='_rexer-verify'
+              // Value = ĐÚNG token, KHÔNG tiền tố. BE verify so
+              // `strings.TrimSpace(TXT) == verification_token`; thêm
+              // `rexer-verify=` sẽ làm verify FAIL vĩnh viễn.
+              value={domain.verificationToken}
+            />
+          </>
+        )}
       </div>
       <p className='mt-2 text-[11px] leading-relaxed text-[var(--pv2-mut)]'>
         {t('dnsHint')}

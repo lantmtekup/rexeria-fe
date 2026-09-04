@@ -9,6 +9,7 @@ import { ChannelDetailModal } from '@/components/organisms/portal-v2/deploy/Chan
 import { DeployChannelsPane } from '@/components/organisms/portal-v2/deploy/DeployChannelsPane';
 import { DeployKpis } from '@/components/organisms/portal-v2/deploy/DeployKpis';
 import { DeployLivePane } from '@/components/organisms/portal-v2/deploy/DeployLivePane';
+import { DomainsPane } from '@/components/organisms/portal-v2/deploy/DomainsPane';
 import { LiveRowDetailModal } from '@/components/organisms/portal-v2/deploy/LiveRowDetailModal';
 import { DeployReadyPane } from '@/components/organisms/portal-v2/deploy/DeployReadyPane';
 import type { CampaignTeamMember } from '@/lib/portal-v2/campaigns/types';
@@ -130,6 +131,10 @@ export const DeployWorkspace = ({
   const [verifyingDomainId, setVerifyingDomainId] = useState<string | null>(
     null
   );
+  const [rebindingDomainId, setRebindingDomainId] = useState<string | null>(
+    null
+  );
+  const [removingDomainId, setRemovingDomainId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     const [ch, lv, rd, kp] = await Promise.all([
@@ -166,9 +171,11 @@ export const DeployWorkspace = ({
             ? totals.live || undefined
             : item.id === 'ready'
               ? totals.ready || undefined
-              : undefined,
+              : item.id === 'domains'
+                ? domains.length || undefined
+                : undefined,
       })),
-    [t, totals.live, totals.ready]
+    [t, totals.live, totals.ready, domains.length]
   );
 
   const activeTab =
@@ -312,7 +319,10 @@ export const DeployWorkspace = ({
   /* ── domain CRUD — real BE, mock fallback ─────────────────────────────── */
 
   const handleCreateDomain = useCallback(
-    async (value: string): Promise<DeployBrandDomain | null> => {
+    async (
+      value: string,
+      pageId: string | null = null
+    ): Promise<DeployBrandDomain | null> => {
       const domain = value.trim().toLowerCase();
       if (!isValidDomain(domain)) return null;
 
@@ -325,6 +335,7 @@ export const DeployWorkspace = ({
             status: 'pending',
             verificationToken: fakeVerificationToken(domain),
             failureReason: null,
+            pageId,
           };
           setDomains(prev => [created, ...prev]);
           toast.success(t('domainAddedFakeToast', { domain }));
@@ -335,9 +346,11 @@ export const DeployWorkspace = ({
           domain,
           workspace_id: workspaceId,
           target_type: 'landing',
-          page_id: null,
+          page_id: pageId,
         });
-        const created = mapBrandDomain(res.domain);
+        // Dùng `dns_records` THẬT từ BE thay vì FE tự dựng — nếu BE đổi edge
+        // host / phương thức verify thì UI vẫn đúng.
+        const created = mapBrandDomain(res.domain, res.dns_records);
         setDomains(prev => [created, ...prev]);
         toast.success(t('domainAddedToast', { domain: created.domain }));
         return created;
@@ -405,6 +418,72 @@ export const DeployWorkspace = ({
     [brandId, domainSource, t]
   );
 
+  /* ── domain → page bind/rebind (Domains tab) ──────────────────────────── */
+
+  const handleRebindDomain = useCallback(
+    async (domainId: string, pageId: string) => {
+      setRebindingDomainId(domainId);
+      // Optimistic — the pill/DNS don't change, only which page it serves.
+      setDomains(prev =>
+        prev.map(d => (d.id === domainId ? { ...d, pageId } : d))
+      );
+      if (domainSource === 'fake' || !brandId) {
+        setRebindingDomainId(null);
+        toast.success(t('domainRebindToast'));
+        return;
+      }
+      try {
+        const res = await rexerApi.brands.domains.update(brandId, domainId, {
+          page_id: pageId,
+        });
+        const updated = mapBrandDomain(res.domain);
+        setDomains(prev => prev.map(d => (d.id === domainId ? updated : d)));
+        toast.success(t('domainRebindToast'));
+      } catch (err) {
+        toast.error(t('domainRebindFailedToast'), {
+          description: err instanceof Error ? err.message : String(err),
+        });
+        // Re-read from the server-truth list would be ideal; here we drop the
+        // optimistic bind so the UI never claims a rebind the BE rejected.
+        setDomains(prev =>
+          prev.map(d => (d.id === domainId ? { ...d, pageId: null } : d))
+        );
+      } finally {
+        setRebindingDomainId(null);
+      }
+    },
+    [brandId, domainSource, t]
+  );
+
+  const handleRemoveDomain = useCallback(
+    async (domainId: string) => {
+      const target = domains.find(d => d.id === domainId);
+      if (!target) return;
+      if (!window.confirm(t('domainRemoveConfirm', { domain: target.domain })))
+        return;
+
+      setRemovingDomainId(domainId);
+      if (domainSource === 'fake' || !brandId) {
+        setDomains(prev => prev.filter(d => d.id !== domainId));
+        setRemovingDomainId(null);
+        toast.success(t('domainRemovedToast', { domain: target.domain }));
+        return;
+      }
+      try {
+        await rexerApi.brands.domains.remove(brandId, domainId);
+        setDomains(prev => prev.filter(d => d.id !== domainId));
+        toast.success(t('domainRemovedToast', { domain: target.domain }));
+      } catch (err) {
+        toast.error(t('domainRemoveFailedToast'), {
+          description: err instanceof Error ? err.message : String(err),
+        });
+      } finally {
+        setRemovingDomainId(null);
+      }
+    },
+    [brandId, domains, domainSource, t]
+  );
+
   const channel = openChannel ? findChannel(channels, openChannel) : null;
   const openLiveRow = openLiveRowId
     ? (live.find(row => row.id === openLiveRowId) ?? null)
@@ -460,7 +539,9 @@ export const DeployWorkspace = ({
           />
         </div>
 
-        <DeployKpis totals={totals} onOpenIssues={() => setTab('live')} />
+        {tab !== 'domains' ? (
+          <DeployKpis totals={totals} onOpenIssues={() => setTab('live')} />
+        ) : null}
 
         <div className='mt-4'>
           {tab === 'live' ? (
@@ -491,6 +572,22 @@ export const DeployWorkspace = ({
               channels={channels}
               live={live}
               onOpen={setOpenChannel}
+            />
+          ) : null}
+
+          {tab === 'domains' ? (
+            <DomainsPane
+              domains={domains}
+              workspaceId={workspaceId}
+              domainSource={domainSource}
+              creatingDomain={creatingDomain}
+              verifyingDomainId={verifyingDomainId}
+              rebindingId={rebindingDomainId}
+              removingId={removingDomainId}
+              onCreate={handleCreateDomain}
+              onVerify={handleVerifyDomain}
+              onRebind={handleRebindDomain}
+              onRemove={handleRemoveDomain}
             />
           ) : null}
         </div>
