@@ -117,7 +117,7 @@ const TimelineConnector = ({ active }: { active: boolean }) => (
 );
 
 /** `pending → verifying → connected`, or a failed DNS step on `error`. */
-const DomainTimeline = ({ status }: { status: DeployDomainStatus }) => {
+export const DomainTimeline = ({ status }: { status: DeployDomainStatus }) => {
   const t = useTranslations('portalV2.deploy');
   const dnsDone = status === 'connected';
   const dnsFailed = status === 'error';
@@ -203,7 +203,7 @@ const DnsRecordRow = ({
   );
 };
 
-const DnsRecordsPanel = ({ domain }: { domain: DeployBrandDomain }) => {
+export const DnsRecordsPanel = ({ domain }: { domain: DeployBrandDomain }) => {
   const t = useTranslations('portalV2.deploy');
   const host = domain.domain.split('.').slice(0, -2).join('.') || '@';
 

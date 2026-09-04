@@ -206,6 +206,12 @@ export const mapBrandDomain = (
     status,
     verificationToken: d.verification_token,
     failureReason: d.failure_reason,
+    // Per-page binding + TLS detail — the Domains manager reads these; the
+    // legacy Web-channel DomainField ignores them (fields are optional).
+    pageId: d.page_id ?? null,
+    targetType: d.target_type,
+    tlsStatus: d.tls_status,
+    verifiedAt: d.verified_at ?? null,
     ...(records?.length
       ? {
           dnsRecords: records.map(r => ({
@@ -222,6 +228,40 @@ export const findDomain = (
   domains: DeployBrandDomain[],
   id: string
 ): DeployBrandDomain | null => domains.find(d => d.id === id) ?? null;
+
+/** The registrable root of a hostname — the last two labels. `site1.tekup.vn`
+ *  and `blog.tekup.vn` share `tekup.vn`, so the Domains manager can group a
+ *  brand's many subdomains under the one domain they own. Naive on purpose
+ *  (no public-suffix list): a multi-part TLD like `co.uk` groups one label
+ *  too shallow, which only ever over-groups the header — never mis-routes a
+ *  domain, since routing keys on the full host, not this. */
+export const rootDomain = (domain: string): string => {
+  const parts = domain.trim().toLowerCase().split('.').filter(Boolean);
+  return parts.length <= 2 ? parts.join('.') : parts.slice(-2).join('.');
+};
+
+/** Group a brand's domains by their registrable root, preserving first-seen
+ *  order of both the roots and the rows within each. */
+export const groupDomainsByRoot = (
+  domains: DeployBrandDomain[]
+): { root: string; items: DeployBrandDomain[] }[] => {
+  const order: string[] = [];
+  const byRoot = new Map<string, DeployBrandDomain[]>();
+  for (const d of domains) {
+    const root = rootDomain(d.domain);
+    const bucket = byRoot.get(root);
+    if (bucket) {
+      bucket.push(d);
+    } else {
+      order.push(root);
+      byRoot.set(root, [d]);
+    }
+  }
+  return order.flatMap(root => {
+    const items = byRoot.get(root);
+    return items ? [{ root, items }] : [];
+  });
+};
 
 /* ── domain, fallback-only ──────────────────────────────────────────────────
    Everything below this line exists for exactly one situation: brandId could

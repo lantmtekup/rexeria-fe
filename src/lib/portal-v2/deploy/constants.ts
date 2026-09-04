@@ -26,6 +26,7 @@ export const DEPLOY_TABS: {
   { id: 'live', labelKey: 'tabLive', questionKey: 'questionLive' },
   { id: 'ready', labelKey: 'tabReady', questionKey: 'questionReady' },
   { id: 'channels', labelKey: 'tabChannels', questionKey: 'questionChannels' },
+  { id: 'domains', labelKey: 'tabDomains', questionKey: 'questionDomains' },
 ];
 
 /**
