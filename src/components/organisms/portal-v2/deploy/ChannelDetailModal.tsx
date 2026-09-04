@@ -64,6 +64,9 @@ export const ChannelDetailModal = ({
   );
   const [shopDomain, setShopDomain] = useState('');
   const [token, setToken] = useState('');
+  /** Đổi domain ngay trong trạng thái đã kết nối (không cần ngắt → không rớt
+   *  trải nghiệm đang chạy — BE `ConnectChannel` chỉ ghi lại config domain). */
+  const [changingDomain, setChangingDomain] = useState(false);
 
   const handleCreateDomain = async (value: string) => {
     const created = await onCreateDomain(value);
@@ -250,6 +253,83 @@ export const ChannelDetailModal = ({
           {t('channelNothingLive')}
         </p>
       )}
+
+      {channel.kind === 'web' ? (
+        <div className='mt-4 rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] p-3.5'>
+          <div className='flex flex-wrap items-center justify-between gap-2'>
+            <div className='min-w-0'>
+              <p className='text-[10.5px] font-bold tracking-[0.06em] text-[var(--pv2-faint)] uppercase'>
+                {t('webDomainCurrentLabel')}
+              </p>
+              <p className='mt-0.5 truncate font-mono text-[13px] text-[var(--pv2-ink)]'>
+                {domains.find(d => d.id === channel.domainId)?.domain ??
+                  t('webDomainNone')}
+              </p>
+            </div>
+            {!changingDomain ? (
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => {
+                  setSelectedDomainId(channel.domainId);
+                  setChangingDomain(true);
+                }}
+              >
+                {t('changeDomain')}
+              </Button>
+            ) : null}
+          </div>
+
+          {changingDomain ? (
+            <div className='mt-3 space-y-3'>
+              {domainSource === 'fake' ? (
+                <DeployNote>{t('domainFakeBanner')}</DeployNote>
+              ) : null}
+              <DomainField
+                domains={domains}
+                loading={false}
+                selectedId={selectedDomainId}
+                onSelect={setSelectedDomainId}
+                onCreate={handleCreateDomain}
+                creating={creatingDomain}
+                onVerify={onVerifyDomain}
+                verifyingId={verifyingDomainId}
+              />
+              <p className='text-[11.5px] leading-relaxed text-[var(--pv2-mut)]'>
+                {t('domainRebindNote')}
+              </p>
+              <div className='flex items-center gap-2'>
+                <Button
+                  variant='primary'
+                  size='sm'
+                  disabled={
+                    connecting ||
+                    !selectedDomainId ||
+                    selectedDomainId === channel.domainId
+                  }
+                  onClick={() => {
+                    if (selectedDomainId) {
+                      onConnect(channel.id, { domainId: selectedDomainId });
+                    }
+                  }}
+                >
+                  {connecting ? t('updatingDomain') : t('updateDomain')}
+                </Button>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => {
+                    setChangingDomain(false);
+                    setSelectedDomainId(channel.domainId);
+                  }}
+                >
+                  {t('cancel')}
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       <DeployNote className='mt-4'>{t('channelOpenNote')}</DeployNote>
     </Modal>

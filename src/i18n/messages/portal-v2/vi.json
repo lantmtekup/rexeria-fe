@@ -2330,7 +2330,14 @@
       "liveDetailCaptionFailedToast": "Không sinh được caption",
       "liveShareLabel": "Link test nguồn truy cập",
       "liveShareHint": "Copy hoặc mở mỗi link ở tab/máy khác để tạo lượt truy cập theo nguồn — xem kết quả ở Analytics › Trang › Nguồn truy cập.",
-      "liveShareOpen": "Mở thử"
+      "liveShareOpen": "Mở thử",
+      "webDomainCurrentLabel": "Domain đang dùng",
+      "webDomainNone": "Chưa gắn domain",
+      "changeDomain": "Đổi domain",
+      "domainRebindNote": "Đổi domain không làm gián đoạn trải nghiệm đang chạy — chỉ cập nhật địa chỉ phục vụ.",
+      "updateDomain": "Cập nhật domain",
+      "updatingDomain": "Đang cập nhật…",
+      "cancel": "Huỷ"
     },
     "settings": {
       "title": "Cài đặt",

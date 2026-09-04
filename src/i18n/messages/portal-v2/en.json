@@ -2330,7 +2330,14 @@
       "liveDetailCaptionFailedToast": "Could not generate a caption",
       "liveShareLabel": "Traffic-source test links",
       "liveShareHint": "Copy or open each link in a separate tab/device to generate visits per source — see them in Analytics › Pages › Traffic sources.",
-      "liveShareOpen": "Open"
+      "liveShareOpen": "Open",
+      "webDomainCurrentLabel": "Current domain",
+      "webDomainNone": "No domain bound",
+      "changeDomain": "Change domain",
+      "domainRebindNote": "Changing the domain doesn't interrupt live experiences — it only updates the serving address.",
+      "updateDomain": "Update domain",
+      "updatingDomain": "Updating…",
+      "cancel": "Cancel"
     },
     "settings": {
       "title": "Settings",
