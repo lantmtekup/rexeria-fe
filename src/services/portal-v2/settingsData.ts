@@ -7,6 +7,7 @@ import type {
   SettingsData,
   SettingsMember,
 } from '@/lib/portal-v2/settings/types';
+import { rexerApi } from '@/services/rexer/endpoints';
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 
 /**
@@ -31,17 +32,22 @@ export const fetchSettings = async (
     return { data: null, version: 0, error: null };
   }
   try {
-    const [gov, caps, me, members] = await Promise.all([
+    // `brand` nằm ngoài bộ ba governance/capabilities/me vì GA measurement id
+    // sống ở bảng `brands`. Best-effort: đọc brand lỗi thì phần còn lại của
+    // màn hình vẫn mở, chỉ ô GA trống.
+    const [gov, caps, me, members, brand] = await Promise.all([
       rexerV2Api.settings.governance(brandId),
       rexerV2Api.settings.capabilities(brandId),
       rexerV2Api.settings.meProfile(),
       rexerV2Api.settings.members(brandId),
+      rexerApi.brands.get(brandId).catch(() => null),
     ]);
     const list = (members.items ?? []).map(v2ToMember);
     return {
       data: v2ToSettings(gov, caps, me, {
         seats: list.length,
         members: list,
+        gaMeasurementId: brand?.ga_measurement_id ?? '',
       }),
       version: gov.version,
       error: null,
@@ -76,11 +82,17 @@ export const saveSettings = async (
     email: data.general.accountEmail,
     title: data.general.accountTitle,
   });
+  // GA measurement id ở bảng `brands`, không thuộc governance ⇒ PATCH riêng.
+  // Gửi cả chuỗi rỗng: đó là cách người dùng GỠ thẻ (BE chuẩn hoá '' → NULL).
+  await rexerApi.brands.update(brandId, {
+    ga_measurement_id: data.measurement.gaMeasurementId.trim(),
+  });
   const caps = await rexerV2Api.settings.capabilities(brandId);
   return {
     data: v2ToSettings(gov, caps, me, {
       seats: data.general.seats,
       members: data.members,
+      gaMeasurementId: data.measurement.gaMeasurementId.trim(),
     }),
     version: gov.version,
   };

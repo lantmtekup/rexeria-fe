@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/atoms/button';
-import { isGaEnabled, readConsent, writeConsent } from '@/lib/analytics/ga';
+import { hasAnyGaConfig, readConsent, writeConsent } from '@/lib/analytics/ga';
 import type { ConsentChoice } from '@/lib/analytics/ga';
 
 /**
@@ -25,7 +25,10 @@ export function ConsentBanner() {
   );
 
   React.useEffect(() => {
-    setChoice(isGaEnabled() ? readConsent() : 'denied');
+    // `hasAnyGaConfig` dò cả property của brand (thẻ brand đã chèn config
+    // lúc parse HTML, trước effect này) — trang công khai có thể chỉ có GA
+    // của brand mà nền tảng thì không bật.
+    setChoice(hasAnyGaConfig() ? readConsent() : 'denied');
   }, []);
 
   const decide = React.useCallback((next: ConsentChoice) => {

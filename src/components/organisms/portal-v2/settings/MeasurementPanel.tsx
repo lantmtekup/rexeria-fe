@@ -8,6 +8,7 @@ import {
   GovBox,
   GovHint,
   Pill,
+  TextField,
   WeightSum,
 } from '@/components/molecules/portal-v2/settings-form';
 import {
@@ -64,8 +65,24 @@ export const MeasurementPanel = ({
   const scoreSum = sumWeights(m.scoreW);
   const fitSum = sumWeights(m.fitW);
 
+  // Định dạng kiểm ngay tại chỗ để người dùng không phải bấm lưu mới biết sai.
+  // Rỗng là hợp lệ — đó là cách gỡ thẻ.
+  const gaId = m.gaMeasurementId.trim();
+  const gaInvalid = gaId !== '' && !/^G-[A-Z0-9]{4,20}$/i.test(gaId);
+
   return (
     <>
+      <GovBox title={t('boxBrandGa')} note={t('noteBrandGa')}>
+        <TextField
+          label={t('fieldGaMeasurementId')}
+          value={m.gaMeasurementId}
+          editing={editing}
+          error={gaInvalid ? t('errGaMeasurementId') : undefined}
+          onChange={v => patch({ gaMeasurementId: v })}
+        />
+        <GovHint>{t('hintBrandGa')}</GovHint>
+      </GovBox>
+
       <GovBox title={t('boxTiers')} note={t('noteTiers')}>
         <Eyebrow>{t('eyebrowFloors')}</Eyebrow>
         <div className='grid gap-4 sm:grid-cols-2'>

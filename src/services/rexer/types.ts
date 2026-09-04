@@ -2341,6 +2341,12 @@ export interface PublicPageResponse {
   brand_kit?: BrandKitTokens;
   /** Active motion kit — scales animation + sets page-transition style. */
   motion_kit?: MotionKitData;
+  /**
+   * GA4 measurement id của brand sở hữu trang (`brands.ga_measurement_id`,
+   * migration 000105). FE nhúng thẻ gtag thứ hai bằng id này. Vắng mặt = brand
+   * không cấu hình.
+   */
+  ga_measurement_id?: string;
 }
 
 // ── Motion Kit (per-brand motion personality) ────────────────────────────
@@ -2444,6 +2450,11 @@ export interface Brand {
   created_by: string;
   created_at: string;
   updated_at: string;
+  /**
+   * GA4 measurement id nhúng vào landing công khai của brand
+   * (`brands.ga_measurement_id`, migration 000105). Null/vắng = không nhúng.
+   */
+  ga_measurement_id?: string | null;
 }
 export interface BrandListResponse {
   items: Brand[];
@@ -2465,7 +2476,13 @@ export interface CreateBrandRequest {
   industry?: string;
   plan?: BrandPlan;
 }
-export type UpdateBrandRequest = Partial<Omit<CreateBrandRequest, 'slug'>>;
+export type UpdateBrandRequest = Partial<Omit<CreateBrandRequest, 'slug'>> & {
+  /**
+   * GA4 measurement id. Gửi chuỗi RỖNG để gỡ thẻ — BE chuẩn hoá '' → NULL;
+   * sai định dạng thì trả ERR_BRAND_INVALID_GA_MEASUREMENT_ID.
+   */
+  ga_measurement_id?: string;
+};
 
 export type BrandMembershipRole = 'brand_admin' | 'brand_member';
 

@@ -2512,7 +2512,12 @@
       "toastInvited": "Invited {email}",
       "toastRemoveFailed": "Could not remove the member",
       "removeMember": "Remove from brand",
-      "toastInvitedNoMail": "Created an account for {email} but could NOT send the email. Temporary password: {password} — pass it on and have them change it."
+      "toastInvitedNoMail": "Created an account for {email} but could NOT send the email. Temporary password: {password} — pass it on and have them change it.",
+      "boxBrandGa": "Brand Google Analytics",
+      "noteBrandGa": "Public-page traffic flows to your own GA4 property",
+      "fieldGaMeasurementId": "Measurement ID",
+      "hintBrandGa": "Paste the G-XXXXXXXXXX id from GA4 (Admin → Data streams). The tag is embedded on every published landing page of this brand, including on its own custom domain. Leave empty to remove it.",
+      "errGaMeasurementId": "Wrong format — the id must look like G-XXXXXXXXXX"
     },
     "media": {
       "title": "Media",

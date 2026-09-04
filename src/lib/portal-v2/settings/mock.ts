@@ -28,6 +28,7 @@ export const SETTINGS_DEFAULTS: SettingsData = {
     since: 'March 2026',
   },
   measurement: {
+    gaMeasurementId: '',
     highFloor: 5000,
     dirFloor: 1000,
     blkGapPts: 10,

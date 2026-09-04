@@ -60,7 +60,12 @@ export const v2ToSettings = (
   gov: RxGovernance,
   caps: RxCapabilities,
   me: RxMeProfile,
-  opts: { seats?: number; members?: SettingsMember[] } = {}
+  opts: {
+    seats?: number;
+    members?: SettingsMember[];
+    /** Từ `brands.ga_measurement_id` — không có trong payload governance. */
+    gaMeasurementId?: string;
+  } = {}
 ): SettingsData => ({
   general: {
     orgName: gov.org_name ?? '',
@@ -77,6 +82,7 @@ export const v2ToSettings = (
     since: MISSING_SINCE,
   },
   measurement: {
+    gaMeasurementId: opts.gaMeasurementId ?? '',
     highFloor: gov.high_floor,
     dirFloor: gov.directional_floor,
     blkGapPts: gov.block_gap_pts,
