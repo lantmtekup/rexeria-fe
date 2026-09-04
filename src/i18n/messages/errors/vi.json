@@ -51,6 +51,7 @@
     "AUTH_OLD_PASSWORD_INVALID": "Mật khẩu hiện tại không đúng",
     "GOOGLE_OAUTH_DISABLED": "Đăng nhập Google chưa được bật",
     "GOOGLE_OAUTH_FAILED": "Đăng nhập Google thất bại",
+    "FIREBASE_UNAUTHORIZED_DOMAIN": "Tên miền này chưa được cho phép trong Firebase Authentication",
     "FIREBASE_NOT_CONFIGURED": "Firebase chưa được cấu hình ở client",
     "FIREBASE_AUTH_DISABLED": "Đăng nhập Firebase chưa được bật ở máy chủ",
     "FIREBASE_TOKEN_INVALID": "Phiên đăng nhập Firebase không hợp lệ, vui lòng thử lại",
