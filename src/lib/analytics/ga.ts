@@ -30,9 +30,13 @@ export function isGaEnabled(): boolean {
 export function hasAnyGaConfig(): boolean {
   if (isGaEnabled()) return true;
   if (typeof window === 'undefined') return false;
-  return (window.dataLayer ?? []).some(
-    entry => Array.isArray(entry) && entry[0] === 'config'
-  );
+  // Entry trong dataLayer là đối tượng `arguments`, KHÔNG phải Array — dùng
+  // Array.isArray ở đây thì luôn ra false và trang chỉ-có-GA-của-brand sẽ mất
+  // cả banner consent lẫn page_view.
+  return (window.dataLayer ?? []).some(entry => {
+    if (entry === null || typeof entry !== 'object') return false;
+    return (entry as { 0?: unknown })[0] === 'config';
+  });
 }
 
 /** Key lưu lựa chọn consent. Đổi hậu tố khi danh mục consent thay đổi để hỏi lại. */
@@ -55,10 +59,27 @@ declare global {
 
 function gtag(...args: GtagArgs): void {
   if (typeof window === 'undefined') return;
-  // Đẩy thẳng vào dataLayer thay vì gọi window.gtag: inline script trong
-  // <head> đã tạo dataLayer trước khi gtag.js kịp nạp, nên hàng đợi luôn tồn
-  // tại kể cả lúc script ngoài còn đang tải (hoặc bị adblock chặn hẳn).
-  (window.dataLayer = window.dataLayer ?? []).push(args);
+  // PHẢI đẩy đối tượng `arguments`, KHÔNG phải mảng thường. gtag.js duyệt
+  // dataLayer và chỉ nhận diện lệnh ở dạng arguments; một Array bị bỏ qua
+  // lặng lẽ — không lỗi, không cảnh báo, chỉ là không có gì xảy ra. Bản đầu
+  // đẩy mảng nên `consent update` và `page_view` không bao giờ tới GA: trang
+  // trông như đã gắn đủ (container đăng ký, dataLayer có entry) mà property
+  // không nhận được hit nào và cookie `_ga` không hề được đặt.
+  // Ưu tiên `window.gtag` do bootstrap trong <head> tạo ra, vốn đã đúng hình
+  // dạng chuẩn `function gtag(){dataLayer.push(arguments)}`.
+  const call = window.gtag as ((...a: unknown[]) => void) | undefined;
+  if (typeof call === 'function') {
+    call(...args);
+    return;
+  }
+  // Bootstrap chưa chạy (vd môi trường test dựng DOM trần): tự tạo đúng hình
+  // dạng đó thay vì đẩy mảng.
+  const dl = (window.dataLayer = window.dataLayer ?? []);
+  function queue() {
+    // eslint-disable-next-line prefer-rest-params
+    dl.push(arguments);
+  }
+  (queue as (...a: unknown[]) => void)(...args);
 }
 
 /** Đọc lựa chọn đã lưu. `null` = chưa hỏi ⇒ cần hiện banner. */
