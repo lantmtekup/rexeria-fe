@@ -187,6 +187,10 @@ export const mapBrandDomain = (
   d: BrandDomain,
   dnsRecords?: BrandDomainDnsRecord[]
 ): DeployBrandDomain => {
+  // Ưu tiên records truyền vào (create response), rồi tới records nhúng trong
+  // chính domain (list giờ đã trả `dns_records`). Chỉ khi cả hai vắng UI mới
+  // fallback tự dựng.
+  const records = dnsRecords ?? d.dns_records;
   const status: DeployDomainStatus =
     d.status === 'verifying'
       ? 'verifying'
@@ -202,10 +206,9 @@ export const mapBrandDomain = (
     status,
     verificationToken: d.verification_token,
     failureReason: d.failure_reason,
-    // Chỉ create trả `dns_records`; list không → để undefined, UI fallback.
-    ...(dnsRecords?.length
+    ...(records?.length
       ? {
-          dnsRecords: dnsRecords.map(r => ({
+          dnsRecords: records.map(r => ({
             type: r.type,
             name: r.name,
             value: r.value,

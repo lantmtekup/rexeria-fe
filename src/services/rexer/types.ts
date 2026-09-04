@@ -2539,6 +2539,9 @@ export interface BrandDomain {
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  /** BE (list + create) trả kèm để FE khỏi tự dựng record theo edge host
+   *  hardcode. Optional để tương thích BE cũ chưa trả. */
+  dns_records?: BrandDomainDnsRecord[];
 }
 export interface BrandDomainListResponse {
   items: BrandDomain[];

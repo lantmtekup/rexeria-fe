@@ -233,8 +233,14 @@ const DnsRecordsPanel = ({ domain }: { domain: DeployBrandDomain }) => {
             />
             <DnsRecordRow
               kind='TXT'
-              name={`_rexer-verify.${domain.domain}`}
-              value={`rexer-verify=${domain.verificationToken}`}
+              // Name tương đối `_rexer-verify` (khớp BE + create-path). Ghi
+              // FQDN `_rexer-verify.<domain>` dễ bị nhà cung cấp DNS nối thêm
+              // zone → `_rexer-verify.<domain>.<domain>`.
+              name='_rexer-verify'
+              // Value = ĐÚNG token, KHÔNG tiền tố. BE verify so
+              // `strings.TrimSpace(TXT) == verification_token`; thêm
+              // `rexer-verify=` sẽ làm verify FAIL vĩnh viễn.
+              value={domain.verificationToken}
             />
           </>
         )}
