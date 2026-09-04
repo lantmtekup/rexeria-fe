@@ -105,6 +105,22 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (isPublicRoute(pathname)) {
+    // Ingest analytics: chuyển tiếp mã quốc gia Cloudflare gắn ở biên xuống BE.
+    //
+    // Vị trí PHẢI do biên xác định, không thể để client gửi lên — ai cũng khai
+    // man được. Cloudflare đặt `cf-ipcountry` trên mọi request tới Worker này;
+    // ở đây chép sang `x-rexer-country` rồi mới đi qua rewrite `/api/rexer/*`,
+    // để không phải trông chờ vào việc rewrite có giữ nguyên header gốc hay
+    // không. BE ưu tiên `cf-ipcountry` nếu nó sống sót, và dùng header này làm
+    // đường lùi.
+    if (pathname.startsWith('/api/rexer/analytics/')) {
+      const country = request.headers.get('cf-ipcountry');
+      if (country) {
+        const headers = new Headers(request.headers);
+        headers.set('x-rexer-country', country);
+        return NextResponse.next({ request: { headers } });
+      }
+    }
     return NextResponse.next();
   }
 

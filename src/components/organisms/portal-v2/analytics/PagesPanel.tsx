@@ -342,6 +342,10 @@ const PageDetail = ({
   }, [row.slug]);
 
   const maxSource = Math.max(1, ...(detail?.sources ?? []).map(s => s.visits));
+  const maxCountry = Math.max(
+    1,
+    ...(detail?.countries ?? []).map(c => c.visits)
+  );
 
   return (
     <div className='flex flex-col gap-5'>
@@ -490,6 +494,49 @@ const PageDetail = ({
               ) : (
                 <p className='px-5 py-8 text-center text-[12.5px] text-[var(--pv2-faint)]'>
                   {t('sourcesEmpty')}
+                </p>
+              )}
+            </div>
+
+            {/* Khách đến từ đâu — vị trí do biên xác định (cf-ipcountry), cùng
+                đơn vị đếm với lượt truy cập ở trên nên hai số so được với nhau. */}
+            <div className='overflow-hidden rounded-[var(--pv2-r)] border border-[var(--pv2-hair)] bg-[var(--pv2-paper)]'>
+              <div className='border-b border-[var(--pv2-hair)] px-4 py-3 md:px-5'>
+                <h3 className='text-[13px] font-semibold text-[var(--pv2-ink)]'>
+                  {t('countriesTitle')}
+                </h3>
+              </div>
+              {detail.countries.length ? (
+                <div>
+                  {detail.countries.map(c => (
+                    <div
+                      key={c.code || 'unknown'}
+                      className='flex items-center gap-3 border-b border-[var(--pv2-hair)]/60 px-4 py-2.5 last:border-0 md:px-5'
+                    >
+                      <span className='w-20 shrink-0 truncate text-[12.5px] font-medium text-[var(--pv2-ink)]'>
+                        {c.code || t('countryUnknown')}
+                      </span>
+                      <span className='h-2 flex-1 overflow-hidden rounded-full bg-[var(--pv2-hair)]'>
+                        <span
+                          className='block h-full rounded-full'
+                          style={{
+                            width: `${(c.visits / maxCountry) * 100}%`,
+                            background: 'var(--pv2-electric)',
+                          }}
+                        />
+                      </span>
+                      <span className='w-16 text-right font-[family-name:var(--pv2-disp)] text-[12px] text-[var(--pv2-mut)] tabular-nums'>
+                        {fmt(c.visits)}
+                      </span>
+                      <span className='w-12 text-right text-[12px] text-[var(--pv2-mut)] tabular-nums'>
+                        {c.share}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className='px-5 py-8 text-center text-[12.5px] text-[var(--pv2-faint)]'>
+                  {t('countriesEmpty')}
                 </p>
               )}
             </div>

@@ -634,7 +634,10 @@
         "colBlock": "Block",
         "colDwell": "Dwell TB",
         "colSessions": "Phiên",
-        "colCvr": "CVR"
+        "colCvr": "CVR",
+        "countriesTitle": "Khách đến từ đâu",
+        "countriesEmpty": "Chưa ghi nhận vị trí nào cho trang này.",
+        "countryUnknown": "Không rõ"
       }
     },
     "intelligence": {

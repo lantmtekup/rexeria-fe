@@ -634,7 +634,10 @@
         "colBlock": "Block",
         "colDwell": "Avg. dwell",
         "colSessions": "Sessions",
-        "colCvr": "CVR"
+        "colCvr": "CVR",
+        "countriesTitle": "Where visitors come from",
+        "countriesEmpty": "No location recorded for this page yet.",
+        "countryUnknown": "Unknown"
       }
     },
     "intelligence": {
