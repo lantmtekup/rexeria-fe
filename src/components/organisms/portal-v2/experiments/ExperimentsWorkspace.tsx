@@ -39,6 +39,7 @@ import type {
 } from '@/lib/portal-v2/experiments/types';
 import { formatCount, formatMoney } from '@/lib/portal-v2/format';
 import { crossHref } from '@/lib/portal-v2/journey-audit/params';
+import { FEATURE_EVENT, trackFeature } from '@/lib/analytics/featureEvents';
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 import { RxApiError } from '@/services/rexer/client';
 
@@ -190,6 +191,7 @@ export const ExperimentsWorkspace = ({
         const updated = experimentFromRx(
           await rexerV2Api.experiments.stop(selected.id)
         );
+        trackFeature(FEATURE_EVENT.experimentStop);
         setEndModalOpen(false);
         toast.success(t('toastStopped', { name: updated.name }));
         router.refresh();
@@ -222,6 +224,11 @@ export const ExperimentsWorkspace = ({
         const updated = experimentFromRx(
           await rexerV2Api.experiments.conclude(selected.id, {})
         );
+        // Kết cục (won/lost/…) là nhãn phân loại, cho biết thử nghiệm có đi tới
+        // kết luận hay chỉ bị dừng giữa chừng.
+        trackFeature(FEATURE_EVENT.experimentConclude, {
+          outcome: updated.status,
+        });
         setEndModalOpen(false);
         toast.success(
           updated.status === 'won'
