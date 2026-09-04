@@ -233,6 +233,7 @@ import type {
   AnalyticsFunnelResponse,
   AnalyticsTimeseriesResponse,
   AnalyticsSourcesResponse,
+  PageCountriesResponse,
   Lead,
   LeadsListResponse,
   LeadStatus,
@@ -1884,6 +1885,16 @@ export const rexerApi = {
 
       // ── Analytics v2: phễu + leads (be-spec-analytics-funnel-leads) ──
       // `id` ở đây là page_id (uuid|slug) — BE nhận qua query, không phải path.
+      /**
+       * Lượt xem theo quốc gia của MỘT trang. Vị trí do biên xác định
+       * (`cf-ipcountry` của Cloudflare), cùng đơn vị đếm với lượt truy cập của
+       * trang — khác GA4 vốn đếm session của cả property.
+       */
+      countries: (id: string, query?: { range?: AnalyticsRange }) =>
+        rx<PageCountriesResponse>(`/pages/${id}/analytics/countries`, {
+          query,
+        }),
+
       /** 6-bậc phễu visits → engaged → cta_clicks → leads → sql → deals. */
       funnel: (id: string, query?: { range?: AnalyticsRange }) =>
         rx<AnalyticsFunnelResponse>('/analytics/funnel', {

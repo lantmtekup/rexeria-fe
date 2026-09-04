@@ -2427,6 +2427,21 @@ export interface UpdateBrandKitRequest extends BrandKitTokens {
 export type BrandStatus = 'active' | 'pending' | 'suspended';
 export type BrandPlan = 'phase1_managed' | 'phase2_self_serve' | string;
 
+/** Một dòng phân bố lượt xem theo quốc gia của MỘT trang landing. */
+export interface PageCountryRow {
+  /** Rỗng = không xác định được vị trí (request không qua Cloudflare). */
+  country_code: string;
+  visits: number;
+  /** % trên tổng của khoảng đang xem, BE làm tròn sẵn 1 chữ số. */
+  share: number;
+}
+
+/** GET /v1/pages/{pageId}/analytics/countries. */
+export interface PageCountriesResponse {
+  items: PageCountryRow[];
+  total_visits: number;
+}
+
 export interface Brand {
   id: string;
   slug: string;

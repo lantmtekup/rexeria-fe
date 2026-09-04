@@ -185,6 +185,14 @@ export type LivePageTrendPoint = {
   leads: number;
 };
 
+export type LivePageCountry = {
+  /** ISO alpha-2; rỗng = không xác định được vị trí. */
+  code: string;
+  visits: number;
+  /** % trên tổng, BE làm tròn sẵn. */
+  share: number;
+};
+
 export type LivePageDetail = {
   slug: string;
   measured: boolean;
@@ -194,6 +202,7 @@ export type LivePageDetail = {
   conversions: number;
   blocks: LivePageBlock[];
   sources: LivePageSource[];
+  countries: LivePageCountry[];
   trend: LivePageTrendPoint[];
 };
 
@@ -204,13 +213,14 @@ export type LivePageDetail = {
 export const fetchLivePageDetail = async (
   slug: string
 ): Promise<LivePageDetail> => {
-  const [summaryR, blocksR, sourcesR, visitsR, leadsR] =
+  const [summaryR, blocksR, sourcesR, visitsR, leadsR, countriesR] =
     await Promise.allSettled([
       rexerApi.pages.analytics.summary(slug),
       rexerApi.pages.analytics.blocks(slug),
       rexerApi.pages.analytics.sources(slug),
       rexerApi.pages.analytics.timeseries(slug, { metric: 'visits' }),
       rexerApi.pages.analytics.timeseries(slug, { metric: 'leads' }),
+      rexerApi.pages.analytics.countries(slug),
     ]);
 
   const summary = summaryR.status === 'fulfilled' ? summaryR.value : null;
@@ -230,6 +240,17 @@ export const fetchLivePageDetail = async (
       ? (sourcesR.value.items ?? []).map(s => ({
           source: s.utm_source || 'direct',
           visits: s.visits,
+        }))
+      : [];
+
+  // Quốc gia: best-effort như block/source. BE cũ chưa có endpoint này thì
+  // phần đó rỗng, không kéo sập màn chi tiết.
+  const countries: LivePageCountry[] =
+    countriesR.status === 'fulfilled'
+      ? (countriesR.value.items ?? []).map(c => ({
+          code: c.country_code,
+          visits: c.visits,
+          share: c.share,
         }))
       : [];
 
@@ -255,6 +276,7 @@ export const fetchLivePageDetail = async (
     conversions: summary?.conversions ?? 0,
     blocks,
     sources,
+    countries,
     trend,
   };
 };
