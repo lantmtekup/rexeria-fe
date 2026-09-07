@@ -31,7 +31,14 @@ type ShowcaseImage = {
 
 type ShowcaseCard = {
   id: string;
-  emblem: { src: string; width: number; height: number; className: string };
+  emblem: {
+    src: string;
+    width: number;
+    height: number;
+    className: string;
+    /** Emblem này là vương miện → làm điểm dừng cho CrownTraveler. */
+    crownSlot?: boolean;
+  };
   caption?: readonly string[];
   images: readonly [ShowcaseImage, ShowcaseImage];
 };
@@ -44,6 +51,7 @@ const SHOWCASE_CARDS: readonly ShowcaseCard[] = [
       width: 318,
       height: 236,
       className: 'h-auto w-[clamp(170px,20vw,300px)]',
+      crownSlot: true,
     },
     images: [
       {
@@ -131,6 +139,7 @@ function CardCenter({
     >
       <Image
         data-fade
+        data-crown-slot={card.emblem.crownSlot ? 'showcase' : undefined}
         src={card.emblem.src}
         alt=''
         aria-hidden

@@ -31,6 +31,15 @@ img {
   --story-gutter: clamp(24px, 4.4%, 64px);
 }
 
+/**
+ * CrownTraveler (desktop): khi 1 vương miện fixed đang bay qua các section, 6 vương miện
+ * tĩnh vẫn nằm trong DOM để giữ layout nhưng phải ẩn. Dùng `!important` vì Showcase timeline
+ * set inline `opacity`/`visibility` (autoAlpha) lên chính ảnh này khi cross-fade card.
+ */
+.crown-traveling [data-crown-slot] {
+  opacity: 0 !important;
+}
+
 /* Strip cuộn ngang (DesignPanel) và hàng thumbnail mobile (ProductsPanel) */
 .no-scrollbar {
   scrollbar-width: none;

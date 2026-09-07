@@ -35,6 +35,7 @@ export function StoryRail({ activeIndex, onSelect }: Props) {
     <aside className='sticky top-[72px] hidden h-[calc(100svh-72px)] w-[354px] shrink-0 border-r border-black/40 bg-[#F5F5F5] pt-[clamp(56px,13vh,120px)] lg:block'>
       <div className='relative mx-auto w-full' style={{ height: MENU_STACK_H }}>
         <Image
+          data-crown-slot='story'
           src='/hero/hero-emblem.png'
           alt=''
           aria-hidden

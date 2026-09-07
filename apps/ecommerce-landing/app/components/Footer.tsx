@@ -13,6 +13,7 @@ export default function Footer() {
         <div className='flex w-full items-center gap-6'>
           <span aria-hidden className='h-px flex-1 bg-black/15' />
           <Image
+            data-crown-slot='footer'
             src='/product/crown.png'
             alt=''
             aria-hidden

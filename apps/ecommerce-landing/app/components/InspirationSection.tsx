@@ -284,6 +284,7 @@ export default function InspirationSection() {
       <div className='mx-auto w-full px-6'>
         <div className='flex flex-col items-center text-center'>
           <Image
+            data-crown-slot='inspirations'
             src='/product/crown.png'
             alt=''
             aria-hidden

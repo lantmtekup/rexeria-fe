@@ -132,6 +132,7 @@ export default function Hero() {
 
       <div className='flex h-full flex-col items-center justify-center px-6 text-center text-white'>
         <Image
+          data-crown-slot='hero'
           src='/hero/hero-emblem.png'
           alt=''
           aria-hidden

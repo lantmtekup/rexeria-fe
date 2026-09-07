@@ -162,6 +162,14 @@ import { westlyRevealDef } from './defs/westlyReveal';
 import { westlyProductRevealDef } from './defs/westlyProductReveal';
 import { westlyFooterDef } from './defs/westlyFooter';
 import { westlyHeaderDef } from './defs/westlyHeader';
+import { lecoolHeroDef } from './defs/lecoolHero';
+import { lecoolStoryDef } from './defs/lecoolStory';
+import { lecoolShowcaseDef } from './defs/lecoolShowcase';
+import { lecoolCollectionDef } from './defs/lecoolCollection';
+import { lecoolInspirationDef } from './defs/lecoolInspiration';
+import { lecoolFooterDef } from './defs/lecoolFooter';
+import { lecoolHeaderDef } from './defs/lecoolHeader';
+import { lecoolCrownTravelerDef } from './defs/lecoolCrownTraveler';
 import { belgoHeroDef } from './defs/belgoHero';
 import { belgoAboutProductDef } from './defs/belgoAboutProduct';
 import { belgoScrollFramesDef } from './defs/belgoScrollFrames';
@@ -198,6 +206,14 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   westly_product_reveal: westlyProductRevealDef as BlockDef,
   westly_footer: westlyFooterDef as BlockDef,
   westly_header: westlyHeaderDef as BlockDef,
+  lecool_hero: lecoolHeroDef as BlockDef,
+  lecool_story: lecoolStoryDef as BlockDef,
+  lecool_showcase: lecoolShowcaseDef as BlockDef,
+  lecool_collection: lecoolCollectionDef as BlockDef,
+  lecool_inspiration: lecoolInspirationDef as BlockDef,
+  lecool_footer: lecoolFooterDef as BlockDef,
+  lecool_header: lecoolHeaderDef as BlockDef,
+  lecool_crown_traveler: lecoolCrownTravelerDef as BlockDef,
   belgo_hero: belgoHeroDef as BlockDef,
   belgo_about_product: belgoAboutProductDef as BlockDef,
   belgo_scroll_frames: belgoScrollFramesDef as BlockDef,

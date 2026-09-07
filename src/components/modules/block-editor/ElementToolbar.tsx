@@ -124,6 +124,22 @@ import {
 import { resolveCoolHunterSectionProgressSections } from './blocks/_registry/defs/coolHunterSectionProgress';
 import { resolveBelgoAboutProductSpecs } from './blocks/_registry/defs/belgoAboutProduct';
 import {
+  resolveDesignCards,
+  resolveDesignParagraphs,
+  resolveDetailRows,
+  resolveProductActions,
+  resolveProductColors,
+  resolveProductImages,
+  resolveProductSpecs,
+} from './blocks/lecoolStoryData';
+import { resolveShowcaseCards } from './blocks/lecoolShowcaseData';
+import { resolveCollectionItems } from './blocks/lecoolCollectionData';
+import { resolveInspirationCards } from './blocks/lecoolInspirationData';
+import {
+  resolveHeaderActions,
+  resolveHeaderNav,
+} from './blocks/lecoolHeaderData';
+import {
   resolveBelgoFooterHeadlineWords,
   resolveBelgoFooterLocations,
   resolveBelgoFooterSocials,
@@ -219,6 +235,23 @@ import {
   type CoolHunterGalleryItem,
   type FramerBungeeHeroV2Content,
   type CoolHunterSectionProgressContent,
+  type LecoolStoryContent,
+  type LecoolStoryCard,
+  type LecoolStoryDetailRow,
+  type LecoolStoryColor,
+  type LecoolStorySpec,
+  type LecoolStoryAction,
+  type LecoolStoryIconName,
+  type LecoolShowcaseContent,
+  type LecoolShowcaseCard,
+  type LecoolCollectionContent,
+  type LecoolCollectionItem,
+  type LecoolCollectionColor,
+  type LecoolInspirationContent,
+  type LecoolInspirationCard,
+  type LecoolHeaderContent,
+  type LecoolHeaderNavItem,
+  type LecoolHeaderAction,
   type BelgoAboutProductContent,
   type BelgoFooterContent,
   type BelgoFooterHeadlineWord,
@@ -1096,6 +1129,87 @@ export function ElementToolbar({
         {kind === 'lineaPortfolioItems' && (
           <LineaPortfolioItemsControls
             content={content as LineaPortfolioContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'lecoolDesignParagraphs' && (
+          <LecoolDesignParagraphsControls
+            content={content as LecoolStoryContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'lecoolDesignCards' && (
+          <LecoolDesignCardsControls
+            content={content as LecoolStoryContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'lecoolDetailRows' && (
+          <LecoolDetailRowsControls
+            content={content as LecoolStoryContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'lecoolProductImages' && (
+          <LecoolProductImagesControls
+            content={content as LecoolStoryContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'lecoolProductColors' && (
+          <LecoolProductColorsControls
+            content={content as LecoolStoryContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'lecoolProductSpecs' && (
+          <LecoolProductSpecsControls
+            content={content as LecoolStoryContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'lecoolProductActions' && (
+          <LecoolProductActionsControls
+            content={content as LecoolStoryContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'lecoolShowcaseCards' && (
+          <LecoolShowcaseCardsControls
+            content={content as LecoolShowcaseContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'lecoolCollectionItems' && (
+          <LecoolCollectionItemsControls
+            content={content as LecoolCollectionContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'lecoolCollectionColors' && (
+          <LecoolCollectionColorsControls
+            content={content as LecoolCollectionContent}
+            onContentChange={onContentChange}
+            itemIndex={Number(
+              selectedKey?.match(/^items\[(\d+)\]\.colors$/)?.[1] ?? -1
+            )}
+          />
+        )}
+        {kind === 'lecoolInspirationCards' && (
+          <LecoolInspirationCardsControls
+            content={content as LecoolInspirationContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'lecoolHeaderNav' && (
+          <LecoolHeaderNavControls
+            content={content as LecoolHeaderContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'lecoolHeaderActions' && (
+          <LecoolHeaderActionsControls
+            content={content as LecoolHeaderContent}
             onContentChange={onContentChange}
           />
         )}
@@ -10086,6 +10200,1212 @@ function ToolbarBtn({
     >
       {children}
     </button>
+  );
+}
+
+// ─────────────────────────────────────────── LE COOL MOVE · LIST MANAGERS
+//
+// Mọi control đọc qua đúng `resolve*` mà canvas và LayersPanel đang dùng, nên
+// số item trong popover luôn khớp số node trên canvas kể cả khi content còn
+// thiếu field hoặc sai kiểu.
+
+type Setter = (
+  next: BlockContent | ((prev: BlockContent) => BlockContent)
+) => void;
+
+/** Một dòng item: nhãn thứ tự + nút xoá. */
+function LecoolRowHead({
+  label,
+  onRemove,
+  disabled,
+}: {
+  label: string;
+  onRemove: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <div className='flex items-center justify-between gap-2'>
+      <span className='text-3xs font-semibold tracking-widest text-neutral-500 uppercase'>
+        {label}
+      </span>
+      <button
+        type='button'
+        onClick={e => {
+          e.preventDefault();
+          e.stopPropagation();
+          onRemove();
+        }}
+        disabled={disabled}
+        aria-label={`Xoá ${label}`}
+        className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40'
+      >
+        <Trash2 className='size-3.5' />
+      </button>
+    </div>
+  );
+}
+
+const LECOOL_ICON_OPTIONS: Array<{
+  value: LecoolStoryIconName;
+  label: string;
+}> = [
+  { value: 'ruler', label: 'Thước' },
+  { value: 'bag', label: 'Túi' },
+  { value: 'phone', label: 'Điện thoại' },
+  { value: 'calendar', label: 'Lịch' },
+  { value: 'pin', label: 'Ghim' },
+];
+
+function LecoolIconSelect({
+  value,
+  onChange,
+  ariaLabel,
+}: {
+  value: LecoolStoryIconName | undefined;
+  onChange: (next: LecoolStoryIconName) => void;
+  ariaLabel: string;
+}) {
+  return (
+    <select
+      value={value ?? 'bag'}
+      onChange={e => onChange(e.target.value as LecoolStoryIconName)}
+      aria-label={ariaLabel}
+      className='h-8 w-24 shrink-0 rounded-md border border-neutral-200 bg-white px-1.5 text-xs text-neutral-800'
+    >
+      {LECOOL_ICON_OPTIONS.map(option => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/** Ô chọn màu: swatch gốc + ô gõ hex, hai chiều cùng một giá trị. */
+function LecoolColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string | undefined;
+  onChange: (next: string) => void;
+}) {
+  const safe = /^#[0-9a-f]{6}$/i.test(value ?? '')
+    ? (value as string)
+    : '#000000';
+  return (
+    <label className='text-2xs flex flex-1 items-center gap-1.5 text-neutral-500'>
+      {label}
+      <input
+        type='color'
+        value={safe}
+        onChange={e => onChange(e.target.value)}
+        aria-label={label}
+        className='h-8 w-8 shrink-0 cursor-pointer rounded-md border border-neutral-200 bg-white p-0.5'
+      />
+      <Input
+        value={value ?? ''}
+        onChange={e => onChange(e.target.value)}
+        placeholder='#000000'
+        className='h-8 border-neutral-200 bg-white text-xs'
+      />
+    </label>
+  );
+}
+
+/* ── Story · Design ─────────────────────────────────────────────────────── */
+
+function LecoolDesignParagraphsControls({
+  content,
+  onContentChange,
+}: {
+  content: LecoolStoryContent;
+  onContentChange: Setter;
+}) {
+  const paragraphs = resolveDesignParagraphs(content);
+
+  const write = (updater: (list: string[]) => string[]) =>
+    onContentChange(prev => {
+      const c = prev as LecoolStoryContent;
+      return {
+        ...c,
+        designParagraphs: updater(resolveDesignParagraphs(c)),
+      } as BlockContent;
+    });
+
+  const remove = (i: number) => {
+    if (paragraphs.length <= 1) {
+      toast.error('Cần ít nhất 1 đoạn văn');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger
+      label='Đoạn văn Design'
+      preview={`${paragraphs.length} đoạn`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {paragraphs.map((paragraph, i) => (
+          <div
+            key={`lecool-para-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <LecoolRowHead
+              label={`Đoạn ${i + 1}`}
+              onRemove={() => remove(i)}
+              disabled={paragraphs.length <= 1}
+            />
+            <Textarea
+              value={paragraph}
+              onChange={e =>
+                write(list =>
+                  list.map((v, idx) => (idx === i ? e.target.value : v))
+                )
+              }
+              placeholder='Nội dung đoạn văn'
+              className='field-sizing-fixed min-h-20 resize-y overflow-y-auto border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() => write(list => [...list, 'Đoạn văn mới.'])}
+        label='Thêm đoạn văn'
+      />
+    </PopoverTrigger>
+  );
+}
+
+function LecoolDesignCardsControls({
+  content,
+  onContentChange,
+}: {
+  content: LecoolStoryContent;
+  onContentChange: Setter;
+}) {
+  const cards = resolveDesignCards(content);
+
+  const write = (updater: (list: LecoolStoryCard[]) => LecoolStoryCard[]) =>
+    onContentChange(prev => {
+      const c = prev as LecoolStoryContent;
+      return {
+        ...c,
+        designCards: updater(resolveDesignCards(c)),
+      } as BlockContent;
+    });
+
+  const update = (i: number, patch: Partial<LecoolStoryCard>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (cards.length <= 1) {
+      toast.error('Cần ít nhất 1 thẻ ảnh');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger
+      label='Thẻ ảnh Design'
+      preview={`${cards.length} thẻ`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {cards.map((card, i) => (
+          <div
+            key={`lecool-card-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <LecoolRowHead
+              label={`Thẻ ${i + 1}`}
+              onRemove={() => remove(i)}
+              disabled={cards.length <= 1}
+            />
+            <ImagePicker
+              value={card.imageUrl ?? ''}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+            <Input
+              value={card.caption ?? ''}
+              onChange={e => update(i, { caption: e.target.value })}
+              placeholder='Chú thích trên ảnh'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() =>
+          write(list => [...list, { imageUrl: '', caption: 'Thẻ mới' }])
+        }
+        label='Thêm thẻ ảnh'
+      />
+    </PopoverTrigger>
+  );
+}
+
+/* ── Story · Details hotspot ────────────────────────────────────────────── */
+
+function LecoolDetailRowsControls({
+  content,
+  onContentChange,
+}: {
+  content: LecoolStoryContent;
+  onContentChange: Setter;
+}) {
+  const rows = resolveDetailRows(content);
+
+  const write = (
+    updater: (list: LecoolStoryDetailRow[]) => LecoolStoryDetailRow[]
+  ) =>
+    onContentChange(prev => {
+      const c = prev as LecoolStoryContent;
+      return {
+        ...c,
+        detailRows: updater(resolveDetailRows(c)),
+      } as BlockContent;
+    });
+
+  const update = (i: number, patch: Partial<LecoolStoryDetailRow>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (rows.length <= 1) {
+      toast.error('Cần ít nhất 1 hotspot');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger
+      label='Hotspot Details'
+      preview={`${rows.length} hotspot`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {rows.map((row, i) => (
+          <div
+            key={`lecool-spot-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <LecoolRowHead
+              label={`Hotspot ${i + 1}`}
+              onRemove={() => remove(i)}
+              disabled={rows.length <= 1}
+            />
+            <Input
+              value={row.label ?? ''}
+              onChange={e => update(i, { label: e.target.value })}
+              placeholder='Nhãn hiện trong danh sách'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={row.thumbUrl ?? ''}
+              onChange={url => update(i, { thumbUrl: url })}
+            />
+            {/* Toạ độ theo khung Figma 1086×840, không phải %. */}
+            <div className='flex items-center gap-2'>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+                X (0–1086)
+                <Input
+                  type='number'
+                  min={0}
+                  max={1086}
+                  value={row.x ?? 0}
+                  onChange={e => update(i, { x: Number(e.target.value) })}
+                  className='h-8 border-neutral-200 bg-white text-xs'
+                />
+              </label>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+                Y (0–840)
+                <Input
+                  type='number'
+                  min={0}
+                  max={840}
+                  value={row.y ?? 0}
+                  onChange={e => update(i, { y: Number(e.target.value) })}
+                  className='h-8 border-neutral-200 bg-white text-xs'
+                />
+              </label>
+            </div>
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() =>
+          write(list => [
+            ...list,
+            { label: 'Chi tiết mới', thumbUrl: '', x: 528, y: 404 },
+          ])
+        }
+        label='Thêm hotspot'
+      />
+    </PopoverTrigger>
+  );
+}
+
+/* ── Story · Products ───────────────────────────────────────────────────── */
+
+function LecoolProductImagesControls({
+  content,
+  onContentChange,
+}: {
+  content: LecoolStoryContent;
+  onContentChange: Setter;
+}) {
+  const images = resolveProductImages(content);
+
+  const write = (updater: (list: string[]) => string[]) =>
+    onContentChange(prev => {
+      const c = prev as LecoolStoryContent;
+      return {
+        ...c,
+        productImages: updater(resolveProductImages(c)),
+      } as BlockContent;
+    });
+
+  const remove = (i: number) => {
+    if (images.length <= 1) {
+      toast.error('Cần ít nhất 1 ảnh');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger
+      label='Ảnh sản phẩm'
+      preview={`${images.length} ảnh`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {images.map((src, i) => (
+          <div
+            key={`lecool-pimg-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <LecoolRowHead
+              label={`Ảnh ${i + 1}`}
+              onRemove={() => remove(i)}
+              disabled={images.length <= 1}
+            />
+            <ImagePicker
+              value={src}
+              onChange={url =>
+                write(list => list.map((v, idx) => (idx === i ? url : v)))
+              }
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={() => write(list => [...list, ''])} label='Thêm ảnh' />
+    </PopoverTrigger>
+  );
+}
+
+function LecoolProductColorsControls({
+  content,
+  onContentChange,
+}: {
+  content: LecoolStoryContent;
+  onContentChange: Setter;
+}) {
+  const colors = resolveProductColors(content);
+
+  const write = (updater: (list: LecoolStoryColor[]) => LecoolStoryColor[]) =>
+    onContentChange(prev => {
+      const c = prev as LecoolStoryContent;
+      return {
+        ...c,
+        productColors: updater(resolveProductColors(c)),
+      } as BlockContent;
+    });
+
+  const update = (i: number, patch: Partial<LecoolStoryColor>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (colors.length <= 1) {
+      toast.error('Cần ít nhất 1 màu');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger label='Màu' preview={`${colors.length} màu`} width={460}>
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {colors.map((color, i) => (
+          <div
+            key={`lecool-color-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <LecoolRowHead
+              label={`Màu ${i + 1}`}
+              onRemove={() => remove(i)}
+              disabled={colors.length <= 1}
+            />
+            <Input
+              value={color.name ?? ''}
+              onChange={e => update(i, { name: e.target.value })}
+              placeholder='Tên màu'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <div className='flex items-center gap-2'>
+              <LecoolColorField
+                label='Trên'
+                value={color.from}
+                onChange={from => update(i, { from })}
+              />
+              <LecoolColorField
+                label='Dưới'
+                value={color.to}
+                onChange={to => update(i, { to })}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() =>
+          write(list => [
+            ...list,
+            { name: 'Màu mới', from: '#cccccc', to: '#333333' },
+          ])
+        }
+        label='Thêm màu'
+      />
+    </PopoverTrigger>
+  );
+}
+
+function LecoolProductSpecsControls({
+  content,
+  onContentChange,
+}: {
+  content: LecoolStoryContent;
+  onContentChange: Setter;
+}) {
+  const specs = resolveProductSpecs(content);
+
+  const write = (updater: (list: LecoolStorySpec[]) => LecoolStorySpec[]) =>
+    onContentChange(prev => {
+      const c = prev as LecoolStoryContent;
+      return {
+        ...c,
+        productSpecs: updater(resolveProductSpecs(c)),
+      } as BlockContent;
+    });
+
+  const update = (i: number, patch: Partial<LecoolStorySpec>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (specs.length <= 1) {
+      toast.error('Cần ít nhất 1 thông số');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger
+      label='Thông số'
+      preview={`${specs.length} thông số`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {specs.map((spec, i) => (
+          <div
+            key={`lecool-spec-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <LecoolRowHead
+              label={`Thông số ${i + 1}`}
+              onRemove={() => remove(i)}
+              disabled={specs.length <= 1}
+            />
+            <div className='flex gap-1.5'>
+              <LecoolIconSelect
+                value={spec.icon}
+                onChange={icon => update(i, { icon })}
+                ariaLabel={`Icon thông số ${i + 1}`}
+              />
+              <Input
+                value={spec.label ?? ''}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Nhãn (Dimensions)'
+                className='h-8 border-neutral-200 bg-white text-xs'
+              />
+            </div>
+            <Input
+              value={spec.value ?? ''}
+              onChange={e => update(i, { value: e.target.value })}
+              placeholder='Giá trị'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() =>
+          write(list => [
+            ...list,
+            { icon: 'ruler', label: 'NHÃN', value: 'Giá trị' },
+          ])
+        }
+        label='Thêm thông số'
+      />
+    </PopoverTrigger>
+  );
+}
+
+function LecoolProductActionsControls({
+  content,
+  onContentChange,
+}: {
+  content: LecoolStoryContent;
+  onContentChange: Setter;
+}) {
+  const actions = resolveProductActions(content);
+
+  const write = (updater: (list: LecoolStoryAction[]) => LecoolStoryAction[]) =>
+    onContentChange(prev => {
+      const c = prev as LecoolStoryContent;
+      return {
+        ...c,
+        productActions: updater(resolveProductActions(c)),
+      } as BlockContent;
+    });
+
+  const update = (i: number, patch: Partial<LecoolStoryAction>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (actions.length <= 1) {
+      toast.error('Cần ít nhất 1 hành động');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger
+      label='Hành động'
+      preview={`${actions.length} hành động`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {actions.map((action, i) => (
+          <div
+            key={`lecool-action-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <LecoolRowHead
+              label={`Hành động ${i + 1}`}
+              onRemove={() => remove(i)}
+              disabled={actions.length <= 1}
+            />
+            <div className='flex gap-1.5'>
+              <LecoolIconSelect
+                value={action.icon}
+                onChange={icon => update(i, { icon })}
+                ariaLabel={`Icon hành động ${i + 1}`}
+              />
+              <Input
+                value={action.title ?? ''}
+                onChange={e => update(i, { title: e.target.value })}
+                placeholder='Tiêu đề'
+                className='h-8 border-neutral-200 bg-white text-xs'
+              />
+            </div>
+            <Input
+              value={action.sub ?? ''}
+              onChange={e => update(i, { sub: e.target.value })}
+              placeholder='Mô tả ngắn'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() =>
+          write(list => [
+            ...list,
+            { icon: 'pin', title: 'Hành động mới', sub: 'Mô tả ngắn' },
+          ])
+        }
+        label='Thêm hành động'
+      />
+    </PopoverTrigger>
+  );
+}
+
+/* ── Showcase ───────────────────────────────────────────────────────────── */
+
+function LecoolShowcaseCardsControls({
+  content,
+  onContentChange,
+}: {
+  content: LecoolShowcaseContent;
+  onContentChange: Setter;
+}) {
+  const cards = resolveShowcaseCards(content);
+
+  const write = (
+    updater: (list: LecoolShowcaseCard[]) => LecoolShowcaseCard[]
+  ) =>
+    onContentChange(prev => {
+      const c = prev as LecoolShowcaseContent;
+      return {
+        ...c,
+        cards: updater(resolveShowcaseCards(c)),
+      } as BlockContent;
+    });
+
+  const update = (i: number, patch: Partial<LecoolShowcaseCard>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const updateImage = (i: number, slot: 0 | 1, url: string) =>
+    write(list =>
+      list.map((item, idx) => {
+        if (idx !== i) return item;
+        const images = [...(item.images ?? [])];
+        images[slot] = { ...(images[slot] ?? {}), imageUrl: url };
+        return { ...item, images };
+      })
+    );
+
+  const remove = (i: number) => {
+    if (cards.length <= 2) {
+      toast.error('Cần ít nhất 2 card để có mép chuyển');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger label='Card' preview={`${cards.length} card`} width={460}>
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {cards.map((card, i) => (
+          <div
+            key={`lecool-sc-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <LecoolRowHead
+              label={`Card ${i + 1}`}
+              onRemove={() => remove(i)}
+              disabled={cards.length <= 2}
+            />
+            <span className='text-3xs tracking-widest text-neutral-400 uppercase'>
+              Cột giữa
+            </span>
+            <ImagePicker
+              value={card.emblemUrl ?? ''}
+              onChange={url => update(i, { emblemUrl: url })}
+            />
+            <div className='flex items-center gap-2'>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+                Rộng (px)
+                <Input
+                  type='number'
+                  min={40}
+                  max={600}
+                  value={card.emblemWidth ?? 300}
+                  onChange={e =>
+                    update(i, { emblemWidth: Number(e.target.value) })
+                  }
+                  className='h-8 border-neutral-200 bg-white text-xs'
+                />
+              </label>
+              <label className='text-2xs flex shrink-0 items-center gap-1.5 text-neutral-500'>
+                <input
+                  type='checkbox'
+                  checked={!!card.isCrown}
+                  onChange={e => update(i, { isCrown: e.target.checked })}
+                  className='size-3.5 cursor-pointer'
+                />
+                Điểm dừng vương miện
+              </label>
+            </div>
+            <Textarea
+              value={(card.captionLines ?? []).join('\n')}
+              onChange={e =>
+                update(i, {
+                  captionLines: e.target.value
+                    .split('\n')
+                    .map(line => line.trimEnd()),
+                })
+              }
+              placeholder={'Caption — mỗi dòng một dòng hiển thị'}
+              className='field-sizing-fixed min-h-16 resize-y overflow-y-auto border-neutral-200 bg-white text-xs'
+            />
+            <span className='text-3xs tracking-widest text-neutral-400 uppercase'>
+              Hai ảnh hai bên
+            </span>
+            <ImagePicker
+              value={card.images?.[0]?.imageUrl ?? ''}
+              onChange={url => updateImage(i, 0, url)}
+            />
+            <ImagePicker
+              value={card.images?.[1]?.imageUrl ?? ''}
+              onChange={url => updateImage(i, 1, url)}
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() =>
+          write(list => [
+            ...list,
+            {
+              emblemUrl: '',
+              emblemWidth: 232,
+              captionLines: ['Dòng caption mới'],
+              images: [{ imageUrl: '' }, { imageUrl: '' }],
+            },
+          ])
+        }
+        label='Thêm card'
+      />
+    </PopoverTrigger>
+  );
+}
+
+/* ── Collection ─────────────────────────────────────────────────────────── */
+
+function LecoolCollectionItemsControls({
+  content,
+  onContentChange,
+}: {
+  content: LecoolCollectionContent;
+  onContentChange: Setter;
+}) {
+  const items = resolveCollectionItems(content);
+
+  const write = (
+    updater: (list: LecoolCollectionItem[]) => LecoolCollectionItem[]
+  ) =>
+    onContentChange(prev => {
+      const c = prev as LecoolCollectionContent;
+      return {
+        ...c,
+        items: updater(resolveCollectionItems(c)),
+      } as BlockContent;
+    });
+
+  const update = (i: number, patch: Partial<LecoolCollectionItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 sản phẩm');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger
+      label='Sản phẩm'
+      preview={`${items.length} sản phẩm`}
+      width={440}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={`lecool-item-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <LecoolRowHead
+              label={`Sản phẩm ${i + 1}`}
+              onRemove={() => remove(i)}
+              disabled={items.length <= 1}
+            />
+            <div className='flex gap-1.5'>
+              <Input
+                value={item.name ?? ''}
+                onChange={e => update(i, { name: e.target.value })}
+                placeholder='Tên'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <Input
+                value={item.price ?? ''}
+                onChange={e => update(i, { price: e.target.value })}
+                placeholder='Giá'
+                className='h-8 w-28 shrink-0 border-neutral-200 bg-white text-xs'
+              />
+            </div>
+            <Input
+              value={item.material ?? ''}
+              onChange={e => update(i, { material: e.target.value })}
+              placeholder='Chất liệu'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <p className='text-3xs text-neutral-400'>
+              Màu của thẻ này sửa ở lớp “Thêm / quản lý màu” bên trong folder
+              Sản phẩm {i + 1}.
+            </p>
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() =>
+          write(list => [
+            ...list,
+            {
+              material: 'Sellier Calf',
+              name: 'Sản phẩm mới',
+              price: '0 €',
+              colors: [
+                { name: 'Màu 1', from: '#cccccc', to: '#333333', imageUrl: '' },
+              ],
+            },
+          ])
+        }
+        label='Thêm sản phẩm'
+      />
+    </PopoverTrigger>
+  );
+}
+
+function LecoolCollectionColorsControls({
+  content,
+  onContentChange,
+  itemIndex,
+}: {
+  content: LecoolCollectionContent;
+  onContentChange: Setter;
+  itemIndex: number;
+}) {
+  const items = resolveCollectionItems(content);
+  const colors = items[itemIndex]?.colors ?? [];
+
+  const write = (
+    updater: (list: LecoolCollectionColor[]) => LecoolCollectionColor[]
+  ) =>
+    onContentChange(prev => {
+      const c = prev as LecoolCollectionContent;
+      return {
+        ...c,
+        items: resolveCollectionItems(c).map((item, idx) =>
+          idx === itemIndex
+            ? { ...item, colors: updater(item.colors ?? []) }
+            : item
+        ),
+      } as BlockContent;
+    });
+
+  const update = (i: number, patch: Partial<LecoolCollectionColor>) =>
+    write(list =>
+      list.map((color, idx) => (idx === i ? { ...color, ...patch } : color))
+    );
+
+  const remove = (i: number) => {
+    if (colors.length <= 1) {
+      toast.error('Cần ít nhất 1 màu');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  if (itemIndex < 0 || !items[itemIndex]) return null;
+
+  return (
+    <PopoverTrigger
+      label={`Màu · sản phẩm ${itemIndex + 1}`}
+      preview={`${colors.length} màu`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {colors.map((color, i) => (
+          <div
+            key={`lecool-ic-${itemIndex}-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <LecoolRowHead
+              label={`Màu ${i + 1}`}
+              onRemove={() => remove(i)}
+              disabled={colors.length <= 1}
+            />
+            <Input
+              value={color.name ?? ''}
+              onChange={e => update(i, { name: e.target.value })}
+              placeholder='Tên màu'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <div className='flex items-center gap-2'>
+              <LecoolColorField
+                label='Trên'
+                value={color.from}
+                onChange={from => update(i, { from })}
+              />
+              <LecoolColorField
+                label='Dưới'
+                value={color.to}
+                onChange={to => update(i, { to })}
+              />
+            </div>
+            {/* Ảnh hiện lên khi chọn đúng màu này. */}
+            <ImagePicker
+              value={color.imageUrl ?? ''}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() =>
+          write(list => [
+            ...list,
+            { name: 'Màu mới', from: '#cccccc', to: '#333333', imageUrl: '' },
+          ])
+        }
+        label='Thêm màu'
+      />
+    </PopoverTrigger>
+  );
+}
+
+/* ── Inspiration ────────────────────────────────────────────────────────── */
+
+function LecoolInspirationCardsControls({
+  content,
+  onContentChange,
+}: {
+  content: LecoolInspirationContent;
+  onContentChange: Setter;
+}) {
+  const cards = resolveInspirationCards(content);
+
+  const write = (
+    updater: (list: LecoolInspirationCard[]) => LecoolInspirationCard[]
+  ) =>
+    onContentChange(prev => {
+      const c = prev as LecoolInspirationContent;
+      return {
+        ...c,
+        cards: updater(resolveInspirationCards(c)),
+      } as BlockContent;
+    });
+
+  const update = (i: number, patch: Partial<LecoolInspirationCard>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (cards.length <= 2) {
+      toast.error('Cần ít nhất 2 lá để bung quạt');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger label='Lá bài' preview={`${cards.length} lá`} width={420}>
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {cards.map((card, i) => (
+          <div
+            key={`lecool-insp-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <LecoolRowHead
+              label={`Lá ${i + 1}`}
+              onRemove={() => remove(i)}
+              disabled={cards.length <= 2}
+            />
+            <Input
+              value={card.title ?? ''}
+              onChange={e => update(i, { title: e.target.value })}
+              placeholder='Tên hiện khi rê chuột'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+            <ImagePicker
+              value={card.imageUrl ?? ''}
+              onChange={url => update(i, { imageUrl: url })}
+            />
+            <Input
+              value={card.alt ?? ''}
+              onChange={e => update(i, { alt: e.target.value })}
+              placeholder='Alt cho screen-reader'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() =>
+          write(list => [
+            ...list,
+            {
+              title: `0${list.length + 1} Lá mới`,
+              imageUrl: '',
+              alt: '',
+            },
+          ])
+        }
+        label='Thêm lá'
+      />
+    </PopoverTrigger>
+  );
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+
+function LecoolHeaderNavControls({
+  content,
+  onContentChange,
+}: {
+  content: LecoolHeaderContent;
+  onContentChange: Setter;
+}) {
+  const items = resolveHeaderNav(content);
+
+  const write = (
+    updater: (list: LecoolHeaderNavItem[]) => LecoolHeaderNavItem[]
+  ) =>
+    onContentChange(prev => {
+      const c = prev as LecoolHeaderContent;
+      return {
+        ...c,
+        navItems: updater(resolveHeaderNav(c)),
+      } as BlockContent;
+    });
+
+  const update = (i: number, patch: Partial<LecoolHeaderNavItem>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  const remove = (i: number) => {
+    if (items.length <= 1) {
+      toast.error('Cần ít nhất 1 mục menu');
+      return;
+    }
+    write(list => list.filter((_, idx) => idx !== i));
+  };
+
+  return (
+    <PopoverTrigger label='Menu' preview={`${items.length} mục`} width={440}>
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {items.map((item, i) => (
+          <div
+            key={`lecool-nav-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <LecoolRowHead
+              label={`Mục ${i + 1}`}
+              onRemove={() => remove(i)}
+              disabled={items.length <= 1}
+            />
+            <Input
+              value={item.label ?? ''}
+              onChange={e => update(i, { label: e.target.value })}
+              placeholder='Nhãn'
+              className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+            />
+            {/* Chọn trang / block đích thì bấm thẳng vào lớp `navItems[i].href`
+                để mở link picker; ô này chỉ để dán URL ngoài cho nhanh. */}
+            <Input
+              value={item.href ?? ''}
+              onChange={e => update(i, { href: e.target.value })}
+              placeholder='URL ngoài (để trống nếu chọn bằng link picker)'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() => write(list => [...list, { label: 'Mục mới', href: '' }])}
+        label='Thêm mục menu'
+      />
+    </PopoverTrigger>
+  );
+}
+
+function LecoolHeaderActionsControls({
+  content,
+  onContentChange,
+}: {
+  content: LecoolHeaderContent;
+  onContentChange: Setter;
+}) {
+  const actions = resolveHeaderActions(content);
+
+  const write = (
+    updater: (list: LecoolHeaderAction[]) => LecoolHeaderAction[]
+  ) =>
+    onContentChange(prev => {
+      const c = prev as LecoolHeaderContent;
+      return {
+        ...c,
+        actions: updater(resolveHeaderActions(c)),
+      } as BlockContent;
+    });
+
+  const update = (i: number, patch: Partial<LecoolHeaderAction>) =>
+    write(list =>
+      list.map((item, idx) => (idx === i ? { ...item, ...patch } : item))
+    );
+
+  return (
+    <PopoverTrigger
+      label='Nút icon'
+      preview={`${actions.length} nút`}
+      width={420}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {actions.map((action, i) => (
+          <div
+            key={`lecool-hact-${i}`}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <LecoolRowHead
+              label={`Nút ${i + 1}`}
+              onRemove={() => write(list => list.filter((_, idx) => idx !== i))}
+              disabled={false}
+            />
+            <ImagePicker
+              value={action.iconUrl ?? ''}
+              onChange={url => update(i, { iconUrl: url })}
+            />
+            <Input
+              value={action.label ?? ''}
+              onChange={e => update(i, { label: e.target.value })}
+              placeholder='Nhãn cho screen-reader'
+              className='h-8 border-neutral-200 bg-white text-xs'
+            />
+          </div>
+        ))}
+      </div>
+      <AddRow
+        onAdd={() =>
+          write(list => [...list, { iconUrl: '', label: 'Nút mới' }])
+        }
+        label='Thêm nút icon'
+      />
+    </PopoverTrigger>
   );
 }
 

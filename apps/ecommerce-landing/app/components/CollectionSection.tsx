@@ -251,6 +251,7 @@ export default function CollectionSection() {
       <div className='mx-auto w-full px-6'>
         <div className='relative flex flex-col items-center text-center'>
           <Image
+            data-crown-slot='collection'
             src='/product/crown.png'
             alt=''
             aria-hidden

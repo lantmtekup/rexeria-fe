@@ -51,6 +51,23 @@ import { AddExtraElementButton } from './AddExtraElementButton';
 import { ExtraElementsList } from './ExtraElementsList';
 import { resolvePnjParagraphs } from './blocks/PnjDetails';
 import { resolvePnjHeroTitleLines } from './blocks/pnjHeroTitleLines';
+import {
+  resolveDesignCards,
+  resolveDesignParagraphs,
+  resolveDetailRows,
+  resolveMenuLabels,
+  resolveProductActions,
+  resolveProductColors,
+  resolveProductImages,
+  resolveProductSpecs,
+} from './blocks/lecoolStoryData';
+import { resolveShowcaseCards } from './blocks/lecoolShowcaseData';
+import { resolveCollectionItems } from './blocks/lecoolCollectionData';
+import { resolveInspirationCards } from './blocks/lecoolInspirationData';
+import {
+  resolveHeaderActions,
+  resolveHeaderNav,
+} from './blocks/lecoolHeaderData';
 import { resolvePnjVariants } from './blocks/pnjVariantContent';
 import { realEstateHeroStatElements } from './blocks/_registry/defs/realEstateHero';
 import { realEstateHighlightItemElements } from './blocks/_registry/defs/realEstateHighlights';
@@ -237,6 +254,11 @@ import {
   type GambitRelatedProductsContent,
   type GambitSectionNavContent,
   type AesthaExploreProject,
+  type LecoolCollectionContent,
+  type LecoolHeaderContent,
+  type LecoolInspirationContent,
+  type LecoolShowcaseContent,
+  type LecoolStoryContent,
   type PnjHeroContent,
   type PnjVariantContent,
   type WestlyResidencesContent,
@@ -1051,6 +1073,331 @@ export function elementsForType(
         icon: ImageIcon,
         fieldType: 'image',
       },
+    ];
+  }
+  if (type === 'lecool_header') {
+    // Logo + ô tìm kiếm lấy từ BlockDef; nav và nút icon expand theo content.
+    const c = (content ?? {}) as unknown as LecoolHeaderContent;
+    const base = def?.elements ?? [];
+    const pick = (keys: string[]) => base.filter(el => keys.includes(el.key));
+    return [
+      BACKGROUND_LAYER,
+      ...pick(['logoUrl', 'logoHref']),
+      ...resolveHeaderNav(c).flatMap((_, i) => [
+        {
+          key: `navItems[${i}].label`,
+          label: 'Nhãn',
+          groupId: `lecoolNav${i}`,
+          groupLabel: `Menu ${i + 1}`,
+          icon: Type,
+          fieldType: 'text' as const,
+        },
+        {
+          key: `navItems[${i}].href`,
+          label: 'Đích đến',
+          groupId: `lecoolNav${i}`,
+          icon: Link2,
+          fieldType: 'link' as const,
+        },
+      ]),
+      { key: 'navItems', label: 'Thêm / quản lý menu', icon: ListChecks },
+      ...pick(['searchIconUrl', 'searchPlaceholder']),
+      ...resolveHeaderActions(c).map((action, i) => ({
+        key: `actions[${i}].iconUrl`,
+        label: `Icon ${i + 1}${action.label ? ` · ${action.label}` : ''}`,
+        groupId: 'lecoolActions',
+        ...(i === 0 ? { groupLabel: 'Nút icon bên phải' } : null),
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      })),
+      { key: 'actions', label: 'Thêm / quản lý nút icon', icon: ListChecks },
+    ];
+  }
+  if (type === 'lecool_inspiration') {
+    // Phần đầu section lấy từ BlockDef; mỗi lá bài thành một folder.
+    const c = (content ?? {}) as unknown as LecoolInspirationContent;
+    return [
+      BACKGROUND_LAYER,
+      ...(def?.elements ?? []),
+      ...resolveInspirationCards(c).flatMap((_, i) => {
+        const group = `lecoolInspCard${i}`;
+        return [
+          {
+            key: `cards[${i}].imageUrl`,
+            label: 'Ảnh',
+            groupId: group,
+            groupLabel: `Lá ${i + 1}`,
+            icon: ImageIcon,
+            fieldType: 'image' as const,
+          },
+          {
+            key: `cards[${i}].title`,
+            label: 'Tên hiện khi rê chuột',
+            groupId: group,
+            icon: Type,
+            fieldType: 'text' as const,
+          },
+        ];
+      }),
+      { key: 'cards', label: 'Thêm / quản lý lá', icon: ListChecks },
+    ];
+  }
+  if (type === 'lecool_collection') {
+    // Phần đầu section lấy từ BlockDef; mỗi thẻ sản phẩm thành một folder.
+    const c = (content ?? {}) as unknown as LecoolCollectionContent;
+    return [
+      BACKGROUND_LAYER,
+      ...(def?.elements ?? []),
+      ...resolveCollectionItems(c).flatMap((item, i) => {
+        const group = `lecoolItem${i}`;
+        return [
+          {
+            key: `items[${i}].material`,
+            label: 'Chất liệu',
+            groupId: group,
+            groupLabel: `Sản phẩm ${i + 1}`,
+            icon: Type,
+            fieldType: 'text' as const,
+          },
+          {
+            key: `items[${i}].name`,
+            label: 'Tên',
+            groupId: group,
+            icon: Type,
+            fieldType: 'text' as const,
+          },
+          {
+            key: `items[${i}].price`,
+            label: 'Giá',
+            groupId: group,
+            icon: Type,
+            fieldType: 'text' as const,
+          },
+          ...(item.colors ?? []).map((color, j) => ({
+            key: `items[${i}].colors[${j}].imageUrl`,
+            label: `Ảnh màu ${j + 1}${color.name ? ` · ${color.name}` : ''}`,
+            groupId: group,
+            icon: ImageIcon,
+            fieldType: 'image' as const,
+          })),
+          {
+            key: `items[${i}].colors`,
+            label: 'Thêm / quản lý màu',
+            groupId: group,
+            icon: ListChecks,
+          },
+        ];
+      }),
+      { key: 'items', label: 'Thêm / quản lý sản phẩm', icon: ListChecks },
+    ];
+  }
+  if (type === 'lecool_showcase') {
+    // Toàn bộ nội dung nằm trong `cards[]` → gom mỗi card thành một folder.
+    const c = (content ?? {}) as unknown as LecoolShowcaseContent;
+    return [
+      BACKGROUND_LAYER,
+      ...resolveShowcaseCards(c).flatMap((card, i) => {
+        const group = `lecoolShowcaseCard${i}`;
+        const lines = card.captionLines ?? [];
+        return [
+          {
+            key: `cards[${i}].emblemUrl`,
+            label: 'Emblem',
+            groupId: group,
+            groupLabel: `Card ${i + 1}`,
+            icon: ImageIcon,
+            fieldType: 'image' as const,
+          },
+          ...lines.map((_, j) => ({
+            key: `cards[${i}].captionLines[${j}]`,
+            label: `Caption dòng ${j + 1}`,
+            groupId: group,
+            icon: Type,
+            fieldType: 'text' as const,
+          })),
+          {
+            key: `cards[${i}].images[0].imageUrl`,
+            label: 'Ảnh trái',
+            groupId: group,
+            icon: ImageIcon,
+            fieldType: 'image' as const,
+          },
+          {
+            key: `cards[${i}].images[0].title`,
+            label: 'Chữ trên ảnh trái',
+            groupId: group,
+            icon: Type,
+            fieldType: 'textarea' as const,
+          },
+          {
+            key: `cards[${i}].images[1].imageUrl`,
+            label: 'Ảnh phải',
+            groupId: group,
+            icon: ImageIcon,
+            fieldType: 'image' as const,
+          },
+        ];
+      }),
+      { key: 'cards', label: 'Thêm / quản lý card', icon: ListChecks },
+    ];
+  }
+  if (type === 'lecool_story') {
+    // Mọi mảng của block này đều dài tuỳ nội dung → expand slot ở đây; field
+    // phẳng (kèm groupId/label) lấy thẳng từ BlockDef để chỉ có một nguồn.
+    const c = (content ?? {}) as unknown as LecoolStoryContent;
+    const pick = (keys: string[]) =>
+      (def?.elements ?? []).filter(el => keys.includes(el.key));
+
+    return [
+      BACKGROUND_LAYER,
+      ...pick(['crownUrl']),
+      ...resolveMenuLabels(c).map((_, i) => ({
+        key: `menuLabels[${i}]`,
+        label: `Mục ${i + 1}`,
+        groupId: 'lecoolMenu',
+        ...(i === 0 ? { groupLabel: 'Menu 3 mục' } : null),
+        icon: Type,
+        fieldType: 'text' as const,
+      })),
+      ...pick(['designHeadingAccent', 'designHeadingRest']),
+      ...resolveDesignParagraphs(c).map((_, i) => ({
+        key: `designParagraphs[${i}]`,
+        label: `Đoạn ${i + 1}`,
+        groupId: 'lecoolDesignBody',
+        ...(i === 0 ? { groupLabel: 'Design · Đoạn văn' } : null),
+        icon: Pilcrow,
+        fieldType: 'textarea' as const,
+      })),
+      {
+        key: 'designParagraphs',
+        label: 'Thêm / quản lý đoạn văn',
+        icon: ListChecks,
+      },
+      ...resolveDesignCards(c).flatMap((_, i) => [
+        {
+          key: `designCards[${i}].imageUrl`,
+          label: 'Ảnh',
+          groupId: `lecoolCard${i}`,
+          groupLabel: `Design · Thẻ ${i + 1}`,
+          icon: ImageIcon,
+          fieldType: 'image' as const,
+        },
+        {
+          key: `designCards[${i}].caption`,
+          label: 'Chú thích',
+          groupId: `lecoolCard${i}`,
+          icon: Type,
+          fieldType: 'text' as const,
+        },
+      ]),
+      { key: 'designCards', label: 'Thêm / quản lý thẻ ảnh', icon: ListChecks },
+      ...pick(['bannerHeading', 'bannerSub', 'bannerImageUrl']),
+      ...pick(['detailsImageUrl']),
+      ...resolveDetailRows(c).flatMap((_, i) => [
+        {
+          key: `detailRows[${i}].label`,
+          label: 'Nhãn',
+          groupId: `lecoolSpot${i}`,
+          groupLabel: `Details · Hotspot ${i + 1}`,
+          icon: Type,
+          fieldType: 'text' as const,
+        },
+        {
+          key: `detailRows[${i}].thumbUrl`,
+          label: 'Ảnh nhỏ',
+          groupId: `lecoolSpot${i}`,
+          icon: ImageIcon,
+          fieldType: 'image' as const,
+        },
+      ]),
+      { key: 'detailRows', label: 'Thêm / quản lý hotspot', icon: ListChecks },
+      ...resolveProductImages(c).map((_, i) => ({
+        key: `productImages[${i}]`,
+        label: `Ảnh ${i + 1}`,
+        groupId: 'lecoolProductImages',
+        ...(i === 0 ? { groupLabel: 'Products · Ảnh' } : null),
+        icon: ImageIcon,
+        fieldType: 'image' as const,
+      })),
+      { key: 'productImages', label: 'Thêm / quản lý ảnh', icon: ListChecks },
+      ...pick(['productName', 'addToCartLabel']),
+      ...resolveProductColors(c).map((_, i) => ({
+        key: `productColors[${i}].name`,
+        label: `Màu ${i + 1}`,
+        groupId: 'lecoolColors',
+        ...(i === 0 ? { groupLabel: 'Products · Tên màu' } : null),
+        icon: Palette,
+        fieldType: 'text' as const,
+      })),
+      { key: 'productColors', label: 'Thêm / quản lý màu', icon: ListChecks },
+      ...resolveProductSpecs(c).flatMap((_, i) => [
+        {
+          key: `productSpecs[${i}].label`,
+          label: 'Nhãn',
+          groupId: `lecoolSpec${i}`,
+          groupLabel: `Products · Thông số ${i + 1}`,
+          icon: Type,
+          fieldType: 'text' as const,
+        },
+        {
+          key: `productSpecs[${i}].value`,
+          label: 'Giá trị',
+          groupId: `lecoolSpec${i}`,
+          icon: Type,
+          fieldType: 'text' as const,
+        },
+      ]),
+      {
+        key: 'productSpecs',
+        label: 'Thêm / quản lý thông số',
+        icon: ListChecks,
+      },
+      ...resolveProductActions(c).flatMap((_, i) => [
+        {
+          key: `productActions[${i}].title`,
+          label: 'Tiêu đề',
+          groupId: `lecoolAction${i}`,
+          groupLabel: `Products · Hành động ${i + 1}`,
+          icon: Type,
+          fieldType: 'text' as const,
+        },
+        {
+          key: `productActions[${i}].sub`,
+          label: 'Mô tả',
+          groupId: `lecoolAction${i}`,
+          icon: Type,
+          fieldType: 'text' as const,
+        },
+      ]),
+      {
+        key: 'productActions',
+        label: 'Thêm / quản lý hành động',
+        icon: ListChecks,
+      },
+    ];
+  }
+  if (type === 'lecool_hero') {
+    // titleLines dài tuỳ ý → expand ở đây; các field còn lại (kể cả folder
+    // groupId) lấy nguyên từ BlockDef, chỉ chèn slot tiêu đề vào đúng chỗ.
+    const lines = resolvePnjHeroTitleLines(
+      (content ?? {}) as unknown as PnjHeroContent
+    );
+    const titleSlots = lines.map((_, i) => ({
+      key: `titleLines[${i}]`,
+      label: `Tiêu đề dòng ${i + 1}`,
+      groupId: 'heroTitle',
+      ...(i === 0 ? { groupLabel: 'Tiêu đề' } : null),
+      icon: Type,
+      fieldType: 'text' as const,
+    }));
+    const base = def?.elements ?? [];
+    const found = base.findIndex(el => el.key === 'titleLines');
+    const at = found < 0 ? base.length : found;
+    return [
+      BACKGROUND_LAYER,
+      ...base.slice(0, at),
+      ...titleSlots,
+      ...base.slice(at),
     ];
   }
   if (type === 'belgo_hero') {
