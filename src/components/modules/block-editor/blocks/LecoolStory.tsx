@@ -42,6 +42,7 @@ import {
 import { LecoolStoryProducts } from './LecoolStoryProducts';
 import { resolveMenuLabels } from './lecoolStoryData';
 import {
+  LECOOL_BODY_FONT,
   LECOOL_HEADER_H,
   LECOOL_NO_SCROLLBAR_CSS,
   LECOOL_PAPER,
@@ -58,6 +59,7 @@ const DESKTOP_BREAKPOINT = 896;
  * gom về một biến để mép nội dung không nhảy khi cuộn qua nhau.
  */
 const ROOT_STYLE = {
+  fontFamily: LECOOL_BODY_FONT,
   '--story-gutter': 'clamp(24px, 4.4%, 64px)',
   backgroundColor: LECOOL_PAPER,
 } as React.CSSProperties;

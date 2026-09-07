@@ -407,6 +407,7 @@ export function LecoolInspiration({
       className={cn('@container relative w-full overflow-hidden', className)}
       style={composeStyle(
         {
+          fontFamily: LECOOL_BODY_FONT,
           backgroundColor: LECOOL_PAPER,
           paddingBlock: 'clamp(48px, 5cqi, 64px)',
         },

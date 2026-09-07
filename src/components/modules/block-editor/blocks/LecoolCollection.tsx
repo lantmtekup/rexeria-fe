@@ -34,6 +34,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useLecoolAnchorScroll } from './lecoolAnchorScroll';
 import { resolveCollectionItems } from './lecoolCollectionData';
 import {
   IconArrowRight,
@@ -294,6 +295,7 @@ export function LecoolCollection({
   const addToCartLabel = content.addToCartLabel ?? '';
   const allProductsLabel = content.allProductsLabel ?? '';
   const allProductsHref = content.allProductsHref ?? '';
+  const onAnchorClick = useLecoolAnchorScroll(isCanvas);
 
   useBlockMotion(
     rootRef,
@@ -331,6 +333,7 @@ export function LecoolCollection({
       className={cn('@container relative w-full', className)}
       style={composeStyle(
         {
+          fontFamily: LECOOL_BODY_FONT,
           backgroundColor: '#FFFFFF',
           paddingBlock: 'clamp(48px, 5cqi, 64px)',
         },
@@ -369,7 +372,7 @@ export function LecoolCollection({
           <a
             data-element-key='allProductsHref'
             href={isCanvas ? undefined : allProductsHref || '#'}
-            onClick={isCanvas ? e => e.preventDefault() : undefined}
+            onClick={e => onAnchorClick(e, allProductsHref)}
             aria-label={allProductsLabel}
             className={selectableClass(
               activeKey === 'allProductsHref',

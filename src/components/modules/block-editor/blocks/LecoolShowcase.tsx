@@ -41,6 +41,7 @@ import {
 } from './applyStyle';
 import { resolveShowcaseCards } from './lecoolShowcaseData';
 import {
+  LECOOL_BODY_FONT,
   LECOOL_DISPLAY_FONT,
   LECOOL_HEADER_H,
   LECOOL_PAPER,
@@ -363,7 +364,7 @@ export function LecoolShowcase({
       data-canvas-edit={isCanvas ? 'true' : undefined}
       className={cn('@container relative w-full', className)}
       style={composeStyle(
-        { backgroundColor: LECOOL_PAPER },
+        { fontFamily: LECOOL_BODY_FONT, backgroundColor: LECOOL_PAPER },
         sectionStyle,
         blockBackgroundStyle(background)
       )}

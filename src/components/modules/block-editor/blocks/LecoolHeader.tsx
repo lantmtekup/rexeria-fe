@@ -3,10 +3,12 @@
 /**
  * Le Cool Move Header — port từ apps/ecommerce-landing Header.tsx.
  *
- * Thanh `sticky` cao 72px. KHÔNG portal như PnjHeader/BelgoHeader: bản gốc là
- * `sticky` chứ không `fixed`, mà `@container` chỉ phá `position: fixed` — sticky
- * vẫn neo đúng vào khung cuộn nên để nguyên trong luồng là chạy được cả trên
- * canvas lẫn `/p`.
+ * Thanh cao 72px luôn nằm trên đỉnh. PHẢI portal + `fixed` như PnjHeader /
+ * BelgoHeader, dù bản gốc chỉ là `sticky`: trong host mỗi block bị bọc trong
+ * một wrapper riêng, mà `position: sticky` chỉ dính được trong hộp CHA — wrapper
+ * của header cao đúng 73px nên không có chỗ nào để dính, đo thực tế header trôi
+ * mất hẳn (`top = -2000` khi cuộn 2000px). Root ở lại luồng làm THANH CHỪA CHỖ
+ * đúng 72px để nội dung dưới không chui lên dưới bar.
  *
  * Khác apps:
  * - `lg:` / `xl:` / `md:` → `isDesktop` (@4xl) / `isWide` (@2xl) đo theo
@@ -20,9 +22,12 @@
  *   ring chọn dính vào ô nhập thật trên `/p`) — sửa trong panel Lớp.
  */
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 
 import { cn } from '@/lib/cn';
 
+import { useLandingMotion } from '../motion/LandingMotion';
+import { isDeviceFrameHost, resolveDrawerPortalHost } from '../previewPortal';
 import type { LecoolHeaderContent } from '../types';
 import type { BlockRenderProps } from './_registry/types';
 import {
@@ -33,6 +38,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useLecoolAnchorScroll } from './lecoolAnchorScroll';
 import { resolveHeaderActions, resolveHeaderNav } from './lecoolHeaderData';
 import { LECOOL_BODY_FONT, LECOOL_HEADER_H } from './lecoolTheme';
 import { useContainerMobile } from './useContainerMobile';
@@ -73,6 +79,20 @@ export function LecoolHeader({
   const isDesktop = !useContainerMobile(rootRef, DESKTOP_BREAKPOINT);
   const isWide = !useContainerMobile(rootRef);
 
+  const { hasRoot } = useLandingMotion();
+  const [mounted, setMounted] = React.useState(false);
+  const [portalHost, setPortalHost] = React.useState<HTMLElement | null>(null);
+
+  React.useEffect(() => setMounted(true), []);
+  React.useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    setPortalHost(resolveDrawerPortalHost(root));
+  }, [mounted, hasRoot]);
+
+  const useFixed = mounted && hasRoot && !isCanvas;
+  const inFrame = isDeviceFrameHost(portalHost);
+
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),
@@ -82,6 +102,7 @@ export function LecoolHeader({
 
   const navItems = React.useMemo(() => resolveHeaderNav(content), [content]);
   const actions = React.useMemo(() => resolveHeaderActions(content), [content]);
+  const onAnchorClick = useLecoolAnchorScroll(isCanvas);
 
   /**
    * Canvas: luôn bày nav ra (cho wrap) và luôn hiện ô tìm kiếm, để mọi field
@@ -101,13 +122,11 @@ export function LecoolHeader({
         key={hrefKey}
         data-element-key={hrefKey}
         href={isCanvas ? undefined : href || '#'}
-        onClick={
-          isCanvas
-            ? e => e.preventDefault()
-            : menuOpen
-              ? () => setMenuOpen(false)
-              : undefined
-        }
+        onClick={e => {
+          onAnchorClick(e, href);
+          // Nav xổ xuống: đóng lại sau khi đã bắt đầu cuộn.
+          if (menuOpen) setMenuOpen(false);
+        }}
         aria-label={item.label}
         className={selectableClass(activeKey === hrefKey, extraClass)}
         style={styleOf(hrefKey)}
@@ -123,24 +142,22 @@ export function LecoolHeader({
     );
   };
 
-  return (
-    <header
-      ref={rootRef}
-      data-canvas-edit={isCanvas ? 'true' : undefined}
-      className={cn('@container relative w-full', className)}
+  const chrome = (
+    <div
+      className='w-full'
       style={composeStyle(
-        {
-          position: 'sticky',
-          top: 0,
-          zIndex: 50,
-          backgroundColor: '#FFFFFF',
-        },
+        { fontFamily: LECOOL_BODY_FONT, backgroundColor: '#FFFFFF' },
         blockBackgroundStyle(background)
       )}
     >
       <div
-        className='relative flex items-center pr-6 pl-5 @4xl:pl-[29px]'
-        style={{ height: LECOOL_HEADER_H }}
+        className='relative flex items-center pr-6'
+        style={{
+          height: LECOOL_HEADER_H,
+          // `@4xl:pl-[29px]` không dùng được: bar đã portal ra ngoài root nên
+          // không còn @container nào để container query bám vào.
+          paddingLeft: isDesktop ? 29 : 20,
+        }}
       >
         {showBurger ? (
           <button
@@ -159,7 +176,7 @@ export function LecoolHeader({
         <a
           data-element-key='logoHref'
           href={isCanvas ? undefined : content.logoHref || '#'}
-          onClick={isCanvas ? e => e.preventDefault() : undefined}
+          onClick={e => onAnchorClick(e, content.logoHref ?? '')}
           aria-label={content.logoAlt}
           className={selectableClass(activeKey === 'logoHref', 'shrink-0')}
           style={styleOf('logoHref')}
@@ -262,6 +279,46 @@ export function LecoolHeader({
           {navItems.map((_, i) => renderNavLink(i))}
         </nav>
       ) : null}
+    </div>
+  );
+
+  // Canvas: để bar nằm ngay trong luồng cho author bấm chọn từng field.
+  if (!useFixed) {
+    return (
+      <header
+        ref={rootRef}
+        data-canvas-edit={isCanvas ? 'true' : undefined}
+        className={cn('@container relative w-full', className)}
+      >
+        {chrome}
+      </header>
+    );
+  }
+
+  return (
+    <header
+      ref={rootRef}
+      className={cn('@container relative w-full', className)}
+      // Thanh chừa chỗ: bar thật đã ra khỏi luồng nên root phải giữ đúng 72px,
+      // nếu không nội dung ngay dưới sẽ chui lên nằm khuất sau bar.
+      style={{ height: LECOOL_HEADER_H }}
+    >
+      {portalHost
+        ? createPortal(
+            <div
+              style={{
+                position: inFrame ? 'absolute' : 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 50,
+              }}
+            >
+              {chrome}
+            </div>,
+            portalHost
+          )
+        : null}
     </header>
   );
 }

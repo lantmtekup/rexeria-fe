@@ -81,6 +81,15 @@ export interface MotionEffect {
   /** Effect chữ: tách bằng SplitText (mask cùng loại) rồi stagger. */
   split?: 'chars' | 'words' | 'lines';
   /**
+   * Tắt mask của SplitText (mặc định BẬT).
+   *
+   * Mask chỉ đúng cho hiệu ứng trượt qua khe (`yPercent: 110 → 0`): khe phải
+   * cắt phần chữ chưa trượt tới. Hiệu ứng chỉ dịch vài px kèm fade thì mask
+   * không có tác dụng gì, lại cắt mất phần chữ thò ra ngoài hộp dòng — với
+   * `line-height: 1` là cụt đuôi mọi chữ g/y/p.
+   */
+  noMask?: boolean;
+  /**
    * Trục cho `data-motion-distance` override biên độ from ('x'/'y' tính px,
    * 'scale' tính hệ số). Dấu lấy theo giá trị mặc định (fade-down giữ chiều âm).
    */
@@ -458,6 +467,7 @@ export const MOTION_EFFECTS: Record<string, MotionEffect> = {
     },
     distanceVar: 'y',
     split: 'chars',
+    noMask: true,
     meta: {
       summary:
         'Từng chữ cái dịch nhẹ theo trục y (px, không phải % qua mask) kèm mờ→nét cùng lúc, so le trái→phải.',
@@ -500,6 +510,7 @@ export const MOTION_EFFECTS: Record<string, MotionEffect> = {
     },
     distanceVar: 'y',
     split: 'words',
+    noMask: true,
     meta: {
       summary:
         'Từng từ dịch nhẹ theo trục y (px, không phải % qua mask) kèm mờ→nét cùng lúc, so le theo thứ tự từ.',

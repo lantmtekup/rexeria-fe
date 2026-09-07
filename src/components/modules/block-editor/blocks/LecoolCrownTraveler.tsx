@@ -340,7 +340,11 @@ export function LecoolCrownTraveler({
         data-canvas-edit='true'
         className={cn('@container relative w-full', className)}
         style={composeStyle(
-          { backgroundColor: LECOOL_PAPER, padding: 24 },
+          {
+            fontFamily: LECOOL_BODY_FONT,
+            backgroundColor: LECOOL_PAPER,
+            padding: 24,
+          },
           blockBackgroundStyle(background)
         )}
       >
@@ -399,7 +403,10 @@ export function LecoolCrownTraveler({
         '@container relative w-full',
         active && 'h-0 overflow-visible'
       )}
-      style={blockBackgroundStyle(background)}
+      style={composeStyle(
+        { fontFamily: LECOOL_BODY_FONT },
+        blockBackgroundStyle(background)
+      )}
     >
       <style>{TRAVELING_CSS}</style>
       {active && portalHost ? createPortal(crown, portalHost) : null}
