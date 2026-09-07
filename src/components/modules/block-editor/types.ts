@@ -823,6 +823,11 @@ export interface WestlySceneContent {
 
 /** Một dòng spec trong card hotspot của Westly Residences. */
 export interface WestlyResidenceSpec {
+  label?: string;
+  value?: string;
+}
+
+/**
  * Le Cool Move hero — ảnh nền full-bleed + vương miện + tiêu đề display nhiều
  * dòng + 2 đoạn copy canh giữa. Port từ apps/ecommerce-landing Hero.tsx.
  *
@@ -1006,6 +1011,7 @@ export interface WestlyHeaderContent {
   logoAlt?: string;
   /** Link token (4 dạng LinkControls) — rỗng thì logo không phải link. */
   logoHref?: string;
+}
 export interface LecoolStoryAction {
   icon?: LecoolStoryIconName;
   title?: string;
@@ -5939,6 +5945,7 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'header The Westly: logo giữa nổi fixed trên mọi section, nền gradient trắng tan dần',
     aiLabelEn:
       'The Westly header: centered logo fixed above every section on a fading white gradient',
+  },
   lecool_hero: {
     type: 'lecool_hero',
     category: 'hero',
