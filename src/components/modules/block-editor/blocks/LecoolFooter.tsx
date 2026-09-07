@@ -27,6 +27,7 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { useLecoolAnchorScroll } from './lecoolAnchorScroll';
 import {
   LECOOL_BODY_FONT,
   LECOOL_DISPLAY_FONT,
@@ -97,6 +98,7 @@ export function LecoolFooter({
 
   const ctaLabel = content.ctaLabel ?? '';
   const ctaHref = content.ctaHref ?? '';
+  const onAnchorClick = useLecoolAnchorScroll(isCanvas);
 
   return (
     <footer
@@ -105,6 +107,7 @@ export function LecoolFooter({
       className={cn('@container relative w-full px-6', className)}
       style={composeStyle(
         {
+          fontFamily: LECOOL_BODY_FONT,
           backgroundColor: LECOOL_PAPER,
           paddingTop: 'clamp(28px, 3cqi, 40px)',
           paddingBottom: 'clamp(40px, 4cqi, 56px)',
@@ -153,7 +156,7 @@ export function LecoolFooter({
         <a
           data-element-key='ctaHref'
           href={isCanvas ? undefined : ctaHref || '#'}
-          onClick={isCanvas ? e => e.preventDefault() : undefined}
+          onClick={e => onAnchorClick(e, ctaHref)}
           aria-label={ctaLabel}
           className={selectableClass(
             activeKey === 'ctaHref',

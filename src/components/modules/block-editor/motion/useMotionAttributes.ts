@@ -298,9 +298,12 @@ function addTween(
     ...(opts?.immediateRender === false ? { immediateRender: false } : {}),
   };
   if (effect.split) {
+    // `mask` cắt theo hộp dòng — cần cho hiệu ứng trượt qua khe, nhưng với
+    // hiệu ứng chỉ dịch vài px thì nó xén mất đuôi chữ g/y/p (rõ nhất khi
+    // line-height: 1). Effect tự khai `noMask` để bỏ.
     const split = new SplitText(el, {
       type: effect.split,
-      mask: effect.split,
+      ...(effect.noMask ? {} : { mask: effect.split }),
     });
     splits.push(split);
     const pieces =

@@ -46,6 +46,7 @@ const BRAND_HIGHLIGHT = '#FCF5BD';
  * nên hero + header vừa đúng một màn. Đứng một mình thì hero chỉ hụt 72px.
  */
 const ROOT_STYLE: React.CSSProperties = {
+  fontFamily: LECOOL_BODY_FONT,
   position: 'relative',
   height: 840,
   maxHeight: 'calc(100dvh - 72px)',
