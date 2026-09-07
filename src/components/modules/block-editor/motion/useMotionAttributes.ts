@@ -457,6 +457,13 @@ function buildFromAttributes(
   }
 }
 
+/** Có element nào trong root dùng effect phải SplitText không. */
+function hasSplitEffect(root: HTMLElement): boolean {
+  return Array.from(root.querySelectorAll<HTMLElement>('[data-motion]')).some(
+    el => getMotionEffect(el.getAttribute('data-motion') ?? '')?.split
+  );
+}
+
 /**
  * Quét `[data-motion]` trong block và build GSAP từ motionLibrary.
  *
@@ -482,12 +489,33 @@ export function useMotionAttributes(
 
     const splits: SplitText[] = [];
     const cleanups: Array<() => void> = [];
-    const ctx = gsap.context(() => {
-      buildFromAttributes(root, scroller ?? undefined, splits, cleanups);
-    }, root);
-    requestRefresh();
+    let ctx: gsap.Context | null = null;
+    let cancelled = false;
+
+    const build = () => {
+      if (cancelled || !rootRef.current) return;
+      ctx = gsap.context(() => {
+        buildFromAttributes(root, scroller ?? undefined, splits, cleanups);
+      }, root);
+      requestRefresh();
+    };
+
+    /**
+     * SplitText type='lines' CHỐT vị trí ngắt dòng ngay lúc split. Chạy trước
+     * khi webfont về thì đo bằng font fallback → dòng bị ngắt sai và sai đó
+     * nằm lại vĩnh viễn (runtime này không revert split sau khi tween xong).
+     * Nên đợi `document.fonts.ready` — đúng như bản apps làm trước khi split.
+     * Chỉ đợi khi trong root thật sự có effect split, để effect khác chạy ngay.
+     */
+    if (hasSplitEffect(root) && document.fonts?.status !== 'loaded') {
+      document.fonts.ready.then(build);
+    } else {
+      build();
+    }
+
     return () => {
-      ctx.revert();
+      cancelled = true;
+      ctx?.revert();
       for (const s of splits) s.revert();
       for (const fn of cleanups) fn();
     };

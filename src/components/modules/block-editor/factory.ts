@@ -45,6 +45,14 @@ import { westlyRevealDef } from './blocks/_registry/defs/westlyReveal';
 import { westlyProductRevealDef } from './blocks/_registry/defs/westlyProductReveal';
 import { westlyFooterDef } from './blocks/_registry/defs/westlyFooter';
 import { westlyHeaderDef } from './blocks/_registry/defs/westlyHeader';
+import { lecoolHeroDef } from './blocks/_registry/defs/lecoolHero';
+import { lecoolStoryDef } from './blocks/_registry/defs/lecoolStory';
+import { lecoolShowcaseDef } from './blocks/_registry/defs/lecoolShowcase';
+import { lecoolCollectionDef } from './blocks/_registry/defs/lecoolCollection';
+import { lecoolInspirationDef } from './blocks/_registry/defs/lecoolInspiration';
+import { lecoolFooterDef } from './blocks/_registry/defs/lecoolFooter';
+import { lecoolHeaderDef } from './blocks/_registry/defs/lecoolHeader';
+import { lecoolCrownTravelerDef } from './blocks/_registry/defs/lecoolCrownTraveler';
 import { belgoBrewingProcessDef } from './blocks/_registry/defs/belgoBrewingProcess';
 import { belgoFooterDef } from './blocks/_registry/defs/belgoFooter';
 import { belgoHeroDef } from './blocks/_registry/defs/belgoHero';
@@ -2176,6 +2184,14 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   westly_product_reveal: westlyProductRevealDef.defaultContent.vi,
   westly_footer: westlyFooterDef.defaultContent.vi,
   westly_header: westlyHeaderDef.defaultContent.vi,
+  lecool_hero: lecoolHeroDef.defaultContent.vi,
+  lecool_story: lecoolStoryDef.defaultContent.vi,
+  lecool_showcase: lecoolShowcaseDef.defaultContent.vi,
+  lecool_collection: lecoolCollectionDef.defaultContent.vi,
+  lecool_inspiration: lecoolInspirationDef.defaultContent.vi,
+  lecool_footer: lecoolFooterDef.defaultContent.vi,
+  lecool_header: lecoolHeaderDef.defaultContent.vi,
+  lecool_crown_traveler: lecoolCrownTravelerDef.defaultContent.vi,
   belgo_hero: belgoHeroDef.defaultContent.vi,
   belgo_about_product: belgoAboutProductDef.defaultContent.vi,
   belgo_scroll_frames: belgoScrollFramesDef.defaultContent.vi,
@@ -2416,6 +2432,14 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   westly_product_reveal: westlyProductRevealDef.defaultContent.en,
   westly_footer: westlyFooterDef.defaultContent.en,
   westly_header: westlyHeaderDef.defaultContent.en,
+  lecool_hero: lecoolHeroDef.defaultContent.en,
+  lecool_story: lecoolStoryDef.defaultContent.en,
+  lecool_showcase: lecoolShowcaseDef.defaultContent.en,
+  lecool_collection: lecoolCollectionDef.defaultContent.en,
+  lecool_inspiration: lecoolInspirationDef.defaultContent.en,
+  lecool_footer: lecoolFooterDef.defaultContent.en,
+  lecool_header: lecoolHeaderDef.defaultContent.en,
+  lecool_crown_traveler: lecoolCrownTravelerDef.defaultContent.en,
   belgo_hero: belgoHeroDef.defaultContent.en,
   belgo_about_product: belgoAboutProductDef.defaultContent.en,
   belgo_scroll_frames: belgoScrollFramesDef.defaultContent.en,

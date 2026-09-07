@@ -176,6 +176,15 @@ export type BlockType =
   | 'cool_hunter_product'
   | 'cool_hunter_quote'
   | 'cool_hunter_footer'
+  // ── Le Cool Move (port từ apps/ecommerce-landing) ──
+  | 'lecool_hero'
+  | 'lecool_story'
+  | 'lecool_showcase'
+  | 'lecool_collection'
+  | 'lecool_inspiration'
+  | 'lecool_footer'
+  | 'lecool_header'
+  | 'lecool_crown_traveler'
   // ── Belgo (craft beer landing, port từ apps/belgo) ──
   | 'belgo_hero'
   | 'belgo_about_product'
@@ -818,6 +827,65 @@ export interface WestlyResidenceSpec {
   value?: string;
 }
 
+/**
+ * Le Cool Move hero — ảnh nền full-bleed + vương miện + tiêu đề display nhiều
+ * dòng + 2 đoạn copy canh giữa. Port từ apps/ecommerce-landing Hero.tsx.
+ *
+ * Dòng "Introducing LE COOL MOVE" tách 2 field: `introPrefix` (chữ thường) và
+ * `introBrand` (tên sản phẩm, màu vàng) — sửa màu/chữ độc lập trên canvas.
+ * Đoạn body cũng tách 2: `bodyLead` xuống dòng riêng từ @2xl trở lên.
+ */
+export interface LecoolHeroContent {
+  backgroundUrl?: string;
+  backgroundAlt?: string;
+  /** Vương miện trên đỉnh hero (slot đầu của CrownTraveler ở apps). */
+  emblemUrl?: string;
+  /** Tiêu đề nhiều dòng — dùng chung plumbing với PnjHero titleLines. */
+  titleLines?: string[];
+  introPrefix?: string;
+  introBrand?: string;
+  bodyLead?: string;
+  bodyRest?: string;
+}
+
+/** Thẻ ảnh trong strip cuộn ngang của panel Design (Le Cool Move Story). */
+export interface LecoolStoryCard {
+  imageUrl?: string;
+  caption?: string;
+}
+
+/**
+ * Một hotspot trên ảnh panel Details. `x`/`y` là toạ độ Figma trong khung
+ * 1086×840 — component quy ra % của stage nên luôn dính đúng chỗ trên chiếc túi.
+ */
+export interface LecoolStoryDetailRow {
+  label?: string;
+  thumbUrl?: string;
+  x?: number;
+  y?: number;
+}
+
+/** Swatch màu — gradient dọc from → to. */
+export interface LecoolStoryColor {
+  name?: string;
+  from?: string;
+  to?: string;
+}
+
+/** Icon dùng được trong panel Products (bộ SVG đóng sẵn trong block). */
+export type LecoolStoryIconName =
+  | 'ruler'
+  | 'bag'
+  | 'phone'
+  | 'calendar'
+  | 'pin';
+
+export interface LecoolStorySpec {
+  icon?: LecoolStoryIconName;
+  label?: string;
+  value?: string;
+}
+
 /** Hotspot trên bản vẽ — toạ độ theo % của khung bản vẽ. */
 export interface WestlyResidenceHotspot {
   id?: string;
@@ -943,6 +1011,202 @@ export interface WestlyHeaderContent {
   logoAlt?: string;
   /** Link token (4 dạng LinkControls) — rỗng thì logo không phải link. */
   logoHref?: string;
+}
+export interface LecoolStoryAction {
+  icon?: LecoolStoryIconName;
+  title?: string;
+  sub?: string;
+}
+
+/**
+ * Le Cool Move Story — section 3 panel (Design / Details / Products) dùng chung
+ * một rail menu sticky bên trái (mobile: tab bar). Port từ
+ * apps/ecommerce-landing ProductStorySection.tsx + 3 panel + StoryMenu.
+ *
+ * Gộp 1 block chứ không tách 3: rail nằm CÙNG HÀNG flex với cột panel và
+ * `active` của nó do IntersectionObserver trên chính 3 panel quyết định —
+ * tách ra thì rail không còn gì để bám.
+ */
+export interface LecoolStoryContent {
+  /** Vương miện trên đầu rail (slot thứ 2 của CrownTraveler ở apps). */
+  crownUrl?: string;
+  /** Nhãn 3 mục menu — cũng là thứ tự panel. */
+  menuLabels?: string[];
+
+  // ── Panel 1 · Design ──
+  /** Nửa đầu tiêu đề, tô màu vàng. */
+  designHeadingAccent?: string;
+  designHeadingRest?: string;
+  designParagraphs?: string[];
+  /** 2 thẻ ảnh kẹp hai bên khối chữ. */
+  designCards?: LecoolStoryCard[];
+  bannerHeading?: string;
+  bannerSub?: string;
+  bannerImageUrl?: string;
+
+  // ── Panel 2 · Details ──
+  detailsImageUrl?: string;
+  detailRows?: LecoolStoryDetailRow[];
+
+  // ── Panel 3 · Products ──
+  productImages?: string[];
+  productName?: string;
+  productColors?: LecoolStoryColor[];
+  productSpecs?: LecoolStorySpec[];
+  productActions?: LecoolStoryAction[];
+  addToCartLabel?: string;
+}
+
+/** Một ô ảnh của card Showcase; chỉ ô đầu của card 1 có `title` chồng lên. */
+export interface LecoolShowcaseImage {
+  imageUrl?: string;
+  alt?: string;
+  title?: string;
+}
+
+/**
+ * Một "card" Showcase: 2 ảnh hai bên + cột giữa (emblem + caption). Cột giữa
+ * đứng yên tại chỗ khi track ảnh chạy ngang, và cross-fade sang card kế tiếp
+ * đúng lúc mép hai card đi qua nó.
+ */
+export interface LecoolShowcaseCard {
+  emblemUrl?: string;
+  /** Bề rộng emblem ở khổ desktop (px) — mốc trên của clamp. */
+  emblemWidth?: number;
+  /** Emblem này là vương miện → điểm dừng cho CrownTraveler bên apps. */
+  isCrown?: boolean;
+  captionLines?: string[];
+  /** Đúng 2 ảnh: trái và phải cột giữa. */
+  images?: LecoolShowcaseImage[];
+}
+
+/**
+ * Le Cool Move Showcase — track ảnh chạy ngang theo scroll trong khối dính
+ * đỉnh; cột giữa cố định, emblem/caption cross-fade theo từng mép card.
+ * Port từ apps/ecommerce-landing ShowcaseSection.tsx.
+ */
+export interface LecoolShowcaseContent {
+  cards?: LecoolShowcaseCard[];
+}
+
+/**
+ * Một swatch màu của thẻ Collection: gradient dọc from → to, kèm ảnh sản phẩm
+ * hiện lên khi chọn màu đó.
+ */
+export interface LecoolCollectionColor {
+  name?: string;
+  from?: string;
+  to?: string;
+  imageUrl?: string;
+}
+
+export interface LecoolCollectionItem {
+  material?: string;
+  name?: string;
+  price?: string;
+  colors?: LecoolCollectionColor[];
+}
+
+/**
+ * Le Cool Move Collection — lưới thẻ sản phẩm, mỗi thẻ đổi ảnh theo swatch màu,
+ * có nút wishlist và nút mua. Port từ apps/ecommerce-landing CollectionSection.tsx.
+ *
+ * Khác apps: apps trỏ màu bằng CHỈ SỐ vào 2 mảng dùng chung (`PRODUCT_COLORS`,
+ * `COLOR_IMAGES`); ở đây mỗi thẻ giữ trọn danh sách màu của nó để author sửa
+ * một thẻ không đụng thẻ khác.
+ */
+export interface LecoolCollectionContent {
+  crownUrl?: string;
+  title?: string;
+  subtitle?: string;
+  allProductsLabel?: string;
+  /** Link token `#page:` / `#block:` / URL ngoài / rỗng. */
+  allProductsHref?: string;
+  /** Nhãn dùng chung cho nút mua của mọi thẻ. */
+  addToCartLabel?: string;
+  items?: LecoolCollectionItem[];
+}
+
+/** Một lá bài trong bộ Inspiration. `title` là pill hiện khi rê chuột vào lá. */
+export interface LecoolInspirationCard {
+  title?: string;
+  imageUrl?: string;
+  alt?: string;
+}
+
+/**
+ * Le Cool Move Inspiration — bộ ảnh xếp chồng như cỗ bài; rê chuột vào sân khấu
+ * thì bung ra hình quạt 3D, rê vào từng lá thì lá đó nhấc lên kèm pill tên.
+ * Port từ apps/ecommerce-landing InspirationSection.tsx.
+ *
+ * Chỉ chạy khi container đủ rộng VÀ thiết bị có chuột thật; máy cảm ứng và khổ
+ * hẹp dùng dải cuộn ngang.
+ */
+export interface LecoolInspirationContent {
+  crownUrl?: string;
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  cards?: LecoolInspirationCard[];
+}
+
+/**
+ * Le Cool Move Footer — vương miện giữa hai gạch ngang, một câu tuyên ngôn,
+ * nút mua và dòng bản quyền. Port từ apps/ecommerce-landing Footer.tsx.
+ */
+export interface LecoolFooterContent {
+  crownUrl?: string;
+  headline?: string;
+  ctaLabel?: string;
+  /** Link token `#page:` / `#block:` / URL ngoài / rỗng. */
+  ctaHref?: string;
+  copyright?: string;
+}
+
+export interface LecoolHeaderNavItem {
+  label?: string;
+  /** Link token `#page:` / `#block:` / URL ngoài / rỗng. */
+  href?: string;
+}
+
+/** Nút icon bên phải header (wishlist / account / cart). */
+export interface LecoolHeaderAction {
+  iconUrl?: string;
+  /** Nhãn cho screen-reader — không hiện trên màn hình. */
+  label?: string;
+}
+
+/**
+ * Le Cool Move Header — thanh dính đỉnh cao 72px: logo, nav ngang, ô tìm kiếm
+ * và 3 nút icon. Khổ hẹp thu về nút hamburger mở nav dạng xổ xuống.
+ * Port từ apps/ecommerce-landing Header.tsx.
+ *
+ * 72px này là mốc mà mọi block Le Cool Move khác trừ đi khi tính "một màn"
+ * (xem `LECOOL_HEADER_H`).
+ */
+export interface LecoolHeaderContent {
+  logoUrl?: string;
+  logoAlt?: string;
+  logoHref?: string;
+  navItems?: LecoolHeaderNavItem[];
+  searchIconUrl?: string;
+  searchPlaceholder?: string;
+  actions?: LecoolHeaderAction[];
+}
+
+/**
+ * Le Cool Move Crown Traveler — chrome TOÀN TRANG, không phải section: một
+ * vương miện `position: fixed` bay lần lượt qua mọi `[data-crown-slot]` trên
+ * trang theo scroll, còn các vương miện tĩnh thì ẩn đi.
+ * Port từ apps/ecommerce-landing CrownTraveler.tsx.
+ *
+ * Thứ tự điểm dừng = thứ tự `[data-crown-slot]` trong DOM, nên không có field
+ * nào khai danh sách: thả block nào có slot vào trang là nó tự vào tuyến bay.
+ */
+export interface LecoolCrownTravelerContent {
+  crownUrl?: string;
+  /** Bề rộng vương miện khi bay (px). */
+  crownWidth?: number;
 }
 
 /** Belgo hero — video nền + tiêu đề Bebas nhiều dòng. Port apps/belgo Hero.tsx. */
@@ -4323,6 +4587,14 @@ export type BlockContent =
   | WestlyProductRevealContent
   | WestlyFooterContent
   | WestlyHeaderContent
+  | LecoolHeroContent
+  | LecoolStoryContent
+  | LecoolShowcaseContent
+  | LecoolCollectionContent
+  | LecoolInspirationContent
+  | LecoolFooterContent
+  | LecoolHeaderContent
+  | LecoolCrownTravelerContent
   | BelgoHeroContent
   | BelgoAboutProductContent
   | BelgoBrewingProcessContent
@@ -5673,6 +5945,150 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
       'header The Westly: logo giữa nổi fixed trên mọi section, nền gradient trắng tan dần',
     aiLabelEn:
       'The Westly header: centered logo fixed above every section on a fading white gradient',
+  },
+  lecool_hero: {
+    type: 'lecool_hero',
+    category: 'hero',
+    style: 'luxury',
+    tags: ['lecool', 'hero', 'fullscreen', 'split-text'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-04',
+    label: 'Le Cool Move · Hero',
+    accent: '#FCF5BD',
+    adminLabel: 'Le Cool Move Hero',
+    gradient: 'from-sky-700 to-amber-200',
+    defaultName: 'Le Cool Move Hero',
+    aiLabelVi:
+      'hero Le Cool Move: ảnh nền full-bleed, vương miện, tiêu đề display nhiều dòng + 2 đoạn copy canh giữa, chữ hiện dần theo ký tự/dòng',
+    aiLabelEn:
+      'Le Cool Move hero: full-bleed background image, crown emblem, multi-line display title and two centered copy blocks revealed per character/line',
+  },
+  lecool_story: {
+    type: 'lecool_story',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['lecool', 'story', 'sticky', 'horizontal-scrub', 'hotspot', 'pdp'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-04',
+    label: 'Le Cool Move · Story',
+    accent: '#B68D45',
+    adminLabel: 'Le Cool Move Story',
+    gradient: 'from-amber-700 to-neutral-300',
+    defaultName: 'Le Cool Move Story',
+    aiLabelVi:
+      'section 3 panel Le Cool Move: rail menu sticky (Design/Details/Products), strip ảnh cuộn ngang theo scroll, ảnh hotspot phóng to, và panel sản phẩm có swatch màu + thông số + nút mua',
+    aiLabelEn:
+      'Le Cool Move three-panel story: sticky rail menu (Design/Details/Products), scroll-driven horizontal image strip, zoomable hotspot image, and a product panel with colour swatches, specs and buy actions',
+  },
+  lecool_showcase: {
+    type: 'lecool_showcase',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['lecool', 'showcase', 'sticky', 'horizontal-scrub', 'gallery'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-04',
+    label: 'Le Cool Move · Showcase',
+    accent: '#B68D45',
+    adminLabel: 'Le Cool Move Showcase',
+    gradient: 'from-neutral-300 to-amber-700',
+    defaultName: 'Le Cool Move Showcase',
+    aiLabelVi:
+      'showcase Le Cool Move: khối dính đỉnh, track 2 ảnh chạy ngang theo scroll, cột giữa cố định đổi emblem + caption khi mép card đi qua',
+    aiLabelEn:
+      'Le Cool Move showcase: sticky stage where a two-image track scrolls sideways while the fixed centre column cross-fades its emblem and caption at each card seam',
+  },
+  lecool_collection: {
+    type: 'lecool_collection',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['lecool', 'collection', 'product-grid', 'swatch', 'ecommerce'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-04',
+    label: 'Le Cool Move · Collection',
+    accent: '#B68D45',
+    adminLabel: 'Le Cool Move Collection',
+    gradient: 'from-white to-amber-700',
+    defaultName: 'Le Cool Move Collection',
+    aiLabelVi:
+      'lưới sản phẩm Le Cool Move: tiêu đề + link xem tất cả, mỗi thẻ có ảnh đổi theo swatch màu, nút wishlist và nút thêm vào giỏ; thẻ hiện dần khi cuộn tới',
+    aiLabelEn:
+      'Le Cool Move product grid: heading with an all-products link, cards whose image swaps with the colour swatch, a wishlist toggle and an add-to-cart button; cards fade up on scroll',
+  },
+  lecool_inspiration: {
+    type: 'lecool_inspiration',
+    category: 'gallery',
+    style: 'luxury',
+    tags: ['lecool', 'inspiration', 'gallery', 'hover', '3d', 'deck'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-04',
+    label: 'Le Cool Move · Inspiration',
+    accent: '#B68D45',
+    adminLabel: 'Le Cool Move Inspiration',
+    gradient: 'from-neutral-200 to-neutral-500',
+    defaultName: 'Le Cool Move Inspiration',
+    aiLabelVi:
+      'bộ ảnh Inspiration xếp chồng như cỗ bài, rê chuột vào thì bung ra hình quạt 3D và từng lá nhấc lên kèm pill tên; khổ hẹp thành dải cuộn ngang',
+    aiLabelEn:
+      'Inspiration image deck stacked like playing cards that fans out in 3D on hover, each card lifting with a title pill; narrow widths fall back to a horizontal scroll strip',
+  },
+  lecool_footer: {
+    type: 'lecool_footer',
+    category: 'footer',
+    style: 'luxury',
+    tags: ['lecool', 'footer', 'cta', 'minimal'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-04',
+    label: 'Le Cool Move \u00b7 Footer',
+    accent: '#B68D45',
+    adminLabel: 'Le Cool Move Footer',
+    gradient: 'from-neutral-200 to-neutral-400',
+    defaultName: 'Le Cool Move Footer',
+    aiLabelVi:
+      'footer Le Cool Move: v\u01b0\u01a1ng mi\u1ec7n gi\u1eefa hai g\u1ea1ch ngang, m\u1ed9t c\u00e2u tuy\u00ean ng\u00f4n, n\u00fat mua vi\u1ec1n \u0111en v\u00e0 d\u00f2ng b\u1ea3n quy\u1ec1n \u2014 canh gi\u1eefa',
+    aiLabelEn:
+      'Le Cool Move footer: a crown between two hairlines, one statement line, an outlined shop button and a copyright line \u2014 all centred',
+  },
+  lecool_header: {
+    type: 'lecool_header',
+    category: 'navigation',
+    style: 'luxury',
+    tags: ['lecool', 'header', 'nav', 'sticky', 'ecommerce'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-04',
+    label: 'Le Cool Move \u00b7 Header',
+    accent: '#B68D45',
+    adminLabel: 'Le Cool Move Header',
+    gradient: 'from-white to-neutral-400',
+    defaultName: 'Le Cool Move Header',
+    aiLabelVi:
+      'header Le Cool Move: thanh d\u00ednh \u0111\u1ec9nh cao 72px v\u1edbi logo, nav ngang, \u00f4 t\u00ecm ki\u1ebfm v\u00e0 3 n\u00fat icon; kh\u1ed5 h\u1eb9p thu v\u1ec1 hamburger m\u1edf nav x\u1ed5 xu\u1ed1ng',
+    aiLabelEn:
+      'Le Cool Move header: a 72px sticky bar with logo, inline nav, search field and three icon buttons; narrow widths collapse to a hamburger with a drop-down nav',
+  },
+  lecool_crown_traveler: {
+    type: 'lecool_crown_traveler',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['lecool', 'overlay', 'scroll', 'chrome', 'crown'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-04',
+    label: 'Le Cool Move \u00b7 Crown Traveler',
+    accent: '#B68D45',
+    adminLabel: 'Le Cool Move Crown Traveler',
+    gradient: 'from-amber-300 to-amber-800',
+    defaultName: 'Le Cool Move Crown Traveler',
+    aiLabelVi:
+      'l\u1edbp ph\u1ee7 to\u00e0n trang: m\u1ed9t v\u01b0\u01a1ng mi\u1ec7n bay l\u1ea7n l\u01b0\u1ee3t qua c\u00e1c \u0111i\u1ec3m d\u1eebng c\u1ee7a nh\u1eefng block Le Cool Move kh\u00e1c theo scroll, \u1ea9n c\u00e1c v\u01b0\u01a1ng mi\u1ec7n t\u0129nh \u0111i',
+    aiLabelEn:
+      'page-wide overlay: a single crown flies between the crown slots of the other Le Cool Move blocks as you scroll, hiding the static crowns',
   },
   belgo_hero: {
     type: 'belgo_hero',

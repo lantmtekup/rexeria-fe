@@ -48,6 +48,19 @@ export type ElementKind =
   | 'mintVaultCoins'
   | 'mintVaultImages'
   | 'lineaPortfolioItems'
+  | 'lecoolDesignParagraphs'
+  | 'lecoolDesignCards'
+  | 'lecoolDetailRows'
+  | 'lecoolProductImages'
+  | 'lecoolProductColors'
+  | 'lecoolProductSpecs'
+  | 'lecoolProductActions'
+  | 'lecoolShowcaseCards'
+  | 'lecoolCollectionItems'
+  | 'lecoolCollectionColors'
+  | 'lecoolInspirationCards'
+  | 'lecoolHeaderNav'
+  | 'lecoolHeaderActions'
   | 'fill'
   | 'pnjFrames'
   | 'pnjScrim'
@@ -615,6 +628,37 @@ export function resolveKind(
   if ((key === 'line' || key === 'dot') && blockType === 'mintv2_process') {
     return 'fill';
   }
+  // Mảng của các block Le Cool Move — CHẶN TRƯỚC fallback: `productImages`
+  // khớp `isImageKey` và mấy key còn lại rơi vào 'text', cả hai đều khiến
+  // toolbar ghi một string đè lên cả mảng.
+  if (blockType === 'lecool_story') {
+    if (key === 'designParagraphs') return 'lecoolDesignParagraphs';
+    if (key === 'designCards') return 'lecoolDesignCards';
+    if (key === 'detailRows') return 'lecoolDetailRows';
+    if (key === 'productImages') return 'lecoolProductImages';
+    if (key === 'productColors') return 'lecoolProductColors';
+    if (key === 'productSpecs') return 'lecoolProductSpecs';
+    if (key === 'productActions') return 'lecoolProductActions';
+  }
+  if (blockType === 'lecool_showcase' && key === 'cards') {
+    return 'lecoolShowcaseCards';
+  }
+  if (blockType === 'lecool_collection') {
+    if (key === 'items') return 'lecoolCollectionItems';
+    if (/^items\[\d+\]\.colors$/.test(key)) return 'lecoolCollectionColors';
+  }
+  if (blockType === 'lecool_inspiration' && key === 'cards') {
+    return 'lecoolInspirationCards';
+  }
+  if (blockType === 'lecool_header') {
+    if (key === 'navItems') return 'lecoolHeaderNav';
+    if (key === 'actions') return 'lecoolHeaderActions';
+  }
+  if (blockType === 'lecool_header') {
+    if (/^navItems\[\d+\]\.href$/.test(key)) return 'link';
+    if (/^navItems\[\d+\]\.label$/.test(key)) return 'text';
+    if (/^actions\[\d+\]\.iconUrl$/.test(key)) return 'image';
+  }
   if (ELEMENT_KIND[key]) return ELEMENT_KIND[key];
   // Author-time convenience: give link-shaped fields the link picker without
   // touching all ~43 registry defs that still declare them as 'text'. Typing a
@@ -639,6 +683,114 @@ export function resolveLabel(
   if (paraMatch) return `Đoạn ${Number(paraMatch[1]) + 1}`;
   const titleLineMatch = key.match(/^titleLines\[(\d+)\]$/);
   if (titleLineMatch) return `Tiêu đề dòng ${Number(titleLineMatch[1]) + 1}`;
+  if (blockType === 'lecool_story') {
+    if (key === 'designParagraphs') return 'Thêm / quản lý đoạn văn';
+    if (key === 'designCards') return 'Thêm / quản lý thẻ ảnh';
+    if (key === 'detailRows') return 'Thêm / quản lý hotspot';
+    if (key === 'productImages') return 'Thêm / quản lý ảnh';
+    if (key === 'productColors') return 'Thêm / quản lý màu';
+    if (key === 'productSpecs') return 'Thêm / quản lý thông số';
+    if (key === 'productActions') return 'Thêm / quản lý hành động';
+  }
+  if (blockType === 'lecool_showcase' && key === 'cards') {
+    return 'Thêm / quản lý card';
+  }
+  if (blockType === 'lecool_collection') {
+    if (key === 'items') return 'Thêm / quản lý sản phẩm';
+    const colors = key.match(/^items\[(\d+)\]\.colors$/);
+    if (colors) return `Sản phẩm ${Number(colors[1]) + 1} · quản lý màu`;
+  }
+  if (blockType === 'lecool_inspiration' && key === 'cards') {
+    return 'Thêm / quản lý lá';
+  }
+  if (blockType === 'lecool_header') {
+    if (key === 'navItems') return 'Thêm / quản lý menu';
+    if (key === 'actions') return 'Thêm / quản lý nút icon';
+  }
+  if (blockType === 'lecool_header') {
+    const nav = key.match(/^navItems\[(\d+)\]\.(label|href)$/);
+    if (nav) {
+      return `Menu ${Number(nav[1]) + 1} · ${
+        nav[2] === 'label' ? 'Nhãn' : 'Đích đến'
+      }`;
+    }
+    const action = key.match(/^actions\[(\d+)\]\.iconUrl$/);
+    if (action) return `Nút icon ${Number(action[1]) + 1}`;
+  }
+  if (blockType === 'lecool_inspiration') {
+    const card = key.match(/^cards\[(\d+)\]\.(imageUrl|title)$/);
+    if (card) {
+      return `Lá ${Number(card[1]) + 1} · ${
+        card[2] === 'imageUrl' ? 'Ảnh' : 'Tên'
+      }`;
+    }
+  }
+  if (blockType === 'lecool_collection') {
+    const field = key.match(/^items\[(\d+)\]\.(material|name|price)$/);
+    if (field) {
+      const labels: Record<string, string> = {
+        material: 'Chất liệu',
+        name: 'Tên',
+        price: 'Giá',
+      };
+      return `Sản phẩm ${Number(field[1]) + 1} · ${labels[field[2]]}`;
+    }
+    const img = key.match(/^items\[(\d+)\]\.colors\[(\d+)\]\.imageUrl$/);
+    if (img) {
+      return `Sản phẩm ${Number(img[1]) + 1} · ảnh màu ${Number(img[2]) + 1}`;
+    }
+  }
+  if (blockType === 'lecool_showcase') {
+    const emblem = key.match(/^cards\[(\d+)\]\.emblemUrl$/);
+    if (emblem) return `Card ${Number(emblem[1]) + 1} · Emblem`;
+    const caption = key.match(/^cards\[(\d+)\]\.captionLines\[(\d+)\]$/);
+    if (caption) {
+      return `Card ${Number(caption[1]) + 1} · caption dòng ${Number(caption[2]) + 1}`;
+    }
+    const img = key.match(
+      /^cards\[(\d+)\]\.images\[(\d+)\]\.(imageUrl|title)$/
+    );
+    if (img) {
+      const side = img[2] === '0' ? 'trái' : 'phải';
+      return `Card ${Number(img[1]) + 1} · ${
+        img[3] === 'imageUrl' ? `ảnh ${side}` : `chữ trên ảnh ${side}`
+      }`;
+    }
+  }
+  if (blockType === 'lecool_story') {
+    const menu = key.match(/^menuLabels\[(\d+)\]$/);
+    if (menu) return `Menu · mục ${Number(menu[1]) + 1}`;
+    const para = key.match(/^designParagraphs\[(\d+)\]$/);
+    if (para) return `Design · đoạn ${Number(para[1]) + 1}`;
+    const card = key.match(/^designCards\[(\d+)\]\.(imageUrl|caption)$/);
+    if (card) {
+      return `Design · thẻ ${Number(card[1]) + 1} · ${
+        card[2] === 'imageUrl' ? 'Ảnh' : 'Chú thích'
+      }`;
+    }
+    const spot = key.match(/^detailRows\[(\d+)\]\.(label|thumbUrl)$/);
+    if (spot) {
+      return `Details · hotspot ${Number(spot[1]) + 1} · ${
+        spot[2] === 'label' ? 'Nhãn' : 'Ảnh nhỏ'
+      }`;
+    }
+    const img = key.match(/^productImages\[(\d+)\]$/);
+    if (img) return `Products · ảnh ${Number(img[1]) + 1}`;
+    const color = key.match(/^productColors\[(\d+)\]\.name$/);
+    if (color) return `Products · màu ${Number(color[1]) + 1}`;
+    const spec = key.match(/^productSpecs\[(\d+)\]\.(label|value)$/);
+    if (spec) {
+      return `Products · thông số ${Number(spec[1]) + 1} · ${
+        spec[2] === 'label' ? 'Nhãn' : 'Giá trị'
+      }`;
+    }
+    const action = key.match(/^productActions\[(\d+)\]\.(title|sub)$/);
+    if (action) {
+      return `Products · hành động ${Number(action[1]) + 1} · ${
+        action[2] === 'title' ? 'Tiêu đề' : 'Mô tả'
+      }`;
+    }
+  }
   if (key === 'variants' && blockType === 'delvaux_variant') {
     return 'Thêm / quản lý màu';
   }
@@ -2126,6 +2278,16 @@ export function resolveSiblingLinkKey(
   blockType: BlockType,
   key: string
 ): string | null {
+  if (blockType === 'lecool_header') {
+    const navLabel = key.match(/^navItems\[(\d+)\]\.label$/);
+    if (navLabel) return `navItems[${navLabel[1]}].href`;
+  }
+  if (blockType === 'lecool_footer' && key === 'ctaLabel') {
+    return 'ctaHref';
+  }
+  if (blockType === 'lecool_collection' && key === 'allProductsLabel') {
+    return 'allProductsHref';
+  }
   if (blockType === 'pnj_sticky_menu') {
     const navLabel = key.match(/^items\[(\d+)\]\.label$/);
     if (navLabel) return `items[${navLabel[1]}].link`;
@@ -2166,6 +2328,17 @@ export function resolveLinkAnchorKey(
   blockType: BlockType,
   key: string
 ): string {
+  if (blockType === 'lecool_header') {
+    const navHref = key.match(/^navItems\[(\d+)\]\.href$/);
+    if (navHref) return `navItems[${navHref[1]}].label`;
+    if (key === 'logoHref') return 'logoUrl';
+  }
+  if (blockType === 'lecool_footer' && key === 'ctaHref') {
+    return 'ctaLabel';
+  }
+  if (blockType === 'lecool_collection' && key === 'allProductsHref') {
+    return 'allProductsLabel';
+  }
   if (blockType === 'pnj_sticky_menu') {
     const navLink = key.match(/^items\[(\d+)\]\.link$/);
     if (navLink) return `items[${navLink[1]}].label`;

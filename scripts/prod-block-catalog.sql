@@ -6,7 +6,15 @@ INSERT INTO public.blocks (type_code, name, scope, supported_surfaces, tags)
 SELECT code, 'Builtin · ' || code, 'system',
        ARRAY['landing','ad','curate']::text[], ARRAY['builtin_catalog']::text[]
 FROM unnest(ARRAY[
-  t_hero',
+  'lecool_hero',
+  'lecool_story',
+  'lecool_showcase',
+  'lecool_collection',
+  'lecool_inspiration',
+  'lecool_footer',
+  'lecool_header',
+  'lecool_crown_traveler',
+  'mint_vault_hero',
   'mint_vault_craft',
   'mint_vault_reveal',
   'framer_aestha_editorial',

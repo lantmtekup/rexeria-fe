@@ -1,0 +1,10 @@
+// CF Worker cho demo ecommerce-landing (apps/ecommerce-landing). Build: npm run cf:build — Deploy: npm run cf:deploy
+// Chạy trên *.workers.dev, chưa gắn domain.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rexerai-ecommerce-landing",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-05-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+}

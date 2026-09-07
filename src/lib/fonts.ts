@@ -140,6 +140,14 @@ export const FONTS: FontDef[] = [
     note: 'Editorial / luxury',
   },
   {
+    id: 'libertinus-math',
+    label: 'Libertinus Math',
+    family: `'Libertinus Math', ${SYSTEM_FALLBACK_SERIF}`,
+    category: 'serif',
+    weights: [400],
+    note: 'Le Cool Move — display serif',
+  },
+  {
     id: 'merriweather',
     label: 'Merriweather',
     family: `'Merriweather', ${SYSTEM_FALLBACK_SERIF}`,
