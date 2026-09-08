@@ -14,6 +14,15 @@ import { belgoFooterDef } from './defs/belgoFooter';
 import { belgoOurProductsDef } from './defs/belgoOurProducts';
 import { belgoMoreFlavorsDef } from './defs/belgoMoreFlavors';
 import { belgoHeaderDef } from './defs/belgoHeader';
+import { west72HeroDef } from './defs/west72Hero';
+import { west72ElevatedDef } from './defs/west72Elevated';
+import {
+  west72ShowcaseDef,
+  west72ShowcaseLandmarkDef,
+  west72ShowcaseSanctuaryDef,
+} from './defs/west72Showcase';
+import { west72FooterDef } from './defs/west72Footer';
+import { pageSnapDef } from './defs/pageSnap';
 import { delvauxDetailsDef } from './defs/delvauxDetails';
 import { delvauxHeaderDef } from './defs/delvauxHeader';
 import { delvauxHeroDef } from './defs/delvauxHero';
@@ -241,6 +250,13 @@ export const BLOCK_REGISTRY: Partial<Record<BlockType, BlockDef>> = {
   pnj_variant: pnjVariantDef as BlockDef,
   pnj_header: pnjHeaderDef as BlockDef,
   belgo_header: belgoHeaderDef as BlockDef,
+  west72_hero: west72HeroDef as BlockDef,
+  west72_elevated: west72ElevatedDef as BlockDef,
+  west72_showcase: west72ShowcaseDef as BlockDef,
+  west72_showcase_landmark: west72ShowcaseLandmarkDef as BlockDef,
+  west72_showcase_sanctuary: west72ShowcaseSanctuaryDef as BlockDef,
+  west72_footer: west72FooterDef as BlockDef,
+  page_snap: pageSnapDef as BlockDef,
   pnj_sticky_menu: pnjStickyMenuDef as BlockDef,
   pnj_cta: pnjCtaDef as BlockDef,
   the_grand_intro: theGrandIntroDef as BlockDef,
