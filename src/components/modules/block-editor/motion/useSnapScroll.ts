@@ -50,6 +50,32 @@ const TOUCH_TOLERANCE = 30;
 
 const DEDUPE_EPS = 2;
 const OWNER_ATTR = 'data-snap-owner';
+const STYLE_ID = 'snap-scroll-behavior';
+
+/**
+ * BẮT BUỘC — thiếu nó thì bản xuất bản giật còn editor preview mượt.
+ *
+ * `globals.css` đặt `html { scroll-behavior: smooth }`. ScrollToPlugin ghi
+ * `scrollTo(y_k)` MỖI FRAME; với `smooth`, mỗi lần ghi Chrome khởi động lại một
+ * cú cuộn mượt từ đầu → trang đứng ~6px suốt 900ms rồi lao tới mốc trong 400ms
+ * cuối (đo được). PreviewMode cuộn một `div` nên rule `html` không chạm tới —
+ * vì thế chỉ `/p` (window scroller) bị.
+ *
+ * KHÔNG dùng inline style: `ScrollTrigger.refresh()` kết thúc bằng
+ * `rAF → target.style.scrollBehavior = "smooth"` (nó nhớ computed lúc đầu là
+ * smooth và "trả lại"), và `LandingMotionRoot` refresh liên tục (RO, fonts,
+ * load) → inline `auto` bị đè ngay nhịp sau. Rule stylesheet `!important`
+ * thắng inline không-important nên các lượt ghi đó thành vô hại. Rule bám vào
+ * `data-snap-owner` — chỉ tác dụng đúng lúc snap đang nắm quyền, anchor link
+ * vẫn cuộn mượt khi snap tắt. Inject từ hook để mọi surface đều có.
+ */
+function ensureScrollBehaviorRule() {
+  if (document.getElementById(STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = STYLE_ID;
+  style.textContent = `[${OWNER_ATTR}]{scroll-behavior:auto!important}`;
+  document.head.appendChild(style);
+}
 
 const PREVENT_ATTRS = [
   'data-lenis-prevent',
@@ -226,8 +252,13 @@ export function useSnapScroll({
       });
     };
 
-    const goTo = (index: number) => {
-      const stops = buildStops();
+    /**
+     * `stops` truyền vào để KHÔNG dựng lại: mỗi lần `buildStops` là một lượt
+     * đọc `getBoundingClientRect`/`offsetHeight` → ép browser flush layout đồng
+     * bộ giữa lúc GSAP vừa ghi transform. Gọi 2 lần cho 1 cử chỉ là gấp đôi
+     * chi phí đó mà không được gì.
+     */
+    const goTo = (index: number, stops = buildStops()) => {
       if (stops.length < 2) return;
       const from = currentIndex(stops);
       const to = Math.min(Math.max(index, 0), stops.length - 1);
@@ -237,7 +268,8 @@ export function useSnapScroll({
     };
 
     const step = (direction: 1 | -1) => {
-      goTo(currentIndex(buildStops()) + direction);
+      const stops = buildStops();
+      goTo(currentIndex(stops) + direction, stops);
     };
 
     // Cổng cử chỉ — port nguyên văn từ apps/212-west. Cử chỉ mới bắt đầu khi có
@@ -296,7 +328,7 @@ export function useSnapScroll({
       if (event.ctrlKey) return; // pinch-zoom
       if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return; // carousel ngang
       if (isPrevented(event.composedPath())) return; // drawer trong block
-      getLenis()?.stop();
+      takeOverLenis();
       event.preventDefault();
       const scale =
         event.deltaMode === WheelEvent.DOM_DELTA_LINE
@@ -346,10 +378,36 @@ export function useSnapScroll({
     let armed = false;
     let observer: Observer | null = null;
     let touchPrevented = false;
+    let lenisTaken = false;
+
+    /**
+     * Dừng Lenis nếu có (nó cũng ghi scrollTop mỗi frame — hai tay cùng lái).
+     * Lenis được tạo trong effect của `LandingMotionRoot` — chạy SAU effect này
+     * (React flush effect con trước cha) — nên `arm()` thường chưa thấy nó. Gọi
+     * lại ở mỗi cử chỉ và ở nhịp `settle`; `lenisTaken` giữ cho idempotent.
+     * Khi Lenis nghỉ, trả `lagSmoothing` về mặc định GSAP (Lenis đã tắt nó).
+     */
+    const takeOverLenis = () => {
+      if (lenisTaken) return;
+      const lenis = getLenis();
+      if (!lenis) return;
+      lenisTaken = true;
+      lenis.stop();
+      gsap.ticker.lagSmoothing(500, 33);
+    };
+
+    const releaseLenis = () => {
+      if (!lenisTaken) return;
+      lenisTaken = false;
+      gsap.ticker.lagSmoothing(0);
+      getLenis()?.start();
+    };
 
     const arm = () => {
       wheelGate = makeGate(WHEEL_THRESHOLD);
       touchGate = makeGate(1);
+      ensureScrollBehaviorRule();
+      takeOverLenis();
       ownerNode.setAttribute(OWNER_ATTR, 'true');
       target.addEventListener('wheel', onWheel as EventListener, {
         passive: false,
@@ -366,7 +424,9 @@ export function useSnapScroll({
             self.event.composedPath?.() ?? [self.target as EventTarget]
           )),
         onDown: () => {
-          if (!touchPrevented) touchGate(1, performance.now());
+          if (touchPrevented) return;
+          takeOverLenis();
+          touchGate(1, performance.now());
         },
         onUp: () => {
           if (!touchPrevented) touchGate(-1, performance.now());
@@ -385,7 +445,7 @@ export function useSnapScroll({
       window.clearTimeout(watchdog);
       window.clearTimeout(tail);
       busy = false;
-      getLenis()?.start();
+      releaseLenis();
     };
 
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -393,11 +453,14 @@ export function useSnapScroll({
     const evaluate = () => {
       // Chỉ một chủ sở hữu / scroller: preset + block cùng bật cũng không chồng.
       const ownedByOther = ownerNode.hasAttribute(OWNER_ATTR) && !armed;
+      // Đếm section thay vì `buildStops()`: đây là callback của ResizeObserver,
+      // chạy dày trong lúc layout đang đổi — không được ép flush layout ở đây.
+      // `goTo` vẫn tự guard `stops.length < 2`.
       const ok =
         !ownedByOther &&
         !mq.matches &&
         viewW() >= minWidth &&
-        buildStops().length >= 2;
+        sectionsRef.current().length >= 2;
       if (ok === armed) return;
       armed = ok;
       if (ok) arm();
@@ -408,7 +471,10 @@ export function useSnapScroll({
     ro.observe(el ?? document.documentElement);
     mq.addEventListener('change', evaluate);
     // DOM của trang có thể tới sau (ảnh, block lazy) → soát lại một nhịp.
-    const settle = window.setTimeout(evaluate, 300);
+    const settle = window.setTimeout(() => {
+      if (armed) takeOverLenis();
+      evaluate();
+    }, 300);
     evaluate();
 
     return () => {
