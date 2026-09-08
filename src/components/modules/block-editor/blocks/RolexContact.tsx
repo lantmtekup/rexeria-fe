@@ -3,6 +3,8 @@
 import * as React from 'react';
 
 import { useMotionAttributes } from '../motion/useMotionAttributes';
+import { LeadConsentField } from '../leads/LeadConsentField';
+import { useLeadSubmit } from '../leads/useLeadSubmit';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
@@ -94,7 +96,7 @@ export function RolexContact({
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [message, setMessage] = React.useState('');
-  const [submitted, setSubmitted] = React.useState(false);
+  const [consent, setConsent] = React.useState(false);
 
   const isCanvas = useIsCanvasEdit(rootRef);
 
@@ -105,11 +107,21 @@ export function RolexContact({
       positionStyle(positions, key)
     );
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const lead = useLeadSubmit(isCanvas);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isCanvas) return;
     if (!name.trim() || !email.trim()) return;
-    setSubmitted(true);
+    const ok = await lead.submit({
+      fields: { name, email, message },
+      consent,
+    });
+    if (ok) {
+      setName('');
+      setEmail('');
+      setMessage('');
+    }
   };
 
   useMotionAttributes(rootRef);
@@ -201,7 +213,7 @@ export function RolexContact({
               </p>
             </div>
 
-            {submitted ? (
+            {lead.state === 'success' ? (
               <p
                 data-element-key='successMessage'
                 role='status'
@@ -307,8 +319,16 @@ export function RolexContact({
                   />
                 </div>
 
+                <LeadConsentField
+                  text={content.consentText}
+                  checked={consent}
+                  onChange={setConsent}
+                  className='flex cursor-pointer items-start gap-2 text-xs text-white/70'
+                />
+
                 <button
                   type='submit'
+                  disabled={lead.state === 'loading'}
                   data-element-key='submitLabel'
                   style={composeStyle(
                     {
@@ -329,6 +349,17 @@ export function RolexContact({
                 >
                   {content.submitLabel}
                 </button>
+
+                {/* Bản trước bật `submitted` ngay mà không gửi đi đâu — lỗi
+                    phải hiện ra, nếu không lead rơi mà không ai biết. */}
+                {lead.state === 'error' && lead.error ? (
+                  <p className='text-xs text-[#ff8a80]'>{lead.error}</p>
+                ) : null}
+                {!isCanvas && !lead.enabled ? (
+                  <p className='text-xs text-white/50'>
+                    Bản xem trước — form chỉ gửi được trên trang đã xuất bản.
+                  </p>
+                ) : null}
               </form>
             )}
           </div>

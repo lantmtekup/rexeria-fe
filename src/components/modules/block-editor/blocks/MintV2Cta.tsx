@@ -12,6 +12,8 @@ import * as React from 'react';
 import gsap from 'gsap';
 
 import { useBlockMotion } from '../motion/LandingMotion';
+import { useLeadSubmit } from '../leads/useLeadSubmit';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -57,8 +59,12 @@ export function MintV2Cta({
     phone: '',
     message: '',
   });
-  const [status, setStatus] = React.useState<SubmitState>('idle');
-  const [errorMsg, setErrorMsg] = React.useState('');
+  const isCanvas = useIsCanvasEdit(rootRef);
+  const lead = useLeadSubmit(isCanvas);
+  /** Lỗi tự kiểm ở client (thiếu email lẫn phone) — chưa gọi tới server. */
+  const [localError, setLocalError] = React.useState('');
+  const status: SubmitState = localError ? 'error' : lead.state;
+  const errorMsg = localError || (lead.error ?? '');
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),
@@ -96,44 +102,20 @@ export function MintV2Cta({
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm(f => ({ ...f, [field]: e.target.value }));
 
+  // Bản trước tự gọi `/api/forms` với `page_slug: location.pathname`
+  // (`/p/abc`) — route đó CHƯA TỒN TẠI nên mọi lần gửi đều 404, và kể cả khi
+  // có thì `/p/abc` không phải slug BE nhận. Giờ đi qua `useLeadSubmit`, nơi
+  // `pageId` đến từ chính trang đang render.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (status === 'loading') return;
+    if (isCanvas || lead.state === 'loading') return;
     if (!form.email.trim() && !form.phone.trim()) {
-      setStatus('error');
-      setErrorMsg('Please provide an email or phone number.');
+      setLocalError('Please provide an email or phone number.');
       return;
     }
-    setStatus('loading');
-    setErrorMsg('');
-    try {
-      const fields: Record<string, string> = {};
-      (['name', 'email', 'phone', 'message'] as const).forEach(k => {
-        if (form[k].trim()) fields[k] = form[k].trim();
-      });
-      const res = await fetch('/api/forms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          page_slug:
-            typeof window !== 'undefined' ? window.location.pathname : '',
-          fields,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(
-          data.error ||
-            data.message ||
-            'Something went wrong. Please try again.'
-        );
-      }
-      setStatus('success');
-      setForm({ name: '', email: '', phone: '', message: '' });
-    } catch (err) {
-      setStatus('error');
-      setErrorMsg((err as Error).message);
-    }
+    setLocalError('');
+    const ok = await lead.submit({ fields: form });
+    if (ok) setForm({ name: '', email: '', phone: '', message: '' });
   };
 
   return (
@@ -228,7 +210,10 @@ export function MintV2Cta({
               </p>
               <button
                 type='button'
-                onClick={() => setStatus('idle')}
+                onClick={() => {
+                  setLocalError('');
+                  lead.reset();
+                }}
                 className='mt-6 text-[11px] tracking-[0.18em] text-[#c79119] uppercase transition-colors hover:text-neutral-100'
               >
                 Submit another request →

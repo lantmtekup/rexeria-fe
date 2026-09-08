@@ -16,6 +16,8 @@ import * as React from 'react';
 import gsap from 'gsap';
 
 import { useBlockMotion } from '../motion/LandingMotion';
+import { LeadConsentField } from '../leads/LeadConsentField';
+import { useLeadSubmit } from '../leads/useLeadSubmit';
 import type {
   BlockBackground,
   ElementPositionsMap,
@@ -83,7 +85,7 @@ export function PnjCta({
   const [email, setEmail] = React.useState('');
   const [phone, setPhone] = React.useState('');
   const [note, setNote] = React.useState('');
-  const [submitted, setSubmitted] = React.useState(false);
+  const [consent, setConsent] = React.useState(false);
 
   // Editor canvas detection — trong canvas không đổi sang màn cảm ơn.
   const [isCanvas, setIsCanvas] = React.useState(false);
@@ -100,13 +102,23 @@ export function PnjCta({
       positionStyle(positions, key)
     );
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const lead = useLeadSubmit(isCanvas);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isCanvas) return;
     if (!email.trim() || !phone.trim()) return;
-    // Chưa có backend — bắt cục bộ + xác nhận. Thay bằng POST thật
-    // (vd /api/reserve) khi có endpoint. Note tuỳ chọn; email + phone bắt buộc.
-    setSubmitted(true);
+    // `note` là field tự do — BE lưu nguyên vào `leads.form_data`, nên nó hiện
+    // được ở bảng lead mà không cần thêm cột nào.
+    const ok = await lead.submit({
+      fields: { email, phone, note },
+      consent,
+    });
+    if (ok) {
+      setEmail('');
+      setPhone('');
+      setNote('');
+    }
   };
 
   useBlockMotion(
@@ -138,7 +150,8 @@ export function PnjCta({
         }
       );
     },
-    [submitted]
+    // Form đổi sang lời cảm ơn ⇒ DOM khác ⇒ phải dựng lại timeline reveal.
+    [lead.state]
   );
 
   return (
@@ -203,7 +216,7 @@ export function PnjCta({
           {content.subtitle}
         </p>
 
-        {submitted ? (
+        {lead.state === 'success' ? (
           <p
             data-element-key='successMessage'
             role='status'
@@ -293,8 +306,16 @@ export function PnjCta({
               />
             </div>
 
+            <LeadConsentField
+              text={content.consentText}
+              checked={consent}
+              onChange={setConsent}
+              className='flex cursor-pointer items-start gap-2 text-xs text-white/70'
+            />
+
             <button
               type='submit'
+              disabled={lead.state === 'loading'}
               data-element-key='submitText'
               style={composeStyle(
                 {
@@ -317,6 +338,15 @@ export function PnjCta({
             >
               {content.submitText}
             </button>
+
+            {lead.state === 'error' && lead.error ? (
+              <p className='text-xs text-[#ff8a80]'>{lead.error}</p>
+            ) : null}
+            {!isCanvas && !lead.enabled ? (
+              <p className='text-xs text-white/50'>
+                Bản xem trước — form chỉ gửi được trên trang đã xuất bản.
+              </p>
+            ) : null}
           </form>
         )}
       </div>

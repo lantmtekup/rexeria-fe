@@ -1,3 +1,5 @@
+'use client';
+
 import * as React from 'react';
 
 import { cn } from '@/lib/cn';
@@ -16,6 +18,9 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { LeadConsentField } from '../leads/LeadConsentField';
+import { useLeadSubmit } from '../leads/useLeadSubmit';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 
 interface BookingFormProps {
   content: BookingFormContent;
@@ -36,6 +41,28 @@ export function BookingForm({
   activeKey,
   className,
 }: BookingFormProps) {
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  const isCanvas = useIsCanvasEdit(rootRef);
+  const [consent, setConsent] = React.useState(false);
+  const lead = useLeadSubmit(isCanvas);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (isCanvas) return;
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    const ok = await lead.submit({
+      fields: {
+        name: String(data.get('name') ?? ''),
+        phone: String(data.get('phone') ?? ''),
+        email: String(data.get('email') ?? ''),
+        message: String(data.get('message') ?? ''),
+      },
+      consent,
+    });
+    if (ok) form.reset();
+  };
+
   const styleOf = (key: string) =>
     composeStyle(
       elementStyleOf(styles, key),
@@ -51,6 +78,7 @@ export function BookingForm({
 
   return (
     <div
+      ref={rootRef}
       style={blockBackgroundStyle(background)}
       className={cn(
         'animate-in fade-in slide-in-from-bottom-4 relative grid w-full grid-cols-1 overflow-hidden rounded-md bg-neutral-950 text-white duration-700 ease-out @2xl:grid-cols-[minmax(0,5fr)_minmax(0,4fr)]',
@@ -123,23 +151,67 @@ export function BookingForm({
         )}
       </div>
 
-      <div className='flex flex-col gap-3 bg-white p-6 text-neutral-900 @2xl:gap-4 @2xl:p-10 @4xl:gap-5 @4xl:p-14'>
-        <FormField label='Họ tên' placeholder='Nguyễn Văn A' />
-        <FormField label='Số điện thoại' placeholder='+84' />
-        <FormField label='Email' placeholder='you@email.com' />
-        <FormField label='Ghi chú' placeholder='Mong muốn của bạn…' textarea />
+      <form
+        onSubmit={handleSubmit}
+        className='flex flex-col gap-3 bg-white p-6 text-neutral-900 @2xl:gap-4 @2xl:p-10 @4xl:gap-5 @4xl:p-14'
+      >
+        {/* Ô nhập TRÊN CANVAS để `disabled` để người dựng bấm vào là chọn được
+            block chứ không rơi con trỏ vào ô; trên trang thật thì mở. */}
+        <FormField
+          name='name'
+          label='Họ tên'
+          placeholder='Nguyễn Văn A'
+          disabled={isCanvas}
+        />
+        <FormField
+          name='phone'
+          type='tel'
+          label='Số điện thoại'
+          placeholder='+84'
+          disabled={isCanvas}
+        />
+        <FormField
+          name='email'
+          type='email'
+          label='Email'
+          placeholder='you@email.com'
+          disabled={isCanvas}
+        />
+        <FormField
+          name='message'
+          label='Ghi chú'
+          placeholder='Mong muốn của bạn…'
+          textarea
+          disabled={isCanvas}
+        />
+        <LeadConsentField
+          text={content.consentText}
+          checked={consent}
+          onChange={setConsent}
+          className='flex cursor-pointer items-start gap-2 text-xs text-neutral-500'
+        />
         <button
-          type='button'
+          type={isCanvas ? 'button' : 'submit'}
+          disabled={lead.state === 'loading'}
           data-element-key='submitText'
-          onClick={e => e.preventDefault()}
           style={sSubmit}
           className={selectableClass(
             activeKey === 'submitText',
-            'rounded-pill animate-soft-rise mt-2 inline-flex min-h-11 items-center justify-center bg-neutral-900 px-5 py-3 text-sm font-semibold text-white shadow-md transition-all duration-300 ease-out [animation-delay:2400ms] hover:-translate-y-0.5 hover:bg-neutral-800 hover:shadow-xl @2xl:py-3.5 @2xl:text-base'
+            'rounded-pill animate-soft-rise mt-2 inline-flex min-h-11 items-center justify-center bg-neutral-900 px-5 py-3 text-sm font-semibold text-white shadow-md transition-all duration-300 ease-out [animation-delay:2400ms] hover:-translate-y-0.5 hover:bg-neutral-800 hover:shadow-xl disabled:opacity-60 @2xl:py-3.5 @2xl:text-base'
           )}
         >
-          {content.submitText || 'Gửi đăng ký'}
+          {lead.state === 'success'
+            ? 'Đã nhận, sẽ liên hệ lại'
+            : content.submitText || 'Gửi đăng ký'}
         </button>
+        {lead.state === 'error' && lead.error ? (
+          <p className='text-xs text-red-600'>{lead.error}</p>
+        ) : null}
+        {!isCanvas && !lead.enabled ? (
+          <p className='text-xs text-neutral-400'>
+            Bản xem trước — form chỉ gửi được trên trang đã xuất bản.
+          </p>
+        ) : null}
         {content.noteText && (
           <p
             data-element-key='noteText'
@@ -152,19 +224,25 @@ export function BookingForm({
             {content.noteText}
           </p>
         )}
-      </div>
+      </form>
     </div>
   );
 }
 
 function FormField({
+  name,
   label,
   placeholder,
   textarea,
+  type,
+  disabled,
 }: {
+  name: string;
   label: string;
   placeholder?: string;
   textarea?: boolean;
+  type?: string;
+  disabled?: boolean;
 }) {
   return (
     <label className='flex flex-col gap-1'>
@@ -173,14 +251,17 @@ function FormField({
       </span>
       {textarea ? (
         <textarea
-          disabled
+          name={name}
+          disabled={disabled}
           placeholder={placeholder}
           rows={2}
           className='resize-none rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400'
         />
       ) : (
         <input
-          disabled
+          name={name}
+          type={type}
+          disabled={disabled}
           placeholder={placeholder}
           className='h-11 rounded-md border border-neutral-200 bg-neutral-50 px-3 text-sm text-neutral-700 placeholder:text-neutral-400'
         />
