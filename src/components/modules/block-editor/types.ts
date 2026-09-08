@@ -121,6 +121,15 @@ export type BlockType =
   | 'pnj_cta'
   // ── Belgo (craft beer) — port từ apps/belgo ──
   | 'belgo_header'
+  // ── 212 West 72nd (residence) — port từ apps/212-west ──
+  | 'west72_hero'
+  | 'west72_elevated'
+  | 'west72_showcase'
+  | 'west72_showcase_landmark'
+  | 'west72_showcase_sanctuary'
+  | 'west72_footer'
+  // ── Tiện ích cấp trang (không thuộc brand nào) ──
+  | 'page_snap'
   // ── The Grand (Masterise) — port từ apps/the-grand ──
   | 'the_grand_intro'
   | 'the_grand_location'
@@ -1779,6 +1788,124 @@ export interface BelgoHeaderContent {
   /** Hai dòng cách nhau bằng `\n`. */
   menuTagline: string;
   navLinks: BelgoNavLink[];
+}
+
+/** 212 West 72nd — nav link `{ label, href }` (cùng shape aestha/belgo). */
+export interface West72NavLink {
+  label: string;
+  href: string;
+}
+
+/**
+ * 212 West 72nd hero — ảnh full màn + header + tiêu đề, panel "Designed For
+ * New Yorkers" trượt vào từ phải. Port từ apps/212-west HeroStage.
+ */
+export interface West72HeroContent {
+  logoUrl: string;
+  logoAlt: string;
+  logoHref: string;
+  navLinks: West72NavLink[];
+  contactLabel: string;
+  contactHref: string;
+  /** aria-label nút gọi (mobile). */
+  phoneLabel: string;
+  /** `tel:` URL. */
+  phoneHref: string;
+  heroImageUrl: string;
+  heroImageAlt: string;
+  title: string;
+  /** Các dòng cách nhau bằng `\n`. */
+  designedTitle: string;
+  designedVertical: string;
+  designedBody: string;
+  designedImageUrl: string;
+  designedImageAlt: string;
+}
+
+/**
+ * 212 West 72nd "Elevated Living" — 2 cột: ảnh nội thất + intro trái, tranh
+ * treo + trích dẫn + rule dọc phải. Port từ apps/212-west ElevatedLiving.
+ */
+export interface West72ElevatedContent {
+  badgeLabel: string;
+  /** Các dòng cách nhau bằng `\n`. */
+  title: string;
+  bodyText: string;
+  bgImageUrl: string;
+  bgImageAlt: string;
+  artworkImageUrl: string;
+  artworkImageAlt: string;
+  quote: string;
+  verticalLabel: string;
+}
+
+/** 212 West showcase — 1 điểm nóng trên ảnh (toạ độ % theo khung 12/7). */
+export interface West72ShowcaseHotspot {
+  label: string;
+  desc: string;
+  dotX: number;
+  dotY: number;
+  /** Capsule nhãn nằm trên hay dưới chấm. */
+  labelSide: 'top' | 'bottom';
+}
+
+/**
+ * 212 West 72nd showcase — ảnh full-bleed + thẻ nội dung neo góc, rèm reveal,
+ * hotspot zoom. Port từ apps/212-west FeatureShowcase (1 panel = 1 block).
+ */
+export interface West72ShowcaseContent {
+  chip: string;
+  /** Các dòng cách nhau bằng `\n`. */
+  title: string;
+  desc: string;
+  imageUrl: string;
+  imageAlt: string;
+  /** Vị trí thẻ nội dung trên khung rộng — cũng quyết định bố cục rèm. */
+  cardAnchor: 'top-left' | 'top-right' | 'bottom-right';
+  /** `none` = không rèm; `split` tách tiêu đề/mô tả, `combined` dịch cả cụm. */
+  revealMode: 'none' | 'split' | 'combined';
+  /** Căn chữ trong thẻ trên khung rộng. */
+  textAlign: 'left' | 'right';
+  /** Khung rộng cao full màn (true) hay tỉ lệ 12/7. */
+  fullHeight: boolean;
+  hotspots: West72ShowcaseHotspot[];
+}
+
+/**
+ * 212 West 72nd footer — khung viền trắng trên nền nâu, wordmark cưỡi mép trên,
+ * liên hệ + fine print, rèm 4 cột reveal. Port từ apps/212-west Footer.
+ */
+export interface West72FooterContent {
+  wordmark: string;
+  addressText: string;
+  emailLabel: string;
+  emailHref: string;
+  phoneLabel: string;
+  phoneHref: string;
+  /** aria-label cho nút Instagram. */
+  instagramLabel: string;
+  instagramHref: string;
+  fairHousingText: string;
+  fairHousingHref: string;
+  disclaimer: string;
+  copyright: string;
+}
+
+/**
+ * Page Snap — block hành vi (không giao diện): bật cuộn snap từng section cho
+ * cả trang. Cùng engine với preset transition `snap`.
+ */
+export interface PageSnapContent {
+  /** Nhãn hiện trên canvas editor (trang thật không hiển thị). */
+  label: string;
+  /** Ghi chú hiện trên canvas editor. Để trống = dùng mô tả mặc định. */
+  note: string;
+  /** Tắt tạm mà không cần xoá block. */
+  enabled: boolean;
+  /** Bề rộng scroller tối thiểu mới bật (px). Dưới mức này cuộn tự do. */
+  minWidth: number;
+  /** Thời lượng chuyển giữa 2 section (giây). */
+  duration: number;
 }
 
 /**
@@ -4642,6 +4769,11 @@ export type BlockContent =
   | PnjVariantContent
   | PnjHeaderContent
   | BelgoHeaderContent
+  | West72HeroContent
+  | West72ElevatedContent
+  | West72ShowcaseContent
+  | West72FooterContent
+  | PageSnapContent
   | PnjStickyMenuContent
   | PnjCtaContent
   | TheGrandIntroContent
@@ -6382,6 +6514,132 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMetaCatalog> = {
     aiLabelVi: 'header PNJ: logo fixed top trong suốt, thu nhỏ khi scroll',
     aiLabelEn:
       'PNJ fixed-top logo header: transparent over hero, shrinks on scroll',
+  },
+  west72_hero: {
+    type: 'west72_hero',
+    category: 'hero',
+    style: 'luxury',
+    tags: ['clone', '212-west', 'real-estate', 'residence', 'wipe'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-07',
+    label: '212 West · Hero',
+    accent: '#763718',
+    adminLabel: '212 West Hero',
+    gradient: 'from-stone-900 to-neutral-950',
+    defaultName: '212 West Hero',
+    aiLabelVi:
+      'hero bất động sản 212 West: ảnh full màn + header + tiêu đề, panel "Designed For New Yorkers" trượt vào khi cuộn',
+    aiLabelEn:
+      'residential hero: full-bleed photo + header + title, "Designed For New Yorkers" panel wipes in on scroll',
+  },
+  west72_elevated: {
+    type: 'west72_elevated',
+    category: 'intro',
+    style: 'luxury',
+    tags: ['clone', '212-west', 'real-estate', 'residence', 'reveal'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-07',
+    label: '212 West · Elevated Living',
+    accent: '#763718',
+    adminLabel: '212 West Elevated Living',
+    gradient: 'from-stone-100 to-neutral-200',
+    defaultName: '212 West Elevated Living',
+    aiLabelVi:
+      'section giới thiệu 2 cột: ảnh nội thất + tiêu đề trái, tranh treo + trích dẫn + đường kẻ dọc phải, reveal bằng rèm trượt',
+    aiLabelEn:
+      'two-column overview section: interior photo + heading left, framed artwork + pull quote + vertical rule right, slat curtain reveal',
+  },
+  west72_showcase: {
+    type: 'west72_showcase',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', '212-west', 'real-estate', 'hotspot', 'reveal'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-07',
+    label: '212 West · Kitchens',
+    accent: '#763718',
+    adminLabel: '212 West Kitchens',
+    gradient: 'from-stone-200 to-neutral-300',
+    defaultName: '212 West Kitchens',
+    aiLabelVi:
+      'section bếp: ảnh full-bleed + thẻ nội dung góc trên-trái, rèm reveal 4 cột, 8 hotspot bấm để zoom vào chi tiết',
+    aiLabelEn:
+      'kitchen feature: full-bleed image with top-left copy card, four-column curtain reveal and eight click-to-zoom hotspots',
+  },
+  west72_showcase_landmark: {
+    type: 'west72_showcase_landmark',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', '212-west', 'real-estate', 'landmark', 'reveal'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-07',
+    label: '212 West · Landmark Views',
+    accent: '#763718',
+    adminLabel: '212 West Landmark Views',
+    gradient: 'from-amber-100 to-stone-300',
+    defaultName: '212 West Landmark Views',
+    aiLabelVi:
+      'section view: ảnh phòng khách nhìn ra landmark full-bleed, thẻ nội dung góc dưới-phải, rèm reveal tách tiêu đề / mô tả, không hotspot',
+    aiLabelEn:
+      'views feature: full-bleed living-room photo over landmarks, bottom-right copy card, split-text curtain reveal, no hotspots',
+  },
+  west72_showcase_sanctuary: {
+    type: 'west72_showcase_sanctuary',
+    category: 'feature',
+    style: 'luxury',
+    tags: ['clone', '212-west', 'real-estate', 'bathroom', 'hotspot'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-07',
+    label: '212 West · Sanctuary',
+    accent: '#763718',
+    adminLabel: '212 West Sanctuary',
+    gradient: 'from-neutral-100 to-stone-300',
+    defaultName: '212 West Sanctuary',
+    aiLabelVi:
+      'section phòng tắm: ảnh full-bleed, thẻ nội dung góc trên-phải căn phải, không rèm, 6 hotspot bấm để zoom vào chi tiết',
+    aiLabelEn:
+      'bathroom feature: full-bleed image, top-right right-aligned copy card, no curtain, six click-to-zoom hotspots',
+  },
+  west72_footer: {
+    type: 'west72_footer',
+    category: 'footer',
+    style: 'luxury',
+    tags: ['clone', '212-west', 'real-estate', 'residence', 'reveal'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-07',
+    label: '212 West · Footer',
+    accent: '#763718',
+    adminLabel: '212 West Footer',
+    gradient: 'from-orange-950 to-stone-900',
+    defaultName: '212 West Footer',
+    aiLabelVi:
+      'footer bất động sản: khung viền trắng nền nâu, wordmark cưỡi mép trên, địa chỉ + email + điện thoại + Instagram + fine print, rèm 4 cột reveal',
+    aiLabelEn:
+      'residential footer: white-bordered frame on brown, wordmark straddling the top edge, address + email + phone + Instagram + fine print, four-column curtain reveal',
+  },
+  page_snap: {
+    type: 'page_snap',
+    category: 'interactive',
+    style: 'minimal',
+    tags: ['utility', 'scroll', 'snap', 'page'],
+    status: 'ready',
+    responsive: true,
+    updatedAt: '2026-09-08',
+    label: 'Tiện ích · Cuộn snap',
+    accent: '#111111',
+    adminLabel: 'Page Snap',
+    gradient: 'from-neutral-700 to-neutral-900',
+    defaultName: 'Cuộn snap từng section',
+    aiLabelVi:
+      'block tiện ích không giao diện: bật cuộn snap cả trang, mỗi cú vuốt nhảy đúng một section',
+    aiLabelEn:
+      'headless utility block: enables page-wide scroll snapping, one flick per section',
   },
   belgo_header: {
     type: 'belgo_header',

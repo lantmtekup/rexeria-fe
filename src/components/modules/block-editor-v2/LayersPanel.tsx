@@ -157,6 +157,10 @@ import { pnjStickyMenuItemElements } from '@/components/modules/block-editor/blo
 import { aesthaNavLinkElements } from '@/components/modules/block-editor/blocks/_registry/defs/aesthaNav';
 import { belgoNavLinkElements } from '@/components/modules/block-editor/blocks/_registry/defs/belgoHeader';
 import {
+  isWest72ShowcaseType,
+  west72ShowcaseHotspotElements,
+} from '@/components/modules/block-editor/blocks/_registry/defs/west72Showcase';
+import {
   belgoFlavorItemElements,
   resolveBelgoMoreFlavors,
 } from '@/components/modules/block-editor/blocks/_registry/defs/belgoMoreFlavors';
@@ -174,6 +178,7 @@ import {
   type Device,
   type ExtraElementKind,
   type DelvauxProductHotspot,
+  type West72ShowcaseHotspot,
   type DelvauxSubnavLink,
   type DelvauxVariantFaq,
   type DelvauxVariantOption,
@@ -2141,6 +2146,34 @@ export function elementsForType(
     ];
   }
   if (type === 'belgo_header') {
+    const raw = content?.navLinks;
+    const links = Array.isArray(raw)
+      ? (raw as Array<{ label: string; href: string }>).filter(
+          l => l && typeof l === 'object' && typeof l.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...(def?.elements ?? []).filter(el => el.key !== 'navLinks'),
+      ...belgoNavLinkElements(links),
+      { key: 'navLinks', label: 'Thêm / quản lý nav', icon: ListChecks },
+    ];
+  }
+  if (isWest72ShowcaseType(type)) {
+    const raw = content?.hotspots;
+    const hotspots = Array.isArray(raw)
+      ? (raw as West72ShowcaseHotspot[]).filter(
+          h => h && typeof h === 'object' && typeof h.label === 'string'
+        )
+      : [];
+    return [
+      BACKGROUND_LAYER,
+      ...(def?.elements ?? []).filter(el => el.key !== 'hotspots'),
+      ...west72ShowcaseHotspotElements(hotspots),
+      { key: 'hotspots', label: 'Thêm / quản lý hotspot', icon: ListChecks },
+    ];
+  }
+  if (type === 'west72_hero') {
     const raw = content?.navLinks;
     const links = Array.isArray(raw)
       ? (raw as Array<{ label: string; href: string }>).filter(

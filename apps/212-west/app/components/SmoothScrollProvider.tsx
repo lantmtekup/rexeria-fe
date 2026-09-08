@@ -6,6 +6,9 @@ import { gsap, MQ, ScrollTrigger } from '@/app/lib/motion';
 
 type LenisWindow = Window & { __lenis?: Lenis };
 
+// Bắn sau khi tạo instance để component con (effect chạy trước provider) bắt được.
+export const LENIS_READY_EVENT = 'lenis:ready';
+
 export const getLenis = () =>
   typeof window === 'undefined'
     ? null
@@ -61,6 +64,8 @@ export default function SmoothScrollProvider({
 
       gsap.ticker.add(tick);
       gsap.ticker.lagSmoothing(0);
+
+      window.dispatchEvent(new Event(LENIS_READY_EVENT));
     };
 
     const sync = () => (mobile.matches ? stop() : start());

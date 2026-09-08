@@ -27,4 +27,49 @@ export type MotionConditions = {
   reduce: boolean;
 };
 
+type ReplayTriggerOptions = {
+  trigger: Element;
+  start: string;
+  end?: string;
+  timeline: gsap.core.Timeline;
+  enabled?: () => boolean;
+};
+
+/**
+ * Chạy lại timeline mỗi lần section vào khung nhìn thay vì `once: true`.
+ * Cuộn lên qua `start` thì tua ngược (còn nhìn thấy nên cần animate),
+ * ra hẳn khỏi màn ở `end` thì reset tức thời để lần sau chạy trọn vẹn.
+ */
+export function createReplayTrigger({
+  trigger,
+  start,
+  end = 'bottom top',
+  timeline,
+  enabled,
+}: ReplayTriggerOptions) {
+  const blocked = () => enabled !== undefined && !enabled();
+
+  return ScrollTrigger.create({
+    trigger,
+    start,
+    end,
+    onEnter: () => {
+      if (blocked()) return;
+      timeline.play();
+    },
+    onEnterBack: () => {
+      if (blocked()) return;
+      timeline.play();
+    },
+    onLeave: () => {
+      if (blocked()) return;
+      timeline.pause(0);
+    },
+    onLeaveBack: () => {
+      if (blocked()) return;
+      timeline.reverse();
+    },
+  });
+}
+
 export { gsap, Observer, ScrollTrigger };

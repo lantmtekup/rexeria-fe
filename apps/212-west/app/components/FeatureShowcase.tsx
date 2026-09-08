@@ -10,10 +10,10 @@ import {
   ShowcaseRail,
 } from '@/app/components/FeatureShowcaseHotspots';
 import {
+  createReplayTrigger,
   gsap,
   MOTION_CONDITIONS,
   MQ,
-  ScrollTrigger,
   type MotionConditions,
 } from '@/app/lib/motion';
 import {
@@ -172,11 +172,12 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
         }
       }
 
-      const trigger = ScrollTrigger.create({
+      const trigger = createReplayTrigger({
         trigger: root,
         start: isXl ? 'top 20%' : 'top 70%',
-        once: true,
-        onEnter: () => timeline.play(),
+        timeline,
+        // Hotspot đang mở cũng lái scale/x/y của ảnh, replay lúc này sẽ giành quyền.
+        enabled: () => openedHotspot.current === null,
       });
 
       return () => trigger.kill();
@@ -420,6 +421,7 @@ function ShowcasePanel({ section }: { section: ShowcaseSection }) {
       id={section.key}
       data-panel
       data-showcase
+      data-snap
       className={`relative flex w-full flex-col overflow-hidden bg-white xl:block ${
         section.fullHeight ? 'xl:h-svh' : 'xl:aspect-12/7'
       }`}

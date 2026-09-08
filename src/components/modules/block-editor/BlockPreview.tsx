@@ -197,6 +197,7 @@ const STICKY_SCROLL_BLOCK_TYPES = new Set<Block['blockType']>([
   'cool_hunter_quote',
   'belgo_footer',
   'belgo_more_flavors',
+  'west72_hero',
 ]);
 
 /** Overlay chrome (header/nav) — canvas căn top, không center tạo khoảng hở. */

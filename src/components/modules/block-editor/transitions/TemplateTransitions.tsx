@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { cn } from '@/lib/cn';
 import { useLandingMotion } from '../motion/LandingMotion';
+import { SnapStack } from './SnapStack';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -18,7 +19,8 @@ export type TemplateTransition =
   | 'roll-up'
   | 'swipe'
   | 'tabs'
-  | 'parallax';
+  | 'parallax'
+  | 'snap';
 
 export const TEMPLATE_TRANSITIONS: {
   id: TemplateTransition;
@@ -51,9 +53,23 @@ export const TEMPLATE_TRANSITIONS: {
     label: 'Parallax',
     desc: 'Layer dịch chuyển khác tốc độ theo scroll',
   },
+  {
+    id: 'snap',
+    label: 'Snap',
+    desc: 'Một cú vuốt = một section — cuộn theo từng màn',
+  },
 ];
 
-/** Transition có cuộn dọc (hợp với smooth-scroll Lenis). swipe/tabs thì không. */
+/**
+ * Transition có cuộn dọc (hợp với smooth-scroll Lenis). swipe/tabs thì không.
+ *
+ * `snap` CỐ Ý bị loại dù nó cuộn dọc: nó tween mọi cú cuộn bằng ScrollToPlugin
+ * nên momentum của Lenis vô dụng, mà có Lenis thì `/p` sinh race — Lenis được
+ * tạo trong effect của `LandingMotionRoot`, chạy SAU effect của SnapStack
+ * (React flush effect con trước cha) nên `window.__lenis` chưa tồn tại lúc
+ * SnapStack mount. Bỏ `snap` ra khỏi đây ⇒ `enableSmooth={false}` ⇒ không có
+ * Lenis ⇒ một đường code duy nhất. Đừng "sửa" lại.
+ */
 export function isVerticalTransition(t: TemplateTransition): boolean {
   return t === 'none' || t === 'fade' || t === 'roll-up' || t === 'parallax';
 }
@@ -93,6 +109,8 @@ export function TemplateTransitions({ transition, items, className }: Props) {
       return <TabsLayout items={items} className={className} />;
     case 'parallax':
       return <ParallaxStack items={items} className={className} />;
+    case 'snap':
+      return <SnapStack items={items} className={className} />;
     default:
       return <PlainStack items={items} className={className} />;
   }

@@ -3,6 +3,7 @@
  * Registry-first (`BlockDef.elements.fieldType`), then key heuristics.
  */
 import { getBlockDef } from './blocks/_registry/registry';
+import { isWest72ShowcaseType } from './blocks/west72ShowcasePresets';
 import {
   FRAMER_PUREVISUALS_PANEL_LABEL,
   isFramerPurevisualsPanelKey,
@@ -90,6 +91,7 @@ export type ElementKind =
   | 'pnjScrim'
   | 'delvauxFrames'
   | 'delvauxHotspots'
+  | 'west72ShowcaseLayout'
   | 'delvauxVariants'
   | 'delvauxFaqs'
   | 'citeFlowFaqs'
@@ -291,6 +293,30 @@ export function resolveKind(
     if (key === 'navLinks') return 'aesthaNavLinks';
     if (/^navLinks\[\d+\]\.(label|href)$/.test(key)) {
       return key.endsWith('.href') ? 'link' : 'text';
+    }
+  }
+  // 212 West hero: `navLinks` list manager (cùng shape aestha/belgo); các
+  // `*Href` phẳng mở link picker.
+  if (blockType === 'west72_hero') {
+    if (key === 'navLinks') return 'aesthaNavLinks';
+    if (/^navLinks\[\d+\]\.(label|href)$/.test(key)) {
+      return key.endsWith('.href') ? 'link' : 'text';
+    }
+    if (['logoHref', 'contactHref', 'phoneHref'].includes(key)) return 'link';
+  }
+  // 212 West showcase: `hotspots` là list manager; field con là chữ.
+  if (isWest72ShowcaseType(blockType)) {
+    if (key === 'hotspots') return 'mintTabs';
+    if (key === 'layout') return 'west72ShowcaseLayout';
+    if (/^hotspots\[\d+\]\.(label|desc)$/.test(key)) return 'text';
+  }
+  if (blockType === 'west72_footer') {
+    if (
+      ['emailHref', 'phoneHref', 'instagramHref', 'fairHousingHref'].includes(
+        key
+      )
+    ) {
+      return 'link';
     }
   }
   // Aestha Explore: `projects` là mảng động (list manager) — chặn trước
@@ -1163,6 +1189,16 @@ export function resolveLabel(
   if (key === 'variants' && blockType === 'pnj_variant') return 'Góc nhìn';
   if (key === 'variants' && blockType === 'mint_variants') {
     return 'Thêm / quản lý biến thể';
+  }
+  if (isWest72ShowcaseType(blockType)) {
+    const hs = key.match(/^hotspots\[(\d+)\]\.(label|desc)$/);
+    if (hs) {
+      return `Hotspot ${Number(hs[1]) + 1} · ${
+        hs[2] === 'label' ? 'nhãn' : 'mô tả'
+      }`;
+    }
+    if (key === 'hotspots') return 'Thêm / quản lý hotspot';
+    if (key === 'layout') return 'Bố cục thẻ / reveal';
   }
   if (key === 'hotspots' && blockType === 'delvaux_product') {
     return 'Thêm / quản lý hotspot';
@@ -2935,6 +2971,23 @@ export function resolveElementMeta(
       }`,
     };
   }
+  if (key === 'navLinks' && blockType === 'west72_hero') {
+    return {
+      kind: 'aesthaNavLinks',
+      fieldType: undefined,
+      label: 'Thêm / quản lý nav',
+    };
+  }
+  if (aesthaNavLink && blockType === 'west72_hero') {
+    const isHref = aesthaNavLink[2] === 'href';
+    return {
+      kind: isHref ? 'link' : 'text',
+      fieldType: isHref ? 'link' : 'text',
+      label: `Nav ${Number(aesthaNavLink[1]) + 1} · ${
+        isHref ? 'Link' : 'Nhãn'
+      }`,
+    };
+  }
   if (key === 'projects' && blockType === 'aestha_explore') {
     return {
       kind: 'aesthaExploreProjects',
@@ -3147,6 +3200,18 @@ export function resolveSiblingLinkKey(
     if (key === 'bookTableLabel') return 'bookTableHref';
     if (key === 'orderBeerLabel') return 'orderBeerHref';
   }
+  if (blockType === 'west72_hero') {
+    const navLabel = key.match(/^navLinks\[(\d+)\]\.label$/);
+    if (navLabel) return `navLinks[${navLabel[1]}].href`;
+    if (key === 'contactLabel') return 'contactHref';
+    if (key === 'phoneLabel') return 'phoneHref';
+  }
+  if (blockType === 'west72_footer') {
+    if (key === 'emailLabel') return 'emailHref';
+    if (key === 'phoneLabel') return 'phoneHref';
+    if (key === 'instagramLabel') return 'instagramHref';
+    if (key === 'fairHousingText') return 'fairHousingHref';
+  }
   if (blockType === 'belgo_our_products') {
     const cta = key.match(/^products\[(\d+)\]\.cta$/);
     if (cta) return `products[${cta[1]}].href`;
@@ -3198,6 +3263,18 @@ export function resolveLinkAnchorKey(
     if (key === 'bookTableHref') return 'bookTableLabel';
     if (key === 'orderBeerHref') return 'orderBeerLabel';
     if (key === 'logoHref') return 'logoUrl';
+  }
+  if (blockType === 'west72_hero') {
+    const navHref = key.match(/^navLinks\[(\d+)\]\.href$/);
+    if (navHref) return `navLinks[${navHref[1]}].label`;
+    if (key === 'contactHref') return 'contactLabel';
+    if (key === 'phoneHref') return 'phoneLabel';
+    if (key === 'logoHref') return 'logoUrl';
+  }
+  if (blockType === 'west72_footer') {
+    if (key === 'emailHref') return 'emailLabel';
+    if (key === 'phoneHref') return 'phoneLabel';
+    if (key === 'fairHousingHref') return 'fairHousingText';
   }
   if (blockType === 'belgo_our_products') {
     const href = key.match(/^products\[(\d+)\]\.href$/);

@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from 'react';
 import {
+  createReplayTrigger,
   gsap,
   MOTION_CONDITIONS,
   type MotionConditions,
@@ -74,26 +75,31 @@ export default function Footer() {
       gsap.set(panels, { yPercent: 0, y: 0 });
       gsap.set(content, { autoAlpha: 0 });
 
-      const tl = gsap.timeline({
-        defaults: {
-          duration: reduce ? 0 : CURTAIN_DURATION,
-          ease: 'power3.out',
-        },
-        scrollTrigger: {
-          trigger: section,
-          start: 'top 75%',
-          once: true,
-        },
+      const tl = gsap
+        .timeline({
+          paused: true,
+          defaults: {
+            duration: reduce ? 0 : CURTAIN_DURATION,
+            ease: 'power3.out',
+          },
+        })
+        .to(
+          panels,
+          {
+            yPercent: (index: number) => (index % 2 === 0 ? -100 : 100),
+            y: (index: number) => (index % 2 === 0 ? -2 : 2),
+          },
+          0
+        )
+        .to(content, { autoAlpha: 1 }, 0);
+
+      const trigger = createReplayTrigger({
+        trigger: section,
+        start: 'top 75%',
+        timeline: tl,
       });
 
-      tl.to(
-        panels,
-        {
-          yPercent: (index: number) => (index % 2 === 0 ? -100 : 100),
-          y: (index: number) => (index % 2 === 0 ? -2 : 2),
-        },
-        0
-      ).to(content, { autoAlpha: 1 }, 0);
+      return () => trigger.kill();
     });
 
     return () => mm.revert();
@@ -102,6 +108,7 @@ export default function Footer() {
   return (
     <footer
       ref={sectionRef}
+      data-snap
       className='relative z-30 w-full overflow-hidden bg-[#763718] px-5 pt-14 pb-10 md:px-10 lg:pt-[85.5px] 2xl:px-0'
     >
       <div data-footer-content className='mx-auto w-full max-w-360'>

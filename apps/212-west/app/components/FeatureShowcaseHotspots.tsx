@@ -5,9 +5,9 @@ import {
   type ShowcaseHotspot,
 } from '@/app/data/showcase';
 import {
+  createReplayTrigger,
   gsap,
   MOTION_CONDITIONS,
-  ScrollTrigger,
   type MotionConditions,
 } from '@/app/lib/motion';
 
@@ -247,11 +247,10 @@ export function ShowcaseLegend({
         })
         .to(items, { opacity: 1, y: 0, stagger: 0.08 }, 0);
 
-      const trigger = ScrollTrigger.create({
+      const trigger = createReplayTrigger({
         trigger: list,
         start: 'top 85%',
-        once: true,
-        onEnter: () => timeline.play(),
+        timeline,
       });
 
       return () => trigger.kill();

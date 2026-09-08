@@ -242,48 +242,65 @@ export const SHOWCASE_SECTIONS: ShowcaseSection[] = [
     imageHeight: 1350,
     cardAnchor: 'top-right',
     align: 'right',
+    fullHeight: true,
     hotspots: [
       {
         label: 'Fluted-Glass Shower',
         desc: 'Ribbed glass encloses the generous shower clad in Venus White marble walls and a marble mosaic patterned floor; Select residences include a recessed niche.',
         dotX: 23.1,
-        dotY: 35.1,
+        dotY: 36.1,
         labelSide: 'bottom',
       },
       {
         label: 'Soaking Tub',
         desc: 'Kohler under-mount soaking tub surrounded in honed Venus White marble',
         dotX: 16.3,
-        dotY: 78.2,
+        dotY: 76.3,
         labelSide: 'bottom',
       },
       {
         label: 'Honed Marble',
         desc: 'Venus White marble floors and walls with honed finish',
         dotX: 41.1,
-        dotY: 78.9,
+        dotY: 77,
         labelSide: 'bottom',
       },
       {
         label: 'Double Vanity',
         desc: 'Vanity by CetraRuddy clad in leathered textile, with deep drawers and custom polished nickel pulls, with a Pure White Caesarstone vanity deck.',
         dotX: 59.1,
-        dotY: 72.5,
+        dotY: 71,
         labelSide: 'bottom',
       },
       {
         label: 'Kohler Water Closet',
         dotX: 58.2,
-        dotY: 66.9,
+        dotY: 65.8,
         labelSide: 'top',
       },
       {
         label: 'Original Design by CetraRuddy',
         desc: 'Mirrors, medicine cabinets, and light fixtures by CetraRuddy',
         dotX: 57,
-        dotY: 37,
+        dotY: 37.9,
         labelSide: 'bottom',
       },
     ],
+    reveal: {
+      // Thẻ neo `top-right` → cột thẻ là panel CUỐI (xlLeft cộng dồn trái→phải).
+      // Mask của cột thẻ nằm DƯỚI thẻ (không `flex-col-reverse` vì thẻ neo
+      // trên) nên phải thoát XUỐNG — thoát lên sẽ trượt đè mất tiêu đề.
+      panels: [
+        { top: 0, height: 100, exit: 'down' },
+        { top: 0, height: 100, exit: 'up' },
+        { top: 0, height: 100, exit: 'down' },
+        { top: 0, height: 100, exit: 'down', isCardColumn: true },
+      ],
+      text: {
+        mode: 'combined',
+        groupShiftX: -16,
+        copyScaleFrom: 1.25,
+      },
+    },
   },
 ];

@@ -3,9 +3,9 @@
 import Image from 'next/image';
 import { useLayoutEffect, useRef } from 'react';
 import {
+  createReplayTrigger,
   gsap,
   MOTION_CONDITIONS,
-  ScrollTrigger,
   type MotionConditions,
 } from '@/app/lib/motion';
 
@@ -133,11 +133,10 @@ export default function ElevatedLiving() {
 
       const master = gsap.timeline({ paused: true }).add(beat1).add(beat2, '>');
 
-      const trigger = ScrollTrigger.create({
+      const trigger = createReplayTrigger({
         trigger: section,
         start: isXl ? 'top 20%' : 'top 70%',
-        once: true,
-        onEnter: () => master.play(),
+        timeline: master,
       });
 
       return () => trigger.kill();
@@ -151,6 +150,7 @@ export default function ElevatedLiving() {
       ref={sectionRef}
       id='elevated-living'
       data-panel
+      data-snap
       className='relative z-30 w-full overflow-hidden bg-white'
     >
       <div

@@ -82,6 +82,15 @@ import { mintDiscoverDef } from '@/components/modules/block-editor/blocks/_regis
 import { pnjVariantDef } from '@/components/modules/block-editor/blocks/_registry/defs/pnjVariant';
 import { pnjHeaderDef } from '@/components/modules/block-editor/blocks/_registry/defs/pnjHeader';
 import { belgoHeaderDef } from '@/components/modules/block-editor/blocks/_registry/defs/belgoHeader';
+import { west72HeroDef } from '@/components/modules/block-editor/blocks/_registry/defs/west72Hero';
+import { west72ElevatedDef } from '@/components/modules/block-editor/blocks/_registry/defs/west72Elevated';
+import {
+  west72ShowcaseDef,
+  west72ShowcaseLandmarkDef,
+  west72ShowcaseSanctuaryDef,
+} from '@/components/modules/block-editor/blocks/_registry/defs/west72Showcase';
+import { west72FooterDef } from '@/components/modules/block-editor/blocks/_registry/defs/west72Footer';
+import { pageSnapDef } from '@/components/modules/block-editor/blocks/_registry/defs/pageSnap';
 import { pnjStickyMenuDef } from '@/components/modules/block-editor/blocks/_registry/defs/pnjStickyMenu';
 import { pnjCtaDef } from '@/components/modules/block-editor/blocks/_registry/defs/pnjCta';
 import { theGrandIntroDef } from '@/components/modules/block-editor/blocks/_registry/defs/theGrandIntro';
@@ -2270,6 +2279,13 @@ const DEFAULTS_VI: Record<BlockType, BlockContent> = {
   pnj_variant: pnjVariantDef.defaultContent.vi,
   pnj_header: pnjHeaderDef.defaultContent.vi,
   belgo_header: belgoHeaderDef.defaultContent.vi,
+  west72_hero: west72HeroDef.defaultContent.vi,
+  west72_elevated: west72ElevatedDef.defaultContent.vi,
+  west72_showcase: west72ShowcaseDef.defaultContent.vi,
+  west72_showcase_landmark: west72ShowcaseLandmarkDef.defaultContent.vi,
+  west72_showcase_sanctuary: west72ShowcaseSanctuaryDef.defaultContent.vi,
+  west72_footer: west72FooterDef.defaultContent.vi,
+  page_snap: pageSnapDef.defaultContent.vi,
   pnj_sticky_menu: pnjStickyMenuDef.defaultContent.vi,
   pnj_cta: pnjCtaDef.defaultContent.vi,
   the_grand_intro: theGrandIntroDef.defaultContent.vi,
@@ -2518,6 +2534,13 @@ const DEFAULTS_EN: Record<BlockType, BlockContent> = {
   pnj_variant: pnjVariantDef.defaultContent.en,
   pnj_header: pnjHeaderDef.defaultContent.en,
   belgo_header: belgoHeaderDef.defaultContent.en,
+  west72_hero: west72HeroDef.defaultContent.en,
+  west72_elevated: west72ElevatedDef.defaultContent.en,
+  west72_showcase: west72ShowcaseDef.defaultContent.en,
+  west72_showcase_landmark: west72ShowcaseLandmarkDef.defaultContent.en,
+  west72_showcase_sanctuary: west72ShowcaseSanctuaryDef.defaultContent.en,
+  west72_footer: west72FooterDef.defaultContent.en,
+  page_snap: pageSnapDef.defaultContent.en,
   pnj_sticky_menu: pnjStickyMenuDef.defaultContent.en,
   pnj_cta: pnjCtaDef.defaultContent.en,
   the_grand_intro: theGrandIntroDef.defaultContent.en,

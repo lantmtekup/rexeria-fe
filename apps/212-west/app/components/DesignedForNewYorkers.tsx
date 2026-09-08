@@ -3,13 +3,15 @@
 import Image from 'next/image';
 import { useLayoutEffect, useRef } from 'react';
 import {
+  createReplayTrigger,
   gsap,
   MOTION_CONDITIONS,
-  ScrollTrigger,
   type MotionConditions,
 } from '@/app/lib/motion';
 
 export const DESIGNED_REVEAL_EVENT = 'designed:reveal';
+
+export const DESIGNED_RESET_EVENT = 'designed:reset';
 
 const HEADING_LINES = ['Designed For', 'New Yorkers'];
 
@@ -125,20 +127,23 @@ export default function DesignedForNewYorkers() {
         .add(beatCopy, '>');
 
       if (isXl) {
-        const onReveal = () => master.play();
-        section.addEventListener(DESIGNED_REVEAL_EVENT, onReveal, {
-          once: true,
-        });
+        // Panel nằm ngoài màn cho tới khi hero wipe vào, nên nhịp replay bám
+        // theo wipe in/out của HeroStage thay vì vị trí scroll.
+        const onReveal = () => master.play(0);
+        const onReset = () => master.pause(0);
+        section.addEventListener(DESIGNED_REVEAL_EVENT, onReveal);
+        section.addEventListener(DESIGNED_RESET_EVENT, onReset);
 
-        return () =>
+        return () => {
           section.removeEventListener(DESIGNED_REVEAL_EVENT, onReveal);
+          section.removeEventListener(DESIGNED_RESET_EVENT, onReset);
+        };
       }
 
-      const trigger = ScrollTrigger.create({
+      const trigger = createReplayTrigger({
         trigger: section,
         start: 'top 80%',
-        once: true,
-        onEnter: () => master.play(),
+        timeline: master,
       });
 
       return () => trigger.kill();

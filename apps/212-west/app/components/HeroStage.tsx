@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from 'react';
 import DesignedForNewYorkers, {
+  DESIGNED_RESET_EVENT,
   DESIGNED_REVEAL_EVENT,
 } from '@/app/components/DesignedForNewYorkers';
 import Hero from '@/app/components/Hero';
@@ -9,9 +10,13 @@ import { getLenis } from '@/app/components/SmoothScrollProvider';
 import {
   gsap,
   MOTION_CONDITIONS,
-  Observer,
   type MotionConditions,
 } from '@/app/lib/motion';
+
+// SectionSnap bắn event này lên stage để mở/đóng panel Designed.
+export const HERO_WIPE_EVENT = 'hero:wipe';
+
+export type HeroWipeDetail = { open: boolean; done: () => void };
 
 const TITLE_SHIFT_PERCENT = -120;
 const NAV_SHIFT_PERCENT = -120;
@@ -20,8 +25,6 @@ const IMAGE_SCALE = 1.2;
 const WIPE_DURATION = 1.7;
 const HERO_MOTION_DURATION = 1.7;
 const MOTION_EASE = 'power2.out';
-
-const SCROLL_TOP_SLACK = 10;
 
 function lockScroll() {
   const lockedY = window.scrollY;
@@ -54,12 +57,10 @@ export default function HeroStage() {
       history.scrollRestoration = 'manual';
     }
 
+    // Không stop/start Lenis ở đây: SectionSnap sở hữu trạng thái đó ở xl.
     const toTop = () => {
-      const lenis = getLenis();
-      lenis?.stop();
       window.scrollTo(0, 0);
-      lenis?.scrollTo(0, { immediate: true });
-      lenis?.start();
+      getLenis()?.scrollTo(0, { immediate: true, force: true });
     };
     toTop();
 
@@ -94,8 +95,6 @@ export default function HeroStage() {
         ease: MOTION_EASE,
       };
 
-      let revealed = false;
-
       const wipeIn = gsap
         .timeline({ paused: true })
         .to(
@@ -107,8 +106,6 @@ export default function HeroStage() {
         .to(nav, { yPercent: NAV_SHIFT_PERCENT, ...heroDefaults }, 0)
         .to(image, { scale: IMAGE_SCALE, ...heroDefaults }, 0)
         .call(() => {
-          if (revealed) return;
-          revealed = true;
           designed.dispatchEvent(new CustomEvent(DESIGNED_REVEAL_EVENT));
         });
 
@@ -121,55 +118,42 @@ export default function HeroStage() {
         )
         .to(title, { xPercent: 0, ...heroDefaults }, 0)
         .to(nav, { yPercent: 0, ...heroDefaults }, 0)
-        .to(image, { scale: 1, ...heroDefaults }, 0);
+        .to(image, { scale: 1, ...heroDefaults }, 0)
+        // Panel đã trượt hẳn ra ngoài nên reset ở đây không nhìn thấy.
+        .call(() => {
+          designed.dispatchEvent(new CustomEvent(DESIGNED_RESET_EVENT));
+        });
 
-      let wiped = false;
-      let busy = false;
       let release: (() => void) | null = null;
 
       const runWipe = (timeline: gsap.core.Timeline, done: () => void) => {
-        busy = true;
-        const lenis = getLenis();
-        lenis?.stop();
-        lenis?.scrollTo(0, { immediate: true });
+        getLenis()?.scrollTo(0, { immediate: true, force: true });
         window.scrollTo(0, 0);
         release = lockScroll();
         timeline.play(0);
         timeline.eventCallback('onComplete', () => {
           release?.();
           release = null;
-          busy = false;
-          lenis?.start();
           done();
         });
       };
 
-      const observer = Observer.create({
-        target: window,
-        type: 'wheel,touch',
-        tolerance: 10,
-        onDown: () => {
-          if (wiped || busy) return;
-          if (window.scrollY >= stage.offsetHeight) {
-            wiped = true;
-            return;
-          }
-          runWipe(wipeIn, () => {
-            wiped = true;
-          });
-        },
-        onUp: () => {
-          if (!wiped || busy) return;
-          if (window.scrollY > SCROLL_TOP_SLACK) return;
-          runWipe(wipeOut, () => {
-            wiped = false;
-          });
-        },
-      });
+      stage.dataset.heroOpen = 'false';
+
+      const onWipe = (event: Event) => {
+        const { open, done } = (event as CustomEvent<HeroWipeDetail>).detail;
+        runWipe(open ? wipeIn : wipeOut, () => {
+          stage.dataset.heroOpen = String(open);
+          done();
+        });
+      };
+
+      stage.addEventListener(HERO_WIPE_EVENT, onWipe);
 
       return () => {
         release?.();
-        observer.kill();
+        stage.removeEventListener(HERO_WIPE_EVENT, onWipe);
+        delete stage.dataset.heroOpen;
       };
     });
 
@@ -179,6 +163,7 @@ export default function HeroStage() {
   return (
     <div
       ref={stageRef}
+      data-snap='hero'
       className='relative w-full overflow-hidden bg-[#0F0F0E] xl:h-svh'
     >
       <Hero />

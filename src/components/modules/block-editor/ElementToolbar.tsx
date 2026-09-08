@@ -101,6 +101,12 @@ import {
 } from './blocks/pnjVariantContent';
 import { resolveScrollMattisSlides } from './blocks/_registry/defs/scrollMattis';
 import {
+  WEST72_SHOWCASE_PRESET_LABELS,
+  isWest72ShowcaseType,
+  west72ShowcasePreset,
+  type West72ShowcasePresetId,
+} from './blocks/_registry/defs/west72Showcase';
+import {
   READMAG_CASE_BLANK,
   resolveReadymagCases,
 } from './blocks/_registry/defs/readymagCaseSection';
@@ -340,6 +346,8 @@ import {
   type PnjHeroHotspot,
   type WestlyResidenceHotspot,
   type WestlyResidencesContent,
+  type West72ShowcaseContent,
+  type West72ShowcaseHotspot,
   type PnjVariantContent,
   type PnjVariantItem,
   type PnjStickyMenuContent,
@@ -669,6 +677,11 @@ export function ElementToolbar({
               content={content as PnjHeroContent}
               onContentChange={onContentChange}
             />
+          ) : isWest72ShowcaseType(block.blockType) ? (
+            <West72ShowcaseHotspotsControls
+              content={content as West72ShowcaseContent}
+              onContentChange={onContentChange}
+            />
           ) : (
             <MintTabsControls
               content={content as MintDiscoverContent}
@@ -853,6 +866,12 @@ export function ElementToolbar({
         {kind === 'pnjScrim' && (
           <PnjScrimControls
             content={content as PnjHeroContent}
+            onContentChange={onContentChange}
+          />
+        )}
+        {kind === 'west72ShowcaseLayout' && (
+          <West72ShowcaseLayoutControls
+            content={content as West72ShowcaseContent}
             onContentChange={onContentChange}
           />
         )}
@@ -7810,6 +7829,251 @@ function PnjHotspotsControls({
                   onChange={e => update(i, { dotY: Number(e.target.value) })}
                   className='h-8 border-neutral-200 bg-white text-xs'
                 />
+              </label>
+            </div>
+          </div>
+        ))}
+      </div>
+      <AddRow onAdd={add} label='Thêm hotspot' />
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── 212 WEST SHOWCASE LAYOUT / PRESET
+
+const WEST72_SELECT_CLASS =
+  'h-8 w-full cursor-pointer rounded-md border border-neutral-200 bg-white px-2 text-xs';
+
+function West72ShowcaseLayoutControls({
+  content,
+  onContentChange,
+}: {
+  content: West72ShowcaseContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const cardAnchor = content.cardAnchor ?? 'top-left';
+  const revealMode = content.revealMode ?? 'combined';
+  const textAlign = content.textAlign ?? 'left';
+  const fullHeight = content.fullHeight !== false;
+
+  const patch = (next: Partial<West72ShowcaseContent>) =>
+    onContentChange({ ...content, ...next } as BlockContent);
+
+  const applyPreset = (id: West72ShowcasePresetId) => {
+    onContentChange(west72ShowcasePreset(id) as BlockContent);
+    toast.success(`Đã áp preset "${WEST72_SHOWCASE_PRESET_LABELS[id]}"`);
+  };
+
+  return (
+    <PopoverTrigger
+      label='Bố cục thẻ / reveal'
+      preview={`${cardAnchor} · ${revealMode}`}
+      width={360}
+    >
+      <div className='flex flex-col gap-2.5'>
+        <label className='text-2xs flex flex-col gap-1 text-neutral-500'>
+          Preset section (thay toàn bộ nội dung)
+          <select
+            value=''
+            onChange={e => {
+              const id = e.target.value as West72ShowcasePresetId | '';
+              if (id) applyPreset(id);
+            }}
+            className={WEST72_SELECT_CLASS}
+          >
+            <option value=''>— chọn section của 212 West —</option>
+            {(
+              Object.keys(
+                WEST72_SHOWCASE_PRESET_LABELS
+              ) as West72ShowcasePresetId[]
+            ).map(id => (
+              <option key={id} value={id}>
+                {WEST72_SHOWCASE_PRESET_LABELS[id]}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className='text-2xs flex flex-col gap-1 text-neutral-500'>
+          Vị trí thẻ nội dung (khung rộng)
+          <select
+            value={cardAnchor}
+            onChange={e =>
+              patch({
+                cardAnchor: e.target
+                  .value as West72ShowcaseContent['cardAnchor'],
+              })
+            }
+            className={WEST72_SELECT_CLASS}
+          >
+            <option value='top-left'>Trên · trái</option>
+            <option value='top-right'>Trên · phải</option>
+            <option value='bottom-right'>Dưới · phải</option>
+          </select>
+        </label>
+
+        <label className='text-2xs flex flex-col gap-1 text-neutral-500'>
+          Rèm reveal
+          <select
+            value={revealMode}
+            onChange={e =>
+              patch({
+                revealMode: e.target
+                  .value as West72ShowcaseContent['revealMode'],
+              })
+            }
+            className={WEST72_SELECT_CLASS}
+          >
+            <option value='combined'>Có — dịch cả cụm chữ</option>
+            <option value='split'>Có — tách tiêu đề / mô tả</option>
+            <option value='none'>Không</option>
+          </select>
+        </label>
+
+        <label className='text-2xs flex flex-col gap-1 text-neutral-500'>
+          Căn chữ trong thẻ
+          <select
+            value={textAlign}
+            onChange={e =>
+              patch({
+                textAlign: e.target.value as West72ShowcaseContent['textAlign'],
+              })
+            }
+            className={WEST72_SELECT_CLASS}
+          >
+            <option value='left'>Trái</option>
+            <option value='right'>Phải</option>
+          </select>
+        </label>
+
+        <label className='text-2xs flex cursor-pointer items-center gap-2 text-neutral-600'>
+          <input
+            type='checkbox'
+            checked={fullHeight}
+            onChange={e => patch({ fullHeight: e.target.checked })}
+          />
+          Cao full màn ở khung rộng (bỏ chọn = tỉ lệ 12/7)
+        </label>
+      </div>
+    </PopoverTrigger>
+  );
+}
+
+// ─────────────────────────────────────────── 212 WEST SHOWCASE HOTSPOTS
+
+function West72ShowcaseHotspotsControls({
+  content,
+  onContentChange,
+}: {
+  content: West72ShowcaseContent;
+  onContentChange: (next: BlockContent) => void;
+}) {
+  const hotspots = content.hotspots ?? [];
+
+  const update = (i: number, patch: Partial<West72ShowcaseHotspot>) =>
+    onContentChange({
+      ...content,
+      hotspots: hotspots.map((h, idx) => (idx === i ? { ...h, ...patch } : h)),
+    } as BlockContent);
+
+  const remove = (i: number) =>
+    onContentChange({
+      ...content,
+      hotspots: hotspots.filter((_, idx) => idx !== i),
+    } as BlockContent);
+
+  const add = () =>
+    onContentChange({
+      ...content,
+      hotspots: [
+        ...hotspots,
+        {
+          label: 'Điểm mới',
+          desc: 'Mô tả chi tiết.',
+          dotX: 50,
+          dotY: 50,
+          labelSide: 'bottom' as const,
+        },
+      ],
+    } as BlockContent);
+
+  return (
+    <PopoverTrigger
+      label='Hotspot / chi tiết'
+      preview={`${hotspots.length} hotspot`}
+      width={460}
+    >
+      <div className='flex max-h-80 flex-col gap-2 overflow-y-auto pr-1'>
+        {hotspots.length === 0 ? (
+          <p className='text-2xs rounded-md border border-dashed border-neutral-200 bg-neutral-50 px-3 py-4 text-center text-neutral-500'>
+            Chưa có hotspot — ảnh hiện tĩnh, không có chấm bấm để zoom.
+          </p>
+        ) : null}
+        {hotspots.map((h, i) => (
+          <div
+            key={i}
+            className='flex flex-col gap-1.5 rounded-md border border-neutral-200 bg-white p-2'
+          >
+            <div className='flex items-center gap-2'>
+              <Input
+                value={h.label}
+                onChange={e => update(i, { label: e.target.value })}
+                placeholder='Tiêu đề hotspot'
+                className='h-8 border-neutral-200 bg-white text-xs font-semibold'
+              />
+              <button
+                type='button'
+                onClick={() => remove(i)}
+                aria-label='Xoá hotspot'
+                className='flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-rose-500 hover:bg-rose-50'
+              >
+                <Trash2 className='size-3.5' />
+              </button>
+            </div>
+            <Textarea
+              value={h.desc}
+              onChange={e => update(i, { desc: e.target.value })}
+              placeholder='Mô tả'
+              className='min-h-16 resize-none border-neutral-200 bg-white text-xs'
+            />
+            <div className='flex items-center gap-2'>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+                Dot X%
+                <Input
+                  type='number'
+                  min={0}
+                  max={100}
+                  value={h.dotX}
+                  onChange={e => update(i, { dotX: Number(e.target.value) })}
+                  className='h-8 border-neutral-200 bg-white text-xs'
+                />
+              </label>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+                Dot Y%
+                <Input
+                  type='number'
+                  min={0}
+                  max={100}
+                  value={h.dotY}
+                  onChange={e => update(i, { dotY: Number(e.target.value) })}
+                  className='h-8 border-neutral-200 bg-white text-xs'
+                />
+              </label>
+              <label className='text-2xs flex flex-1 items-center gap-1 text-neutral-500'>
+                Nhãn
+                <select
+                  value={h.labelSide}
+                  onChange={e =>
+                    update(i, {
+                      labelSide: e.target
+                        .value as West72ShowcaseHotspot['labelSide'],
+                    })
+                  }
+                  className='h-8 w-full cursor-pointer rounded-md border border-neutral-200 bg-white px-1 text-xs'
+                >
+                  <option value='bottom'>Dưới chấm</option>
+                  <option value='top'>Trên chấm</option>
+                </select>
               </label>
             </div>
           </div>
