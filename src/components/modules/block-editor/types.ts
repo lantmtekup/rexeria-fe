@@ -515,6 +515,12 @@ export interface CiteFlowContactFormContent {
   messagePlaceholder: string;
   submitText: string;
   submittedText: string;
+  /**
+   * Chữ cạnh ô tick "đồng ý được liên hệ". Để trống ⇒ KHÔNG hiện ô.
+   * Bắt buộc điền khi trang có điểm đo bậc `identified`: BE
+   * `leadUsecase.submitCore` từ chối 400 nếu submit thiếu `consent`.
+   */
+  consentText?: string;
 }
 
 export interface CiteFlowSignatureContent {
@@ -606,6 +612,12 @@ export interface BookingFormContent {
   reasons: BookingReason[];
   submitText: string;
   noteText: string;
+  /**
+   * Chữ cạnh ô tick "đồng ý được liên hệ". Để trống ⇒ KHÔNG hiện ô.
+   * Bắt buộc điền khi trang có điểm đo bậc `identified`: BE
+   * `leadUsecase.submitCore` từ chối 400 nếu submit thiếu `consent`.
+   */
+  consentText?: string;
 }
 
 /** Mint-coint "details" section (port). Title + 2 đoạn mô tả. */
@@ -1797,6 +1809,12 @@ export interface PnjCtaContent {
   submitText: string;
   /** Thông báo sau khi gửi (chỉ hiện trên /p, không hiện trong editor). */
   successMessage: string;
+  /**
+   * Chữ cạnh ô tick "đồng ý được liên hệ". Để trống ⇒ KHÔNG hiện ô.
+   * Bắt buộc điền khi trang có điểm đo bậc `identified`: BE
+   * `leadUsecase.submitCore` từ chối 400 nếu submit thiếu `consent`.
+   */
+  consentText?: string;
 }
 
 // ── Mintcoin-v2 sections (port từ apps/mintcoin-v2) ──────────────────────
@@ -2984,6 +3002,12 @@ export interface RolexContactContent {
   instagramHref?: string;
   twitterLabel: string;
   twitterHref?: string;
+  /**
+   * Chữ cạnh ô tick "đồng ý được liên hệ". Để trống ⇒ KHÔNG hiện ô.
+   * Bắt buộc điền khi trang có điểm đo bậc `identified`: BE
+   * `leadUsecase.submitCore` từ chối 400 nếu submit thiếu `consent`.
+   */
+  consentText?: string;
 }
 
 /** Trang chi tiết dự án (project-details) của rolex_collection — 1 block DUY

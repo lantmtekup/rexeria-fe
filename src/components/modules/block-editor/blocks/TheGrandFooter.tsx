@@ -17,6 +17,8 @@ import {
   selectableClass,
 } from './applyStyle';
 import { useMotionAttributes } from '../motion/useMotionAttributes';
+import { useLeadSubmit } from '../leads/useLeadSubmit';
+import { useIsCanvasEdit } from './useIsCanvasEdit';
 import {
   resolveTheGrandFooterPolicies,
   resolveTheGrandFooterSocials,
@@ -91,6 +93,8 @@ export function TheGrandFooter({
 }: Props) {
   const sectionRef = React.useRef<HTMLElement>(null);
   const [email, setEmail] = React.useState('');
+  const isCanvas = useIsCanvasEdit(sectionRef);
+  const lead = useLeadSubmit(isCanvas);
 
   const policies = resolveTheGrandFooterPolicies(content);
   const socials = resolveTheGrandFooterSocials(content);
@@ -104,9 +108,14 @@ export function TheGrandFooter({
 
   useMotionAttributes(sectionRef, [policies.length, socials.length]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    // Bản demo: chặn reload, chưa gửi đi đâu cả (giống apps/the-grand).
+  // Ô đăng ký nhận tin cũng là một lead: BE `ContactFromForm` lấy email làm
+  // `contact`, `method` mặc định là `form`. Trước đây handler chỉ chặn reload
+  // rồi thôi — người nhập xong không nhận được gì, và cũng không đi vào đâu.
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isCanvas || lead.state === 'loading' || !email.trim()) return;
+    const ok = await lead.submit({ fields: { email, source: 'newsletter' } });
+    if (ok) setEmail('');
   };
 
   const renderLabel = (key: string, text: string, delay: string) => (
@@ -467,6 +476,7 @@ export function TheGrandFooter({
                 <button
                   className='the-grand-footer__submit inline-flex shrink-0 items-center'
                   type='submit'
+                  disabled={lead.state === 'loading'}
                   style={{
                     gap: 8,
                     border: 0,
@@ -498,6 +508,33 @@ export function TheGrandFooter({
                   </span>
                 </button>
               </form>
+
+              {lead.state === 'success' ? (
+                <p
+                  role='status'
+                  style={{
+                    marginTop: 8,
+                    fontFamily: SANS,
+                    fontSize: RESPONSIVE.textFont,
+                    color: COLORS.text,
+                  }}
+                >
+                  Đã nhận, cảm ơn bạn.
+                </p>
+              ) : null}
+              {lead.state === 'error' && lead.error ? (
+                <p
+                  role='status'
+                  style={{
+                    marginTop: 8,
+                    fontFamily: SANS,
+                    fontSize: RESPONSIVE.textFont,
+                    color: '#b42318',
+                  }}
+                >
+                  {lead.error}
+                </p>
+              ) : null}
             </div>
           </div>
         </div>

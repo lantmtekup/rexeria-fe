@@ -2,12 +2,14 @@
 
 import {
   ArrowDownWideNarrow,
+  Inbox,
   ListFilter,
   Loader2,
   Plus,
   Search,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -658,6 +660,12 @@ export const ExperiencesWorkspace = ({
     setActiveId(null);
   }, []);
 
+  // Giữ `?brand=` khi sang màn lead: bỏ nó đi thì admin rơi về "chưa chọn
+  // thương hiệu" và phải chọn lại từ đầu.
+  const leadsBaseHref = brandId
+    ? `/portal-v2/experiences/leads?brand=${encodeURIComponent(brandId)}`
+    : '/portal-v2/experiences/leads';
+
   return (
     <div className='flex min-h-0 flex-col'>
       <div className='pv2-page-header'>
@@ -671,20 +679,38 @@ export const ExperiencesWorkspace = ({
             </p>
           </div>
 
-          <button
-            type='button'
-            onClick={() => setNewOpen(true)}
-            className={cn(
-              'inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-2',
-              'bg-[var(--pv2-electric)] text-[12.5px] font-semibold text-[var(--pv2-paper)]',
-              'shadow-[0_2px_8px_rgba(56,98,255,0.18)] transition-colors',
-              'hover:bg-[var(--pv2-electric-hover)]',
-              'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2 focus-visible:outline-none'
-            )}
-          >
-            <Plus className='size-3.5' strokeWidth={2.4} aria-hidden />
-            {t('newAction')}
-          </button>
+          <div className='flex shrink-0 items-center gap-2'>
+            {/* Lối vào mặt SALES của thư viện. Đứng cạnh nút tạo vì đây là hai
+                đầu của cùng một vòng: dựng trang ra, rồi xem trang đó ra khách
+                nào. Trước đây lead có trong BE mà không màn nào đọc. */}
+            <Link
+              href={leadsBaseHref}
+              className={cn(
+                'inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-2',
+                'border border-[var(--pv2-hair)] text-[12.5px] font-semibold text-[var(--pv2-ink)]',
+                'transition-colors hover:border-[var(--pv2-slate-300)] hover:bg-[var(--pv2-canvas)]',
+                'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2 focus-visible:outline-none'
+              )}
+            >
+              <Inbox className='size-3.5' strokeWidth={2.2} aria-hidden />
+              {t('leadsAction')}
+            </Link>
+
+            <button
+              type='button'
+              onClick={() => setNewOpen(true)}
+              className={cn(
+                'inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-2',
+                'bg-[var(--pv2-electric)] text-[12.5px] font-semibold text-[var(--pv2-paper)]',
+                'shadow-[0_2px_8px_rgba(56,98,255,0.18)] transition-colors',
+                'hover:bg-[var(--pv2-electric-hover)]',
+                'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2 focus-visible:outline-none'
+              )}
+            >
+              <Plus className='size-3.5' strokeWidth={2.4} aria-hidden />
+              {t('newAction')}
+            </button>
+          </div>
         </div>
       </div>
 

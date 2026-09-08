@@ -1598,7 +1598,8 @@
       "vehicleCurated": "Nội dung tuyển chọn",
       "vehicleMicrosite": "Microsite",
       "vehicleShowcase": "Trưng bày sản phẩm",
-      "whereItRuns": "Chạy ở đâu"
+      "whereItRuns": "Chạy ở đâu",
+      "leadsAction": "Khách để lại"
     },
     "products": {
       "title": "Sản phẩm",
@@ -2715,6 +2716,43 @@
       "locked": "Gói tài khoản chưa mở Automation.",
       "widen": "Nới sang lớp hàng cha",
       "masterHint": "Chỉnh master trước khi nhân bản — điểm sẵn sàng hiện ở bước sau."
+    },
+    "leads": {
+      "title": "Khách để lại thông tin",
+      "subtitle": "Ai đã điền form trên trang, nóng tới đâu, và đã gọi lại chưa.",
+      "needsBrand": "Chọn thương hiệu ở thanh trên trước — mỗi lead thuộc về một thương hiệu.",
+      "pagePicker": "Trang",
+      "pagePickerEmpty": "— Chọn trang —",
+      "pickPageFirst": "Chọn một trang để xem khách đã để lại thông tin",
+      "noLeads": "Chưa có ai để lại thông tin",
+      "noLeadsHint": "Nếu trang đã chạy quảng cáo mà vẫn trống, kiểm tra xem trang có block dạng form không, và form đã xuất bản chưa.",
+      "openPage": "Mở trang",
+      "filterRange": "Khoảng thời gian",
+      "filterStatus": "Trạng thái",
+      "filterTier": "Độ nóng",
+      "any": "Tất cả",
+      "range7d": "7 ngày",
+      "range30d": "30 ngày",
+      "range90d": "90 ngày",
+      "colContact": "Liên hệ",
+      "colTier": "Độ nóng",
+      "colSource": "Nguồn",
+      "colDetails": "Khách điền thêm",
+      "colWhen": "Lúc",
+      "colStatus": "Trạng thái",
+      "noName": "(không để tên)",
+      "sourceDirect": "Trực tiếp",
+      "scoreTitle": "Điểm {score}/100 — tính từ nguồn và hành vi trên trang",
+      "tier_hot": "Nóng",
+      "tier_warm": "Ấm",
+      "tier_cold": "Nguội",
+      "status_new": "Mới",
+      "status_contacted": "Đã liên hệ",
+      "status_negotiating": "Đang thương lượng",
+      "status_won": "Chốt",
+      "status_lost": "Mất",
+      "statusFailed": "không đổi được trạng thái",
+      "countLabel": "Hiện {shown} trên tổng {total}"
     }
   }
 }

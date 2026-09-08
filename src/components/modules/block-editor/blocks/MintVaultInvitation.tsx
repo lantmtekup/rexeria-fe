@@ -15,6 +15,7 @@ import * as React from 'react';
 import gsap from 'gsap';
 
 import { useBlockMotion } from '../motion/LandingMotion';
+import { useLeadSubmit } from '../leads/useLeadSubmit';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 import type {
   BlockBackground,
@@ -107,12 +108,11 @@ export function MintVaultInvitation({
 }: Props) {
   const rootRef = React.useRef<HTMLElement>(null);
   const [email, setEmail] = React.useState('');
-  const [status, setStatus] = React.useState<'idle' | 'loading' | 'done'>(
-    'idle'
-  );
   const images = Array.isArray(content.images) ? content.images : [];
 
   const isCanvas = useIsCanvasEdit(rootRef);
+  const lead = useLeadSubmit(isCanvas);
+  const status = lead.state;
 
   const styleOf = (key: string) =>
     composeStyle(
@@ -173,21 +173,10 @@ export function MintVaultInvitation({
     // Canvas hiện form chỉ để chọn/sửa field — không gửi lead thật khi đang edit.
     if (isCanvas) return;
     if (status === 'loading' || !email.trim()) return;
-    setStatus('loading');
-    try {
-      await fetch('/api/forms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          page_slug:
-            typeof window !== 'undefined' ? window.location.pathname : '',
-          fields: { email: email.trim() },
-        }),
-      });
-    } catch {
-      /* best-effort */
-    }
-    setStatus('done');
+    // KHÔNG nuốt lỗi nữa. Bản trước `catch {}` rồi vẫn chuyển sang màn cảm ơn,
+    // nên một lead trượt trông y hệt một lead thành công — không ai biết để sửa.
+    const ok = await lead.submit({ fields: { email } });
+    if (ok) setEmail('');
   };
 
   // ── Node dùng chung cho cả 2 nhánh (canvas + production).
@@ -243,6 +232,13 @@ export function MintVaultInvitation({
       </button>
     </form>
   );
+
+  const errorMessage =
+    status === 'error' && lead.error ? (
+      <p role='status' style={NOTE_BASE} className='vault-inv-reveal mt-3'>
+        {lead.error}
+      </p>
+    ) : null;
 
   const successMessage = (
     <p
@@ -373,7 +369,14 @@ export function MintVaultInvitation({
 
       <div className='relative z-10 flex w-full flex-col items-center'>
         {heading}
-        {status === 'done' ? successMessage : form}
+        {status === 'success' ? (
+          successMessage
+        ) : (
+          <>
+            {form}
+            {errorMessage}
+          </>
+        )}
         {note}
       </div>
     </section>

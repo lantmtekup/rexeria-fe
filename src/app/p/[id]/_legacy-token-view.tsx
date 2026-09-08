@@ -21,6 +21,7 @@ import { Spinner } from '@/components/atoms/spinner';
 import { AuthHydrator } from '@/components/modules/Auth/AuthHydrator';
 import { StatsAnnotationOverlay } from '@/components/modules/Analytics/StatsAnnotationOverlay';
 import { useBlockTracking, useInitTracker } from '@/lib/analytics/use-tracker';
+import { LeadCaptureProvider } from '@/components/modules/block-editor/leads/LeadCaptureContext';
 import { RenderBlock } from '@/components/modules/block-editor/blocks/renderBlock';
 import {
   MotionBlockRoot,
@@ -158,52 +159,58 @@ export function LegacyTokenView({ id, token }: LegacyTokenViewProps) {
     <>
       <AuthHydrator />
       <StatsAnnotationOverlay templateId={id}>
-        <div className='relative flex min-h-screen flex-col bg-neutral-50'>
-          <main className='@container mx-auto flex w-full max-w-[1280px] flex-col gap-3 px-4 py-6 md:gap-4 md:py-10'>
-            {visible.length === 0 ? (
-              <div className='flex h-[60vh] items-center justify-center text-sm text-neutral-500'>
-                Trang chưa có block hiển thị.
-              </div>
-            ) : (
-              visible.map(block => {
-                // Public view always renders desktop variant. Container queries
-                // inside the block templates handle responsive scaling based on
-                // the actual viewport (real device width).
-                const content = block.contentVi.desktop;
-                const styles = block.elementStyles?.desktop;
-                const background = block.background?.desktop;
-                const order = block.elementOrder?.desktop;
-                const motion = block.motion?.desktop as BlockMotion | undefined;
-                return (
-                  <MotionProvider
-                    key={block.id}
-                    mode='production'
-                    motion={motion}
-                  >
-                    <div
-                      data-block-id={block.id}
-                      data-block-type={block.blockType}
+        {/* `id` ở route này là page UUID của canvas — cùng khoá mà tracker và
+            `GET /v1/leads?page_id=` dùng, nên form trong block gửi được lead. */}
+        <LeadCaptureProvider pageId={id} pageSlug={null}>
+          <div className='relative flex min-h-screen flex-col bg-neutral-50'>
+            <main className='@container mx-auto flex w-full max-w-[1280px] flex-col gap-3 px-4 py-6 md:gap-4 md:py-10'>
+              {visible.length === 0 ? (
+                <div className='flex h-[60vh] items-center justify-center text-sm text-neutral-500'>
+                  Trang chưa có block hiển thị.
+                </div>
+              ) : (
+                visible.map(block => {
+                  // Public view always renders desktop variant. Container queries
+                  // inside the block templates handle responsive scaling based on
+                  // the actual viewport (real device width).
+                  const content = block.contentVi.desktop;
+                  const styles = block.elementStyles?.desktop;
+                  const background = block.background?.desktop;
+                  const order = block.elementOrder?.desktop;
+                  const motion = block.motion?.desktop as
+                    | BlockMotion
+                    | undefined;
+                  return (
+                    <MotionProvider
+                      key={block.id}
+                      mode='production'
+                      motion={motion}
                     >
-                      <MotionBlockRoot className='overflow-hidden rounded-md bg-white shadow-sm ring-1 ring-black/5'>
-                        <RenderBlock
-                          block={block}
-                          content={content}
-                          styles={styles}
-                          background={background}
-                          order={order}
-                        />
-                      </MotionBlockRoot>
-                    </div>
-                  </MotionProvider>
-                );
-              })
-            )}
-          </main>
+                      <div
+                        data-block-id={block.id}
+                        data-block-type={block.blockType}
+                      >
+                        <MotionBlockRoot className='overflow-hidden rounded-md bg-white shadow-sm ring-1 ring-black/5'>
+                          <RenderBlock
+                            block={block}
+                            content={content}
+                            styles={styles}
+                            background={background}
+                            order={order}
+                          />
+                        </MotionBlockRoot>
+                      </div>
+                    </MotionProvider>
+                  );
+                })
+              )}
+            </main>
 
-          <footer className='text-3xs border-t border-neutral-200 bg-white px-6 py-4 text-center tracking-widest text-neutral-400 uppercase'>
-            Tạo bằng REXER · {visible.length} block
-          </footer>
-        </div>
+            <footer className='text-3xs border-t border-neutral-200 bg-white px-6 py-4 text-center tracking-widest text-neutral-400 uppercase'>
+              Tạo bằng REXER · {visible.length} block
+            </footer>
+          </div>
+        </LeadCaptureProvider>
       </StatsAnnotationOverlay>
     </>
   );

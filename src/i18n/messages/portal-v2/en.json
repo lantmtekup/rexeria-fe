@@ -1598,7 +1598,8 @@
       "vehicleCurated": "Curated Content",
       "vehicleMicrosite": "Microsites",
       "vehicleShowcase": "Product Showcase",
-      "whereItRuns": "Where it runs"
+      "whereItRuns": "Where it runs",
+      "leadsAction": "Captured contacts"
     },
     "products": {
       "title": "Product",
@@ -2715,6 +2716,43 @@
       "locked": "Automation is not enabled on this plan.",
       "widen": "Widen to parent class",
       "masterHint": "Adjust the master before replicating — readiness is scored in the next step."
+    },
+    "leads": {
+      "title": "Captured contacts",
+      "subtitle": "Who filled in a form on the page, how warm they are, and whether anyone called back.",
+      "needsBrand": "Pick a brand in the bar above first — every lead belongs to one brand.",
+      "pagePicker": "Page",
+      "pagePickerEmpty": "— Pick a page —",
+      "pickPageFirst": "Pick a page to see the contacts it captured",
+      "noLeads": "Nobody has left their details yet",
+      "noLeadsHint": "If the page is already running ads and this is still empty, check that it has a form block and that the form is published.",
+      "openPage": "Open page",
+      "filterRange": "Date range",
+      "filterStatus": "Status",
+      "filterTier": "Tier",
+      "any": "All",
+      "range7d": "7 days",
+      "range30d": "30 days",
+      "range90d": "90 days",
+      "colContact": "Contact",
+      "colTier": "Tier",
+      "colSource": "Source",
+      "colDetails": "Also filled in",
+      "colWhen": "When",
+      "colStatus": "Status",
+      "noName": "(no name given)",
+      "sourceDirect": "Direct",
+      "scoreTitle": "Score {score}/100 — from source and on-page behaviour",
+      "tier_hot": "Hot",
+      "tier_warm": "Warm",
+      "tier_cold": "Cold",
+      "status_new": "New",
+      "status_contacted": "Contacted",
+      "status_negotiating": "Negotiating",
+      "status_won": "Won",
+      "status_lost": "Lost",
+      "statusFailed": "could not change status",
+      "countLabel": "Showing {shown} of {total}"
     }
   }
 }

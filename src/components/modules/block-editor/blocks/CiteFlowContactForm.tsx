@@ -19,6 +19,8 @@ import {
   positionStyle,
   selectableClass,
 } from './applyStyle';
+import { LeadConsentField } from '../leads/LeadConsentField';
+import { useLeadSubmit } from '../leads/useLeadSubmit';
 import { useIsCanvasEdit } from './useIsCanvasEdit';
 import { useMotionAttributes } from '../motion/useMotionAttributes';
 import { CITE_FLOW_FONT_CSS, CITE_FLOW_FONT_HEADING } from './citeFlowTheme';
@@ -47,6 +49,8 @@ const DEFAULT_MESSAGE_LABEL = 'Message';
 const DEFAULT_MESSAGE_PLACEHOLDER = 'Message';
 const DEFAULT_SUBMIT_TEXT = 'Send message';
 const DEFAULT_SUBMITTED_TEXT = 'Message sent';
+const PREVIEW_TEXT =
+  'Bản xem trước — form chỉ gửi được trên trang đã xuất bản.';
 
 const TEXT_STYLE: React.CSSProperties = {
   color: '#1a1919',
@@ -95,7 +99,8 @@ export function CiteFlowContactForm({
 }: CiteFlowContactFormProps) {
   const rootRef = React.useRef<HTMLElement>(null);
   const isCanvas = useIsCanvasEdit(rootRef);
-  const [status, setStatus] = React.useState<'idle' | 'submitted'>('idle');
+  const [consent, setConsent] = React.useState(false);
+  const lead = useLeadSubmit(isCanvas);
   useMotionAttributes(rootRef);
 
   const styleOf = (key: string) =>
@@ -125,10 +130,22 @@ export function CiteFlowContactForm({
   const submitText = content.submitText?.trim() || DEFAULT_SUBMIT_TEXT;
   const submittedText = content.submittedText?.trim() || DEFAULT_SUBMITTED_TEXT;
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isCanvas) return;
-    setStatus('submitted');
+    // Giữ tham chiếu TRƯỚC `await`: React trả `currentTarget` về null ngay khi
+    // handler nhả, nên `e.currentTarget.reset()` sau đó là lỗi runtime.
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    const ok = await lead.submit({
+      fields: {
+        name: String(data.get('name') ?? ''),
+        email: String(data.get('email') ?? ''),
+        message: String(data.get('message') ?? ''),
+      },
+      consent,
+    });
+    if (ok) form.reset();
   };
 
   const labelClass = 'text-xl tracking-[-0.16px] @4xl:text-2xl';
@@ -289,8 +306,17 @@ export function CiteFlowContactForm({
                 </label>
               </div>
 
+              <LeadConsentField
+                text={content.consentText}
+                checked={consent}
+                onChange={setConsent}
+                className='flex cursor-pointer items-start gap-2.5 text-sm'
+                style={TEXT_STYLE}
+              />
+
               <button
                 type={isCanvas ? 'button' : 'submit'}
+                disabled={lead.state === 'loading'}
                 data-element-key='submitText'
                 style={composeStyle(TEXT_STYLE, styleOf('submitText'))}
                 className={selectableClass(
@@ -298,11 +324,24 @@ export function CiteFlowContactForm({
                   'group flex w-fit cursor-pointer items-center gap-3.75 text-sm font-normal @4xl:text-base'
                 )}
               >
-                {status === 'submitted' ? submittedText : submitText}
+                {lead.state === 'success' ? submittedText : submitText}
                 <span className='flex h-11 w-11 items-center justify-center rounded-full bg-[#1a1919]'>
                   <ArrowRight className='h-4 w-4 text-neutral-100' />
                 </span>
               </button>
+
+              {/* Lỗi phải HIỆN RA. Bản trước `setStatus('submitted')` vô điều
+                  kiện, nên form báo đã gửi kể cả khi không ai nhận được gì. */}
+              {lead.state === 'error' && lead.error ? (
+                <p className='text-sm text-[#b42318]' style={TEXT_STYLE}>
+                  {lead.error}
+                </p>
+              ) : null}
+              {!isCanvas && !lead.enabled ? (
+                <p className='text-sm text-[#6e6d6d]' style={TEXT_STYLE}>
+                  {PREVIEW_TEXT}
+                </p>
+              ) : null}
             </form>
           </div>
         </div>

@@ -21,6 +21,7 @@ import {
   MotionProvider,
 } from '@/components/modules/block-editor/motion/runtime';
 import type { BlockMotion } from '@/components/modules/block-editor/motion/types';
+import { LeadCaptureProvider } from '@/components/modules/block-editor/leads/LeadCaptureContext';
 import { LinkNav } from '@/components/modules/block-editor/links/LinkNav';
 import { blockAnchorId } from '@/components/modules/block-editor/links/linkToken';
 import { resolveLinksDeep } from '@/components/modules/block-editor/links/resolveLinks';
@@ -215,20 +216,24 @@ export function PublicBlockRender({
   // block so `token:*` element styles resolve to the brand's palette/fonts.
   return (
     <div className='min-h-screen bg-white' style={brandKitToCssVars(brandKit)}>
-      <LandingMotionRoot enableSmooth={isVerticalTransition(transition)}>
-        <LinkNav mode='public' rootSlug={rootSlug ?? page.slug}>
-          <main className='w-full'>
-            {/* `!gap-0`: trang published là landing full-bleed — gap mặc định
+      {/* Block có form đọc `pageId` ở đây để biết gửi lead về trang nào —
+          không có provider thì form chỉ hiện bản xem trước, không gửi. */}
+      <LeadCaptureProvider pageId={page.id} pageSlug={rootSlug ?? page.slug}>
+        <LandingMotionRoot enableSmooth={isVerticalTransition(transition)}>
+          <LinkNav mode='public' rootSlug={rootSlug ?? page.slug}>
+            <main className='w-full'>
+              {/* `!gap-0`: trang published là landing full-bleed — gap mặc định
                 của PlainStack (gap-3/4) tạo sọc trắng giữa các section (lộ rõ
                 với block full-viewport như q80_experience). */}
-            <TemplateTransitions
-              transition={transition}
-              items={items}
-              className='!gap-0'
-            />
-          </main>
-        </LinkNav>
-      </LandingMotionRoot>
+              <TemplateTransitions
+                transition={transition}
+                items={items}
+                className='!gap-0'
+              />
+            </main>
+          </LinkNav>
+        </LandingMotionRoot>
+      </LeadCaptureProvider>
       {/* {embed ? null : (
         <footer className='text-3xs border-t border-neutral-200 bg-white px-6 py-4 text-center tracking-widest text-neutral-400 uppercase'>
           Tạo bằng REXER · {visible.length} block ·{' '}
