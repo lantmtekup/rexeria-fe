@@ -91,13 +91,13 @@ export default function AuthenticationLayout({
               href='/privacy'
               className='transition-colors hover:text-[#0e1117]'
             >
-              Privacy Policy
+              Chính sách quyền riêng tư
             </Link>
             <Link
               href='/terms'
               className='transition-colors hover:text-[#0e1117]'
             >
-              Terms of Service
+              Điều khoản sử dụng
             </Link>
           </div>
         </div>
