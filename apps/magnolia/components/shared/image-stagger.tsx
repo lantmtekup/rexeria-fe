@@ -23,7 +23,13 @@ import { VR } from '@/lib/motion';
  * rather than looked at.
  *
  * Aspect ratios are declared per slot from the real files rather than imposed, so no picture
- * is cropped: `ASPECTS` below is the source geometry.
+ * is cropped: the `aspect` on each item is the source geometry.
+ *
+ * Hover follows the convention the rexerai blocks already use for a picture in a frame
+ * (`FramerProjectsGrid`, `LumeaGallery`, `HousentListings`): the frame keeps its size and the
+ * picture inside it scales, so the layout never moves — only the crop tightens. The curve is
+ * the page's own `ease-luxe` rather than a generic `ease-out`, and at 700 ms it is slow enough
+ * to read as the photograph leaning in rather than snapping.
  */
 
 /** Fraction of the right column's width that it is dropped by. This is the stagger. */
@@ -52,7 +58,7 @@ function Plate({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.22 }}
       transition={{ duration: 1, delay: reduced ? 0 : delay, ease: VR }}
-      className='border-ivory/10 bg-charcoal-900 relative w-full overflow-hidden rounded-2xl border'
+      className='border-ivory/10 bg-charcoal-900 group relative w-full overflow-hidden rounded-2xl border'
       style={{ aspectRatio: item.aspect }}
     >
       <img
@@ -60,7 +66,11 @@ function Plate({
         alt={item.alt}
         loading='lazy'
         decoding='async'
-        className='h-full w-full object-cover'
+        className={
+          reduced
+            ? 'h-full w-full object-cover'
+            : 'ease-luxe h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.05]'
+        }
       />
     </motion.figure>
   );
