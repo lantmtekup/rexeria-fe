@@ -1,7 +1,7 @@
 'use client';
 import { useMemo } from 'react';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion, type Variants } from 'framer-motion';
 import { VR, pB, EY, d1 } from '@/lib/motion';
 import { useLocale } from '@/components/shared/locale-provider';
 import { ImageStagger } from '@/components/shared/image-stagger';
@@ -29,6 +29,55 @@ const P = {
   },
 };
 
+/**
+ * The closing plate: the picture opens out, then the words arrive.
+ *
+ * The order is the point. Before this the whole group faded up together on `d1`
+ * (`amount: 0.28`), which on a plate this tall fires while it is still a strip at the bottom of
+ * the screen — the animation was over before anyone had it in front of them, which reads as no
+ * animation at all. It now waits for 40 % of the plate and runs as a sequence.
+ *
+ * The picture grows out of a smaller rounded card into full bleed. That is the hero's outro
+ * played backwards — the hero shrinks into a rounded card as it leaves, this one opens out of
+ * one as it arrives — so the page closes the section the way it opened.
+ *
+ * Height is a screen height, capped. It used to be `min(58vw, 860px)` — measured off the
+ * window's WIDTH, so on a wide monitor the 860 px cap was what decided it and the plate sat as
+ * a short band under a very tall picture. A closing plate carrying the collection name and its
+ * call to action should hold the screen. The source is 3200 × 2133, so a full-height frame
+ * crops about a fifth of its height, which the composition has to spare.
+ */
+const PLATE_VIEWPORT = { once: true, amount: 0.4 } as const;
+
+const plateImage: Variants = {
+  hidden: { scale: 0.86, borderRadius: 28 },
+  visible: {
+    scale: 1,
+    borderRadius: 0,
+    transition: { duration: 1.5, ease: VR },
+  },
+};
+
+/** Held back until the picture is most of the way open, then one line after another. */
+const plateCopy: Variants = {
+  hidden: {},
+  visible: { transition: { delayChildren: 0.9, staggerChildren: 0.18 } },
+};
+
+const plateLine: Variants = {
+  hidden: { opacity: 0, y: 22 },
+  visible: { opacity: 1, y: 0, transition: { duration: 1.2, ease: VR } },
+};
+
+const plateCta: Variants = {
+  hidden: { opacity: 0, y: 18 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 1.2, delay: 1.35, ease: VR },
+  },
+};
+
 function Compass({ className }: { className?: string }) {
   return (
     <svg
@@ -51,6 +100,7 @@ function Compass({ className }: { className?: string }) {
 
 export function UnitsSection() {
   const { t, locale } = useLocale();
+  const reduced = useReducedMotion() ?? false;
   const dividerLines = [t.units.divider[0], t.units.divider[1]];
 
   /*
@@ -154,30 +204,51 @@ export function UnitsSection() {
         />
       </div>
 
-      <div className='bg-navy-dark relative mt-24 h-[min(58vw,860px)] min-h-[520px] w-full overflow-hidden'>
-        <Image
-          src={P.units.src ?? cardImages['3 Bedroom']}
-          alt={P.units.alt}
-          fill
-          sizes='100vw'
-          quality={92}
-          className='object-cover'
-        />
+      <motion.div
+        initial={reduced ? 'visible' : 'hidden'}
+        whileInView='visible'
+        viewport={PLATE_VIEWPORT}
+        className='bg-navy-dark relative mt-24 h-[min(100svh,1240px)] min-h-[640px] w-full overflow-hidden'
+      >
+        {/* The card that opens out. `overflow-hidden` is what lets the radius bite while it
+            is still small, and the plate's own navy shows at the edges as it grows. */}
         <motion.div
-          initial={{ opacity: 0, y: 28 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={d1}
-          transition={{ duration: 1.1, ease: VR }}
+          variants={plateImage}
+          style={{ transformOrigin: 'center' }}
+          className='absolute inset-0 overflow-hidden'
+        >
+          <Image
+            src={P.units.src ?? cardImages['3 Bedroom']}
+            alt={P.units.alt}
+            fill
+            sizes='100vw'
+            quality={92}
+            className='object-cover'
+          />
+        </motion.div>
+
+        <motion.div
+          variants={plateCopy}
           className='text-ivory absolute right-8 bottom-0 left-8 flex flex-col gap-2 pb-36 md:right-auto md:left-10 md:pb-20'
         >
-          <p className='font-display text-[clamp(1rem,1.6vw,1.72rem)] leading-none'>
+          <motion.p
+            variants={plateLine}
+            className='font-display text-[clamp(1rem,1.6vw,1.72rem)] leading-none'
+          >
             {t.units.hero.eyebrow}
-          </p>
-          <p className='font-display text-[clamp(2.72rem,5.92vw,5.6rem)] leading-none font-semibold tracking-[-0.018em]'>
+          </motion.p>
+          <motion.p
+            variants={plateLine}
+            className='font-display text-[clamp(2.72rem,5.92vw,5.6rem)] leading-none font-semibold tracking-[-0.018em]'
+          >
             {t.units.hero.title}
-          </p>
+          </motion.p>
         </motion.div>
-        <div className='absolute right-8 bottom-16 left-8 md:right-10 md:bottom-20 md:left-auto'>
+
+        <motion.div
+          variants={plateCta}
+          className='absolute right-8 bottom-16 left-8 md:right-10 md:bottom-20 md:left-auto'
+        >
           <button
             type='button'
             className='group border-ivory/55 text-ivory hover:bg-ivory inline-flex h-[72px] w-full min-w-[18rem] items-center justify-center gap-[22px] border bg-black/[0.16] px-[34px] font-sans text-[0.75rem] backdrop-blur-[5px] transition-colors duration-500 hover:text-black md:w-auto'
@@ -186,8 +257,8 @@ export function UnitsSection() {
             <span className='font-display'>{t.units.hero.explore}</span>
             <Compass className='h-5 w-5' />
           </button>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </section>
   );
 }
