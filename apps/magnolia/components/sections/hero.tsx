@@ -8,6 +8,7 @@ import { useLocale } from '@/components/shared/locale-provider';
 import { PanelBackground } from '@/components/shared/panel-background';
 import { CursorGlow } from '@/components/shared/cursor-glow';
 import { useHeroFrames } from '@/components/shared/hero-frames';
+import { OPENING_DONE } from '@/lib/events';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -45,6 +46,21 @@ const OUTRO_SCALE = 0.72;
 const OUTRO_RADIUS = 32;
 /** Top edge of `HeritageSection` (`bg-charcoal-950`). */
 const OUTRO_BACKDROP = '#0b0908';
+
+/**
+ * The opening slogan.
+ *
+ * The film opens on the mark alone on a near-black field, which says nothing: a viewer who has
+ * just watched the curtains part is looking at a symbol with no name and no reason to scroll.
+ * The project's line sits under it and then gets out of the way — it fades across the first 5 %
+ * of the scrub, about a quarter of a screen of scrolling, so it is gone before the film has
+ * anything of its own to show.
+ *
+ * It is the same line the film closes on, lettered into its last frames. That is deliberate:
+ * said once at the start and once at the end, it reads as the film's own bookends rather than
+ * as a caption repeated by accident.
+ */
+const SLOGAN_FADE = 0.05;
 
 /**
  * Cap the device pixel ratio at 2. Drawing a 1600 px frame onto a 3× canvas on a Retina
@@ -88,6 +104,8 @@ export function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const sloganRef = useRef<HTMLDivElement>(null);
+  const sloganInnerRef = useRef<HTMLParagraphElement>(null);
 
   // Scrub progress lives outside React: it changes every frame and must not re-render.
   const scrollState = useRef({ progress: 0 });
@@ -143,6 +161,24 @@ export function HeroSection() {
     if (done) draw(scrollState.current.progress, true);
   }, [done, draw]);
 
+  // Brought in when the curtains have finished parting, not on a timer — the beat's length
+  // depends on how long the frames take.
+  useEffect(() => {
+    const el = sloganInnerRef.current;
+    if (!el) return;
+    const enter = () => {
+      gsap.to(el, {
+        opacity: 1,
+        y: 0,
+        duration: reduced ? 0.3 : 1.4,
+        ease: 'power2.out',
+      });
+    };
+    if (document.documentElement.getAttribute('aria-busy') === 'false') enter();
+    else window.addEventListener(OPENING_DONE, enter, { once: true });
+    return () => window.removeEventListener(OPENING_DONE, enter);
+  }, [reduced]);
+
   useEffect(() => {
     if (reduced) return;
     const section = sectionRef.current;
@@ -152,6 +188,12 @@ export function HeroSection() {
     const state = scrollState.current;
 
     const ctx = gsap.context(() => {
+      // Written on the wrapper, while the entrance tween owns the element inside it. Two
+      // animations on one element's opacity would overwrite each other.
+      const setSlogan = sloganRef.current
+        ? gsap.quickSetter(sloganRef.current, 'opacity')
+        : () => undefined;
+
       gsap.to(state, {
         progress: 1,
         ease: 'none',
@@ -164,7 +206,18 @@ export function HeroSection() {
           anticipatePin: 1,
           refreshPriority: 1,
         },
-        onUpdate: () => draw(state.progress),
+        onUpdate: () => {
+          draw(state.progress);
+          // Scrubbed rather than tweened, so dragging back to the top brings it again.
+          setSlogan(
+            1 -
+              gsap.utils.clamp(
+                0,
+                1,
+                gsap.utils.normalize(0, SLOGAN_FADE, state.progress)
+              )
+          );
+        },
       });
 
       // Created after the pin trigger on purpose: ScrollTrigger then knows about the pinned
@@ -232,6 +285,22 @@ export function HeroSection() {
             {t.hero.tagline}
           </p>
         )}
+
+        {/* Not under reduced motion: that branch has no film, so it already prints the line
+            in the middle of the poster just above, and two copies would show at once. */}
+        <div
+          ref={sloganRef}
+          hidden={reduced}
+          className='pointer-events-none absolute inset-x-0 top-[62%] z-20 px-6 text-center'
+        >
+          <p
+            ref={sloganInnerRef}
+            style={{ opacity: 0, transform: 'translateY(16px)' }}
+            className='font-display text-ivory/85 text-[clamp(1.05rem,2.05vw,1.95rem)] leading-none tracking-[0.015em] [text-shadow:0_2px_20px_rgb(0_0_0_/_0.5)]'
+          >
+            {t.hero.tagline}
+          </p>
+        </div>
 
         {siteConfig.cursorGlow && <CursorGlow />}
       </div>

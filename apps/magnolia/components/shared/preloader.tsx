@@ -5,6 +5,7 @@ import { MagnoliaMark } from './magnolia-mark';
 import { useLocale } from './locale-provider';
 import { useHeroFrames } from './hero-frames';
 import { lockScroll, unlockScroll } from '@/lib/scroll-control';
+import { OPENING_DONE } from '@/lib/events';
 import { siteConfig } from '@/lib/site-config';
 
 /**
@@ -118,6 +119,10 @@ export function Preloader() {
     if (!done) return;
     document.documentElement.setAttribute('aria-busy', 'false');
     unlockScroll();
+    // The hero waits for this to bring its slogan in. The beat's length is not a constant —
+    // it holds until the frames are decoded — so nothing downstream can time itself off a
+    // number; it has to be told.
+    window.dispatchEvent(new CustomEvent(OPENING_DONE));
   }, [done]);
 
   const letters = [...t.hero.brand];
