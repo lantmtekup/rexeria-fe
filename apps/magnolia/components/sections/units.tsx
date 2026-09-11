@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { VR, pB, EY, d1 } from '@/lib/motion';
 import { useLocale } from '@/components/shared/locale-provider';
-import { StickyStack } from '@/components/shared/sticky-stack';
+import { ImageStagger } from '@/components/shared/image-stagger';
 import {
   MediaPanelTrack,
   type TrackItem,
@@ -15,10 +15,12 @@ const cardImages: Record<string, string> = {
   Penthouse: '/images/assets/units/card-penthouse.webp',
   Duplex: '/images/assets/units/card-duplex.webp',
 };
+/* Aspect ratios are the files' own — two portraits and a landscape. Declared rather than
+   imposed so the grid bends to the pictures instead of cropping them to a common shape. */
 const strips = [
-  '/images/assets/units/strip-1.webp',
-  '/images/assets/units/strip-2.webp',
-  '/images/assets/units/strip-3.webp',
+  { src: '/images/assets/units/strip-1.webp', aspect: '1800 / 2388' },
+  { src: '/images/assets/units/strip-2.webp', aspect: '1800 / 1167' },
+  { src: '/images/assets/units/strip-3.webp', aspect: '1800 / 2388' },
 ];
 const P = {
   units: {
@@ -106,19 +108,19 @@ export function UnitsSection() {
       </div>
 
       {/*
-       * Sticky stack from the rexerai block FramerAesthaEditorial: the statement holds on the
-       * left while three images pass and pile over one another. Replaces a static three-image
-       * grid with the statement printed underneath, where the pictures were decoration and the
-       * words arrived all at once with nothing to read them against.
+       * Staggered grid from the rexerai block FramerImageStagger: the statement sets the three
+       * pictures up, then they sit off-register — one large plate, a shorter column dropped
+       * below it. See components/shared/image-stagger.tsx for what it replaced and why.
        */}
       <div className='mt-28'>
-        <StickyStack
-          items={strips.map((src, i) => ({
+        <ImageStagger
+          items={strips.map(({ src, aspect }, i) => ({
             key: src,
             src,
+            aspect,
             alt: dividerLines.join(' · ') + ` — ${i + 1}`,
           }))}
-          aside={
+          heading={
             <motion.p
               initial='hidden'
               whileInView='visible'
