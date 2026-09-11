@@ -50,6 +50,21 @@ const PAD_RIGHT = '0px';
 const CARD_PAD = 'max(2.78vw, 28px)';
 const COPY_MAX = 'min(22.15vw, 420px)';
 
+/**
+ * How much of a panel must be on screen before its curtain starts to part.
+ *
+ * A panel is a full viewport wide, so this number trades two faults against each other. Set it
+ * high and the reveal has not begun while a wide band of the panel is already showing — at
+ * 0.55 that band was a solid ivory column a quarter of the window across, since all four
+ * curtains were still shut. Set it at zero and the beat starts on the panel's first pixel and
+ * its 1.6 s is spent long before the panel is in front of anyone, so the curtain is never seen
+ * at all.
+ *
+ * 0.3 keeps the beat visible: it begins with a strip of the panel showing and runs while the
+ * rest of it travels in.
+ */
+const REVEAL_AT = 0.3;
+
 export type TrackItem = {
   key: string;
   src: string;
@@ -80,22 +95,13 @@ export const MediaPanelCard = memo(function MediaPanelCard({
     if (flat || revealed) return;
     const el = articleRef.current;
     if (!el) return;
-    /*
-     * Fires on horizontal arrival as well as vertical, which a rect-top rule cannot do — and on
-     * the first sliver of the panel, not on a majority of it.
-     *
-     * A panel here is a full viewport wide, so waiting for 55 % of it meant the reveal did not
-     * start until the panel was already more than half across the screen. Until then all four
-     * curtains were still shut, and what slid in from the right edge was a solid ivory column
-     * a quarter of the window wide. Starting the beat the moment the panel appears runs its
-     * 1.6 s while the panel is still travelling, so it is a photograph by the time it is in
-     * front of the viewer rather than a white panel that turns into one.
-     */
+    // Fires on horizontal arrival as well as vertical, which a rect-top rule cannot do.
     const io = new IntersectionObserver(
       entries => {
-        if (entries.some(e => e.isIntersecting)) setRevealed(true);
+        if (entries.some(e => e.intersectionRatio >= REVEAL_AT))
+          setRevealed(true);
       },
-      { threshold: 0 }
+      { threshold: [0, REVEAL_AT, 1] }
     );
     io.observe(el);
     return () => io.disconnect();
