@@ -104,13 +104,13 @@ export function InteractiveTourSection() {
                 <button
                   type='button'
                   onClick={open}
-                  className='border-ivory/55 bg-charcoal-950/45 tracking-luxe text-ivory hover:bg-ivory hover:text-charcoal-950 focus-visible:ring-champagne-300 inline-flex items-center gap-4 border px-7 py-4 font-sans text-[0.62rem] uppercase backdrop-blur-[3px] transition-colors duration-500'
+                  className='border-ivory/55 bg-charcoal-950/45 tracking-luxe text-ivory hover:bg-ivory hover:text-charcoal-950 focus-visible:ring-champagne-300 inline-flex items-center gap-4 border px-7 py-4 font-sans text-[0.75rem] uppercase backdrop-blur-[3px] transition-colors duration-500 sm:text-[0.62rem]'
                 >
                   <Sparkle size={10} />
                   {t.tour.title}
                   <Sparkle size={10} />
                 </button>
-                <p className='text-ivory/55 mt-4 font-sans text-[0.58rem]'>
+                <p className='text-ivory/55 mt-4 font-sans text-[0.75rem] sm:text-[0.58rem]'>
                   {t.globe.hint}
                 </p>
               </div>
@@ -140,7 +140,7 @@ export function InteractiveTourSection() {
                   href={externalUrl}
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='border-ivory/45 tracking-luxe text-ivory hover:bg-ivory/10 focus-visible:ring-champagne-300 mt-5 inline-flex items-center gap-3 border px-5 py-3 font-sans text-[0.56rem] uppercase transition-colors'
+                  className='border-ivory/45 tracking-luxe text-ivory hover:bg-ivory/10 focus-visible:ring-champagne-300 mt-5 inline-flex items-center gap-3 border px-5 py-3 font-sans text-[0.75rem] uppercase transition-colors sm:text-[0.56rem]'
                 >
                   <Sparkle size={9} />
                   {t.tour.openExternal}

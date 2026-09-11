@@ -15,6 +15,13 @@ import { CurtainReveal } from '@/components/shared/curtain-reveal';
 const GRAIN =
   "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.7'/></svg>\")";
 
+/*
+ * No `whitespace-nowrap` on the second tagline any more. It was there to hold the line
+ * together as it rises, which it does on a wide screen — but the clamp bottoms out at 40 px,
+ * and "Phong cách sống tinh tuyến" at 40 px on one line measures 479 px, wider than a 390 px
+ * phone. It was being sliced at both ends. Letting it wrap costs nothing: the first tagline
+ * beside it already wraps at the same size.
+ */
 const TAGLINE_CLASS =
   'font-display text-[clamp(2.52rem,4.68vw,6.32rem)] leading-[0.98] tracking-[-0.018em] text-ivory drop-shadow-[0_3px_22px_rgba(0,0,0,0.22)]';
 
@@ -103,7 +110,7 @@ export function HeritageSection() {
                 className={`max-w-[22ch] whitespace-normal ${TAGLINE_CLASS}`}
               >
                 <p>{taglines[0]}</p>
-                <p className='mt-6 whitespace-nowrap'>{taglines[1]}</p>
+                <p className='mt-6 max-w-[22ch]'>{taglines[1]}</p>
               </div>
             ) : (
               <>
@@ -122,7 +129,7 @@ export function HeritageSection() {
                 <motion.p
                   aria-hidden
                   style={{ y: tag2Y, opacity: tag2Opacity }}
-                  className={`absolute whitespace-nowrap ${TAGLINE_CLASS}`}
+                  className={`absolute w-full max-w-[22ch] ${TAGLINE_CLASS}`}
                 >
                   {taglines[1]}
                 </motion.p>

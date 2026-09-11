@@ -220,7 +220,7 @@ export function Preloader() {
                 </h1>
 
                 <motion.p
-                  className='tracking-luxe text-champagne-100/70 mt-3 font-sans text-[0.5rem] font-light uppercase'
+                  className='tracking-luxe text-champagne-100/70 mt-3 font-sans text-[0.75rem] font-light uppercase sm:text-[0.5rem]'
                   initial={{ opacity: 0 }}
                   animate={{ opacity: exiting && !reduced ? 0 : 1 }}
                   transition={{

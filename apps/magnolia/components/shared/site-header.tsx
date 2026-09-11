@@ -23,7 +23,9 @@ function ModeTabs({
     <div
       role='tablist'
       aria-label='Story Mode / Explore Mode'
-      className={cn('flex h-[30px] w-[195px] items-stretch', className)}
+      // 44 px is the smallest target a finger hits reliably; the 30 px of the original is a
+      // pointer-only size. Reverts to it from `sm` up, where there is a cursor.
+      className={cn('flex h-11 w-[195px] items-stretch sm:h-[30px]', className)}
     >
       {(['story', 'explore'] as Mode[]).map(key => {
         const active = value === key;
@@ -36,7 +38,7 @@ function ModeTabs({
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(key)}
             className={cn(
-              'font-display text-ivory relative flex-1 text-[10.4px] leading-none',
+              'font-display text-ivory relative flex-1 text-[12px] leading-none sm:text-[10.4px]',
               'ease-luxe transition-opacity duration-500',
               active
                 ? 'bg-white/[0.04] backdrop-blur-[35.9px]'
@@ -57,32 +59,32 @@ function ModeTabs({
   );
 }
 
-export function LogoLockup({
-  scale = 1,
-  className,
-}: {
-  scale?: number;
-  className?: string;
-}) {
+/**
+ * The wordmark, sized by breakpoint rather than by a scale factor.
+ *
+ * It used to take a numeric `scale` and multiply every dimension by it. That cannot answer the
+ * problem it had on a phone: the lockup is absolutely centred in a row that also carries the
+ * sound control, and at full size the two ran into each other at 390 px — measured, the mark
+ * ended at x 293 and the sound control began at 253. Scaling the whole thing down would have
+ * fixed the collision and made the small line smaller still, and it was already 8 px.
+ *
+ * So below `sm` the lockup drops to the mark and the name, and the 8 px line is left out
+ * rather than shrunk. Nothing is lost: "PRIVATE RESIDENCES" at 8 px on a phone was decoration
+ * that could not be read anyway.
+ */
+export function LogoLockup({ className }: { className?: string }) {
   return (
     <div
       role='img'
       aria-label='The Magnolia — Private Residences'
-      className={cn('text-ivory flex items-center', className)}
-      style={{ gap: 7 * scale }}
+      className={cn('text-ivory flex items-center gap-[7px]', className)}
     >
-      <MagnoliaMark size={44 * scale} />
-      <span className='flex flex-col' style={{ gap: 3 * scale }}>
-        <span
-          className='font-display leading-none'
-          style={{ fontSize: 27 * scale, letterSpacing: '0.005em' }}
-        >
+      <MagnoliaMark size={44} className='h-8 w-8 sm:h-11 sm:w-11' />
+      <span className='flex flex-col gap-[3px]'>
+        <span className='font-display text-[20px] leading-none tracking-[0.005em] sm:text-[27px]'>
           The Magnolia
         </span>
-        <span
-          className='text-ivory/85 self-center font-sans leading-none font-light'
-          style={{ fontSize: 8 * scale, letterSpacing: `${0.3 * scale}em` }}
-        >
+        <span className='text-ivory/85 hidden self-center font-sans text-[8px] leading-none font-light tracking-[0.3em] sm:block'>
           PRIVATE RESIDENCES
         </span>
       </span>
@@ -108,8 +110,11 @@ function SoundToggle({
       type='button'
       aria-pressed={on}
       onClick={onToggle}
+      aria-label={label}
       className={cn(
-        'group text-ivory flex items-center gap-4 transition-opacity duration-300',
+        // The bars alone carry the meaning on a phone; the label is what made this control
+        // wide enough to collide with the centred wordmark.
+        'group text-ivory flex h-11 items-center gap-4 transition-opacity duration-300 sm:h-auto',
         on ? 'opacity-100' : 'opacity-60 hover:opacity-90',
         className
       )}
@@ -138,7 +143,7 @@ function SoundToggle({
           />
         ))}
       </span>
-      <span className='font-sans text-[10.4px] leading-none font-light'>
+      <span className='hidden font-sans text-[10.4px] leading-none font-light sm:inline'>
         {label}
       </span>
     </button>

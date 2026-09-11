@@ -108,7 +108,6 @@ function GraceImage({ frame, index, p, e, reduced }: FrameProps) {
         src={frame.image}
         alt=''
         fill
-        priority={index === 0}
         sizes='100vw'
         quality={92}
         className='object-cover'
@@ -133,16 +132,23 @@ function GraceCaption({ frame, index, p, reduced }: Omit<FrameProps, 'e'>) {
       className='absolute flex max-w-[90vw] flex-col items-center'
     >
       {title && (
-        <h2 className='font-display text-ivory text-[clamp(4rem,9.4vw,10rem)] leading-[0.86] tracking-[-0.055em]'>
+        <h2 className='font-display text-ivory text-[clamp(2.6rem,9.4vw,10rem)] leading-[0.86] tracking-[-0.055em]'>
           {title}
         </h2>
       )}
-      <p className={title ? 'mt-10' : 'whitespace-nowrap'}>
+      {/*
+       * The standalone lines used to be `text-5xl whitespace-nowrap` — a fixed 48 px on one
+       * unbreakable line. On a 390 px phone that measured 1023 px and 1082 px wide, two and
+       * three quarters of the screen, so both ended up sliced at either edge with the middle
+       * of a Vietnamese sentence showing. They are now allowed to wrap, and the size is a
+       * clamp that reaches the original 48 px from about 1140 px up.
+       */}
+      <p className={title ? 'mt-10' : undefined}>
         <span
           className={
             title
               ? 'font-display text-champagne-200 text-[clamp(1.1rem,1.8vw,2rem)] leading-none tracking-[0.01em]'
-              : 'font-display text-champagne-200 text-5xl leading-none tracking-[0.01em]'
+              : 'font-display text-champagne-200 text-[clamp(1.5rem,4.2vw,3rem)] leading-[1.15] tracking-[0.01em]'
           }
         >
           {subtitle}
