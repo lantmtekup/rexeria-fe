@@ -1,5 +1,8 @@
 {
   "count": 286,
-  "width": 1600,
-  "height": 900
+  "sets": {
+    "lg": { "dir": "/frames/hero", "width": 1600, "height": 900 },
+    "sm": { "dir": "/frames/hero-sm", "width": 640, "height": 1386 }
+  },
+  "smallMaxWidth": 768
 }
