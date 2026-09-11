@@ -68,6 +68,28 @@ const STEP = SHRINK_BEATS + FADE_BEATS + HOLD;
  */
 const BEAT_SVH = 76;
 
+/**
+ * Parallax drift.
+ *
+ * The picture moves against its own frame while that frame holds still, which is what stops a
+ * held full-bleed photograph reading as a flat plate — it is the same trick
+ * `components/shared/panel-background.tsx` plays on the heritage panel, at `UQ.subtle`.
+ *
+ * It is driven by the section's own progress rather than by a ScrollTrigger of its own. The
+ * stage here is `sticky`, so its rectangle sits at the top of the screen for the whole track
+ * and a trigger measured off that rectangle has nothing to travel through. The progress value
+ * the layers already share does not have that problem.
+ *
+ * Each picture drifts across its own window — from when the one in front of it starts leaving
+ * to when it has gone itself — so the whole range is spent while that picture is the one being
+ * looked at, rather than a quarter of it each.
+ *
+ * `OVERSCALE` is the margin the drift eats: at ±6 % the layer must be at least 112 % tall or
+ * the travel exposes an edge. 1.16 leaves a little over.
+ */
+const DRIFT = 6;
+const OVERSCALE = 1.16;
+
 export type StackedItem = {
   key: string;
   src: string;
@@ -116,6 +138,16 @@ function Layer({
     isLast ? [0, 0] : [0, FRAME_RADIUS, FRAME_RADIUS]
   );
   const opacity = useTransform(progress, range, isLast ? [1, 1] : [1, 1, 0]);
+
+  // This picture's own turn on screen: it starts being uncovered a hold before its shrink, and
+  // is finished when it has faded out (or at the end of the section, for the last one).
+  const driftStart = Math.max(0, (HOLD_START + index * STEP - HOLD) / T);
+  const driftEnd = isLast ? 1 : bEnd;
+  const driftY = useTransform(
+    progress,
+    [driftStart, driftEnd],
+    [`${-DRIFT}%`, `${DRIFT}%`]
+  );
   // The label belongs to the picture: it leaves with it.
   const labelOpacity = useTransform(
     progress,
@@ -138,13 +170,18 @@ function Layer({
             }
       }
     >
-      <img
-        src={item.src}
-        alt={item.alt}
-        loading='eager'
-        decoding='async'
-        className='h-full w-full object-cover'
-      />
+      <motion.div
+        className='absolute inset-0 will-change-transform'
+        style={reduced ? undefined : { y: driftY, scale: OVERSCALE }}
+      >
+        <img
+          src={item.src}
+          alt={item.alt}
+          loading='eager'
+          decoding='async'
+          className='h-full w-full object-cover'
+        />
+      </motion.div>
       <div
         aria-hidden
         className='from-charcoal-950/70 to-charcoal-950/20 pointer-events-none absolute inset-0 bg-gradient-to-t via-transparent'
