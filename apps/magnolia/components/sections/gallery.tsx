@@ -8,6 +8,7 @@ import {
 } from 'framer-motion';
 import { useLocale } from '@/components/shared/locale-provider';
 import { useSmoothProgress } from '@/components/shared/use-smooth-progress';
+import { ScrollScrubVideo } from '@/components/shared/scroll-scrub-video';
 import {
   StackedReveal,
   type StackedItem,
@@ -34,6 +35,9 @@ const PHASE_IMAGES = [
   { id: 'evening', src: '/images/assets/day-experience/evening-02.webp' },
 ] as const;
 
+/** First frame of the day, used as the film's poster while it loads. */
+const POSTER = '/images/assets/day-experience/morning-01.webp';
+
 export function GallerySection() {
   const { t } = useLocale();
   const ref = useRef<HTMLElement>(null);
@@ -59,7 +63,13 @@ export function GallerySection() {
   );
 }
 
-/** The statement that opens the passage, held on its own screen before the day begins. */
+/**
+ * The statement that opens the passage, over the scroll-scrubbed film.
+ *
+ * The film is the backdrop rather than the subject: the words sit on it, and it advances with
+ * the same scroll that brings them in and takes them out. At 180svh the scrub runs about
+ * 119 px per second of footage, the same legible rate the hero uses.
+ */
 function Intro() {
   const { t } = useLocale();
   const ref = useRef<HTMLDivElement>(null);
@@ -82,10 +92,28 @@ function Intro() {
 
   return (
     <div ref={ref} style={{ height: reduced ? undefined : '180svh' }}>
-      <div className='sticky top-0 flex h-[100svh] min-h-[620px] items-center justify-center overflow-hidden px-6'>
+      <div className='bg-charcoal-950 sticky top-0 flex h-[100svh] min-h-[620px] items-center justify-center overflow-hidden px-6'>
+        {!reduced && (
+          <ScrollScrubVideo
+            src='/videos/grace-scroll.mp4'
+            poster={POSTER}
+            targetRef={ref}
+            scrollYProgress={p}
+            getTime={(progress, dur) => progress * dur}
+            enabled
+            diagnosticLabel='gallery-intro'
+            rootMargin='100% 0px'
+            className='pointer-events-none absolute inset-0 h-full w-full object-cover transition-opacity duration-300'
+          />
+        )}
+        {/* Holds the words legible over whatever frame is on screen. */}
+        <div
+          aria-hidden
+          className='from-charcoal-950/80 via-charcoal-950/45 to-charcoal-950/80 pointer-events-none absolute inset-0 bg-gradient-to-b'
+        />
         <motion.p
           style={reduced ? undefined : { opacity, y, filter: blur }}
-          className='font-display text-ivory/92 max-w-[46rem] text-center text-[clamp(1.6rem,3.1vw,3.3rem)] leading-[1.22] tracking-[-0.02em]'
+          className='font-display text-ivory/95 relative z-10 max-w-[46rem] text-center text-[clamp(1.6rem,3.1vw,3.3rem)] leading-[1.22] tracking-[-0.02em] [text-shadow:0_3px_28px_rgb(0_0_0_/_0.55)]'
         >
           {first}
           <br />

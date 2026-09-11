@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { VR, pB, EY, d1 } from '@/lib/motion';
 import { useLocale } from '@/components/shared/locale-provider';
+import { StickyStack } from '@/components/shared/sticky-stack';
 import {
   MediaPanelTrack,
   type TrackItem,
@@ -104,55 +105,51 @@ export function UnitsSection() {
         <MediaPanelTrack items={unitItems} chip={t.units.hero.eyebrow} />
       </div>
 
-      <div className='mx-auto mt-36 max-w-[1440px] px-8'>
-        <div className='grid grid-cols-[1fr_2.08fr_1fr] gap-5 md:gap-7'>
-          {strips.map((src, i) => (
-            <motion.div
-              key={src}
-              initial={{ opacity: 0, y: 32 }}
-              whileInView={{ opacity: 1, y: 0 }}
+      {/*
+       * Sticky stack from the rexerai block FramerAesthaEditorial: the statement holds on the
+       * left while three images pass and pile over one another. Replaces a static three-image
+       * grid with the statement printed underneath, where the pictures were decoration and the
+       * words arrived all at once with nothing to read them against.
+       */}
+      <div className='mt-28'>
+        <StickyStack
+          items={strips.map((src, i) => ({
+            key: src,
+            src,
+            alt: dividerLines.join(' · ') + ` — ${i + 1}`,
+          }))}
+          aside={
+            <motion.p
+              initial='hidden'
+              whileInView='visible'
               viewport={d1}
-              transition={{ duration: 1, delay: 0.12 * i, ease: VR }}
-              className='border-ivory/15 relative aspect-[329/437] w-full overflow-hidden rounded-2xl border'
-              style={i === 1 ? { aspectRatio: '678 / 439' } : undefined}
+              variants={EY(0.1, 0.2)}
+              className='font-display text-ivory text-[clamp(1.5rem,2.9vw,2.9rem)] leading-[1.14] tracking-[-0.005em]'
             >
-              <Image
-                src={src}
-                alt=''
-                fill
-                sizes={i === 1 ? '47vw' : '22vw'}
-                quality={92}
-                className='object-cover grayscale-[0.2]'
-              />
-            </motion.div>
-          ))}
-        </div>
-        <motion.div
-          initial='hidden'
-          whileInView='visible'
-          viewport={d1}
-          variants={EY(0.1, 0.35)}
-          className='font-display text-ivory mx-auto mt-16 max-w-[42rem] text-center text-[clamp(1.4rem,3.12vw,2.8rem)] leading-[1.1] tracking-[-0.002em]'
-        >
-          {dividerLines.map((line, li) => (
-            <span key={line} className={li === 0 ? 'block' : 'mt-2 block'}>
-              {line.split(' ').map((word, wi, arr) => (
-                <motion.span
-                  key={`${word}-${wi}`}
-                  variants={pB}
-                  className={
-                    wi === arr.length - 1
-                      ? 'text-champagne-200 inline-block'
-                      : 'inline-block'
-                  }
-                >
-                  {word}
-                  {wi < arr.length - 1 ? ' ' : ''}
-                </motion.span>
+              {dividerLines.map((line, li) => (
+                <span key={line} className={li === 0 ? 'block' : 'mt-2 block'}>
+                  {line.split(' ').map((word, wi, arr) => (
+                    <motion.span
+                      key={`${word}-${wi}`}
+                      variants={pB}
+                      // `whitespace-pre`: the trailing space lives inside this span, and an
+                      // inline-block collapses trailing whitespace — which ran every word
+                      // together.
+                      className={
+                        wi === arr.length - 1
+                          ? 'text-champagne-200 inline-block whitespace-pre'
+                          : 'inline-block whitespace-pre'
+                      }
+                    >
+                      {word}
+                      {wi < arr.length - 1 ? ' ' : ''}
+                    </motion.span>
+                  ))}
+                </span>
               ))}
-            </span>
-          ))}
-        </motion.div>
+            </motion.p>
+          }
+        />
       </div>
 
       <div className='bg-navy-dark relative mt-24 h-[min(58vw,860px)] min-h-[520px] w-full overflow-hidden'>

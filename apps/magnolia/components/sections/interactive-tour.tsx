@@ -16,43 +16,22 @@ export function InteractiveTourSection() {
   const { embedUrl, externalUrl, previewSrc, readyTimeoutMs } =
     siteConfig.interactiveTour;
 
-  // Mount the iframe on first intersection (threshold 0, default rootMargin — `mountRootMargin` is defined but unused).
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const activate = () => {
-      setMounted(true);
-      setStatus('loading');
-    };
-    if (typeof IntersectionObserver === 'undefined') {
-      const check = () => {
-        const rect = el.getBoundingClientRect();
-        if (rect.top < window.innerHeight && rect.bottom > 0) {
-          activate();
-          window.removeEventListener('scroll', check);
-          window.removeEventListener('resize', check);
-        }
-      };
-      window.addEventListener('scroll', check, { passive: true });
-      window.addEventListener('resize', check);
-      check();
-      return () => {
-        window.removeEventListener('scroll', check);
-        window.removeEventListener('resize', check);
-      };
-    }
-    const io = new IntersectionObserver(
-      entries => {
-        if (entries.some(e => e.isIntersecting)) {
-          activate();
-          io.disconnect();
-        }
-      },
-      { threshold: 0 }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
+  /*
+   * The tour loads on request, not on arrival.
+   *
+   * Measured on this page: while the tour is on screen, 29 % of frames miss 32 ms, against
+   * 7.6 % elsewhere. It renders 2.78 million gaussian splats in WebGL, and that competes with
+   * the compositor for the whole time it is visible — scrolling past it is what feels bad.
+   *
+   * Unmounting it once it leaves the screen would not help: measured off-screen it costs
+   * nothing at all (0 dropped frames of 321), because the browser already stops it. And the
+   * viewer takes no quality or level-of-detail parameter, so it cannot be turned down from
+   * outside. That leaves one lever that actually works — do not start it until it is wanted.
+   */
+  const open = () => {
+    setMounted(true);
+    setStatus('loading');
+  };
 
   // Ready timeout → unavailable state.
   useEffect(() => {
@@ -104,6 +83,38 @@ export function InteractiveTourSection() {
               onError={() => setStatus('failed')}
               className={`absolute inset-0 z-10 h-full w-full border-0 ${reduced ? '' : 'transition-opacity duration-500'} ${status === 'ready' ? 'opacity-100' : 'opacity-0'}`}
             />
+          )}
+          {/*
+           * Covers the viewer's own outbound chip in the top-right corner, which links visitors
+           * away to studio.realhorizons.ai. The iframe is cross-origin so its DOM cannot be
+           * touched; a patch in the page's own colour over that corner is the only way.
+           *
+           * Deliberately only the outbound link. The "powered by" credit at the bottom is the
+           * provider's attribution and is left alone.
+           */}
+          {status === 'ready' && (
+            <div
+              aria-hidden
+              className='bg-charcoal-night pointer-events-none absolute top-0 right-0 z-[15] h-[clamp(44px,4.6vw,62px)] w-[clamp(150px,15vw,230px)] rounded-bl-[14px]'
+            />
+          )}
+          {status === 'dormant' && (
+            <div className='absolute inset-0 z-20 grid place-items-center px-6 text-center'>
+              <div>
+                <button
+                  type='button'
+                  onClick={open}
+                  className='border-ivory/55 bg-charcoal-950/45 tracking-luxe text-ivory hover:bg-ivory hover:text-charcoal-950 focus-visible:ring-champagne-300 inline-flex items-center gap-4 border px-7 py-4 font-sans text-[0.62rem] uppercase backdrop-blur-[3px] transition-colors duration-500'
+                >
+                  <Sparkle size={10} />
+                  {t.tour.title}
+                  <Sparkle size={10} />
+                </button>
+                <p className='text-ivory/55 mt-4 font-sans text-[0.58rem]'>
+                  {t.globe.hint}
+                </p>
+              </div>
+            </div>
           )}
           {status === 'loading' && (
             <div className='bg-charcoal-950/30 absolute inset-0 z-20 grid place-items-center px-6 text-center backdrop-blur-[1px]'>

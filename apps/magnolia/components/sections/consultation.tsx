@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import Image from 'next/image';
 import { motion, useInView, useReducedMotion } from 'framer-motion';
 import { VR } from '@/lib/motion';
@@ -74,23 +74,13 @@ export function ConsultationSection() {
    *
    * Watching for scroll to go quiet puts the whole rise in front of a still viewer.
    */
-  const inView = useInView(sectionRef, { amount: 0.35 });
-  const [landed, setLanded] = useState(false);
-
-  useEffect(() => {
-    if (!inView || landed) return;
-    let timer = 0;
-    const arm = () => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => setLanded(true), 140);
-    };
-    arm();
-    window.addEventListener('scroll', arm, { passive: true });
-    return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener('scroll', arm);
-    };
-  }, [inView, landed]);
+  /*
+   * Waiting for scroll to go quiet was making the picture take two to three seconds to show:
+   * any small movement reset the timer, and only then did the 1.2 s reveal begin. It now fires
+   * on arrival, and the card follows it rather than racing ahead — the image lands first, the
+   * form settles onto it.
+   */
+  const landed = useInView(sectionRef, { amount: 0.45, once: true });
 
   // Spec §9 — Derived values.
   const tel = 'tel:' + t.contact.phone.replace(/[^+\d]/g, '');
@@ -129,6 +119,7 @@ export function ConsultationSection() {
         >
           <Image
             src='/images/assets/heritage/silhouette2.webp'
+            priority
             alt=''
             fill
             sizes='100vw'
@@ -139,9 +130,10 @@ export function ConsultationSection() {
       </div>
       <motion.div
         initial={reduced ? false : { opacity: 0, y: 28 }}
-        whileInView={reduced ? undefined : { opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.35 }}
-        transition={{ duration: 0.6, ease: VR }}
+        animate={landed ? { opacity: 1, y: 0 } : undefined}
+        // Starts after the picture has had most of its 1.2 s, so the two read as one sequence
+        // rather than two things happening at once.
+        transition={{ duration: 0.7, delay: reduced ? 0 : 0.55, ease: VR }}
         className='relative z-10 mx-auto my-10 flex w-full max-w-[31rem] flex-1 items-center sm:my-12'
       >
         <div className='border-ivory/30 w-full border bg-black/35 px-10 py-9 shadow-[0_18px_70px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:px-14 sm:py-10'>
