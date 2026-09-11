@@ -80,12 +80,22 @@ export const MediaPanelCard = memo(function MediaPanelCard({
     if (flat || revealed) return;
     const el = articleRef.current;
     if (!el) return;
-    // Fires on horizontal arrival as well as vertical, which a rect-top rule cannot do.
+    /*
+     * Fires on horizontal arrival as well as vertical, which a rect-top rule cannot do — and on
+     * the first sliver of the panel, not on a majority of it.
+     *
+     * A panel here is a full viewport wide, so waiting for 55 % of it meant the reveal did not
+     * start until the panel was already more than half across the screen. Until then all four
+     * curtains were still shut, and what slid in from the right edge was a solid ivory column
+     * a quarter of the window wide. Starting the beat the moment the panel appears runs its
+     * 1.6 s while the panel is still travelling, so it is a photograph by the time it is in
+     * front of the viewer rather than a white panel that turns into one.
+     */
     const io = new IntersectionObserver(
       entries => {
-        if (entries.some(e => e.intersectionRatio >= 0.55)) setRevealed(true);
+        if (entries.some(e => e.isIntersecting)) setRevealed(true);
       },
-      { threshold: [0, 0.55, 1] }
+      { threshold: 0 }
     );
     io.observe(el);
     return () => io.disconnect();
