@@ -1,0 +1,25 @@
+# Cache policy, read by Cloudflare Workers static assets from the asset directory.
+#
+# Without this every asset is served `max-age=0, must-revalidate`. The edge still caches, but
+# the browser does not: a returning visitor re-asks for all 286 hero frames before the first
+# one can be drawn. They come back as 304s, so no bytes move, but the round trips are the wait
+# — and the preloader holds the page until every frame is decoded.
+#
+# HTML is deliberately left alone. It must keep revalidating or a deploy would not be picked up.
+
+# Content-hashed by the build — the name changes whenever the bytes do, so it can never go
+# stale and a year is free.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Not content-hashed. Thirty days is a deliberate trade: replacing one of these files in place
+# leaves anyone who already has it holding the old copy until it expires. Change the filename
+# when you replace a picture or the film, rather than the bytes behind the same name.
+/frames/*
+  Cache-Control: public, max-age=2592000
+
+/images/*
+  Cache-Control: public, max-age=2592000
+
+/videos/*
+  Cache-Control: public, max-age=2592000
