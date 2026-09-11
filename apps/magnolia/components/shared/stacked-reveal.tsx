@@ -174,10 +174,13 @@ function Layer({
         className='absolute inset-0 will-change-transform'
         style={reduced ? undefined : { y: driftY, scale: OVERSCALE }}
       >
+        {/* Only the first picture is fetched up front. The other three sit behind it in the
+            same box, so they enter the viewport together when the section is reached and load
+            as one — which on a phone keeps 2.5 MB off the opening. */}
         <img
           src={item.src}
           alt={item.alt}
-          loading='eager'
+          loading={index === 0 ? 'eager' : 'lazy'}
           decoding='async'
           className='h-full w-full object-cover'
         />

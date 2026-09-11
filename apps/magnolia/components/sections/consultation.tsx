@@ -14,8 +14,14 @@ import { MagnoliaMark, Sparkle } from '@/components/shared/magnolia-mark';
  */
 const POWER2_OUT = [0.25, 0.46, 0.45, 0.94] as const;
 
+/*
+ * 16 px on a phone is not a taste choice. Safari on iOS zooms the whole page in when a focused
+ * input has a font smaller than that, and it does not zoom back out — the visitor is left on a
+ * magnified, sideways-scrolling page in the middle of filling in a form. `sm:` restores the
+ * designed size where there is no such behaviour.
+ */
 const INPUT_CLASS =
-  'h-11 w-full bg-black/55 px-2 font-sans text-[0.72rem] text-ivory placeholder:text-ivory/45 focus:outline-none focus:ring-1 focus:ring-champagne-200';
+  'h-11 w-full bg-black/55 px-2 font-sans text-[16px] text-ivory placeholder:text-ivory/45 focus:outline-none focus:ring-1 focus:ring-champagne-200 sm:text-[0.72rem]';
 
 function SocialIcon({ icon }: { icon: 'facebook' | 'instagram' | 'whatsapp' }) {
   return (
@@ -119,7 +125,6 @@ export function ConsultationSection() {
         >
           <Image
             src='/images/assets/heritage/silhouette2.webp'
-            priority
             alt=''
             fill
             sizes='100vw'
@@ -145,7 +150,7 @@ export function ConsultationSection() {
             >
               {t.contact.brand}
             </h2>
-            <p className='text-ivory/75 mt-2 font-sans text-[0.52rem] tracking-[0.34em] uppercase sm:text-[0.58rem]'>
+            <p className='text-ivory/75 mt-2 font-sans text-[0.75rem] tracking-[0.34em] uppercase sm:text-[0.58rem]'>
               {t.contact.kicker}
             </p>
             <span aria-hidden className='bg-ivory/25 mt-6 h-px w-12' />
@@ -221,13 +226,13 @@ export function ConsultationSection() {
         <div className='flex flex-col items-start gap-2 sm:items-end sm:text-right'>
           <a
             href={tel}
-            className='font-display text-ivory/95 hover:text-champagne-200 text-[clamp(1.3rem,2.3vw,2.25rem)] leading-none tracking-[-0.025em] transition-colors'
+            className='font-display text-ivory/95 hover:text-champagne-200 inline-flex min-h-11 items-center text-[clamp(1.3rem,2.3vw,2.25rem)] leading-none tracking-[-0.025em] transition-colors sm:min-h-0'
           >
             {t.contact.phone}
           </a>
           <a
             href={`mailto:${t.contact.email}`}
-            className='font-display text-ivory/85 hover:text-champagne-200 text-[clamp(0.8rem,1vw,1rem)] leading-none transition-colors'
+            className='font-display text-ivory/85 hover:text-champagne-200 inline-flex min-h-11 items-center text-[clamp(0.8rem,1vw,1rem)] leading-none transition-colors sm:min-h-0'
           >
             {t.contact.email}
           </a>

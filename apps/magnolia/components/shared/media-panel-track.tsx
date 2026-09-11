@@ -82,11 +82,17 @@ export const MediaPanelCard = memo(function MediaPanelCard({
   index,
   chip,
   flat = false,
+  eager = false,
+  ready = false,
 }: {
   item: TrackItem;
   index: number;
   chip?: string;
   flat?: boolean;
+  /** Set only once the track is known to travel horizontally. See the `img` below. */
+  eager?: boolean;
+  /** The width has been measured on the client. Until then no picture is emitted at all. */
+  ready?: boolean;
 }) {
   const articleRef = useRef<HTMLElement>(null);
   const [revealed, setRevealed] = useState(false);
@@ -114,7 +120,7 @@ export const MediaPanelCard = memo(function MediaPanelCard({
         target='_blank'
         rel='noreferrer'
         aria-label={`${item.cta}: ${item.title}`}
-        className='border-charcoal-950/30 tracking-luxe text-charcoal-950 hover:border-charcoal-950 mt-7 inline-flex w-fit items-center gap-3 border-b pb-1 font-sans text-[0.62rem] uppercase transition-colors'
+        className='border-charcoal-950/30 tracking-luxe text-charcoal-950 hover:border-charcoal-950 mt-7 inline-flex min-h-11 w-fit items-center gap-3 border-b pb-1 font-sans text-[0.75rem] uppercase transition-colors sm:min-h-0 sm:text-[0.62rem]'
       >
         {item.cta}
         <span aria-hidden>→</span>
@@ -122,7 +128,7 @@ export const MediaPanelCard = memo(function MediaPanelCard({
     ) : (
       <button
         type='button'
-        className='border-charcoal-950/30 tracking-luxe text-charcoal-950 hover:border-charcoal-950 mt-7 inline-flex w-fit items-center gap-3 border-b pb-1 font-sans text-[0.62rem] uppercase transition-colors'
+        className='border-charcoal-950/30 tracking-luxe text-charcoal-950 hover:border-charcoal-950 mt-7 inline-flex min-h-11 w-fit items-center gap-3 border-b pb-1 font-sans text-[0.75rem] uppercase transition-colors sm:min-h-0 sm:text-[0.62rem]'
       >
         {item.cta}
         <span aria-hidden>→</span>
@@ -142,7 +148,7 @@ export const MediaPanelCard = memo(function MediaPanelCard({
       {chip && (
         <span
           className='font-display text-ivory bg-clay-600 w-fit leading-none font-medium uppercase'
-          style={{ padding: 12, fontSize: 'clamp(11px, 0.97vw, 14px)' }}
+          style={{ padding: 12, fontSize: 'clamp(12px, 0.97vw, 14px)' }}
         >
           {chip}
         </span>
@@ -169,19 +175,44 @@ export const MediaPanelCard = memo(function MediaPanelCard({
     </div>
   );
 
-  /* Plain img: already right-sized WebP and every card loads up front, so the track never
-     stalls on a decode part-way through its travel. */
-  const img = (
+  /*
+   * Plain img: already right-sized WebP.
+   *
+   * Loaded up front only when the track actually travels. A panel that has to be on screen the
+   * instant the row translates under it cannot wait for a decode — and a lazy image will not
+   * load on a transform, because a transform does not bring it into the viewport as far as the
+   * browser is concerned. Under 768 px none of that applies: `flat` stacks the panels
+   * vertically and they arrive one screen at a time like any other picture.
+   *
+   * `eager` therefore starts false and is raised only after the width has been measured. It
+   * cannot be derived while rendering — the server has no width.
+   *
+   * `ready` is why the picture is withheld from the prerendered HTML entirely rather than just
+   * marked lazy. Measured on a phone: the five panels were requested at t = 0.18 s, before
+   * React had hydrated, `loading="lazy"` and all — the browser resolves lazy against the
+   * layout it has while parsing, and at that moment it loaded 5.5 MB that nothing had asked
+   * for. The same elements rendered after hydration are left alone, which is the tell. So the
+   * `<img>` only exists once the client is running and the layout is real.
+   */
+  const img = ready ? (
     <img
       src={item.src}
       alt={item.alt}
-      loading='eager'
+      loading={eager ? 'eager' : 'lazy'}
       decoding='async'
-      fetchPriority={index === 0 ? 'high' : 'low'}
+      fetchPriority={eager && index === 0 ? 'high' : 'low'}
       className={
         flat
           ? 'aspect-[4/3] w-full object-cover'
           : 'absolute inset-0 h-full w-full object-cover'
+      }
+    />
+  ) : (
+    // Holds the panel's shape so nothing shifts when the picture arrives.
+    <div
+      aria-hidden
+      className={
+        flat ? 'aspect-[4/3] w-full' : 'absolute inset-0 h-full w-full'
       }
     />
   );
@@ -212,11 +243,15 @@ function Row({
   items,
   move,
   chip,
+  eager,
+  ready,
 }: {
   progress: MotionValue<number>;
   items: TrackItem[];
   move: number;
   chip?: string;
+  eager: boolean;
+  ready: boolean;
 }) {
   const x = useTransform(progress, [0, 1], [0, -move]);
   return (
@@ -225,7 +260,14 @@ function Row({
       className='flex h-full w-max flex-row items-center will-change-transform'
     >
       {items.map((item, i) => (
-        <MediaPanelCard key={item.key} item={item} index={i} chip={chip} />
+        <MediaPanelCard
+          key={item.key}
+          item={item}
+          index={i}
+          chip={chip}
+          eager={eager}
+          ready={ready}
+        />
       ))}
     </motion.div>
   );
@@ -250,6 +292,7 @@ export function MediaPanelTrack({
   const p = useSmoothProgress(raw);
 
   const [flat, setFlat] = useState(false);
+  const [measured, setMeasured] = useState(false);
   const [move, setMove] = useState(0);
   const keys = useMemo(() => items.map(i => i.key).join('|'), [items]);
 
@@ -257,6 +300,7 @@ export function MediaPanelTrack({
     const measure = () => {
       const narrow = window.matchMedia('(max-width: 767px)').matches;
       setFlat(narrow || reduced);
+      setMeasured(true);
       const vp = viewportRef.current;
       const track = trackRef.current;
       if (narrow || reduced || !vp || !track) {
@@ -285,6 +329,7 @@ export function MediaPanelTrack({
             index={i}
             chip={chip}
             flat
+            ready={measured}
           />
         ))}
       </div>
@@ -302,7 +347,14 @@ export function MediaPanelTrack({
           className='absolute inset-0 z-[2] overflow-hidden'
         >
           <div ref={trackRef} className='h-full w-max'>
-            <Row progress={p} items={items} move={move} chip={chip} />
+            <Row
+              progress={p}
+              items={items}
+              move={move}
+              chip={chip}
+              eager={measured && !flat}
+              ready={measured}
+            />
           </div>
         </div>
       </div>
