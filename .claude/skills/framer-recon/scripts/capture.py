@@ -22,6 +22,18 @@ import sys
 from pathlib import Path
 
 
+
+def _goto_resilient(page, url):
+    """networkidle first; sites that stream video never go idle -> fall back to load + settle."""
+    try:
+        page.goto(url, wait_until="networkidle", timeout=20_000)
+    except Exception:
+        try:
+            page.wait_for_load_state("load", timeout=30_000)
+        except Exception:
+            pass
+        page.wait_for_timeout(2500)
+
 def ensure_playwright():
     """Install playwright + chromium if not present."""
     try:
@@ -181,7 +193,7 @@ def capture(url, selector, out_dir, record_video=True, hide_selectors=None, auth
             )
             page = context.new_page()
             print(f"[{vp['name']}] loading {url}...")
-            page.goto(url, wait_until="networkidle", timeout=60_000)
+            _goto_resilient(page, url)
             page.wait_for_timeout(1500)  # let webfonts/lazy images settle
 
             el = None
@@ -284,7 +296,7 @@ def capture(url, selector, out_dir, record_video=True, hide_selectors=None, auth
                 record_video_size={"width": 1440, "height": 900},
             )
             page = context.new_page()
-            page.goto(url, wait_until="networkidle", timeout=60_000)
+            _goto_resilient(page, url)
             page.wait_for_timeout(1000)
 
             el = page.query_selector(selector)

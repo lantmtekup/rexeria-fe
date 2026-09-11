@@ -14,7 +14,10 @@ const eslintConfig = [
   {
     // Các app standalone trong apps/* (mint2026, protection…) có toolchain +
     // eslint riêng, không chịu convention của host app rexerai.
-    ignores: ['apps/**'],
+    //
+    // recon/** là tư liệu khảo sát: bundle của site ngoài đã tải về và
+    // de-minify để đọc. Không phải mã nguồn của mình, lint không có ý nghĩa.
+    ignores: ['apps/**', 'recon/**'],
   },
   ...compat.extends('next/core-web-vitals', 'next/typescript', 'prettier'),
   {

@@ -1,0 +1,54 @@
+import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
+import { Inter, Playfair_Display } from 'next/font/google';
+import { LocaleProvider } from '@/components/shared/locale-provider';
+import { Preloader } from '@/components/shared/preloader';
+import { SkipLink } from '@/components/shared/skip-link';
+import { SiteHeader } from '@/components/shared/site-header';
+import { SmoothScroll } from '@/components/shared/smooth-scroll';
+import { siteConfig } from '@/lib/site-config';
+import './globals.css';
+
+const display = Playfair_Display({
+  subsets: ['latin', 'latin-ext', 'vietnamese', 'cyrillic'],
+  weight: ['400', '500', '600'],
+  style: ['normal', 'italic'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const sans = Inter({
+  subsets: ['latin', 'latin-ext', 'vietnamese', 'cyrillic', 'greek'],
+  weight: ['300', '400', '500'],
+  variable: '--font-sans',
+  display: 'swap',
+});
+
+export const metadata: Metadata = {
+  title: 'The Magnolia — The Journey of Timeless Value — Khai Sơn City, Hà Nội',
+  description: siteConfig.description,
+  openGraph: { title: siteConfig.name, locale: 'vi_VN', type: 'website' },
+};
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+  return (
+    <html
+      lang='vi'
+      className={`${display.variable} ${sans.variable} snap-panels`}
+      style={{ ['--snap-strictness' as string]: siteConfig.scrollSnap }}
+    >
+      <body>
+        <noscript>
+          <style>{`#preloader{display:none!important}`}</style>
+        </noscript>
+        <LocaleProvider>
+          <SmoothScroll />
+          <Preloader />
+          <SkipLink />
+          <SiteHeader />
+          {children}
+        </LocaleProvider>
+      </body>
+    </html>
+  );
+}

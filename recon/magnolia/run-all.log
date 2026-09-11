@@ -1,0 +1,21 @@
+=== magnolia-fullpage (#main) 10:16:25
+exit 0 10:19:51
+=== 01-hero (#top) 10:19:51
+exit 0 10:22:22
+=== 02-heritage (#heritage) 10:22:22
+exit 0 10:25:01
+=== 03-horizontal-slide (#horizontal-slide) 10:25:01
+exit 0 10:27:50
+=== 04-interactive-tour (#interactive-tour) 10:27:50
+exit 0 10:31:52
+=== 05-units (#units) 10:31:52
+exit 0 10:34:43
+=== 06-grace (#grace) 10:34:43
+exit 0 10:37:35
+=== 07-gallery (#gallery) 10:37:35
+exit 0 10:40:32
+=== 08-consultation (#consultation) 10:40:32
+exit 0 10:43:25
+=== 00-header (header) 10:43:25
+exit 0 10:45:58
+ALL_DONE

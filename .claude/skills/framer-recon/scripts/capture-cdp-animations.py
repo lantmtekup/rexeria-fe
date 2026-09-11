@@ -26,6 +26,18 @@ import time
 from pathlib import Path
 
 
+
+def _goto_resilient(page, url):
+    """networkidle first; sites that stream video never go idle -> fall back to load + settle."""
+    try:
+        page.goto(url, wait_until="networkidle", timeout=20_000)
+    except Exception:
+        try:
+            page.wait_for_load_state("load", timeout=30_000)
+        except Exception:
+            pass
+        page.wait_for_timeout(2500)
+
 def ensure_playwright():
     try:
         import playwright  # noqa: F401
@@ -95,7 +107,7 @@ def capture(url, selector, workspace, scroll_steps=8, scroll_pause_ms=600, playb
 
         # ---- Navigate (catches on-load animations) ----
         print(f"[cdp] loading {url}...")
-        page.goto(url, wait_until="networkidle", timeout=60_000)
+        _goto_resilient(page, url)
         page.wait_for_timeout(2000)  # let on-load animations fire
 
         # ---- Scroll to target block, recording in-view animations ----

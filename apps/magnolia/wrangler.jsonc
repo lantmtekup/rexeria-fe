@@ -1,0 +1,9 @@
+// CF Worker cho demo magnolia (apps/magnolia). Deploy: npm run cf:deploy
+// Trang tĩnh hoàn toàn — chỉ phục vụ asset, không có worker script.
+// Chạy trên *.workers.dev, chưa gắn domain.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rexerai-magnolia",
+  "compatibility_date": "2026-05-01",
+  "assets": { "directory": "./out", "not_found_handling": "single-page-application" },
+}

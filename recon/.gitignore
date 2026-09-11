@@ -1,0 +1,6 @@
+# Recon capture artefacts: screenshots, scroll frames and per-section Playwright output.
+# Hundreds of MB and fully regenerable from the scripts. The spec and the de-minified
+# sources they produced are committed; the raw captures are not.
+magnolia/recon-*/
+magnolia/scroll-frames/
+magnolia/compare-frames/
