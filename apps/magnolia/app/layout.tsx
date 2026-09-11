@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Inter, Playfair_Display } from 'next/font/google';
 import { LocaleProvider } from '@/components/shared/locale-provider';
+import { HeroFramesProvider } from '@/components/shared/hero-frames';
 import { Preloader } from '@/components/shared/preloader';
 import { SkipLink } from '@/components/shared/skip-link';
 import { SiteHeader } from '@/components/shared/site-header';
@@ -42,11 +43,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <style>{`#preloader{display:none!important}`}</style>
         </noscript>
         <LocaleProvider>
-          <SmoothScroll />
-          <Preloader />
-          <SkipLink />
-          <SiteHeader />
-          {children}
+          {/* The hero film's frames are loaded once here: the preloader counts them and the
+              hero draws them, and neither may start its own download. */}
+          <HeroFramesProvider>
+            <SmoothScroll />
+            <Preloader />
+            <SkipLink />
+            <SiteHeader />
+            {children}
+          </HeroFramesProvider>
         </LocaleProvider>
       </body>
     </html>

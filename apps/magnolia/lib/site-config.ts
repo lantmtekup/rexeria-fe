@@ -16,8 +16,7 @@ export const siteConfig = {
     mountRootMargin: '50% 0px',
     readyTimeoutMs: 15000,
   },
-  // minDuration is the opening beat's hold. The original 1400 ms is too short to read;
-  // the staged entrance in components/shared/preloader.tsx needs ~1.45 s before the progress
-  // rule even starts. Lower this to shorten the intro, raise it to let it breathe more.
-  preloader: { markSize: 140, spinDuration: 14, minDuration: 3200 },
+  // The opening beat's length is no longer a number: it holds until the hero film's frames
+  // finish decoding (see components/shared/preloader.tsx). Only the mark's size is a choice.
+  preloader: { markSize: 280 },
 };

@@ -2,6 +2,11 @@
 import { useEffect } from 'react';
 import Lenis from 'lenis';
 import { useReducedMotion } from 'framer-motion';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { registerLenis } from '@/lib/scroll-control';
+
+gsap.registerPlugin(ScrollTrigger);
 
 /**
  * Global smooth scroll.
@@ -9,17 +14,25 @@ import { useReducedMotion } from 'framer-motion';
  * Native scrolling arrives as discrete jumps: a wheel notch moves the page ~100 px in one
  * step. Every scroll-linked effect on this page reads `scrollY`, so those steps land directly
  * in the animation — and the scrubbed hero film is the worst case, because a 100 px step asks
- * the video to jump nearly a second of footage at once, which no decoder makes look smooth.
+ * for a frame most of a second away. Lenis replaces that with a rAF loop that eases the real
+ * scroll position toward the target, so scroll advances in small per-frame deltas.
  *
- * Lenis replaces that with a rAF loop that eases the real scroll position toward the target.
- * Scroll then advances in small per-frame deltas, so transforms move continuously and the
- * video is asked for the next frame rather than a distant seek. This is the root fix; the
- * per-section springs only smooth what is already a step.
+ * Two things make it cooperate with GSAP rather than fight it:
  *
- * `lerp` is the fraction of remaining distance covered each frame: lower glides longer.
- * 0.085 is a long, cinematic glide without feeling disconnected from the wheel.
+ * - **One clock.** Lenis runs on `gsap.ticker` (`autoRaf: false`) instead of its own
+ *   `requestAnimationFrame`. With two loops, Lenis can move the page after ScrollTrigger has
+ *   already read the position for that frame, and a pinned section lags a frame behind the
+ *   scroll — visible as the pinned element shivering against the page.
+ * - **`ScrollTrigger.update` on every Lenis scroll.** ScrollTrigger otherwise listens to the
+ *   native `scroll` event, which is throttled and arrives late relative to the eased position.
+ *
+ * `lagSmoothing(0)` stops GSAP from silently skipping time after a long frame — useful for a
+ * tween, wrong for a scroll position, which must stay pinned to where the page really is.
+ *
+ * `lerp` is the fraction of remaining distance covered each frame: lower glides longer. 0.1
+ * matches `website-magnolia`, whose hero scrub pacing this page now shares.
  */
-const LERP = 0.085;
+const LERP = 0.1;
 
 export function SmoothScroll() {
   const reduced = useReducedMotion();
@@ -29,29 +42,24 @@ export function SmoothScroll() {
     if (reduced) return;
 
     const lenis = new Lenis({
+      autoRaf: false,
       lerp: LERP,
       wheelMultiplier: 1,
       touchMultiplier: 1.6,
       // Touch devices already scroll smoothly and momentum-scroll fights an rAF lerp.
       syncTouch: false,
     });
+    registerLenis(lenis);
 
-    let rafId = 0;
-    const raf = (time: number) => {
-      lenis.raf(time);
-      rafId = requestAnimationFrame(raf);
-    };
-    rafId = requestAnimationFrame(raf);
-
-    // The hero resets scroll to the top when the film finishes. Lenis keeps its own internal
-    // position, so a raw window.scrollTo would leave the two disagreeing and the next wheel
-    // event would snap back. Route those resets through Lenis instead.
-    const onReset = () => lenis.scrollTo(0, { immediate: true });
-    window.addEventListener('magnolia:scroll-reset', onReset);
+    const tick = (time: number) => lenis.raf(time * 1000);
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add(tick);
+    gsap.ticker.lagSmoothing(0);
 
     return () => {
-      window.removeEventListener('magnolia:scroll-reset', onReset);
-      cancelAnimationFrame(rafId);
+      gsap.ticker.remove(tick);
+      lenis.off('scroll', ScrollTrigger.update);
+      registerLenis(null);
       lenis.destroy();
     };
   }, [reduced]);

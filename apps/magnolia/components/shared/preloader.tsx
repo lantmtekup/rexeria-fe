@@ -1,74 +1,127 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { MagnoliaMark } from './magnolia-mark';
 import { useLocale } from './locale-provider';
+import { useHeroFrames } from './hero-frames';
+import { lockScroll, unlockScroll } from '@/lib/scroll-control';
 import { siteConfig } from '@/lib/site-config';
-import { VR } from '@/lib/motion';
 
 /**
- * Opening beat.
+ * Opening loader, ported from the rexerai block `CgResponsiveLandingLoader`
+ * ("Responsive Landing Loader", itself a port of Codegrid `cg-responsive-landing-page`).
  *
- * The original holds for 1.4 s and then cross-fades out, which is too brief for anything to
- * register: the mark appears already finished, spins a third of a turn, and is gone. This
- * version stages the moment so it can actually be read, using effects from the rexerai motion
- * library (`block-editor/motion/motionLibrary.ts`):
+ * Timing and easing are the source block's, with the GSAP eases written as their cubic-bezier
+ * equivalents so framer-motion runs the same curves. The one structural change: the source
+ * waits a fixed two seconds before leaving, and this waits for **the hero film's 286 frames to
+ * finish decoding**. That is what the wait is actually for — let the page scroll before the
+ * sequence is in memory and the first scroll scrubs against frames that are not there yet,
+ * which is the stutter this beat exists to prevent. The counter reports real decode progress
+ * instead of a random climb, so the number means something.
  *
- * | beat | effect | what it does |
+ * | beat | source | here |
  * |---|---|---|
- * | 0.15 s | `scale-in` + `blur-in` | mark resolves from soft and undersized into focus |
- * | 0.70 s | `word-reveal` | the name rises word by word through a mask |
- * | 1.20 s | `fade-up` | the kicker settles under it |
- * | 1.45 s | `line-draw` | a rule draws across, giving the wait something to track |
- * | exit | `clip-reveal` | the curtain wipes upward off the hero instead of dissolving |
+ * | counter | random 0→100 | frames decoded / 286 |
+ * | letters in | `expo.out`, 1.5 s, stagger 0.03 | same |
+ * | wait | fixed 2 s | until every frame is decoded |
+ * | letters out | `expo.out`, 3 s, stagger 0.03 | same |
+ * | loader shrinks | `scale 0.5`, `power4.inOut`, 2 s, +1 s | same |
+ * | counter fades | `power2.inOut`, 0.5 s, +1.75 s | same |
+ * | first curtain | `height 0%`, `power4.inOut`, 1.5 s, +1.75 s | same |
+ * | second curtain | `height 0%`, `power4.inOut`, 1.5 s, +2 s | same |
  *
- * The wipe matters: a cross-fade makes the screen disappear, a wipe hands the page over.
+ * The curtains are the page's own charcoal-night and ivory rather than the source's black and
+ * red — the ivory matching the curtains in Heritage and the cards, so the whole site parts the
+ * same way — and the mark and wordmark stay, because this loader has a brand to introduce.
  */
-const ENTER_MARK = 0.15;
-const ENTER_WORD = 0.7;
-const ENTER_KICKER = 1.2;
-const ENTER_LINE = 1.45;
-const EXIT_DURATION = 1;
+const EXPO_OUT = [0.16, 1, 0.3, 1] as const;
+const POWER4_IN_OUT = [0.76, 0, 0.24, 1] as const;
+const POWER2_IN_OUT = [0.45, 0, 0.55, 1] as const;
 
-/** Hard ceiling on waiting for `window.load` before the beat is allowed to finish. */
-const LOAD_TIMEOUT = 10_000;
+const LETTERS_IN = 1.5;
+const STAGGER = 0.03;
+
+/** Duration of the letters leaving, and the offsets of everything else within the exit. */
+const LETTERS_OUT = 3;
+const EXIT_SHRINK = 1;
+const EXIT_COUNT_FADE = 1.75;
+const EXIT_CURTAIN_1 = 1.75;
+const EXIT_CURTAIN_2 = 2;
+const CURTAIN_DURATION = 1.5;
+
+/** The beat ends when the second curtain finishes. */
+const EXIT_MS = (EXIT_CURTAIN_2 + CURTAIN_DURATION) * 1000;
+
+/**
+ * Floor on the hold. Frames served from cache report done almost immediately, and a loader
+ * that flashes past reads as a glitch rather than an opening.
+ */
+const MIN_HOLD_MS = (LETTERS_IN + 0.4) * 1000;
+
+/** Ceiling on the hold, so a stalled or failed frame never traps the page behind the curtain. */
+const LOAD_TIMEOUT = 15_000;
 
 export function Preloader() {
-  const [done, setDone] = useState(false);
-  const reduced = useReducedMotion();
+  const reduced = useReducedMotion() ?? false;
   const { t } = useLocale();
-  const { markSize, spinDuration, minDuration } = siteConfig.preloader;
+  const { markSize } = siteConfig.preloader;
+  const { loaded, total, done: framesDone } = useHeroFrames();
 
+  const [exiting, setExiting] = useState(false);
+  const [done, setDone] = useState(false);
+
+  // Measured from mount, not from whenever an effect last re-ran, so the floor is a floor on
+  // the whole beat rather than an extra wait bolted onto the end of the download.
+  const mountedAt = useRef(0);
+  if (mountedAt.current === 0) mountedAt.current = performance.now();
+
+  // Hold until the frames are in — but never less than the floor, never more than the ceiling.
   useEffect(() => {
-    const started = performance.now();
+    const ceiling = window.setTimeout(() => setExiting(true), LOAD_TIMEOUT);
     let timer = 0;
-    const finish = () => {
-      const elapsed = performance.now() - started;
+
+    if (framesDone) {
+      const waited = performance.now() - mountedAt.current;
       timer = window.setTimeout(
-        () => setDone(true),
-        Math.max(0, minDuration - elapsed)
+        () => setExiting(true),
+        Math.max(0, (reduced ? 0 : MIN_HOLD_MS) - waited)
       );
+    }
+
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(ceiling);
     };
-    const waitLoad = new Promise<void>(resolve => {
-      if (document.readyState === 'complete') resolve();
-      else window.addEventListener('load', () => resolve(), { once: true });
-      window.setTimeout(resolve, LOAD_TIMEOUT);
-    });
-    waitLoad.then(finish);
-    return () => window.clearTimeout(timer);
-  }, [minDuration]);
+  }, [framesDone, reduced]);
 
   useEffect(() => {
-    document.documentElement.setAttribute('aria-busy', String(!done));
-    document.body.style.overflow = done ? '' : 'hidden';
+    if (!exiting) return;
+    const timer = window.setTimeout(
+      () => setDone(true),
+      reduced ? 400 : EXIT_MS
+    );
+    return () => window.clearTimeout(timer);
+  }, [exiting, reduced]);
+
+  // The page stays frozen for the whole beat. Unlocking also re-measures the hero's pin, which
+  // was created against a document that could not scroll.
+  useEffect(() => {
+    document.documentElement.setAttribute('aria-busy', 'true');
+    lockScroll();
     return () => {
       document.documentElement.removeAttribute('aria-busy');
-      document.body.style.overflow = '';
+      unlockScroll();
     };
+  }, []);
+
+  useEffect(() => {
+    if (!done) return;
+    document.documentElement.setAttribute('aria-busy', 'false');
+    unlockScroll();
   }, [done]);
 
-  const words = t.hero.brand.split(' ');
-  const dwell = minDuration / 1000;
+  const letters = [...t.hero.brand];
+  const percent = exiting || !total ? 100 : Math.round((loaded / total) * 100);
 
   return (
     <AnimatePresence>
@@ -76,95 +129,128 @@ export function Preloader() {
         <motion.div
           id='preloader'
           key='preloader'
-          className='bg-charcoal-night fixed inset-0 z-[200] grid place-items-center overflow-hidden'
-          initial={{ clipPath: 'inset(0% 0% 0% 0%)' }}
-          exit={reduced ? { opacity: 0 } : { clipPath: 'inset(0% 0% 100% 0%)' }}
-          transition={{ duration: reduced ? 0.4 : EXIT_DURATION, ease: VR }}
+          className='fixed inset-0 z-[200] overflow-hidden'
         >
+          {/* Second curtain, behind everything: leaves last. */}
           <motion.div
-            className='relative flex translate-y-[10px] flex-col items-center'
-            exit={reduced ? undefined : { y: -28, opacity: 0 }}
-            transition={{ duration: EXIT_DURATION * 0.8, ease: VR }}
-          >
-            {/* scale-in + blur-in — the mark resolves rather than simply appearing. */}
-            <motion.div
-              className='text-champagne-400 max-w-[45vw]'
-              style={{ width: markSize, height: markSize }}
-              initial={
-                reduced
-                  ? { opacity: 0 }
-                  : { opacity: 0, scale: 0.86, filter: 'blur(12px)' }
-              }
-              animate={
-                reduced
-                  ? { opacity: 1 }
-                  : { opacity: 1, scale: 1, filter: 'blur(0px)' }
-              }
-              transition={{ duration: 1.1, delay: ENTER_MARK, ease: VR }}
-            >
-              {/* Rotation lives on its own layer so the entrance transform is not fighting it. */}
-              <motion.div
-                className='h-full w-full'
-                animate={reduced ? undefined : { rotate: 360 }}
-                transition={{
-                  duration: spinDuration,
-                  repeat: Infinity,
-                  ease: 'linear',
-                }}
-              >
-                <MagnoliaMark size={markSize} className='h-full w-full' />
-              </motion.div>
-            </motion.div>
+            className='bg-ivory absolute inset-x-0 top-0'
+            initial={{ height: '100%' }}
+            animate={{ height: exiting && !reduced ? '0%' : '100%' }}
+            transition={{
+              duration: CURTAIN_DURATION,
+              delay: EXIT_CURTAIN_2,
+              ease: POWER4_IN_OUT,
+            }}
+          />
 
-            {/* word-reveal — each word rises through its own mask. */}
-            <h1 className='font-display text-ivory mt-9 flex gap-[0.28em] text-[clamp(1.5rem,2.6vw,2.3rem)] leading-none tracking-[0.02em]'>
-              {words.map((word, i) => (
-                <span
-                  key={word + i}
-                  className='block overflow-hidden py-[0.08em]'
+          {/* The loader shrinks as one piece, the way the source scales its whole pre-loader. */}
+          <motion.div
+            className='absolute inset-0'
+            initial={{ scale: 1 }}
+            animate={{ scale: exiting && !reduced ? 0.5 : 1 }}
+            transition={{
+              duration: 2,
+              delay: EXIT_SHRINK,
+              ease: POWER4_IN_OUT,
+            }}
+          >
+            {/* First curtain, carrying the brand. Its height is the mask. */}
+            <motion.div
+              className='bg-charcoal-night absolute inset-x-0 top-0 overflow-hidden'
+              initial={{ height: '100%' }}
+              animate={{ height: exiting && !reduced ? '0%' : '100%' }}
+              transition={{
+                duration: CURTAIN_DURATION,
+                delay: EXIT_CURTAIN_1,
+                ease: POWER4_IN_OUT,
+              }}
+            >
+              {/* Sized to the viewport so the content holds still while the mask closes. */}
+              <div className='relative flex h-[100svh] w-full flex-col items-center justify-center'>
+                <motion.div
+                  className='text-champagne-400'
+                  style={{
+                    width: markSize,
+                    height: markSize,
+                    maxWidth: '62vw',
+                    maxHeight: '62vw',
+                  }}
+                  initial={
+                    reduced ? { opacity: 0 } : { opacity: 0, scale: 0.88 }
+                  }
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: LETTERS_IN, ease: EXPO_OUT }}
                 >
-                  <motion.span
-                    className='block'
-                    initial={{ y: reduced ? '0%' : '110%', opacity: 0 }}
-                    animate={{ y: '0%', opacity: 1 }}
+                  <MagnoliaMark size={markSize} className='h-full w-full' />
+                </motion.div>
+
+                <h1 className='font-display text-ivory mt-8 flex text-[clamp(3.2rem,5.6vw,5rem)] leading-[1.3] tracking-[0.01em]'>
+                  {letters.map((char, i) => (
+                    <span
+                      key={`${char}-${i}`}
+                      className='block overflow-hidden py-[0.06em]'
+                    >
+                      <motion.span
+                        className='block whitespace-pre'
+                        initial={reduced ? { opacity: 0 } : { y: '110%' }}
+                        animate={
+                          reduced
+                            ? { opacity: 1 }
+                            : { y: exiting ? '-110%' : '0%' }
+                        }
+                        transition={
+                          reduced
+                            ? { duration: 0.4 }
+                            : {
+                                duration: exiting ? LETTERS_OUT : LETTERS_IN,
+                                delay: i * STAGGER,
+                                ease: EXPO_OUT,
+                              }
+                        }
+                      >
+                        {char}
+                      </motion.span>
+                    </span>
+                  ))}
+                </h1>
+
+                <motion.p
+                  className='tracking-luxe text-champagne-100/70 mt-3 font-sans text-[0.5rem] font-light uppercase'
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: exiting && !reduced ? 0 : 1 }}
+                  transition={{
+                    duration: exiting ? 0.6 : 1.2,
+                    delay: exiting ? 0 : 0.6,
+                    ease: EXPO_OUT,
+                  }}
+                >
+                  {t.contact.kicker}
+                </motion.p>
+
+                {!reduced && (
+                  <motion.p
+                    aria-hidden
+                    className='font-display text-ivory/85 absolute bottom-[9svh] left-[7vw] text-[clamp(2.6rem,6vw,6.5rem)] leading-none tabular-nums'
+                    initial={{ opacity: 1 }}
+                    animate={{ opacity: exiting ? 0 : 1 }}
                     transition={{
-                      duration: 0.9,
-                      delay: ENTER_WORD + i * 0.06,
-                      ease: VR,
+                      duration: 0.5,
+                      delay: EXIT_COUNT_FADE,
+                      ease: POWER2_IN_OUT,
                     }}
                   >
-                    {word}
-                  </motion.span>
-                </span>
-              ))}
-            </h1>
+                    {percent}
+                    <span className='ml-[0.06em] align-super text-[0.44em]'>
+                      %
+                    </span>
+                  </motion.p>
+                )}
 
-            <motion.p
-              className='tracking-luxe text-champagne-100/70 mt-3 font-sans text-[0.5rem] font-light uppercase'
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: ENTER_KICKER, ease: VR }}
-            >
-              {t.contact.kicker}
-            </motion.p>
-
-            {/* line-draw — a rule that grows for the length of the hold. */}
-            <div className='bg-ivory/12 mt-7 h-px w-[min(34vw,15rem)] overflow-hidden'>
-              <motion.div
-                className='bg-champagne-300/80 h-full w-full origin-left'
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{
-                  duration: Math.max(0.6, dwell - ENTER_LINE),
-                  delay: ENTER_LINE,
-                  ease: 'linear',
-                }}
-              />
-            </div>
-
-            <p role='status' aria-live='polite' className='sr-only'>
-              {t.a11y.loading}
-            </p>
+                <p role='status' aria-live='polite' className='sr-only'>
+                  {t.a11y.loading}
+                </p>
+              </div>
+            </motion.div>
           </motion.div>
         </motion.div>
       )}

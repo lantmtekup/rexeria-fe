@@ -1,24 +1,19 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
-import {
-  motion,
-  useMotionValueEvent,
-  useReducedMotion,
-  useScroll,
-} from 'framer-motion';
-import { VR, Fv, V1, gT } from '@/lib/motion';
+import { useCallback, useEffect, useRef } from 'react';
+import { useReducedMotion } from 'framer-motion';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { siteConfig } from '@/lib/site-config';
 import { useLocale } from '@/components/shared/locale-provider';
 import { PanelBackground } from '@/components/shared/panel-background';
 import { CursorGlow } from '@/components/shared/cursor-glow';
-import { ScrollFrameSequence } from '@/components/shared/scroll-frame-sequence';
-import heroFrames from '@/lib/hero-frames.json';
-import { useSmoothProgress } from '@/components/shared/use-smooth-progress';
+import { useHeroFrames } from '@/components/shared/hero-frames';
+
+gsap.registerPlugin(ScrollTrigger);
 
 /**
- * Panel image data referenced by the hero (`P.hero`).
- * `tone` is only rendered when `src` is absent; the spec does not state a hero-specific
- * value, so the PanelBackground default gradient is replicated here.
+ * Panel image behind the canvas. It is the poster: what stands in for the film before the
+ * first frame is drawn, and what shows through if the sequence fails to load entirely.
  */
 const P = {
   hero: {
@@ -28,90 +23,208 @@ const P = {
   },
 } as const;
 
-const HERO_FRAMES = '/frames/hero';
+/**
+ * Scrub pacing, taken from `website-magnolia`: the section is pinned for five viewport heights
+ * and the film is mapped linearly across that. `scrub` is the catch-up time in seconds — the
+ * canvas eases toward the scroll position rather than snapping to it, which is what keeps a
+ * wheel notch from reading as a jump cut.
+ */
+const SCROLL_LENGTH = '+=500%';
+const SCRUB = 0.6;
 
 /**
- * Scrub pacing.
+ * Outro handoff.
  *
- * The film is 23.8 s. How much scrolling it costs decides whether a viewer can read the
- * footage or just sees it flash past. The useful unit is **pixels of scroll per second of
- * video**; scroll-driven film sits comfortably around 100–150 px/s, because one mouse-wheel
- * notch is ~100 px, so a notch should advance well under a second of footage.
- *
- * The original site uses a 260svh track, which at a 900 px viewport leaves 1440 px of travel;
- * the film occupies the first 80 % of it (1152 px) and so runs at 48 px/s — one wheel notch
- * jumps ~2 s of film. That is the "flies past, can't see anything" problem.
- *
- * 520svh gives 3780 px of travel, 3024 px of film, = 127 px/s (114 px/s on a 812 px phone,
- * 152 px/s on a 1080 px display). A wheel notch now advances ~0.8 s of footage.
+ * When the pin releases and the section starts to leave, the frame shrinks around its centre
+ * and takes on rounded corners, so the next section arrives around a card rather than the hero
+ * sliding off. The colour that appears around the shrinking card is the section's own
+ * background — set it to the top edge of whatever follows and the two read as continuous
+ * rather than as a seam.
  */
-const TRACK_CLASS = 'h-[520svh]';
+const OUTRO_SCALE = 0.72;
+const OUTRO_RADIUS = 32;
+/** Top edge of `HeritageSection` (`bg-charcoal-950`). */
+const OUTRO_BACKDROP = '#0b0908';
 
-/** Fraction of the track the film occupies; the remaining 20 % holds the closing frame. */
-const FILM_SPAN = 0.8;
+/** Progress at which the tagline starts to arrive over the closing frames. */
+const TAGLINE_START = 0.86;
 
 /**
- * Opening hold.
- *
- * The film opens on a title card — the mark on a near-black field — and that card is the first
- * thing anyone sees. Mapped straight through, it lasts only as long as its own ~1.5 s of
- * footage, so two wheel notches blow past it and the page appears to have shown nothing.
- *
- * The first 12 % of the track now pins the video at t=0, which parks the card for ~454 px of
- * scroll before the film starts moving. The film then runs over the remaining 0.12 → 0.8,
- * which is 108 px per second of footage: still inside the legible band.
+ * Cap the device pixel ratio at 2. Drawing a 1600 px frame onto a 3× canvas on a Retina
+ * display costs three times the fill rate and adds no detail the source has.
  */
-const FILM_START = 0.12;
+const MAX_DPR = 2;
 
-/**
- * Hero: scroll-scrubbed opening film (520svh) → static hero once the film reaches 80 %.
- *
- * The film plays as a canvas frame sequence rather than a scrubbed `<video>`, which is what the
- * rexerai "Hero - Scroll Video" block does first and only falls back from. See
- * components/shared/scroll-frame-sequence.tsx for why seeking was the thing making it stutter.
- */
-export function HeroSection() {
-  const reduced = useReducedMotion();
-  const [completed, setCompleted] = useState(false);
-  if (reduced) return <HeroStatic />;
-  if (completed) return <HeroStatic />;
-  return (
-    <HeroScrub
-      onComplete={() => {
-        setCompleted(true);
-        window.requestAnimationFrame(() => {
-          window.scrollTo(0, 0);
-          // Keep Lenis's internal position in step with the reset, otherwise the next wheel
-          // event eases back from where Lenis still thinks the page is.
-          window.dispatchEvent(new CustomEvent('magnolia:scroll-reset'));
-        });
-      }}
-    />
-  );
+/** Cover-fit, so a frame fills the canvas at any aspect ratio without distortion. */
+function drawCover(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  cw: number,
+  ch: number
+) {
+  const scale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
+  const dw = img.naturalWidth * scale;
+  const dh = img.naturalHeight * scale;
+  ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
 }
 
-function HeroScrub({ onComplete }: { onComplete: () => void }) {
-  const sectionRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ['start start', 'end end'],
-  });
-  const smoothed = useSmoothProgress(scrollYProgress);
+/**
+ * Hero: the opening film, scrubbed frame by frame on a canvas.
+ *
+ * One section, pinned. Earlier this was a tall scroll track that swapped itself for a separate
+ * static hero once the film ended, and reset the scroll position to do it — which meant the
+ * thing that scrolled away was never the film, so the handoff to the next section could not
+ * come out of the last frame. Pinning keeps a single element on screen for the whole run and
+ * lets it leave on its own terms.
+ *
+ * The film is a frame sequence rather than a scrubbed `<video>`. Seeking a video decodes every
+ * frame back to the previous keyframe, and the source ran 85 frames between keyframes at 4K,
+ * so one scroll step cost dozens of 4K decodes and the picture always arrived late. Frames are
+ * preloaded and decoded up front by `components/shared/hero-frames.tsx`; the work here is one
+ * `drawImage` per scroll frame.
+ */
+export function HeroSection() {
+  const { t } = useLocale();
+  const reduced = useReducedMotion() ?? false;
+  const { framesRef, done } = useHeroFrames();
 
-  // Hand off on the SMOOTHED value, not the raw one: if a fast flick pushed raw progress past
-  // the threshold the film would still be mid-glide, and the swap would cut it off unseen.
-  useMotionValueEvent(smoothed, 'change', v => {
-    if (v >= FILM_SPAN) onComplete();
-  });
+  const sectionRef = useRef<HTMLElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const taglineRef = useRef<HTMLParagraphElement>(null);
+
+  // Scrub progress lives outside React: it changes every frame and must not re-render.
+  const scrollState = useRef({ progress: 0 });
+  const lastDrawn = useRef(-1);
+
+  const draw = useCallback(
+    (progress: number, force = false) => {
+      const canvas = canvasRef.current;
+      const frames = framesRef.current;
+      if (!canvas || frames.length === 0) return;
+
+      const wanted = Math.round(
+        gsap.utils.clamp(0, 1, progress) * (frames.length - 1)
+      );
+      // A frame that failed to load steps back to the nearest one already in hand.
+      let index = wanted;
+      while (index > 0 && !frames[index]) index -= 1;
+      const img = frames[index];
+      if (!img) return;
+      if (!force && index === lastDrawn.current) return;
+
+      const ctx = canvas.getContext('2d', { alpha: false });
+      if (!ctx) return;
+      lastDrawn.current = index;
+      drawCover(ctx, img, canvas.width, canvas.height);
+    },
+    [framesRef]
+  );
+
+  // Canvas follows the section's box × DPR. A ResizeObserver rather than a `resize` listener,
+  // so the mobile address bar sliding in and out does not force a redraw of a section whose
+  // height is pinned anyway.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const section = sectionRef.current;
+    if (!canvas || !section || reduced) return;
+
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+      canvas.width = Math.round(section.clientWidth * dpr);
+      canvas.height = Math.round(section.clientHeight * dpr);
+      // The canvas is cleared by the resize, so the current frame has to be redrawn.
+      draw(scrollState.current.progress, true);
+    };
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, [draw, reduced]);
+
+  // Frames finished arriving → paint the current one, so the loader lifts onto the real image.
+  useEffect(() => {
+    if (done) draw(scrollState.current.progress, true);
+  }, [done, draw]);
+
+  useEffect(() => {
+    if (reduced) return;
+    const section = sectionRef.current;
+    const frame = frameRef.current;
+    const tagline = taglineRef.current;
+    if (!section || !frame) return;
+
+    const state = scrollState.current;
+
+    const ctx = gsap.context(() => {
+      const setTagline = tagline
+        ? gsap.quickSetter(tagline, 'opacity')
+        : () => undefined;
+      const setTaglineY = tagline
+        ? gsap.quickSetter(tagline, 'y', 'px')
+        : () => undefined;
+
+      gsap.to(state, {
+        progress: 1,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: section,
+          start: 'top top',
+          end: SCROLL_LENGTH,
+          pin: true,
+          scrub: SCRUB,
+          anticipatePin: 1,
+          refreshPriority: 1,
+        },
+        onUpdate: () => {
+          draw(state.progress);
+          // Scrubbed rather than tweened, so dragging back up takes the tagline away again.
+          const in_ = gsap.utils.clamp(
+            0,
+            1,
+            gsap.utils.normalize(TAGLINE_START, 1, state.progress)
+          );
+          setTagline(in_);
+          setTaglineY((1 - in_) * 18);
+        },
+      });
+
+      // Created after the pin trigger on purpose: ScrollTrigger then knows about the pinned
+      // distance and puts the section's 'bottom' where it actually ends up on the page.
+      gsap.fromTo(
+        frame,
+        { scale: 1, borderRadius: 0 },
+        {
+          scale: OUTRO_SCALE,
+          borderRadius: OUTRO_RADIUS,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: section,
+            start: 'bottom bottom',
+            end: 'bottom top',
+            scrub: true,
+          },
+        }
+      );
+    }, sectionRef);
+
+    return () => ctx.revert();
+  }, [draw, reduced]);
 
   return (
     <section
       id='top'
       ref={sectionRef}
       aria-label='The Magnolia opening film'
-      className={`relative ${TRACK_CLASS} bg-charcoal-950 snap-start`}
+      className='relative z-0 h-[100svh] min-h-[620px] w-full overflow-hidden'
+      style={{ backgroundColor: OUTRO_BACKDROP }}
     >
-      <div className='sticky top-0 h-[100svh] min-h-[620px] overflow-hidden'>
+      {/* The card that shrinks on the way out. `overflow-hidden` is what lets the radius bite,
+          and the scale lives here rather than on the canvas so the corners actually clip. */}
+      <div
+        ref={frameRef}
+        className='absolute inset-0 overflow-hidden will-change-transform'
+      >
         <PanelBackground
           src={P.hero.src}
           alt={P.hero.alt}
@@ -121,69 +234,25 @@ function HeroScrub({ onComplete }: { onComplete: () => void }) {
           scrim={false}
           layerClassName='scale-100'
         />
-        <div className='absolute inset-0 z-10'>
-          <ScrollFrameSequence
-            dir={HERO_FRAMES}
-            count={heroFrames.count}
-            width={heroFrames.width}
-            height={heroFrames.height}
-            scrollYProgress={smoothed}
-            getProgress={p =>
-              (Math.max(0, p) - FILM_START) / (FILM_SPAN - FILM_START)
-            }
-            className='pointer-events-none absolute inset-0 h-full w-full object-cover'
+
+        {!reduced && (
+          <canvas
+            ref={canvasRef}
+            aria-hidden
+            className='pointer-events-none absolute inset-0 z-10 h-full w-full'
           />
-        </div>
-        {siteConfig.cursorGlow === true && <CursorGlow />}
+        )}
+
+        <p
+          ref={taglineRef}
+          style={reduced ? undefined : { opacity: 0 }}
+          className='font-display text-ivory/85 pointer-events-none absolute inset-x-0 top-1/2 z-20 -translate-y-1/2 px-6 text-center text-[clamp(2.7rem,5.4vw,4.95rem)] leading-none tracking-[-0.005em]'
+        >
+          {t.hero.tagline}
+        </p>
+
+        {siteConfig.cursorGlow && <CursorGlow />}
       </div>
     </section>
-  );
-}
-
-function HeroStatic() {
-  const { t } = useLocale();
-
-  useEffect(() => {
-    window.dispatchEvent(
-      new CustomEvent('scroll-scrub-video-diagnostic', {
-        detail: {
-          event: 'mode-static-reduced-motion',
-          label: 'hero',
-          phase: 'static-reduced-motion',
-          attempt: 0,
-          isEligible: false,
-          visibility: document.visibilityState,
-        },
-      })
-    );
-  }, []);
-
-  return (
-    <motion.section
-      id='top'
-      whileInView={Fv}
-      viewport={gT}
-      transition={V1}
-      className='relative h-[100svh] min-h-[620px] snap-start overflow-hidden'
-    >
-      <PanelBackground
-        src={P.hero.src}
-        alt={P.hero.alt}
-        tone={P.hero.tone}
-        depth={0}
-        priority
-        scrim={false}
-        layerClassName='scale-100'
-      />
-      {siteConfig.cursorGlow && <CursorGlow />}
-      <motion.p
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.4, delay: 1.1, ease: VR }}
-        className='font-display text-ivory/85 pointer-events-none absolute inset-x-0 top-1/2 z-10 -translate-y-1/2 px-6 text-center text-[clamp(2.7rem,5.4vw,4.95rem)] leading-none tracking-[-0.005em]'
-      >
-        {t.hero.tagline}
-      </motion.p>
-    </motion.section>
   );
 }
