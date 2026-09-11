@@ -23,13 +23,13 @@ import { CurtainReveal } from './curtain-reveal';
  *
  * | | source | here |
  * |---|---|---|
- * | chip | `clamp(12px, 0.97cqi, 14px)`, padding 12, uppercase, on `WEST72_BROWN` | same, on `amber-700` |
+ * | chip | `clamp(12px, 0.97cqi, 14px)`, padding 12, uppercase, on `WEST72_BROWN` | same, on `clay-600` |
  * | title | `clamp(34px, 4.17cqi, 60px)`, line-height 0.92, weight 500, uppercase | same |
  * | body | `clamp(15px, 1.25cqi, 18px)`, line-height 1.56 | same |
  * | card | `padding: max(2.78cqi, 28px)`, copy `max-width: 22.15cqi` | same |
  *
  * Two deliberate departures. The source paints the card pure white with a `#763718` title; the
- * Magnolia equivalents are ivory and `amber-700` (#8a5418), which is within a shade of it and
+ * Magnolia equivalents are ivory and `clay-600` (#8a5418), which is within a shade of it and
  * keeps the page on its own palette. And the source uppercases the body too — that reads well
  * in English but Vietnamese set entirely in caps with diacritics is markedly harder to read, so
  * only the chip and the title are uppercased.
@@ -141,14 +141,14 @@ export const MediaPanelCard = memo(function MediaPanelCard({
     >
       {chip && (
         <span
-          className='font-display text-ivory w-fit bg-amber-700 leading-none font-medium uppercase'
+          className='font-display text-ivory bg-clay-600 w-fit leading-none font-medium uppercase'
           style={{ padding: 12, fontSize: 'clamp(11px, 0.97vw, 14px)' }}
         >
           {chip}
         </span>
       )}
       <h3
-        className='font-display mt-6 w-fit font-medium text-amber-700 uppercase'
+        className='font-display text-clay-600 mt-6 w-fit font-medium uppercase'
         style={{ fontSize: 'clamp(28px, 4.17vw, 60px)', lineHeight: 0.92 }}
       >
         {item.title}

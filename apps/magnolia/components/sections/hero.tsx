@@ -20,7 +20,7 @@ const P = {
   hero: {
     src: '/images/assets/hero/2cb5cde9e63f1f02d524186966868fc771df1cc8.webp',
     alt: 'The Magnolia hero background',
-    tone: 'from-amber-600 via-amber-700 to-charcoal-900',
+    tone: 'from-clay-500 via-clay-600 to-charcoal-900',
   },
 } as const;
 
@@ -296,7 +296,7 @@ export function HeroSection() {
           <p
             ref={sloganInnerRef}
             style={{ opacity: 0, transform: 'translateY(16px)' }}
-            className='font-display text-ivory/85 text-[clamp(1.05rem,2.05vw,1.95rem)] leading-none tracking-[0.015em] [text-shadow:0_2px_20px_rgb(0_0_0_/_0.5)]'
+            className='font-display text-ivory/85 text-[clamp(2.1rem,4.1vw,3.9rem)] leading-none tracking-[0.015em] [text-shadow:0_2px_20px_rgb(0_0_0_/_0.5)]'
           >
             {t.hero.tagline}
           </p>

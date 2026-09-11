@@ -63,7 +63,7 @@ export function HeritageSection() {
           <PanelBackground
             src='/images/assets/heritage/silhouette.webp'
             alt='Silhouette against the Magnolia façade at golden hour'
-            tone='from-amber-700 via-amber-800 to-charcoal-900'
+            tone='from-clay-600 via-clay-700 to-charcoal-900'
             depth={UQ.subtle}
             scrim={false}
             layerClassName='scale-[1.04]'

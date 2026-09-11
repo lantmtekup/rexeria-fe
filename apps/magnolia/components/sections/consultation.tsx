@@ -92,7 +92,7 @@ export function ConsultationSection() {
       id='consultation'
       ref={sectionRef}
       aria-labelledby='consultation-title'
-      className='bg-charcoal-night text-ivory relative flex min-h-[100svh] snap-start flex-col overflow-x-hidden px-5 pt-20 pb-8 sm:px-8 sm:pt-24 sm:pb-10 md:px-12 md:pt-28 md:pb-12'
+      className='bg-charcoal-950 text-ivory relative flex min-h-[100svh] snap-start flex-col overflow-x-hidden px-5 pt-20 pb-8 sm:px-8 sm:pt-24 sm:pb-10 md:px-12 md:pt-28 md:pb-12'
     >
       <div
         aria-hidden

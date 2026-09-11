@@ -124,7 +124,7 @@ export function UnitsSection() {
     <section
       id='units'
       aria-labelledby='units-heading'
-      className='text-ivory relative bg-black'
+      className='text-ivory bg-charcoal-950 relative'
     >
       <div className='mx-auto max-w-[1440px] px-8 pt-24 md:pt-28'>
         <motion.h2

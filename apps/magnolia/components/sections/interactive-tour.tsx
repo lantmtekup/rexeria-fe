@@ -45,7 +45,7 @@ export function InteractiveTourSection() {
       id='interactive-tour'
       ref={ref}
       aria-labelledby='interactive-tour-heading'
-      className='relative h-[100svh] snap-start overflow-hidden bg-black px-10 pt-[120px] pb-16 sm:px-10 sm:pt-32 md:px-10 md:pt-28 md:pb-16'
+      className='bg-charcoal-950 relative h-[100svh] snap-start overflow-hidden px-10 pt-[120px] pb-16 sm:px-10 sm:pt-32 md:px-10 md:pt-28 md:pb-16'
     >
       <div className='flex h-full flex-col'>
         <div className='flex flex-wrap items-end justify-between gap-x-8 gap-y-4'>
@@ -58,7 +58,7 @@ export function InteractiveTourSection() {
         </div>
         <div
           aria-busy={status === 'loading'}
-          className='bg-charcoal-night relative mt-7 min-h-0 flex-1 overflow-hidden rounded-[18px] md:mt-8'
+          className='bg-charcoal-950 relative mt-7 min-h-0 flex-1 overflow-hidden rounded-[18px] md:mt-8'
         >
           <img
             src={previewSrc}
@@ -95,7 +95,7 @@ export function InteractiveTourSection() {
           {status === 'ready' && (
             <div
               aria-hidden
-              className='bg-charcoal-night pointer-events-none absolute top-0 right-0 z-[15] h-[clamp(44px,4.6vw,62px)] w-[clamp(150px,15vw,230px)] rounded-bl-[14px]'
+              className='bg-charcoal-950 pointer-events-none absolute top-0 right-0 z-[15] h-[clamp(44px,4.6vw,62px)] w-[clamp(150px,15vw,230px)] rounded-bl-[14px]'
             />
           )}
           {status === 'dormant' && (

@@ -176,9 +176,9 @@ export function GraceSection() {
     <section
       id='grace'
       ref={ref}
-      className='text-ivory relative h-[300vh] snap-start bg-black'
+      className='text-ivory bg-charcoal-950 relative h-[300vh] snap-start'
     >
-      <div className='sticky top-0 h-[100svh] overflow-hidden bg-black'>
+      <div className='bg-charcoal-950 sticky top-0 h-[100svh] overflow-hidden'>
         {frames.map((frame, i) => (
           <GraceImage
             key={frame.image}
@@ -192,12 +192,12 @@ export function GraceSection() {
         <motion.div
           aria-hidden
           style={{ opacity: reduced ? 0 : endFade }}
-          className='pointer-events-none absolute inset-0 z-10 bg-black'
+          className='bg-charcoal-950 pointer-events-none absolute inset-0 z-10'
         />
         <motion.div
           aria-hidden
           style={{ opacity: reduced ? 0.5 : entranceVeil }}
-          className='pointer-events-none absolute inset-0 z-30 bg-black'
+          className='bg-charcoal-950 pointer-events-none absolute inset-0 z-30'
         />
         <div className='relative z-40 flex h-full items-center justify-center px-6 text-center'>
           {frames.map((frame, i) => (

@@ -55,7 +55,7 @@ export type PanelBackgroundProps = {
 export function PanelBackground({
   src,
   alt = '',
-  tone = 'from-amber-600 via-amber-700 to-charcoal-900',
+  tone = 'from-clay-500 via-clay-600 to-charcoal-900',
   depth = UQ.base,
   priority = false,
   scrim = true,
