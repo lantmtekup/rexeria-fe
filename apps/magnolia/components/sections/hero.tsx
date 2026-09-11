@@ -46,9 +46,6 @@ const OUTRO_RADIUS = 32;
 /** Top edge of `HeritageSection` (`bg-charcoal-950`). */
 const OUTRO_BACKDROP = '#0b0908';
 
-/** Progress at which the tagline starts to arrive over the closing frames. */
-const TAGLINE_START = 0.86;
-
 /**
  * Cap the device pixel ratio at 2. Drawing a 1600 px frame onto a 3× canvas on a Retina
  * display costs three times the fill rate and adds no detail the source has.
@@ -91,7 +88,6 @@ export function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const taglineRef = useRef<HTMLParagraphElement>(null);
 
   // Scrub progress lives outside React: it changes every frame and must not re-render.
   const scrollState = useRef({ progress: 0 });
@@ -151,19 +147,11 @@ export function HeroSection() {
     if (reduced) return;
     const section = sectionRef.current;
     const frame = frameRef.current;
-    const tagline = taglineRef.current;
     if (!section || !frame) return;
 
     const state = scrollState.current;
 
     const ctx = gsap.context(() => {
-      const setTagline = tagline
-        ? gsap.quickSetter(tagline, 'opacity')
-        : () => undefined;
-      const setTaglineY = tagline
-        ? gsap.quickSetter(tagline, 'y', 'px')
-        : () => undefined;
-
       gsap.to(state, {
         progress: 1,
         ease: 'none',
@@ -176,17 +164,7 @@ export function HeroSection() {
           anticipatePin: 1,
           refreshPriority: 1,
         },
-        onUpdate: () => {
-          draw(state.progress);
-          // Scrubbed rather than tweened, so dragging back up takes the tagline away again.
-          const in_ = gsap.utils.clamp(
-            0,
-            1,
-            gsap.utils.normalize(TAGLINE_START, 1, state.progress)
-          );
-          setTagline(in_);
-          setTaglineY((1 - in_) * 18);
-        },
+        onUpdate: () => draw(state.progress),
       });
 
       // Created after the pin trigger on purpose: ScrollTrigger then knows about the pinned
@@ -243,13 +221,17 @@ export function HeroSection() {
           />
         )}
 
-        <p
-          ref={taglineRef}
-          style={reduced ? undefined : { opacity: 0 }}
-          className='font-display text-ivory/85 pointer-events-none absolute inset-x-0 top-1/2 z-20 -translate-y-1/2 px-6 text-center text-[clamp(2.7rem,5.4vw,4.95rem)] leading-none tracking-[-0.005em]'
-        >
-          {t.hero.tagline}
-        </p>
+        {/*
+         * Only when there is no film. The tagline is lettered into the closing frames of the
+         * sequence itself, so drawing it again here printed a second copy over the first,
+         * offset and in a different face. Reduced motion never gets those frames — it gets the
+         * poster — so there the words still have to be said.
+         */}
+        {reduced && (
+          <p className='font-display text-ivory/85 pointer-events-none absolute inset-x-0 top-1/2 z-20 -translate-y-1/2 px-6 text-center text-[clamp(2.7rem,5.4vw,4.95rem)] leading-none tracking-[-0.005em]'>
+            {t.hero.tagline}
+          </p>
+        )}
 
         {siteConfig.cursorGlow && <CursorGlow />}
       </div>
