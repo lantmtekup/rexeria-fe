@@ -31,16 +31,42 @@ import { useSmoothProgress } from './use-smooth-progress';
  * | fade-out | `scale × 0.35`, `autoAlpha 0`, duration 0.6 | same |
  * | lead-in | `HOLD_START = 0.12` | same |
  * | tail | `HOLD_END = 0.25` | same |
- * | track | `400dvh` desktop, `300dvh` mobile | same |
+ * | track | `400dvh` desktop, `300dvh` mobile | grown, see `HOLD` |
  *
  * The source's separate time-based entrance (1.18 → 1 over 1.8 s) is left out: it exists to
  * cover a hero landing cold at the top of a page, and this section is arrived at mid-scroll.
+ *
+ * One departure that matters. In the source, a picture begins its own shrink at the instant
+ * the one in front of it reaches frame size — while that one is still on screen fading out. So
+ * every picture after the first was already shrinking by the time anything else cleared it: it
+ * never had the screen to itself. Noon was never seen full-bleed, only on its way to being
+ * small. Each picture now waits for the one in front to finish leaving and then holds
+ * full-bleed for `HOLD` before it starts to go, which is the beat the sequence was missing.
  */
 const HOLD_START = 0.12;
 const HOLD_END = 0.25;
 const FRAME_RADIUS = 24;
 const SHRINK = 0.4;
 const FADE_SCALE = 0.35;
+
+/** Phase A, the shrink from full-bleed to frame, is the unit beat. */
+const SHRINK_BEATS = 1;
+/** Phase B: the framed picture keeps shrinking and fades out. */
+const FADE_BEATS = 0.6;
+/** Full-bleed dwell after the picture in front has gone and before this one starts to leave. */
+const HOLD = 0.6;
+/** One picture's whole turn on screen. */
+const STEP = SHRINK_BEATS + FADE_BEATS + HOLD;
+
+/**
+ * Scroll length of one beat.
+ *
+ * In screen heights, so the shrink always costs the same fraction of a screen to scroll
+ * through whatever the window size. 76 is the rate the section already ran at (300 svh of
+ * travel over 3.97 beats) — the track gets longer because there are more beats in it now, not
+ * because anything moves at a different speed.
+ */
+const BEAT_SVH = 76;
 
 export type StackedItem = {
   key: string;
@@ -49,8 +75,12 @@ export type StackedItem = {
   label: string;
 };
 
-/** Timeline length in the source's units: last Phase B ends at (n−1) + HOLD_START + 0.6. */
-const totalBeats = (n: number) => n - 1 + HOLD_START + 0.6 + HOLD_END;
+/**
+ * Timeline length. Every picture but the last takes a full `STEP`; the last one only holds,
+ * since it closes the section full-bleed rather than shrinking away.
+ */
+const totalBeats = (n: number) =>
+  HOLD_START + Math.max(0, n - 2) * STEP + SHRINK_BEATS + FADE_BEATS + HOLD_END;
 
 function Layer({
   item,
@@ -68,10 +98,11 @@ function Layer({
   const T = totalBeats(count);
   const isLast = index === count - 1;
 
-  // Phase A: full-bleed → centred rounded frame. Phase B: keep shrinking and fade.
-  const aStart = (index + HOLD_START) / T;
-  const aEnd = (index + 1 + HOLD_START) / T;
-  const bEnd = (index + 1 + HOLD_START + 0.6) / T;
+  // Phase A: full-bleed → centred rounded frame. Phase B: keep shrinking and fade. Everything
+  // before `aStart` is this picture's full-bleed hold, which is simply the absence of a tween.
+  const aStart = (HOLD_START + index * STEP) / T;
+  const aEnd = aStart + SHRINK_BEATS / T;
+  const bEnd = aEnd + FADE_BEATS / T;
 
   const range = isLast ? [0, 1] : [aStart, aEnd, bEnd];
   const scale = useTransform(
@@ -145,9 +176,10 @@ export function StackedReveal({
     offset: ['start start', 'end end'],
   });
   const p = useSmoothProgress(raw);
+  const track = `${Math.round(100 + totalBeats(items.length) * BEAT_SVH)}svh`;
 
   return (
-    <div ref={innerRef} style={{ height: reduced ? undefined : '400svh' }}>
+    <div ref={innerRef} style={{ height: reduced ? undefined : track }}>
       <div className='bg-charcoal-950 sticky top-0 h-[100svh] min-h-[620px] overflow-hidden'>
         {items.map((item, i) => (
           <Layer
