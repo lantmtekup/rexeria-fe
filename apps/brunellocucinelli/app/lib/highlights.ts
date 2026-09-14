@@ -149,4 +149,4 @@ export function readTopic(dir: string, title: string): Topic {
   };
 }
 
-const PLACEHOLDER = '/00-ui/card_placeholder.jpeg';
+const PLACEHOLDER = '/00-ui/card_placeholder.png';

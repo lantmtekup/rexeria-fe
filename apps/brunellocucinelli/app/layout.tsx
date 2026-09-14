@@ -34,8 +34,10 @@ const fell = IM_Fell_Great_Primer({
 });
 
 export const metadata: Metadata = {
-  title: 'The Westly',
-  description: 'The Westly app.',
+  title: 'Engraved scroll — bản dựng tham chiếu',
+  description:
+    'Bản dựng tham chiếu nội bộ của trải nghiệm scroll tranh khắc. Không dùng cho môi trường công khai.',
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({
