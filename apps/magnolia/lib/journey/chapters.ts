@@ -10,11 +10,14 @@ import type { PanelConfig } from './panel-types';
  * Thứ tự mảng = thứ tự vẽ. `z` > 0 trôi chậm hơn camera (xa), < 0 nhanh hơn
  * (gần). Toạ độ đặt lớp đọc từ tên file, không khai trong code.
  *
- * `pier` là điểm mấu chốt và không hiển nhiên: nó nằm đúng trên đường ghép
- * giữa hai render VÀ ở z = 0, cùng tốc độ với nền. Lớp tiền cảnh (z < 0)
- * trôi lệch so với nền nên chỉ che được đường ghép ở đúng một khoảnh khắc.
- * Thân trụ che đường cắt; dải bóng loang 360 px mỗi bên mới là thứ xoá được
- * bậc sáng giữa hai render lệch tông.
+ * Trụ ở đường ghép là điểm mấu chốt và không hiển nhiên: nó phải ở z = 0,
+ * cùng tốc độ với nền. Lớp tiền cảnh (z < 0) trôi lệch so với nền nên chỉ che
+ * được đường ghép ở đúng một khoảnh khắc.
+ *
+ * Mỗi đường ghép dùng hai lớp: `pier` là dải bóng loang 360 px mỗi bên — thứ
+ * xoá bậc sáng giữa hai render lệch tông; `stone` là trụ travertine có nẹp
+ * đồng thật, che đúng đường cắt. Lớp `fg` cũng là trụ đó nhưng đã nhoè như
+ * vật sát ống kính trong một cú lia.
  */
 
 /** Sảnh đón — canvas 5905×1080, đường ghép tại x 1963 và 3910. */
@@ -30,8 +33,13 @@ export const ARRIVAL_CHAPTER: PanelConfig = {
     { match: 'arrival-base-02', z: 0 },
     { match: 'arrival-base-03', z: 0 },
 
+    // Hai lớp ở mỗi đường ghép, cùng z = 0:
+    //   pier  — dải bóng loang, xoá bậc sáng giữa hai render lệch tông;
+    //   stone — trụ travertine + nẹp đồng thật, che đúng đường cắt.
     { match: 'arrival-pier-01', z: 0 },
     { match: 'arrival-pier-02', z: 0 },
+    { match: 'arrival-stone-01', z: 0 },
+    { match: 'arrival-stone-02', z: 0 },
 
     { match: 'arrival-haze-01', z: 0.8, blend: 'screen' },
     { match: 'arrival-haze-02', z: 0.8, blend: 'screen' },
@@ -67,6 +75,9 @@ export const DAY_CHAPTER: PanelConfig = {
     { match: 'day-pier-01', z: 0 },
     { match: 'day-pier-02', z: 0 },
     { match: 'day-pier-03', z: 0 },
+    { match: 'day-stone-01', z: 0 },
+    { match: 'day-stone-02', z: 0 },
+    { match: 'day-stone-03', z: 0 },
 
     { match: 'day-haze-01', z: 0.8, blend: 'screen' },
     { match: 'day-haze-02', z: 0.8, blend: 'screen' },

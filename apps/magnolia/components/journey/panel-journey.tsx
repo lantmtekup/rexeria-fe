@@ -87,12 +87,13 @@ export default function PanelJourney({
       const H = sticky.offsetHeight;
       m.H = H;
       m.S = layoutItems(els, items, W, H);
-      // Section lấn lên section trước 1 màn nên đỉnh section = đáy section
-      // trước − H. Lướt bắt đầu đúng lúc cảnh vừa hiện xong.
-      m.fade =
-        H -
-        (prev.offsetHeight - contentBottom(prev)) +
-        (JOURNEY.show - JOURNEY.revealAt) * H;
+      // KHÔNG lấn lên section trước nữa. Trang mẫu cho chương `-mt-100svh`
+      // vì section nội dung phía trên nó luôn có nội dung phủ kín một màn
+      // cuối. Ở đây section trước (Heritage / Residences) kết thúc bằng
+      // khoảng rỗng nền than, nên trong 1 màn đầu — lúc `sticky` chưa dính —
+      // cảnh nằm ở nửa dưới màn và phía trên là một dải đen lớn.
+      // Bỏ lấn: cảnh dính `sticky` ngay, và chỉ chừa đúng đoạn hiện dần.
+      m.fade = JOURNEY.show * H;
       m.pan = panel.pan.x * 0.0006 * H;
       section.style.height = `${H + m.fade + m.pan + JOURNEY.hold * H}px`;
       draw();
@@ -198,7 +199,7 @@ export default function PanelJourney({
     <section
       ref={sectionRef}
       data-panel={panel.id}
-      className='relative z-0 -mt-[100svh] h-[500svh]'
+      className='relative z-0 h-[500svh]'
     >
       <div
         data-panel-sticky

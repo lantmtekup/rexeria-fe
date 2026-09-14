@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef } from 'react';
 import { gsap, ScrollTrigger } from '@/lib/journey/motion';
 import { useLocale } from '@/components/shared/locale-provider';
 import { openPlace } from '@/lib/journey/overlay-store';
+import { HouseCard } from '@/components/journey/house-card';
 
 /**
  * Căn hộ — nội dung giữ nguyên của `units.tsx`; đổi cách trình bày.
@@ -140,164 +141,113 @@ export function ResidencesGrid() {
     return () => mm.revert();
   }, []);
 
+  const townhouseBody =
+    locale === 'vi'
+      ? 'Bộ sưu tập giới hạn: nhà phố thấp tầng trong lòng dự án, có sân riêng và lối vào riêng — số lượng đếm trên đầu ngón tay.'
+      : 'A limited edition: low-rise townhouses inside the development, each with its own courtyard and private entrance — a handful in total.';
+
   return (
     <section
       id='units'
       ref={ref}
       aria-labelledby='units-heading'
-      className='bg-charcoal-950 relative px-5 pt-[14svh] pb-[20svh] md:px-8'
+      className='bg-charcoal-950 relative'
     >
-      <h2
-        id='units-heading'
-        data-heading
-        className='font-display text-ivory mx-auto max-w-[75.5rem] text-[clamp(1.88rem,3.32vw,3.48rem)] leading-[1.05] tracking-[-0.015em]'
-      >
-        {locale === 'vi' ? (
-          <>
-            Không gian sống được
-            <br />
-            tinh chỉnh
-          </>
-        ) : (
-          t.units.heading
-        )}
-      </h2>
-
-      {/* Card nổi bật — The Townhouse. */}
-      <div
-        data-featured
-        className='mx-auto mt-16 will-change-transform md:mt-20'
-        style={{ width: 'min(52.875rem, 100%)' }}
-      >
-        <article
-          data-featured-inner
-          role='button'
-          tabIndex={0}
-          aria-label={t.units.hero.title}
-          onClick={() =>
-            openPlace({
-              title: t.units.hero.title,
-              body:
-                locale === 'vi'
-                  ? 'Bộ sưu tập giới hạn: nhà phố thấp tầng trong lòng dự án, có sân riêng và lối vào riêng — số lượng đếm trên đầu ngón tay.'
-                  : 'A limited edition: low-rise townhouses inside the development, each with its own courtyard and private entrance — a handful in total.',
-              src: TOWNHOUSE,
-            })
-          }
-          onKeyDown={e => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              openPlace({
-                title: t.units.hero.title,
-                body:
-                  locale === 'vi'
-                    ? 'Bộ sưu tập giới hạn: nhà phố thấp tầng trong lòng dự án, có sân riêng và lối vào riêng.'
-                    : 'A limited edition: low-rise townhouses inside the development, each with its own courtyard and private entrance.',
-                src: TOWNHOUSE,
-              });
-            }
-          }}
-          className='border-charcoal-700 bg-charcoal-900 group block cursor-pointer border'
+      <div className='mx-auto max-w-[1440px] px-5 pt-[14svh] pb-[22svh] md:px-8'>
+        <h2
+          id='units-heading'
+          data-heading
+          className='font-display text-ivory max-w-[36rem] text-[clamp(1.88rem,3.32vw,3.48rem)] leading-[1.05] tracking-[-0.015em]'
         >
-          <span className='relative block aspect-[3200/2133] w-full overflow-hidden'>
-            <Image
+          {locale === 'vi' ? (
+            <>
+              Không gian sống được
+              <br />
+              tinh chỉnh
+            </>
+          ) : (
+            t.units.heading
+          )}
+        </h2>
+
+        {/* Card nổi bật — The Townhouse, dùng cơ chế trồi lên của trang mẫu. */}
+        <div data-featured className='mt-16 will-change-transform md:mt-24'>
+          <div data-featured-inner>
+            <HouseCard
               src={TOWNHOUSE}
-              alt={t.units.hero.title}
-              fill
-              sizes='(max-width: 767px) 100vw, 846px'
-              className='ease-luxe object-cover transition-transform duration-700 group-hover:scale-[1.03]'
-            />
-          </span>
-          <span className='flex flex-col items-center gap-3 px-6 py-8 text-center'>
-            <span className='text-champagne-400 tracking-luxe text-[10px] uppercase'>
-              {t.units.hero.eyebrow}
-            </span>
-            <span className='font-display text-ivory text-[clamp(1.6rem,2.4vw,2.2rem)] leading-tight'>
-              {t.units.hero.title}
-            </span>
-            <span className='text-champagne-400 tracking-luxe text-[10.5px] uppercase group-hover:underline'>
-              {t.units.hero.explore}
-            </span>
-          </span>
-        </article>
-      </div>
-
-      {/* Câu chốt hai dòng — `t.units.divider`. */}
-      <p
-        data-heading
-        className='font-display text-ivory/85 mx-auto mt-24 max-w-[40rem] text-center text-[clamp(1.6rem,2.8vw,2.6rem)] leading-[1.24] italic md:mt-32'
-      >
-        {t.units.divider[0]}
-        <br />
-        {t.units.divider[1]}
-      </p>
-
-      {/* Ba loại căn. */}
-      <ul className='mx-auto mt-20 flex max-w-[75.5rem] flex-wrap justify-center gap-4 md:mt-28'>
-        {t.units.types.map(({ title }) => (
-          <li
-            key={title}
-            data-card
-            className='border-charcoal-700 bg-charcoal-900 flex w-full flex-col border sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)]'
-          >
-            <button
-              type='button'
-              onClick={() =>
+              title={t.units.hero.title}
+              body={townhouseBody}
+              chip={t.units.hero.eyebrow}
+              cta={t.units.hero.explore}
+              aspect='3200 / 1500'
+              eager
+              onOpen={() =>
                 openPlace({
-                  title,
-                  body: UNIT_BODY[locale][title] ?? '',
-                  src: UNIT_CARDS[title],
+                  title: t.units.hero.title,
+                  body: townhouseBody,
+                  src: TOWNHOUSE,
                 })
               }
-              className='group flex h-full w-full flex-col text-left'
-            >
-              <span className='relative block aspect-[1400/933] w-full overflow-hidden'>
-                <Image
-                  src={UNIT_CARDS[title]}
-                  alt={title}
-                  fill
-                  sizes='(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 392px'
-                  className='ease-luxe object-cover transition-transform duration-700 group-hover:scale-[1.04]'
-                />
-              </span>
-              <span className='flex flex-1 flex-col gap-2 px-7 py-7'>
-                <span className='font-display text-ivory text-[22px] leading-tight'>
-                  {title}
-                </span>
-                <span className='text-champagne-50/60 text-[13px] leading-[1.6]'>
-                  {UNIT_BODY[locale][title]}
-                </span>
-                <span className='text-champagne-400 tracking-luxe mt-3 text-[10.5px] uppercase group-hover:underline'>
-                  {t.units.explore}
-                </span>
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      {/* Dải ba ảnh dọc — giữ nhịp lệch tầng của ImageStagger cũ. */}
-      <div className='mx-auto mt-24 grid max-w-[75.5rem] grid-cols-1 gap-4 sm:grid-cols-3 md:mt-32'>
-        {STRIPS.map(({ src, aspect }, i) => (
-          <div
-            key={src}
-            data-card
-            className={i === 1 ? 'sm:mt-20' : i === 2 ? 'sm:mt-10' : ''}
-          >
-            <span
-              className='relative block w-full overflow-hidden'
-              style={{ aspectRatio: aspect }}
-            >
-              <Image
-                src={src}
-                alt={t.units.divider.join(' · ')}
-                fill
-                sizes='(max-width: 639px) 100vw, 33vw'
-                className='object-cover'
-              />
-            </span>
+            />
           </div>
-        ))}
+        </div>
+
+        {/* Câu chốt hai dòng — `t.units.divider`. */}
+        <p
+          data-heading
+          className='font-display text-ivory/85 mx-auto mt-28 max-w-[40rem] text-center text-[clamp(1.6rem,2.8vw,2.6rem)] leading-[1.24] italic md:mt-36'
+        >
+          {t.units.divider[0]}
+          <br />
+          {t.units.divider[1]}
+        </p>
+
+        {/* Ba loại căn. */}
+        <ul className='mt-20 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 md:mt-28'>
+          {t.units.types.map(({ title }) => (
+            <li key={title} data-card>
+              <HouseCard
+                src={UNIT_CARDS[title]}
+                title={title}
+                body={UNIT_BODY[locale][title]}
+                cta={t.units.explore}
+                aspect='1400 / 933'
+                onOpen={() =>
+                  openPlace({
+                    title,
+                    body: UNIT_BODY[locale][title] ?? '',
+                    src: UNIT_CARDS[title],
+                  })
+                }
+              />
+            </li>
+          ))}
+        </ul>
+
+        {/* Dải ba ảnh dọc — giữ nhịp lệch tầng của ImageStagger cũ. */}
+        <div className='mt-28 grid grid-cols-1 gap-5 sm:grid-cols-3 md:mt-36'>
+          {STRIPS.map(({ src, aspect }, i) => (
+            <div
+              key={src}
+              data-card
+              className={i === 1 ? 'sm:mt-24' : i === 2 ? 'sm:mt-12' : ''}
+            >
+              <span
+                className='relative block w-full overflow-hidden'
+                style={{ aspectRatio: aspect }}
+              >
+                <Image
+                  src={src}
+                  alt={t.units.divider.join(' \u00b7 ')}
+                  fill
+                  sizes='(max-width: 639px) 100vw, 33vw'
+                  className='object-cover'
+                />
+                <span aria-hidden className='bg-panel-scrim absolute inset-0' />
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

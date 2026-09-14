@@ -1,9 +1,9 @@
 'use client';
-import Image from 'next/image';
 import { useLayoutEffect, useRef } from 'react';
 import { gsap, ScrollTrigger } from '@/lib/journey/motion';
 import { useLocale } from '@/components/shared/locale-provider';
 import { openPlace } from '@/lib/journey/overlay-store';
+import { HouseCard } from '@/components/journey/house-card';
 
 /**
  * Năm tiện ích — nội dung và link tour 360° giữ nguyên của
@@ -83,63 +83,40 @@ export function AmenitiesGrid() {
       id='amenities'
       ref={ref}
       aria-label={t.amenities.eyebrow}
-      className='bg-charcoal-950 relative z-10 -mt-[100svh] px-5 pt-[22svh] pb-[26svh] md:px-8'
+      className='bg-charcoal-950 relative z-10 -mt-[100svh]'
     >
-      <p className='text-champagne-400 text-center text-[10.5px] tracking-luxe uppercase md:text-[11.5px]'>
-        {t.amenities.eyebrow}
-      </p>
-      <h2
-        data-heading
-        className='font-display text-ivory mx-auto mt-6 mb-14 max-w-[44rem] text-center text-[clamp(2.1rem,3.4vw,3.4rem)] leading-[1.1] text-balance md:mb-20'
-      >
-        {locale === 'vi'
-          ? 'Năm nơi trên cùng một hành trình'
-          : 'Five places on one journey'}
-      </h2>
+      <div className='mx-auto max-w-[1440px] px-5 pt-[20svh] pb-[24svh] md:px-8'>
+        <h2
+          data-heading
+          className='font-display text-ivory max-w-[36rem] text-[clamp(1.88rem,3.32vw,3.48rem)] leading-[1.05] tracking-[-0.015em]'
+        >
+          {locale === 'vi'
+            ? 'Năm nơi trên cùng một hành trình'
+            : 'Five places on one journey'}
+        </h2>
 
-      <ul className='mx-auto flex max-w-[75.5rem] flex-wrap justify-center gap-4'>
-        {t.amenities.items.map((item, i) => (
-          <li
-            key={item.title}
-            data-card
-            className='border-charcoal-700 bg-charcoal-900 flex w-full flex-col border sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)]'
-          >
-            <button
-              type='button'
-              onClick={() =>
-                openPlace({
-                  title: item.title,
-                  body: item.body,
-                  src: CARDS[i],
-                  tour: TOURS[i],
-                })
-              }
-              className='group flex h-full w-full flex-col text-left'
-            >
-              <span className='relative block aspect-[1176/936] w-full overflow-hidden'>
-                <Image
-                  src={CARDS[i]}
-                  alt={item.title}
-                  fill
-                  sizes='(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 392px'
-                  className='object-cover transition-transform duration-700 ease-luxe group-hover:scale-[1.04]'
-                />
-              </span>
-              <span className='flex flex-1 flex-col gap-2 px-7 py-7'>
-                <span className='font-display text-ivory text-[22px] leading-tight'>
-                  {item.title}
-                </span>
-                <span className='text-champagne-50/60 text-[13px] leading-[1.6]'>
-                  {item.body}
-                </span>
-                <span className='text-champagne-400 mt-3 text-[10.5px] tracking-luxe uppercase group-hover:underline'>
-                  {t.amenities.explore}
-                </span>
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+        <ul className='mt-16 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 md:mt-24'>
+          {t.amenities.items.map((item, i) => (
+            <li key={item.title} data-card>
+              <HouseCard
+                src={CARDS[i]}
+                title={item.title}
+                body={item.body}
+                chip={t.amenities.eyebrow}
+                cta={t.amenities.explore}
+                onOpen={() =>
+                  openPlace({
+                    title: item.title,
+                    body: item.body,
+                    src: CARDS[i],
+                    tour: TOURS[i],
+                  })
+                }
+              />
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }
