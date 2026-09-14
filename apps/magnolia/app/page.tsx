@@ -3,8 +3,8 @@ import { HeroSection } from '@/components/sections/hero';
 import { HeritageSection } from '@/components/sections/heritage';
 import { JourneyChapter } from '@/components/journey/journey-chapter';
 import { AmenitiesGrid } from '@/components/sections/amenities-grid';
-import { InteractiveTourSection } from '@/components/sections/interactive-tour';
-import { UnitsSection } from '@/components/sections/units';
+import { TourFrame } from '@/components/sections/tour-frame';
+import { ResidencesGrid } from '@/components/sections/residences-grid';
 import { GalleryIntro } from '@/components/sections/gallery';
 import { GraceSection } from '@/components/sections/grace';
 import { ConsultationSection } from '@/components/sections/consultation';
@@ -34,8 +34,9 @@ import {
  * sau nó mang `-mt-100svh` nên TRỒI LÊN ĐÈ lên cảnh còn đang ghim, và cảnh tự
  * mờ đi theo. Đó là thứ làm cả trang đọc ra một mạch thay vì từng section.
  *
- * `horizontal-slide.tsx` và `GallerySection` không còn được dùng nhưng vẫn
- * nằm trong repo để còn đối chiếu được với bản trước.
+ * `horizontal-slide.tsx`, `units.tsx`, `interactive-tour.tsx` và
+ * `GallerySection` không còn được dùng
+ * nhưng vẫn nằm trong repo để còn đối chiếu được với bản trước.
  */
 export default function Page() {
   return (
@@ -59,9 +60,9 @@ export default function Page() {
       />
       <AmenitiesGrid />
 
-      <InteractiveTourSection />
+      <TourFrame />
       <div className='relative z-10'>
-        <UnitsSection />
+        <ResidencesGrid />
       </div>
 
       <JourneyChapter

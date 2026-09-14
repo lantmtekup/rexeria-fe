@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { useLayoutEffect, useRef } from 'react';
 import { gsap, ScrollTrigger } from '@/lib/journey/motion';
 import { useLocale } from '@/components/shared/locale-provider';
+import { openPlace } from '@/lib/journey/overlay-store';
 
 /**
  * Năm tiện ích — nội dung và link tour 360° giữ nguyên của
@@ -103,11 +104,17 @@ export function AmenitiesGrid() {
             data-card
             className='border-charcoal-700 bg-charcoal-900 flex w-full flex-col border sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)]'
           >
-            <a
-              href={TOURS[i]}
-              target='_blank'
-              rel='noreferrer'
-              className='group flex h-full flex-col'
+            <button
+              type='button'
+              onClick={() =>
+                openPlace({
+                  title: item.title,
+                  body: item.body,
+                  src: CARDS[i],
+                  tour: TOURS[i],
+                })
+              }
+              className='group flex h-full w-full flex-col text-left'
             >
               <span className='relative block aspect-[1176/936] w-full overflow-hidden'>
                 <Image
@@ -129,7 +136,7 @@ export function AmenitiesGrid() {
                   {t.amenities.explore}
                 </span>
               </span>
-            </a>
+            </button>
           </li>
         ))}
       </ul>

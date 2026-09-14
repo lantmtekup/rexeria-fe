@@ -6,6 +6,8 @@ import { HeroFramesProvider } from '@/components/shared/hero-frames';
 import { Preloader } from '@/components/shared/preloader';
 import { SkipLink } from '@/components/shared/skip-link';
 import { SiteHeader } from '@/components/shared/site-header';
+import { PromptBar } from '@/components/journey/prompt-bar';
+import { OverlayView } from '@/components/journey/overlay-view';
 import { SmoothScroll } from '@/components/shared/smooth-scroll';
 import { siteConfig } from '@/lib/site-config';
 import './globals.css';
@@ -51,6 +53,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <SkipLink />
             <SiteHeader />
             {children}
+            {/* Ô hỏi ghim đáy màn và lớp phủ toàn màn nằm ở layout vì cả hai
+                phải sống suốt hành trình, không thuộc về một section nào. */}
+            <PromptBar />
+            <OverlayView />
           </HeroFramesProvider>
         </LocaleProvider>
       </body>
