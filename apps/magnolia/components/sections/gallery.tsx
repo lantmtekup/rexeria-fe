@@ -57,7 +57,7 @@ export function GallerySection() {
       aria-label={t.gallery.ariaLabel}
       className='bg-charcoal-950 relative snap-start'
     >
-      <Intro />
+      <GalleryIntro />
       <StackedReveal items={items} />
     </section>
   );
@@ -70,7 +70,7 @@ export function GallerySection() {
  * the same scroll that brings them in and takes them out. At 180svh the scrub runs about
  * 119 px per second of footage, the same legible rate the hero uses.
  */
-function Intro() {
+export function GalleryIntro() {
   const { t } = useLocale();
   const ref = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion() ?? false;
