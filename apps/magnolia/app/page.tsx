@@ -2,6 +2,7 @@ import { MainShell } from '@/components/shared/main-shell';
 import { HeroSection } from '@/components/sections/hero';
 import { HeritageSection } from '@/components/sections/heritage';
 import { JourneyChapter } from '@/components/journey/journey-chapter';
+import { ApertureGate } from '@/components/journey/aperture-gate';
 import { AmenitiesGrid } from '@/components/sections/amenities-grid';
 import { TourFrame } from '@/components/sections/tour-frame';
 import { ResidencesGrid } from '@/components/sections/residences-grid';
@@ -42,6 +43,13 @@ export default function Page() {
   return (
     <MainShell>
       <HeroSection />
+
+      {/* Khung cửa: camera phóng xuyên lòng vòm vào cảnh phía sau, rồi tấm
+          vòm tan. Thay cho outro thu-vào-card của phim. */}
+      <ApertureGate
+        behindSrc='/journey/gate/behind-interior.jpg'
+        behindAlt='The Magnolia'
+      />
 
       {/* z-10 trên mọi khối nội dung đứng TRƯỚC một chương.
           Chương mang `-mt-100svh` nên nó lấn lên một màn cuối của khối trước;

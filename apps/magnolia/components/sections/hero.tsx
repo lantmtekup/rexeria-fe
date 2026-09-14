@@ -42,8 +42,12 @@ const SCRUB = 0.6;
  * background — set it to the top edge of whatever follows and the two read as continuous
  * rather than as a seam.
  */
-const OUTRO_SCALE = 0.72;
-const OUTRO_RADIUS = 32;
+// Outro cũ thu phim vào một card bo góc 32px trên nền than. Card nhỏ trên nền
+// đen rồi nhảy sang một section sáng full-bleed là cú vấp tông nặng nhất của
+// trang. Giờ phim bàn giao thẳng vào ApertureGate — đi xuyên một ngưỡng — nên
+// outro về trạng thái không làm gì. Muốn trả lại: 0.72 / 32.
+const OUTRO_SCALE = 1;
+const OUTRO_RADIUS = 0;
 /** Top edge of `HeritageSection` (`bg-charcoal-950`). */
 const OUTRO_BACKDROP = '#0b0908';
 

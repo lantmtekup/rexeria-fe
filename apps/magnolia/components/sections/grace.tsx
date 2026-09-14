@@ -45,7 +45,15 @@ function imageOpacityRange(i: number): { input: number[]; output: number[] } {
   };
 }
 
-/** Caption keyframes (`l = i/N`, `m = (i+1)/N`, `u = l+0.1`, `q = m−0.1`); index 1 is special-cased. */
+/**
+ * Nhịp chữ: mỗi câu VÀO TỪ DƯỚI, trôi lên trong lúc hiện, rồi đi tiếp lên và
+ * tan — một luật duy nhất cho cả ba câu.
+ *
+ * Bản trước mỗi câu một luật khác nhau, và câu cuối là `[36, 21, 21, 36]`:
+ * nó đi xuống 36 rồi lên 21 rồi quay về 36, tức về đúng chỗ cũ. Kết quả là
+ * câu quan trọng nhất của đoạn trông như đứng yên. `yOut` giờ đơn điệu giảm
+ * nên chữ không bao giờ lùi lại.
+ */
 function captionRanges(i: number): {
   opacityIn: number[];
   yIn: number[];
@@ -53,21 +61,13 @@ function captionRanges(i: number): {
 } {
   const l = i / N;
   const m = (i + 1) / N;
-  const u = l + 0.1;
-  const q = m - 0.1;
-  if (i === 0)
-    return {
-      opacityIn: [l, u, q, m],
-      yIn: [l, u, q, m],
-      yOut: [0, -42, -42, 42],
-    };
-  if (i === 1)
-    return {
-      opacityIn: [l, u, 0.9, 1],
-      yIn: [l, u, 0.82, 1],
-      yOut: [36, 0, -50, -50],
-    };
-  return { opacityIn: [l, u, q, m], yIn: [l, u, q, m], yOut: [36, 21, 21, 36] };
+  const span = m - l;
+  // Câu đầu vào ngay từ đầu đoạn; câu cuối giữ lâu hơn rồi mới tan.
+  const start = i === 0 ? 0 : l;
+  const end = i === N - 1 ? 1 : m;
+  const inAt = l + span * 0.26;
+  const outAt = m - span * (i === N - 1 ? 0.1 : 0.26);
+  return { opacityIn: [start, inAt, outAt, end], yIn: [start, inAt, outAt, end], yOut: [38, 0, -16, -52] };
 }
 
 type FrameProps = {
