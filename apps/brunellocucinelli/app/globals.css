@@ -4,6 +4,7 @@
   --font-sans:
     var(--font-cormorant), ui-serif, Georgia, 'Times New Roman', serif;
   /* `font-ui` — Inter for labels/eyebrows where the design specs a sans. */
+  --font-fell: var(--font-im-fell), var(--font-cormorant), Georgia, serif;
   --font-ui:
     var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }

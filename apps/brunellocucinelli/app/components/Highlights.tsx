@@ -6,6 +6,7 @@ import { gsap, ScrollTrigger } from '../lib/motion';
 import type { Highlight } from '../lib/highlights';
 import ArtworkPreview from './ArtworkPreview';
 import CardGrid from './CardGrid';
+import { openStory } from '../lib/story';
 
 // Card nổi bật bắt đầu lệch xuống thêm chừng này × chiều cao màn rồi trồi về 0
 // (hết khi mép trên section chạm mép trên màn). Hero đọc để biết lúc card ló.
@@ -131,9 +132,22 @@ export default function Highlights({ items, artwork }: HighlightsProps) {
           width: `min(52.875rem, 100%, calc((100svh - 14.25rem) * ${featured.w} / ${featured.h}))`,
         }}
       >
-        <article data-featured-inner className='bg-white'>
+        <article
+          data-featured-inner
+          role='button'
+          tabIndex={0}
+          aria-label={featured.title}
+          onClick={openStory}
+          onKeyDown={e => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              openStory();
+            }
+          }}
+          className='group cursor-pointer bg-white'
+        >
           <div
-            className='relative w-full'
+            className='relative w-full overflow-hidden'
             style={{ aspectRatio: `${featured.w} / ${featured.h}` }}
           >
             <Image
@@ -141,7 +155,7 @@ export default function Highlights({ items, artwork }: HighlightsProps) {
               alt={featured.title}
               fill
               sizes='(max-width: 767px) 100vw, 846px'
-              className='object-cover'
+              className='object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]'
             />
           </div>
           <p className='flex h-24 items-center justify-center px-6 text-center text-[17px] leading-snug text-neutral-900'>

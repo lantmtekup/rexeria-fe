@@ -1,9 +1,14 @@
 import type { Metadata } from 'next';
-import { Cormorant_Infant, Inter } from 'next/font/google';
+import {
+  Cormorant_Infant,
+  IM_Fell_Great_Primer,
+  Inter,
+} from 'next/font/google';
 import './globals.css';
 import Header from './components/Header';
 import SiteFooter from './components/SiteFooter';
 import SmoothScrollProvider from './components/SmoothScrollProvider';
+import StoryView from './components/StoryView';
 
 const cormorant = Cormorant_Infant({
   subsets: ['latin'],
@@ -20,6 +25,14 @@ const inter = Inter({
   display: 'swap',
 });
 
+// Tiêu đề chương trong trình xem artwork (trang mẫu dùng IM Fell Great Primer).
+const fell = IM_Fell_Great_Primer({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-im-fell',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: 'The Westly',
   description: 'The Westly app.',
@@ -31,7 +44,7 @@ export default function RootLayout({
   return (
     <html
       lang='en'
-      className={`${cormorant.variable} ${inter.variable}`}
+      className={`${cormorant.variable} ${inter.variable} ${fell.variable}`}
       suppressHydrationWarning
     >
       <head>
@@ -47,6 +60,7 @@ export default function RootLayout({
         <SmoothScrollProvider>
           <Header />
           {children}
+          <StoryView />
           <SiteFooter />
         </SmoothScrollProvider>
       </body>

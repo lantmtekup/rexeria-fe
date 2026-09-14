@@ -1,13 +1,28 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { readImageSize } from './layers';
+import EPS from './eps.json';
+
+/**
+ * Artwork EpicPaper (trang mẫu: card `ep`) — bấm vào mở tranh tương tác
+ * `art.solomei.ai/?id=<id>` toàn màn. Chương lấy từ API trang mẫu
+ * (`ep[].chapters`): `id` = tên bookmark trong tranh, `title` = nhãn hiển thị.
+ */
+export type EpArtwork = {
+  id: string;
+  title: string;
+  chapters: Array<{ id: string; title: string }>;
+};
 
 export type Highlight = {
   src: string;
   title: string;
   w: number;
   h: number;
+  ep?: EpArtwork;
 };
+
+const epById = (id: keyof typeof EPS): EpArtwork => EPS[id];
 
 const DIR = 'hl-1';
 
@@ -53,6 +68,7 @@ export function readArtwork(): Highlight | null {
     src,
     title: 'A Story of Dreams and Cashmere',
     ...readImageSize(src),
+    ep: epById('j2PPw53'),
   };
 }
 
@@ -96,13 +112,14 @@ const toHighlight = (dir: string, file: string, title: string) => {
 };
 
 export function readLifeFamily(): Topic {
+  const artwork = toHighlight(
+    'hl-2',
+    '00-cover-the-tale-of-a-life-preview.jpg',
+    'The Tale of a Life'
+  );
   return {
     title: 'Life and family',
-    artwork: toHighlight(
-      'hl-2',
-      '00-cover-the-tale-of-a-life-preview.jpg',
-      'The Tale of a Life'
-    ),
+    artwork: artwork && { ...artwork, ep: epById('jbrrG4j') },
     cards: LIFE_FAMILY.map(([f, t]) => toHighlight('hl-2', f, t)).filter(
       (c): c is Highlight => c !== null
     ),

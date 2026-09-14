@@ -1,9 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { useLayoutEffect, useRef } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { gsap, MQ } from '../lib/motion';
 import type { Highlight } from '../lib/highlights';
+import ArtworkViewer from './ArtworkViewer';
 
 /**
  * Artwork dưới grid Highlights (trang mẫu: ep-highlights-container). Khung có
@@ -28,6 +29,8 @@ export default function ArtworkPreview({
 }: ArtworkPreviewProps) {
   const frameRef = useRef<HTMLDivElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
 
   useLayoutEffect(() => {
     const frame = frameRef.current;
@@ -95,7 +98,19 @@ export default function ArtworkPreview({
       <div
         ref={frameRef}
         data-artwork-frame
-        className={`relative isolate mx-auto aspect-square w-full bg-[#F8F8F6] md:aspect-[1641/842] ${widthClass} [@media(hover:hover)_and_(pointer:fine)]:cursor-none`}
+        {...(artwork.ep && {
+          role: 'button',
+          tabIndex: 0,
+          'aria-label': `Explore the artwork: ${artwork.title}`,
+          onClick: () => setOpen(true),
+          onKeyDown: (e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setOpen(true);
+            }
+          },
+        })}
+        className={`relative isolate mx-auto aspect-square w-full cursor-pointer bg-[#F8F8F6] outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/40 md:aspect-[1641/842] ${widthClass} [@media(hover:hover)_and_(pointer:fine)]:cursor-none`}
       >
         {/* mix-blend trên lớp mask (không trên ảnh — mask tạo stacking context
             riêng). Nền #F8F8F6 đặt ngay trên khung: section Highlights là
@@ -116,6 +131,9 @@ export default function ArtworkPreview({
           Explore the artwork
         </span>
       </div>
+      {artwork.ep && (
+        <ArtworkViewer ep={artwork.ep} open={open} onClose={close} />
+      )}
       {titlePosition === 'bottom' && title}
     </div>
   );
