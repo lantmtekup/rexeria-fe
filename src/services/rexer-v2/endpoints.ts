@@ -875,6 +875,21 @@ export const rexerV2Api = {
       rxV2<RxExchangeListResponse>('/exchange/items', { query }),
 
     /**
+     * `GET /v1/public/exchange/items` — cùng dữ liệu với `list` ở trên, nhưng
+     * KHÔNG cần phiên. Chợ vốn đã xuyên tenant nên hai đường trả cùng một tập;
+     * đường này tồn tại chỉ vì nhóm public bên BE không gắn RequireAuth, tức
+     * là request không mang principal và không thể 401.
+     *
+     * Chỉ dùng cho khách chưa đăng nhập (xem `publicTemplates` ở client v1).
+     */
+    publicList: (query: RxExchangeListQuery = {}) =>
+      rxV2<RxExchangeListResponse>('/public/exchange/items', { query }),
+
+    /** `GET /v1/public/exchange/items/{itemId}` — bản không cần phiên của `get`. */
+    publicGet: (itemId: string) =>
+      rxV2<RxExchangeItemDetail>(`/public/exchange/items/${itemId}`),
+
+    /**
      * `GET /v1/exchange/items/{itemId}` — adds `layers` descriptors plus
      * `features`/`benefits`. Carries no source ids and no slug by design.
      * 404 `ERR_EXCHANGE_LISTING_NOT_FOUND` when missing/delisted.
