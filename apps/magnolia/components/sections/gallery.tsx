@@ -93,7 +93,9 @@ export function GalleryIntro() {
 
   return (
     <div ref={ref} style={{ height: reduced ? undefined : '180svh' }}>
-      <div className='bg-charcoal-950 sticky top-0 flex h-[100svh] min-h-[620px] flex-col items-center justify-center gap-9 overflow-hidden px-5 md:gap-14 md:px-8'>
+      {/* pb-32: ô hỏi ghim đáy màn cao chừng 90px cộng dòng colophon. Không
+          chừa chỗ thì câu chữ bị nó đè và bị cắt ở đáy. */}
+      <div className='bg-charcoal-950 sticky top-0 flex h-[100svh] min-h-[620px] flex-col items-center justify-center gap-7 overflow-hidden px-5 pt-20 pb-32 md:gap-10 md:px-8'>
         {/*
          * Phim trong KHUNG VIỀN MỀM — cùng cái mask với khung tour 360.
          *
@@ -103,7 +105,9 @@ export function GalleryIntro() {
          * text-shadow 28px mới đọc được. Đóng khung phim rồi đặt chữ BÊN DƯỚI
          * thì cả hai đều rõ, và không cần scrim lẫn text-shadow.
          */}
-        <div className='relative aspect-[4/5] w-full max-w-[87.5rem] overflow-hidden [mask-image:url(/journey/mask/frame-square.svg)] [mask-repeat:no-repeat] [mask-size:100%_100%] sm:aspect-square md:aspect-[1641/842] md:w-4/5'>
+        {/* min-h-0 + flex-1: khung co lại theo chỗ còn lại thay vì đẩy chữ
+            ra ngoài màn. aspect vẫn giữ để mask không méo. */}
+        <div className='relative min-h-0 w-full max-w-[87.5rem] flex-1 overflow-hidden [mask-image:url(/journey/mask/frame-square.svg)] [mask-repeat:no-repeat] [mask-size:100%_100%] md:w-4/5'>
           {reduced ? (
             <Image
               src={POSTER}

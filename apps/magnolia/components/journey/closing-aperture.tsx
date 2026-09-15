@@ -24,7 +24,22 @@ import { MagnoliaMark } from '@/components/shared/magnolia-mark';
  * nhỏ hơn 1 là hở mép ra nền.
  */
 const PLATE = { w: 1672, h: 941, holeX: 0.5, holeY: 0.3905 };
-const ASPECT = PLATE.w / PLATE.h;
+/**
+ * Bề rộng tối thiểu để tấm phủ kín màn SAU KHI ĐÃ DỊCH.
+ *
+ * Tôi tính thiếu một ràng buộc ở bản đầu và dùng `177.68vh` — đúng bằng
+ * ASPECT × 100vh, tức chỉ đủ phủ màn khi tấm KHÔNG dịch. Nhưng tấm phải dịch
+ * để tâm ô rơi vào tâm màn, nên phần tấm nằm TRÊN tâm ô (39.05% chiều cao
+ * tấm) mới là phần phải phủ nửa màn trên:
+ *
+ *   0.3905 × H_tấm ≥ 0.5 × H_màn   →   H_tấm ≥ 1.2804 × H_màn
+ *   0.6095 × H_tấm ≥ 0.5 × H_màn   →   H_tấm ≥ 0.8203 × H_màn   (lỏng hơn)
+ *
+ * Ràng buộc trên gắt hơn, nên W_tấm ≥ 1.2804 × 1.7768 × 100vh = 227.5vh.
+ * Thiếu 50vh là lý do có dải đen ở mép trên khung đầu của nhịp mở màn và ở
+ * mép dưới cảnh kết.
+ */
+const PLATE_MIN_W = `max(100vw, 228vh)`;
 
 export function ClosingAperture() {
   const { t } = useLocale();
@@ -94,7 +109,7 @@ export function ClosingAperture() {
   }, []);
 
   const stage = {
-    width: `max(100vw, ${(100 * ASPECT).toFixed(2)}vh)`,
+    width: PLATE_MIN_W,
     aspectRatio: `${PLATE.w} / ${PLATE.h}`,
     transform: `translate(${-PLATE.holeX * 100}%, ${-PLATE.holeY * 100}%)`,
   } as const;
