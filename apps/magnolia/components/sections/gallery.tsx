@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useRef } from 'react';
 import {
   motion,
@@ -8,7 +9,7 @@ import {
 } from 'framer-motion';
 import { useLocale } from '@/components/shared/locale-provider';
 import { useSmoothProgress } from '@/components/shared/use-smooth-progress';
-import { ScrollScrubVideo } from '@/components/shared/scroll-scrub-video';
+import { FrameScrub } from '@/components/journey/frame-scrub';
 import {
   StackedReveal,
   type StackedItem,
@@ -92,28 +93,38 @@ export function GalleryIntro() {
 
   return (
     <div ref={ref} style={{ height: reduced ? undefined : '180svh' }}>
-      <div className='bg-charcoal-950 sticky top-0 flex h-[100svh] min-h-[620px] items-center justify-center overflow-hidden px-6'>
-        {!reduced && (
-          <ScrollScrubVideo
-            src='/videos/grace-scroll.mp4'
-            poster={POSTER}
-            targetRef={ref}
-            scrollYProgress={p}
-            getTime={(progress, dur) => progress * dur}
-            enabled
-            diagnosticLabel='gallery-intro'
-            rootMargin='100% 0px'
-            className='pointer-events-none absolute inset-0 h-full w-full object-cover transition-opacity duration-300'
-          />
-        )}
-        {/* Holds the words legible over whatever frame is on screen. */}
-        <div
-          aria-hidden
-          className='from-charcoal-950/80 via-charcoal-950/45 to-charcoal-950/80 pointer-events-none absolute inset-0 bg-gradient-to-b'
-        />
+      <div className='bg-charcoal-950 sticky top-0 flex h-[100svh] min-h-[620px] flex-col items-center justify-center gap-9 overflow-hidden px-5 md:gap-14 md:px-8'>
+        {/*
+         * Phim trong KHUNG VIỀN MỀM — cùng cái mask với khung tour 360.
+         *
+         * Trước đó phim chạy full-bleed phía sau một lớp scrim tối
+         * (charcoal/80 → /45 → /80) và câu chữ đè lên trên. Kết quả: gần như
+         * không thấy phim, chỉ thấy một vệt tối, và chữ phải đeo
+         * text-shadow 28px mới đọc được. Đóng khung phim rồi đặt chữ BÊN DƯỚI
+         * thì cả hai đều rõ, và không cần scrim lẫn text-shadow.
+         */}
+        <div className='relative aspect-[4/5] w-full max-w-[87.5rem] overflow-hidden [mask-image:url(/journey/mask/frame-square.svg)] [mask-repeat:no-repeat] [mask-size:100%_100%] sm:aspect-square md:aspect-[1641/842] md:w-4/5'>
+          {reduced ? (
+            <Image
+              src={POSTER}
+              alt=''
+              fill
+              sizes='(max-width: 767px) 100vw, 80vw'
+              className='object-cover'
+            />
+          ) : (
+            <FrameScrub
+              dir='/frames/grace'
+              count={145}
+              targetRef={ref}
+              poster={POSTER}
+            />
+          )}
+        </div>
+
         <motion.p
           style={reduced ? undefined : { opacity, y, filter: blur }}
-          className='font-display text-ivory/95 relative z-10 max-w-[46rem] text-center text-[clamp(1.6rem,3.1vw,3.3rem)] leading-[1.22] tracking-[-0.02em] [text-shadow:0_3px_28px_rgb(0_0_0_/_0.55)]'
+          className='font-display text-ivory/95 relative z-10 max-w-[46rem] text-center text-[clamp(1.5rem,2.9vw,3.1rem)] leading-[1.22] tracking-[-0.02em]'
         >
           {first}
           <br />

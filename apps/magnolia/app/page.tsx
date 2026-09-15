@@ -3,6 +3,7 @@ import { HeroSection } from '@/components/sections/hero';
 import { HeritageSection } from '@/components/sections/heritage';
 import { JourneyChapter } from '@/components/journey/journey-chapter';
 import { ApertureGate } from '@/components/journey/aperture-gate';
+import { ClosingAperture } from '@/components/journey/closing-aperture';
 import { AmenitiesGrid } from '@/components/sections/amenities-grid';
 import { TourFrame } from '@/components/sections/tour-frame';
 import { ResidencesGrid } from '@/components/sections/residences-grid';
@@ -86,6 +87,11 @@ export default function Page() {
       </div>
 
       <GraceSection />
+
+      {/* Cảnh kết: bậc thang vừa rời lùi ra sau, tấm vòm tới từ gần và đóng
+          hành trình lại đúng cái ngưỡng nó đã mở ra. */}
+      <ClosingAperture />
+
       <ConsultationSection />
       <BlockInspector />
     </MainShell>
