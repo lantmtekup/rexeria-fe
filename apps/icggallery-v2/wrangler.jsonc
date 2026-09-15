@@ -1,0 +1,12 @@
+// CF Worker static cho icggallery-v2 (Vite SPA). Build: npm run build — Deploy: npx wrangler deploy
+// Model địa phương đã nén Draco + KTX2 (xem scripts/compress-models.mjs); model POV nặng theo
+// từng tầng vẫn có thể trỏ CDN riêng khi có, xem src/floors.js.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rexerai-icggallery-v2",
+  "compatibility_date": "2026-05-01",
+  "assets": {
+    "directory": "dist",
+    "not_found_handling": "single-page-application",
+  },
+}

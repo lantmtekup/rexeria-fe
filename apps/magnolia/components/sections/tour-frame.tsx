@@ -4,6 +4,8 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { gsap, MQ } from '@/lib/journey/motion';
 import { useLocale } from '@/components/shared/locale-provider';
 import { siteConfig } from '@/lib/site-config';
+import { DeepCanvas } from '@/components/journey/deep-canvas';
+import { OVERVIEW_PREVIEW } from '@/lib/journey/day-canvas';
 
 /**
  * Tour 360° — cơ chế `ep-highlights-container` + trình xem toàn màn của trang
@@ -21,11 +23,13 @@ import { siteConfig } from '@/lib/site-config';
  */
 export function TourFrame() {
   const { t, locale } = useLocale();
-  const { embedUrl, externalUrl, previewSrc } = siteConfig.interactiveTour;
+  const { embedUrl, externalUrl } = siteConfig.interactiveTour;
   const frameRef = useRef<HTMLDivElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
   const [open, setOpen] = useState(false);
+  const [canvasOpen, setCanvasOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
+  const closeCanvas = useCallback(() => setCanvasOpen(false), []);
 
   useLayoutEffect(() => {
     const frame = frameRef.current;
@@ -78,7 +82,8 @@ export function TourFrame() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, close]);
 
-  const cta = locale === 'vi' ? 'Mở tour 360°' : 'Open the 360° tour';
+  const cta =
+    locale === 'vi' ? 'Khám phá bức tranh' : 'Explore the artwork';
 
   return (
     <section
@@ -87,7 +92,7 @@ export function TourFrame() {
       className='bg-charcoal-950 relative px-5 pt-[16svh] pb-[20svh] md:px-8'
     >
       <p className='text-champagne-400 tracking-luxe text-center text-[10.5px] uppercase md:text-[11.5px]'>
-        {t.tour.title}
+        {t.gallery.ariaLabel}
       </p>
       <h2
         id='tour-heading'
@@ -104,11 +109,11 @@ export function TourFrame() {
         role='button'
         tabIndex={0}
         aria-label={cta}
-        onClick={() => setOpen(true)}
+        onClick={() => setCanvasOpen(true)}
         onKeyDown={e => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            setOpen(true);
+            setCanvasOpen(true);
           }
         }}
         className='relative isolate mx-auto mt-16 aspect-square w-full max-w-[87.5rem] cursor-pointer outline-none md:mt-20 md:aspect-[1641/842] md:w-4/5 [@media(hover:hover)_and_(pointer:fine)]:cursor-none'
@@ -117,7 +122,7 @@ export function TourFrame() {
             vuông trên mobile, 1641:842 trên desktop. */}
         <div className='absolute inset-0 [mask-image:url(/journey/mask/frame-square.svg)] [mask-repeat:no-repeat] [mask-size:100%_100%] md:[mask-image:url(/journey/mask/frame-desktop.svg)]'>
           <Image
-            src={previewSrc}
+            src={OVERVIEW_PREVIEW}
             alt={t.globe.heading}
             fill
             sizes='(max-width: 767px) 100vw, 80vw'
@@ -136,9 +141,20 @@ export function TourFrame() {
         </span>
       </div>
 
-      <p className='text-champagne-50/40 tracking-luxe mt-10 text-center text-[10px] uppercase'>
-        {t.globe.hint}
-      </p>
+      <div className='mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-4'>
+        <p className='text-champagne-50/40 tracking-luxe text-[10px] uppercase'>
+          {t.globe.hint}
+        </p>
+        <button
+          type='button'
+          onClick={() => setOpen(true)}
+          className='border-champagne-400/45 text-champagne-200 hover:bg-champagne-400/10 tracking-luxe ease-luxe border px-6 py-3 text-[10px] uppercase transition-colors duration-500'
+        >
+          {t.tour.title}
+        </button>
+      </div>
+
+      <DeepCanvas open={canvasOpen} onClose={closeCanvas} />
 
       {open && (
         <div className='bg-charcoal-950 fixed inset-0 z-50'>

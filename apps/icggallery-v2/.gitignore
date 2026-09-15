@@ -1,0 +1,14 @@
+node_modules
+dist
+.DS_Store
+*.local
+.vite
+.wrangler/
+
+# ktx CLI (KhronosGroup KTX-Software), vendored cho scripts/compress-models.mjs —
+# nhị phân macOS arm64, không commit. Lấy lại: tải
+# KTX-Software-*-Darwin-arm64.pkg từ github.com/KhronosGroup/KTX-Software/releases,
+# `pkgutil --expand-full` rồi copy usr/local/bin/ktx → scripts/bin/,
+# usr/local/lib/libktx.4.dylib → scripts/lib/.
+scripts/bin/
+scripts/lib/
