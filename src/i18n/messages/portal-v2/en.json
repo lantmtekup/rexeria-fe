@@ -44,7 +44,8 @@
       "analytics": "Analytics",
       "ai": "Intelligence",
       "exchange": "Exchange",
-      "settings": "Settings"
+      "settings": "Settings",
+      "billing": "Plan & billing"
     },
     "groups": {
       "journeyAudit": "Journey Audit",
@@ -173,7 +174,7 @@
       "addToWorkspace": "Add to workspace",
       "buy": "Buy {price}",
       "premium": "Premium",
-      "premiumLock": "Premium source experiences need a paid plan — switch your account type in your profile to buy",
+      "premiumLock": "Premium experiences need a paid plan — open Plan & billing to subscribe",
       "loading": "Loading catalog…",
       "loadError": "Could not load the Exchange catalog",
       "empty": "No source experience matches — try a different objective, or clear the search.",
@@ -2753,6 +2754,41 @@
       "status_lost": "Lost",
       "statusFailed": "could not change status",
       "countLabel": "Showing {shown} of {total}"
+    },
+    "billing": {
+      "title": "Plan & billing",
+      "subtitle": "Monthly subscription, paid by Mastercard/Visa or a PayPal account. Cancel any time — you keep access until the end of the period you paid for.",
+      "perMonth": "/month",
+      "choosePlan": "Choose this plan",
+      "currentPlan": "Current plan",
+      "popular": "Popular",
+      "cardHint": "Click the PayPal button and pick “Debit or Credit Card” to pay by Mastercard without a PayPal account.",
+      "sandboxWarning": "Sandbox mode — no real money is charged.",
+      "notConfigured": "Billing is not enabled on this server. Prices are visible but nothing can be purchased yet.",
+      "planUnavailable": "This plan is not linked to PayPal yet, so it cannot be purchased.",
+      "loadingPaypal": "Loading PayPal…",
+      "paypalFailed": "PayPal failed to load. Check your connection and try again.",
+      "activating": "Confirming with PayPal…",
+      "activated": "Plan {plan} is active",
+      "activateFailed": "Could not activate the plan",
+      "yourPlan": "Your plan",
+      "statusLabel": "Status",
+      "renewsOn": "Renews on {date}",
+      "endsOn": "Access until {date}",
+      "noSubscription": "You have no subscription yet.",
+      "cancel": "Cancel renewal",
+      "cancelConfirm": "Stop renewing this plan? You keep access until the end of the paid period.",
+      "cancelling": "Cancelling…",
+      "cancelled": "Renewal stopped",
+      "cancelFailed": "Could not cancel the plan",
+      "cancelPending": "Renewal stops at period end",
+      "statusApprovalPending": "Waiting for PayPal",
+      "statusActive": "Active",
+      "statusPastDue": "Payment failed",
+      "statusSuspended": "Suspended",
+      "statusCancelled": "Cancelled",
+      "statusExpired": "Expired",
+      "loadError": "Could not load billing information"
     }
   }
 }

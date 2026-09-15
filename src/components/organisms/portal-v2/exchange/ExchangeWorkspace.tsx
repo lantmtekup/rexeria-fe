@@ -459,7 +459,11 @@ export const ExchangeWorkspace = ({
       const state = resolveActionState(listing, session, EXCHANGE_CAN_BUY);
 
       if (state === 'locked') {
+        // Dẫn thẳng tới chỗ mua được, đừng chỉ báo là không mua được: người
+        // dùng vừa nói rõ họ MUỐN món này — đó là lúc đắt giá nhất để mở trang
+        // gói ra, chứ không phải bắt họ tự đi tìm.
         toast.message(t('premiumLock'));
+        router.push(`${PORTAL_V2_BASE}/billing`);
         return;
       }
 
@@ -473,7 +477,7 @@ export const ExchangeWorkspace = ({
 
       void installListing(listing);
     },
-    [session, t, installListing]
+    [session, t, installListing, router]
   );
 
   /**

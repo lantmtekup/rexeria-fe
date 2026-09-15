@@ -44,7 +44,8 @@
       "analytics": "Phân tích",
       "ai": "Intelligence",
       "exchange": "Exchange",
-      "settings": "Cài đặt"
+      "settings": "Cài đặt",
+      "billing": "Gói & thanh toán"
     },
     "groups": {
       "journeyAudit": "Kiểm toán hành trình",
@@ -173,7 +174,7 @@
       "addToWorkspace": "Thêm vào workspace",
       "buy": "Mua {price}",
       "premium": "Premium",
-      "premiumLock": "Trải nghiệm gốc premium cần gói trả phí — đổi loại tài khoản trong hồ sơ để mua",
+      "premiumLock": "Trải nghiệm gốc premium cần gói trả phí — mở mục Gói & thanh toán để đăng ký",
       "loading": "Đang tải catalog…",
       "loadError": "Không tải được catalog Exchange",
       "empty": "Không có trải nghiệm gốc nào phù hợp — thử mục tiêu khác hoặc xóa tìm kiếm.",
@@ -2753,6 +2754,41 @@
       "status_lost": "Mất",
       "statusFailed": "không đổi được trạng thái",
       "countLabel": "Hiện {shown} trên tổng {total}"
+    },
+    "billing": {
+      "title": "Gói & thanh toán",
+      "subtitle": "Thuê bao theo tháng, thanh toán bằng thẻ Mastercard/Visa hoặc tài khoản PayPal. Huỷ lúc nào cũng được — bạn vẫn dùng hết chu kỳ đã trả tiền.",
+      "perMonth": "/tháng",
+      "choosePlan": "Chọn gói này",
+      "currentPlan": "Gói hiện tại",
+      "popular": "Phổ biến",
+      "cardHint": "Bấm nút PayPal rồi chọn “Debit or Credit Card” nếu bạn muốn trả bằng thẻ Mastercard mà không cần tài khoản PayPal.",
+      "sandboxWarning": "Đang ở chế độ thử nghiệm (sandbox) — không có tiền thật nào bị trừ.",
+      "notConfigured": "Thanh toán chưa được bật trên máy chủ này. Bảng giá vẫn xem được, nhưng chưa mua được gói.",
+      "planUnavailable": "Gói này chưa gắn với PayPal nên tạm thời chưa mua được.",
+      "loadingPaypal": "Đang tải PayPal…",
+      "paypalFailed": "Không tải được PayPal. Kiểm tra kết nối rồi thử lại.",
+      "activating": "Đang xác nhận với PayPal…",
+      "activated": "Đã kích hoạt gói {plan}",
+      "activateFailed": "Không kích hoạt được gói",
+      "yourPlan": "Gói của bạn",
+      "statusLabel": "Trạng thái",
+      "renewsOn": "Gia hạn ngày {date}",
+      "endsOn": "Dùng được tới ngày {date}",
+      "noSubscription": "Bạn chưa đăng ký gói nào.",
+      "cancel": "Huỷ gia hạn",
+      "cancelConfirm": "Huỷ gia hạn gói này? Bạn vẫn dùng được tới hết chu kỳ đã trả tiền.",
+      "cancelling": "Đang huỷ…",
+      "cancelled": "Đã dừng gia hạn",
+      "cancelFailed": "Không huỷ được gói",
+      "cancelPending": "Đã hẹn dừng gia hạn",
+      "statusApprovalPending": "Chờ PayPal xác nhận",
+      "statusActive": "Đang chạy",
+      "statusPastDue": "Thu tiền chưa thành công",
+      "statusSuspended": "Tạm dừng",
+      "statusCancelled": "Đã huỷ",
+      "statusExpired": "Hết hạn",
+      "loadError": "Không tải được thông tin gói"
     }
   }
 }

@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Bot,
+  CreditCard,
   DatabaseZap,
   FlaskConical,
   FolderOpen,
@@ -165,6 +166,12 @@ export const PORTAL_V2_NAV: PortalV2NavGroup[] = [
   {
     bottom: true,
     items: [
+      {
+        id: 'billing',
+        href: `${PORTAL_V2_BASE}/billing`,
+        labelKey: 'billing',
+        icon: CreditCard,
+      },
       {
         id: 'settings',
         href: `${PORTAL_V2_BASE}/settings`,

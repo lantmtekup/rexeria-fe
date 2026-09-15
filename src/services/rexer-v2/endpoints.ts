@@ -17,6 +17,11 @@
 import { rxV2 } from '@/services/rexer/client';
 
 import type {
+  RxActivateSubscriptionRequest,
+  RxBillingPlansResponse,
+  RxSubscriptionResponse,
+} from './types/billing';
+import type {
   RxCreateExchangeListingRequest,
   RxExchangeItemDetail,
   RxExchangeListQuery,
@@ -866,6 +871,41 @@ export const rexerV2Api = {
   },
 
   // ── Exchange (spec §15) — v2-only, absent from the v1 deployment ────────
+  billing: {
+    /**
+     * `GET /v1/public/billing/plans` — bảng giá + client id công khai của
+     * PayPal. KHÔNG cần phiên: giá là thông tin công khai, và client id vốn đã
+     * lộ ra trong mọi trang có nút PayPal.
+     */
+    plans: () => rxV2<RxBillingPlansResponse>('/public/billing/plans'),
+
+    /** `GET /v1/billing/subscription` — gói của brand đang đăng nhập. */
+    current: () => rxV2<RxSubscriptionResponse>('/billing/subscription'),
+
+    /**
+     * `POST /v1/billing/subscriptions/activate` — báo BE biết id subscription
+     * mà PayPal vừa trả về sau khi người dùng duyệt.
+     *
+     * BE gọi ngược lên PayPal để xác minh trước khi ghi, nên lượt này KHÔNG
+     * phải là "tự khai đã trả tiền": khai sai gói sẽ bị trả về
+     * ERR_BILLING_PLAN_MISMATCH.
+     */
+    activate: (body: RxActivateSubscriptionRequest) =>
+      rxV2<RxSubscriptionResponse>('/billing/subscriptions/activate', {
+        method: 'POST',
+        body,
+      }),
+
+    /**
+     * `POST /v1/billing/subscription/cancel` — dừng gia hạn. KHÔNG cắt quyền
+     * ngay: người dùng đã trả tiền cho chu kỳ đang chạy.
+     */
+    cancel: () =>
+      rxV2<RxSubscriptionResponse>('/billing/subscription/cancel', {
+        method: 'POST',
+      }),
+  },
+
   exchange: {
     /**
      * `GET /v1/exchange/items` — only `status: 'listed'` rows, cross-tenant.
