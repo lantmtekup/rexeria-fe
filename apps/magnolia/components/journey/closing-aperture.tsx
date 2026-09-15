@@ -47,6 +47,7 @@ export function ClosingAperture() {
         return;
       }
 
+      const layers = [behind, plate];
       const tl = gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: {
@@ -55,6 +56,11 @@ export function ClosingAperture() {
           end: 'bottom bottom',
           scrub: 0.6,
           invalidateOnRefresh: true,
+          // Cùng lý do với chương: chỉ promote khi nhịp này đang chạy.
+          onToggle: self => {
+            for (const el of layers)
+              el.style.willChange = self.isActive ? 'transform' : 'auto';
+          },
         },
       });
 
@@ -104,7 +110,7 @@ export function ClosingAperture() {
         {/* Cảnh vừa rời — lùi ra sau, vẫn thấy mờ trong lòng vòm. */}
         <div
           data-end-behind
-          className='absolute inset-0 origin-center will-change-transform'
+          className='absolute inset-0 origin-center'
         >
           <Image
             src='/images/assets/grace/stair-04.webp'
@@ -118,7 +124,7 @@ export function ClosingAperture() {
         {/* Tấm vòm tới từ gần. */}
         <div
           data-end-plate
-          className='absolute top-1/2 left-1/2 origin-center will-change-transform'
+          className='absolute top-1/2 left-1/2 origin-center'
           style={stage}
         >
           <Image

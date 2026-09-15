@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useLayoutEffect, useRef } from 'react';
-import { gsap, ScrollTrigger } from '@/lib/journey/motion';
+import { ScrollTrigger } from '@/lib/journey/motion';
 
 /**
  * Phim scrub theo scroll, vẽ từng frame lên canvas.
@@ -10,12 +10,18 @@ import { gsap, ScrollTrigger } from '@/lib/journey/motion';
  * dài — đó là cái giật mà không easing nào chữa được. Chuỗi frame thì mỗi bước
  * chỉ là một lệnh `drawImage`.
  *
- * Đổi `grace-scroll.mp4` (3.3MB, 6.04s, 24fps, 1920×1080) sang 145 frame WebP
- * 1280×720 còn 2.0MB — nhẹ hơn cả video gốc, vì WebP nén tĩnh từng frame tốt
- * hơn H.264 ở bitrate này và không cần giữ khung B/P.
+ * NGÂN SÁCH FRAME là ràng buộc thật, và không phải ràng buộc băng thông.
+ * `grace-scroll.mp4` (6.04s, 24fps, 1920×1080) lấy đủ 24fps ở 1280×720 thành
+ * 145 frame — chỉ 2.0MB tải về, nhưng 509 MB BITMAP GIẢI NÉN nằm thường
+ * trú, cộng thêm 286 frame của nhịp mở màn. Đo được 2 fps rồi tới mức renderer
+ * đứng hẳn. Kích thước file không nói gì về chi phí này.
  *
- * Frame tải hết trước khi vẽ, và canvas chỉ hiện khi đã có frame đầu — nếu
- * không, lần đầu cuộn tới sẽ thấy một khung trống.
+ * Giảm còn 73 frame ở 960×540 ≈ 144 MB. 12fps không làm mất gì: scrub ánh xạ theo
+ * VỊ TRÍ cuộn nên người xem chỉ thấy frame gần vị trí đó, không thấy nhịp thời
+ * gian. Và phim nằm trong khung ~80vw, không full-bleed, nên 960 là đủ.
+ *
+ * Canvas chỉ hiện khi đã vẽ được frame đầu; trước đó `poster` đứng thay, nên
+ * lần đầu cuộn tới không thấy một khung trống.
  */
 const MAX_DPR = 2;
 
@@ -52,32 +58,53 @@ export function FrameScrub({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const framesRef = useRef<HTMLImageElement[]>([]);
-  const readyRef = useRef(false);
+  const lastDrawn = useRef(-1);
 
-  // Tải frame một lần. Không đặt trong useLayoutEffect: nó chặn paint.
+  /**
+   * Tải frame khi section còn cách màn một quãng, không tải ngay lúc mở
+   * trang: nhịp mở màn đã giữ 286 frame, thêm 145 frame nữa cùng lúc là tranh
+   * băng thông với chính đoạn phim người xem đang nhìn.
+   */
   useEffect(() => {
+    const host = targetRef.current;
+    if (!host) return;
     let cancelled = false;
-    const imgs: HTMLImageElement[] = [];
-    let loaded = 0;
-    for (let i = 0; i < count; i++) {
-      const img = new Image();
-      img.decoding = 'async';
-      img.src = `${dir}/${String(start + i).padStart(4, '0')}.webp`;
-      img.onload = () => {
-        loaded++;
-        if (loaded === 1 && !cancelled) {
-          readyRef.current = true;
-          ScrollTrigger.refresh();
+
+    const load = () => {
+      const imgs: HTMLImageElement[] = [];
+      let loaded = 0;
+      for (let i = 0; i < count; i++) {
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = `${dir}/${String(start + i).padStart(4, '0')}.webp`;
+        img.onload = () => {
+          loaded++;
+          // Frame đầu về là đo lại: chiều cao section không đổi, nhưng
+          // ScrollTrigger cần biết có gì để vẽ.
+          if (loaded === 1 && !cancelled) ScrollTrigger.refresh();
+        };
+        imgs.push(img);
+      }
+      framesRef.current = imgs;
+    };
+
+    const io = new IntersectionObserver(
+      entries => {
+        if (entries.some(e => e.isIntersecting)) {
+          io.disconnect();
+          load();
         }
-      };
-      imgs.push(img);
-    }
-    framesRef.current = imgs;
+      },
+      { rootMargin: '150% 0px' }
+    );
+    io.observe(host);
+
     return () => {
       cancelled = true;
+      io.disconnect();
       framesRef.current = [];
     };
-  }, [dir, count, start]);
+  }, [dir, count, start, targetRef]);
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current;
@@ -90,15 +117,27 @@ export function FrameScrub({
     let cw = 0;
     let ch = 0;
 
-    const render = () => {
+    /**
+     * Chỉ vẽ khi CHỈ SỐ FRAME đổi.
+     *
+     * Bản đầu tôi gọi render() trên gsap.ticker mỗi frame: 60 lần drawImage
+     * một ảnh 1280×720 mỗi giây, mãi mãi, kể cả khi section đã ra khỏi màn.
+     * Cộng với 286 frame của nhịp mở màn thì compositor nghẽn tới mức
+     * Page.captureScreenshot của DevTools timeout — trang vẫn chạy JS nhưng
+     * không kịp paint. `hero.tsx` bản gốc chặn đúng chỗ này bằng lastDrawn,
+     * và đây là lý do.
+     */
+    const render = (force = false) => {
       const imgs = framesRef.current;
       if (!imgs.length || !cw) return;
       const i = Math.min(
         imgs.length - 1,
         Math.max(0, Math.round(state.progress * (imgs.length - 1)))
       );
+      if (!force && i === lastDrawn.current) return;
       const img = imgs[i];
       if (!img?.naturalWidth) return;
+      lastDrawn.current = i;
       ctx.clearRect(0, 0, cw, ch);
       drawCover(ctx, img, cw, ch);
       canvas.style.opacity = '1';
@@ -111,7 +150,7 @@ export function FrameScrub({
       ch = Math.round(r.height * dpr);
       canvas.width = cw;
       canvas.height = ch;
-      render();
+      render(true);
     };
 
     resize();
@@ -130,15 +169,9 @@ export function FrameScrub({
         render();
       },
     });
-    // scrub cần một tween để nội suy; ScrollTrigger.onUpdate đã đủ ở đây vì
-    // Lenis đã làm mượt vị trí cuộn trước khi ScrollTrigger đọc.
-    const tick = () => render();
-    gsap.ticker.add(tick);
-
     return () => {
       ro.disconnect();
       st.kill();
-      gsap.ticker.remove(tick);
     };
   }, [targetRef]);
 

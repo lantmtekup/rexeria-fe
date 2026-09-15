@@ -115,7 +115,7 @@ export function GalleryIntro() {
           ) : (
             <FrameScrub
               dir='/frames/grace'
-              count={145}
+              count={73}
               targetRef={ref}
               poster={POSTER}
             />

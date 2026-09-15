@@ -116,6 +116,13 @@ export default function PanelJourney({
         onToggle: self => {
           m.active = self.isActive;
           scene.style.visibility = self.isActive ? '' : 'hidden';
+          // `visibility: hidden` KHÔNG huỷ layer mà `will-change` đã tạo.
+          // Để will-change tĩnh trên từng ảnh thì cả hai chương giữ ~30 layer
+          // hợp ảnh trong GPU suốt thời gian sống của trang — đo được 2 fps ở
+          // giữa trang. Bật theo trạng thái: chỉ chương đang hoạt động mới
+          // được promote. Đổi lúc cảnh còn đang mờ nên không thấy nháy.
+          for (const el of els)
+            el.style.willChange = self.isActive ? 'transform' : 'auto';
           if (self.isActive) draw();
         },
       });
@@ -225,7 +232,9 @@ export default function PanelJourney({
               width={it.w}
               height={it.h}
               decoding='async'
-              className='absolute top-0 left-0 block h-auto max-w-none will-change-transform select-none'
+              // will-change bật/tắt theo trạng thái trong effect, không đặt
+              // tĩnh ở đây — xem onToggle.
+              className='absolute top-0 left-0 block h-auto max-w-none select-none'
               style={it.blend ? { mixBlendMode: it.blend } : undefined}
             />
           ))}

@@ -6,7 +6,7 @@ import { AmenitiesGrid } from '@/components/sections/amenities-grid';
 import { TourFrame } from '@/components/sections/tour-frame';
 import { ResidencesGrid } from '@/components/sections/residences-grid';
 import { GalleryIntro } from '@/components/sections/gallery';
-import { GraceSection } from '@/components/sections/grace';
+import { GraceGrid } from '@/components/sections/grace-grid';
 import { ConsultationSection } from '@/components/sections/consultation';
 import { BlockInspector } from '@/components/dev/block-inspector';
 import {
@@ -35,7 +35,7 @@ import {
  * mờ đi theo. Đó là thứ làm cả trang đọc ra một mạch thay vì từng section.
  *
  * `horizontal-slide.tsx`, `units.tsx`, `interactive-tour.tsx`, `hero.tsx`,
- * `heritage.tsx` và `GallerySection` không còn được dùng
+ * `heritage.tsx`, `grace.tsx` và `GallerySection` không còn được dùng
  * nhưng vẫn nằm trong repo để còn đối chiếu được với bản trước.
  */
 export default function Page() {
@@ -67,15 +67,17 @@ export default function Page() {
         panel={DAY_CHAPTER}
         groups={DAY_GROUPS}
         prevSelector='#units'
-        nextSelector='#gallery-intro'
+        nextSelector='#grace'
       />
-      {/* Statement trên phim scrub — khối nội dung đầu tiên sau chương Một
-          ngày, nên nó là thứ trồi lên đè lên cảnh. */}
-      <div id='gallery-intro' className='relative z-10 -mt-[100svh]'>
+      {/* Grace là khối nội dung đầu tiên sau chương Một ngày, nên nó mang
+          -mt-100svh và là thứ trồi lên đè lên cảnh còn đang ghim. */}
+      <GraceGrid />
+
+      {/* Phim thứ hai trong khung viền mềm — đi sau Grace như một section
+          thường, không lấn lên gì. */}
+      <div id='gallery-intro' className='relative z-10'>
         <GalleryIntro />
       </div>
-
-      <GraceSection />
 
       {/* Cảnh kết: bậc thang vừa rời lùi ra sau, tấm vòm tới từ gần và đóng
           hành trình lại đúng cái ngưỡng nó đã mở ra. */}
