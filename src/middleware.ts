@@ -30,6 +30,21 @@ const authRoutes = ['/dang-nhap', '/quen-mat-khau', '/sign-in'];
 const publicRoutes = ['/api', '/_next', '/favicon.ico', '/scan', '/p/'];
 
 /**
+ * Nằm TRONG vùng `protectedRoutes` nhưng cố ý mở cho khách chưa đăng nhập.
+ *
+ * Exchange là quầy hàng, không phải dữ liệu của brand: cho người ta xem chợ
+ * trước rồi mới mời mở tài khoản. BE có bộ endpoint công khai riêng cho đúng
+ * màn này (`/v1/public/exchange/items`, `/public/templates`, `/public/blocks`)
+ * đã ghim sẵn phạm vi về kho hệ thống, nên mở ở đây không kéo theo dữ liệu
+ * brand nào.
+ *
+ * Mọi thao tác đổi sở hữu — thêm vào thư viện, mua, đăng bán — vẫn đòi đăng
+ * nhập, chặn ở cả UI lẫn BE. Danh sách này KHÔNG được nới sang các màn khác
+ * của portal mà không rà lại từng nguồn dữ liệu màn đó gọi.
+ */
+const publicPortalRoutes = ['/portal-v2/exchange'];
+
+/**
  * Verify the local session cookie and return its `role` claim.
  * Returns `null` when there is no valid session (unauthenticated).
  */
@@ -56,10 +71,19 @@ const getSession = async (
   }
 };
 
-const isProtectedRoute = (pathname: string): boolean =>
-  protectedRoutes.some(route =>
+const isPublicPortalRoute = (pathname: string): boolean =>
+  publicPortalRoutes.some(
+    route => pathname === route || pathname.startsWith(`${route}/`)
+  );
+
+const isProtectedRoute = (pathname: string): boolean => {
+  // Ngoại lệ xét TRƯỚC: `/portal-v2` nằm trong protectedRoutes, nên không chặn
+  // ở đây thì `/portal-v2/exchange` vẫn bị đá về /sign-in.
+  if (isPublicPortalRoute(pathname)) return false;
+  return protectedRoutes.some(route =>
     route === '/' ? pathname === '/' : pathname.startsWith(route)
   );
+};
 
 const isAuthRoute = (pathname: string): boolean =>
   authRoutes.some(route => pathname.startsWith(route));

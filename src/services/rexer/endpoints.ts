@@ -1462,6 +1462,39 @@ export const rexerApi = {
       rx<PublicPageResponse>(`/public/pages/${encodeURIComponent(slug)}`),
   },
 
+  // ── Public catalog (Exchange cho khách chưa đăng nhập) ────────────────
+  // Cùng dữ liệu mà `templates.list` / `blocks.list` trả cho một tài khoản
+  // brand, nhưng BE ghim sẵn phạm vi: template `status=active` + `brand_id IS
+  // NULL`, block `scope=system` + `status=published`. Không nhận `status`,
+  // `scope` hay `brand_id` từ người gọi — gửi lên cũng bị bỏ qua.
+  //
+  // CHỈ dùng khi KHÔNG có phiên. Người đã đăng nhập phải đi đường
+  // `templates.list` / `blocks.list` như cũ, nếu không họ mất phần hàng riêng
+  // của brand mình vốn vẫn hiện trong Exchange.
+  publicTemplates: {
+    list: (query?: {
+      q?: string;
+      category?: string;
+      sort?: 'created_at' | 'updated_at' | 'name';
+      order?: 'asc' | 'desc';
+      page?: number;
+      limit?: number;
+    }) => rx<TemplateListResponse>('/public/templates', { query }),
+  },
+
+  publicBlocks: {
+    list: (query?: {
+      q?: string;
+      type_code?: string;
+      surface?: PageType;
+      tag?: string;
+      page?: number;
+      limit?: number;
+      sort_by?: 'created_at' | 'updated_at' | 'name' | 'usage_count';
+      sort_order?: 'asc' | 'desc';
+    }) => rx<BlockListResponse>('/public/blocks', { query }),
+  },
+
   // ── Tracking keys (brand analytics ingest credential) ─────────────────
   // Read = priv (brand user của brand đó, hoặc staff kèm ?brand_id).
   // Write = internal (staff/admin only). Plaintext `key` chỉ trả ở create +

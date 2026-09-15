@@ -7,10 +7,14 @@ import { TourFrame } from '@/components/sections/tour-frame';
 import { ResidencesGrid } from '@/components/sections/residences-grid';
 import { GalleryIntro } from '@/components/sections/gallery';
 import { GraceGrid } from '@/components/sections/grace-grid';
-import { DayScroll } from '@/components/sections/day-scroll';
 import { ConsultationSection } from '@/components/sections/consultation';
 import { BlockInspector } from '@/components/dev/block-inspector';
-import { ARRIVAL_CHAPTER, ARRIVAL_GROUPS } from '@/lib/journey/chapters';
+import {
+  ARRIVAL_CHAPTER,
+  ARRIVAL_GROUPS,
+  DAY_CHAPTER,
+  DAY_GROUPS,
+} from '@/lib/journey/chapters';
 
 /**
  * Trang là một hành trình liên tục, không phải một chuỗi ảnh xếp cạnh nhau.
@@ -59,12 +63,14 @@ export default function Page() {
         <ResidencesGrid />
       </div>
 
-      {/* Một ngày tại Magnolia: cuộn đi từ tranh tổng thể vào bốn chi tiết,
-          hết bốn thời điểm là hết ngày. Thay chương lướt ngang cũ — cùng 8
-          render, nhưng cơ chế này cho thấy CHI TIẾT khi vào gần, còn lướt
-          ngang thì chỉ trượt qua. */}
-      <DayScroll />
-
+      <JourneyChapter
+        panel={DAY_CHAPTER}
+        groups={DAY_GROUPS}
+        prevSelector='#units'
+        nextSelector='#grace'
+      />
+      {/* Grace là khối nội dung đầu tiên sau chương Một ngày, nên nó mang
+          -mt-100svh và là thứ trồi lên đè lên cảnh còn đang ghim. */}
       <GraceGrid />
 
       {/* Phim thứ hai trong khung viền mềm — đi sau Grace như một section
