@@ -56,43 +56,29 @@ export type Phase = {
 const Q = { w: WORLD.w / 2, h: WORLD.h / 2 };
 
 /**
- * Mỗi vùng có hai ảnh gốc, theo đúng brief: một ảnh CHÍNH phủ gần kín ô, và
- * một ảnh LỒNG nhỏ hơn nằm lệch trong ô — đọc ra "một chi tiết bên trong
- * không gian đó" chứ không phải hai tấm dán cạnh nhau.
+ * MỘT ảnh gốc cho mỗi vùng — năm hình cả thảy: tranh tổng thể + bốn chi tiết.
  *
- * Cả hai đều tan mép, và ảnh lồng tan mạnh hơn vì nó nằm hẳn trong lòng ảnh
- * chính. Ảnh đặt tràn quá mép ô (`over`) để lúc hiện lên không hở ra nền.
+ * Bản đầu tôi lồng thêm một ảnh thứ hai vào mỗi ô. Sai: ở mức zoom 2.7× thì
+ * khung nhìn nhỏ hơn một ô, nên ảnh lồng nằm đè lên ảnh chính và đọc ra một
+ * vệt mờ, không ra "chi tiết bên trong không gian". Bốn ảnh còn lại
+ * (`*-02`) để dành cho lưới thẻ, không nhồi vào đây.
+ *
+ * Ảnh đặt tràn quá mép ô (`over`) và tan mép 9% để lúc hiện lên không hở ra
+ * nền — nhưng ở mức zoom của chặng thì vùng tan mép nằm ngoài khung nhìn, nên
+ * người xem chỉ thấy ảnh gốc phủ kín.
  */
 const over = 56;
 
-const zone = (
-  col: 0 | 1,
-  row: 0 | 1,
-  main: string,
-  inset: string,
-  insetAt: { x: number; y: number }
-): DetailImage[] => {
-  const ox = col * Q.w;
-  const oy = row * Q.h;
-  return [
-    {
-      src: main,
-      x: ox - over,
-      y: oy - over,
-      w: Q.w + over * 2,
-      h: Q.h + over * 2,
-      feather: 9,
-    },
-    {
-      src: inset,
-      x: ox + Q.w * insetAt.x,
-      y: oy + Q.h * insetAt.y,
-      w: Q.w * 0.54,
-      h: Q.h * 0.46,
-      feather: 16,
-    },
-  ];
-};
+const zone = (col: 0 | 1, row: 0 | 1, src: string): DetailImage[] => [
+  {
+    src,
+    x: col * Q.w - over,
+    y: row * Q.h - over,
+    w: Q.w + over * 2,
+    h: Q.h + over * 2,
+    feather: 9,
+  },
+];
 
 export const PHASES: Phase[] = [
   {
@@ -100,52 +86,28 @@ export const PHASES: Phase[] = [
     cx: 0.26,
     cy: 0.24,
     zoom: 2.7,
-    details: zone(
-      0,
-      0,
-      '/images/assets/day-experience/morning-01.webp',
-      '/images/assets/day-experience/morning-02.webp',
-      { x: 0.42, y: 0.5 }
-    ),
+    details: zone(0, 0, '/images/assets/day-experience/morning-01.webp'),
   },
   {
     id: 'noon',
     cx: 0.75,
     cy: 0.24,
     zoom: 2.7,
-    details: zone(
-      1,
-      0,
-      '/images/assets/day-experience/noon-01.webp',
-      '/images/assets/day-experience/noon-02.webp',
-      { x: 0.04, y: 0.48 }
-    ),
+    details: zone(1, 0, '/images/assets/day-experience/noon-01.webp'),
   },
   {
     id: 'afternoon',
     cx: 0.75,
     cy: 0.75,
     zoom: 2.7,
-    details: zone(
-      1,
-      1,
-      '/images/assets/day-experience/afternoon-01.webp',
-      '/images/assets/day-experience/afternoon-02.webp',
-      { x: 0.05, y: 0.06 }
-    ),
+    details: zone(1, 1, '/images/assets/day-experience/afternoon-01.webp'),
   },
   {
     id: 'evening',
     cx: 0.25,
     cy: 0.75,
     zoom: 2.7,
-    details: zone(
-      0,
-      1,
-      '/images/assets/day-experience/evening-02.webp',
-      '/images/assets/day-experience/evening-01.webp',
-      { x: 0.42, y: 0.06 }
-    ),
+    details: zone(0, 1, '/images/assets/day-experience/evening-02.webp'),
   },
 ];
 

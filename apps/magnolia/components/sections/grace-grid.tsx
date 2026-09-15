@@ -122,7 +122,7 @@ export function GraceGrid() {
       id='grace'
       ref={ref}
       aria-labelledby='grace-heading'
-      className='bg-charcoal-950 relative z-10 -mt-[100svh]'
+      className='bg-charcoal-950 relative z-10'
     >
       <div className='mx-auto max-w-[1440px] px-5 pt-[20svh] pb-[24svh] md:px-8'>
         <p className='text-champagne-400 tracking-luxe text-[10.5px] uppercase md:text-[11.5px]'>
