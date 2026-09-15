@@ -122,7 +122,7 @@ export function ClosingAperture() {
           style={stage}
         >
           <Image
-            src='/journey/gate/gate-plate.png'
+            src='/journey/gate/gate-plate.webp'
             alt=''
             fill
             sizes='100vw'

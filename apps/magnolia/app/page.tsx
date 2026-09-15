@@ -1,8 +1,6 @@
 import { MainShell } from '@/components/shared/main-shell';
-import { HeroSection } from '@/components/sections/hero';
-import { HeritageSection } from '@/components/sections/heritage';
 import { JourneyChapter } from '@/components/journey/journey-chapter';
-import { ApertureGate } from '@/components/journey/aperture-gate';
+import { OpeningGate } from '@/components/journey/opening-gate';
 import { ClosingAperture } from '@/components/journey/closing-aperture';
 import { AmenitiesGrid } from '@/components/sections/amenities-grid';
 import { TourFrame } from '@/components/sections/tour-frame';
@@ -36,35 +34,26 @@ import {
  * sau nó mang `-mt-100svh` nên TRỒI LÊN ĐÈ lên cảnh còn đang ghim, và cảnh tự
  * mờ đi theo. Đó là thứ làm cả trang đọc ra một mạch thay vì từng section.
  *
- * `horizontal-slide.tsx`, `units.tsx`, `interactive-tour.tsx` và
- * `GallerySection` không còn được dùng
+ * `horizontal-slide.tsx`, `units.tsx`, `interactive-tour.tsx`, `hero.tsx`,
+ * `heritage.tsx` và `GallerySection` không còn được dùng
  * nhưng vẫn nằm trong repo để còn đối chiếu được với bản trước.
  */
 export default function Page() {
   return (
     <MainShell>
-      <HeroSection />
+      {/* Nhịp mở màn: tấm vòm chắn toàn màn, chữ hiện từng ký tự trong lúc
+          cuộn bị khoá, rồi camera phóng xuyên lòng vòm VÀO TRONG PHIM.
+          Thay cho hero ghim + outro thu-vào-card, và gộp luôn hai câu
+          tagline của Heritage — trang mẫu nói câu mở màn ngay ở nhịp này,
+          không cần một section sticky riêng cho nó.
 
-      {/* Khung cửa: camera phóng xuyên lòng vòm vào cảnh phía sau, rồi tấm
-          vòm tan. Thay cho outro thu-vào-card của phim. */}
-      <ApertureGate
-        behindSrc='/journey/gate/behind-interior.jpg'
-        behindAlt='The Magnolia'
-      />
-
-      {/* z-10 trên mọi khối nội dung đứng TRƯỚC một chương.
-          Chương mang `-mt-100svh` nên nó lấn lên một màn cuối của khối trước;
-          khung sticky của nó có nền than đặc, nên nếu khối trước không có
-          z-index thì nó bị phủ đen đúng một màn. Trang mẫu đặt z-10 cho mọi
-          section nội dung vì lý do này. */}
-      <div className='relative z-10'>
-        <HeritageSection />
-      </div>
+          heritage.tsx vẫn ở lại trong repo để đối chiếu. */}
+      <OpeningGate />
 
       <JourneyChapter
         panel={ARRIVAL_CHAPTER}
         groups={ARRIVAL_GROUPS}
-        prevSelector='#heritage'
+        prevSelector='#opening'
         nextSelector='#amenities'
       />
       <AmenitiesGrid />
