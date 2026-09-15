@@ -71,6 +71,7 @@ recon-archive/
 .tmp-recon/
 
 # node_modules in apps
+/apps/*.zip
 /apps/*/node_modules
 
 # build output in apps
