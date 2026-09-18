@@ -2778,6 +2778,7 @@
       "planUnavailable": "Gói này chưa gắn với PayPal nên tạm thời chưa mua được.",
       "loadingPaypal": "Đang tải PayPal…",
       "paypalFailed": "Không tải được PayPal. Kiểm tra kết nối rồi thử lại.",
+      "paypalRejected": "PayPal từ chối mở lượt mua này. Đây là lỗi cấu hình phía chúng tôi, không phải phía bạn — thử lại cũng không hết.",
       "activating": "Đang xác nhận với PayPal…",
       "activated": "Đã kích hoạt gói {plan}",
       "activateFailed": "Không kích hoạt được gói",

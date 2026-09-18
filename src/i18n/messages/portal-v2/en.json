@@ -2778,6 +2778,7 @@
       "planUnavailable": "This plan is not linked to PayPal yet, so it cannot be purchased.",
       "loadingPaypal": "Loading PayPal…",
       "paypalFailed": "PayPal failed to load. Check your connection and try again.",
+      "paypalRejected": "PayPal refused to start this purchase. This is a setup problem on our side, not yours — retrying will not help.",
       "activating": "Confirming with PayPal…",
       "activated": "Plan {plan} is active",
       "activateFailed": "Could not activate the plan",

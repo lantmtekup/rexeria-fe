@@ -16,6 +16,48 @@ type PlanPayPalButtonProps = {
 };
 
 /**
+ * Hai kiểu hỏng KHÁC HẲN nhau, cố ý không gộp:
+ *
+ * - `sdk-failed`: script của PayPal không về được. Lỗi phía người dùng — mất
+ *   mạng, extension chặn `paypal.com/sdk/js`. Bảo họ thử lại là đúng.
+ * - `paypal-failed`: script về rồi, nút dựng rồi, nhưng PayPal từ chối lượt
+ *   mua. Đây là lỗi CẤU HÌNH phía mình, người dùng thử lại bao nhiêu lần cũng
+ *   vẫn hỏng.
+ *
+ * Trước đây hai kiểu này dùng chung một thông báo "không tải được PayPal", nên
+ * một lần plan_id không thuộc tài khoản của client-id đang dùng đã hiện ra
+ * thành "kiểm tra kết nối" — chỉ đọc log mới lần ra được. Không lặp lại.
+ */
+type Status =
+  | { kind: 'loading' }
+  | { kind: 'ready' }
+  | { kind: 'sdk-failed' }
+  | { kind: 'paypal-failed'; detail: string };
+
+/**
+ * Rút phần đọc được từ lỗi PayPal ném ra.
+ *
+ * PayPal nhồi cả dòng tiêu đề lẫn nguyên body JSON lẫn stack vào `message`.
+ * Lấy dòng đầu để biết hỏng ở bước nào, kèm `issue`/`name` trong body vì đó
+ * mới là thứ nói rõ nguyên nhân — ví dụ `RESOURCE_NOT_FOUND` khi `plan_id`
+ * không thuộc tài khoản của client-id đang cấu hình.
+ */
+const paypalErrorDetail = (err: unknown): string => {
+  const raw =
+    err instanceof Error ? err.message : typeof err === 'string' ? err : '';
+  const text = raw.trim();
+  if (!text) return '';
+
+  const headline = (text.split('\n')[0] ?? '').trim();
+  const code =
+    text.match(/"issue"\s*:\s*"([^"]+)"/)?.[1] ??
+    text.match(/"name"\s*:\s*"([^"]+)"/)?.[1];
+
+  const detail = code ? `${headline} (${code})` : headline;
+  return detail.length > 220 ? `${detail.slice(0, 220)}…` : detail;
+};
+
+/**
  * Nút PayPal cho một bậc giá.
  *
  * Nút do PayPal tự render vào một <div> rỗng — KHÔNG phải nút của mình gọi API
@@ -35,7 +77,7 @@ export const PlanPayPalButton = ({
 }: PlanPayPalButtonProps) => {
   const t = useTranslations('portalV2.billing');
   const hostRef = useRef<HTMLDivElement>(null);
-  const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const [status, setStatus] = useState<Status>({ kind: 'loading' });
 
   /*
    * `onApproved` đi qua ref chứ không nằm trong deps của effect.
@@ -52,7 +94,7 @@ export const PlanPayPalButton = ({
     let cancelled = false;
     let buttons: { close: () => void } | null = null;
 
-    setState('loading');
+    setStatus({ kind: 'loading' });
 
     loadPayPalSdk(clientId, plan.currency)
       .then(paypal => {
@@ -74,17 +116,31 @@ export const PlanPayPalButton = ({
               onApprovedRef.current(data.subscriptionID, plan);
             }
           },
-          onError: () => {
-            if (!cancelled) setState('failed');
+          onError: err => {
+            // Giữ nguyên lỗi gốc trong console: thông báo trên màn phải ngắn,
+            // còn người sửa thì cần cả body PayPal trả về.
+            // eslint-disable-next-line no-console
+            console.error(
+              `[billing] PayPal từ chối bậc "${plan.code}" (plan_id ${plan.paypal_plan_id})`,
+              err
+            );
+            if (!cancelled) {
+              setStatus({
+                kind: 'paypal-failed',
+                detail: paypalErrorDetail(err),
+              });
+            }
           },
         });
         buttons = instance;
         return instance.render(hostRef.current).then(() => {
-          if (!cancelled) setState('ready');
+          if (!cancelled) setStatus({ kind: 'ready' });
         });
       })
-      .catch(() => {
-        if (!cancelled) setState('failed');
+      .catch(err => {
+        // eslint-disable-next-line no-console
+        console.error('[billing] không nạp được SDK PayPal', err);
+        if (!cancelled) setStatus({ kind: 'sdk-failed' });
       });
 
     return () => {
@@ -99,26 +155,35 @@ export const PlanPayPalButton = ({
     };
   }, [clientId, plan]);
 
+  const noticeClass = cn(
+    'mt-2 rounded-[var(--pv2-r-sm)] border border-[var(--pv2-hair)] px-3 py-2',
+    'text-[12.5px] text-[var(--pv2-error)]'
+  );
+
   return (
     <div className='mt-4'>
-      <div ref={hostRef} aria-busy={state === 'loading'} />
+      <div ref={hostRef} aria-busy={status.kind === 'loading'} />
 
-      {state === 'loading' ? (
+      {status.kind === 'loading' ? (
         <div className='flex items-center gap-2 py-2 text-[12.5px] text-[var(--pv2-mut)]'>
           <Loader2 className='size-3.5 animate-spin' aria-hidden />
           {t('loadingPaypal')}
         </div>
       ) : null}
 
-      {state === 'failed' ? (
-        <p
-          className={cn(
-            'rounded-[var(--pv2-r-sm)] border border-[var(--pv2-hair)] px-3 py-2',
-            'text-[12.5px] text-[var(--pv2-error)]'
-          )}
-        >
-          {t('paypalFailed')}
-        </p>
+      {status.kind === 'sdk-failed' ? (
+        <p className={noticeClass}>{t('paypalFailed')}</p>
+      ) : null}
+
+      {status.kind === 'paypal-failed' ? (
+        <div className={noticeClass}>
+          <p>{t('paypalRejected')}</p>
+          {status.detail ? (
+            <p className='mt-1 font-mono text-[11px] break-words text-[var(--pv2-mut)]'>
+              {status.detail}
+            </p>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
