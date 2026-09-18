@@ -25,7 +25,11 @@
       "collapseGroup": "{group} - thu gọn",
       "scopeLabel": "Thương hiệu",
       "scopePlaceholder": "Chọn thương hiệu…",
-      "scopeNeedsPick": "Chọn thương hiệu trước khi sửa — chưa nạp hồ sơ nào."
+      "scopeNeedsPick": "Chọn thương hiệu trước khi sửa — chưa nạp hồ sơ nào.",
+      "signIn": "Đăng nhập",
+      "signUp": "Dùng thử miễn phí",
+      "guestBadge": "Đang xem với tư cách khách",
+      "backToSite": "Về trang chủ"
     },
     "nav": {
       "command": "Trung tâm điều khiển",
@@ -199,7 +203,13 @@
       "buyBullet2": "Giữ lineage — luôn biết concept gốc.",
       "buyBullet3": "Fork, chỉnh sửa và deploy trên mọi chiến dịch.",
       "buyNote": "Mua là cam kết, không phải nháp — Undo không hoàn tác. Thêm bản copy vào trang sau vẫn có thể.",
-      "addNeedsWorkspace": "Chưa có workspace nào để thêm vào — chọn hoặc tạo workspace trước."
+      "addNeedsWorkspace": "Chưa có workspace nào để thêm vào — chọn hoặc tạo workspace trước.",
+      "guestBannerTitle": "Bạn đang xem chợ mà chưa đăng nhập",
+      "guestBannerBody": "Xem, lọc và preview thoải mái. Muốn thêm một món vào thư viện của mình thì cần một tài khoản — miễn phí.",
+      "guestBannerCta": "Tạo tài khoản",
+      "guestBannerSignIn": "Tôi đã có tài khoản",
+      "guestActionNeedsAccount": "Cần đăng nhập để thêm món này vào thư viện của bạn",
+      "guestSellNeedsAccount": "Cần đăng nhập để đăng bán trải nghiệm gốc"
     },
     "preview": {
       "preview": "Xem trước {name}",
