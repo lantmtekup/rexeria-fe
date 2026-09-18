@@ -10,12 +10,28 @@ import {
 } from '@/lib/portal-v2/exchange/previewSlug';
 import type { ExchangeListingView } from '@/lib/portal-v2/exchange/types';
 import { enrichBlocksWithThumbnailUrls } from '@/lib/pages/resolve-thumbnails';
+import { RxApiError } from '@/services/rexer/client';
 import { rexerApi } from '@/services/rexer/endpoints';
 import { rexerV2Api } from '@/services/rexer-v2/endpoints';
 
 export type ExchangeCatalogQuery = {
   /** Free-text search — forwarded to all three sources as `q`. */
   q?: string;
+};
+
+export type ExchangeCatalogOptions = {
+  /**
+   * Có phiên đăng nhập hay không — quyết định gọi bộ endpoint nào.
+   *
+   * `true`  → đường có phiên (`/templates`, `/blocks`, `/exchange/items`).
+   *           Brand vẫn thấy template/block RIÊNG của mình trong chợ, đúng như
+   *           trước khi màn này mở cho khách.
+   * `false` → đường công khai (`/public/*`). BE ghim phạm vi về kho hệ thống.
+   *
+   * Đoán sai không mở thêm quyền: cookie hỏng thì đường có phiên trả 401 và
+   * `withPublicFallback` tự hạ xuống đường công khai.
+   */
+  signedIn?: boolean;
 };
 
 export type ExchangeCatalogResult = {
@@ -63,20 +79,59 @@ const LIMIT = 200;
  *
  * Một nguồn hỏng thì các nguồn còn lại vẫn hiện, và lỗi đi ra `softError`.
  */
+/**
+ * Gọi đường có phiên, rơi về đường công khai khi BE nói "không có phiên".
+ *
+ * Cần thiết vì `/portal-v2/exchange` nay mở cho khách: một cookie CŨ (hết hạn,
+ * hoặc còn lại sau khi BE xoay khoá) không còn bị middleware chặn ở cửa nữa —
+ * nó đi thẳng vào trang rồi mới 401 ở tầng dữ liệu. Không có nhánh này thì màn
+ * hình trống trơn kèm lỗi, trong khi đúng ra phải hiện chợ như một người khách.
+ *
+ * Chỉ hạ cấp trên 401/403. Lỗi khác (500, mạng) ném tiếp để `Promise.allSettled`
+ * ghi vào `softError` — im lặng nuốt chúng sẽ giấu mất sự cố thật.
+ */
+const withPublicFallback = async <T>(
+  authed: () => Promise<T>,
+  publicCall: () => Promise<T>
+): Promise<T> => {
+  try {
+    return await authed();
+  } catch (err) {
+    if (
+      err instanceof RxApiError &&
+      (err.status === 401 || err.status === 403)
+    ) {
+      return publicCall();
+    }
+    throw err;
+  }
+};
+
 export const fetchExchangeCatalog = async (
-  query: ExchangeCatalogQuery = {}
+  query: ExchangeCatalogQuery = {},
+  options: ExchangeCatalogOptions = {}
 ): Promise<ExchangeCatalogResult> => {
   const q = query.q?.trim() || undefined;
+  const signedIn = options.signedIn ?? true;
 
-  const settled = await Promise.allSettled([
+  const listExchange = () =>
     rexerV2Api.exchange.list({
       page: 1,
       page_size: LIMIT,
       ...(q ? { q } : {}),
-    }),
-    // Chỉ `active` — cùng ý với `published` của block: chợ chỉ bày thứ đã
-    // xong. Kho có 62 draft + 13 active; draft là bản đang dựng dở, bày ra
-    // cho brand khác là mời người ta dùng một trang chưa hoàn thiện.
+    });
+  const listExchangePublic = () =>
+    rexerV2Api.exchange.publicList({
+      page: 1,
+      page_size: LIMIT,
+      ...(q ? { q } : {}),
+    });
+
+  // Chỉ `active` — cùng ý với `published` của block: chợ chỉ bày thứ đã
+  // xong. Kho có 62 draft + 13 active; draft là bản đang dựng dở, bày ra
+  // cho brand khác là mời người ta dùng một trang chưa hoàn thiện.
+  // Đường `/public/templates` ghim sẵn `active` ở BE nên không gửi `status`.
+  const listTemplates = () =>
     rexerApi.templates.list({
       status: 'active',
       page: 1,
@@ -84,7 +139,17 @@ export const fetchExchangeCatalog = async (
       sort: 'updated_at',
       order: 'desc',
       ...(q ? { q } : {}),
-    }),
+    });
+  const listTemplatesPublic = () =>
+    rexerApi.publicTemplates.list({
+      page: 1,
+      limit: LIMIT,
+      sort: 'updated_at',
+      order: 'desc',
+      ...(q ? { q } : {}),
+    });
+
+  const listBlocks = () =>
     rexerApi.blocks.list({
       scope: 'system',
       status: 'published',
@@ -93,8 +158,34 @@ export const fetchExchangeCatalog = async (
       sort_by: 'updated_at',
       sort_order: 'desc',
       ...(q ? { q } : {}),
-    }),
-    collectPublishedLandings(),
+    });
+  const listBlocksPublic = () =>
+    rexerApi.publicBlocks.list({
+      page: 1,
+      limit: LIMIT,
+      sort_by: 'updated_at',
+      sort_order: 'desc',
+      ...(q ? { q } : {}),
+    });
+
+  const settled = await Promise.allSettled([
+    signedIn
+      ? withPublicFallback(listExchange, listExchangePublic)
+      : listExchangePublic(),
+    signedIn
+      ? withPublicFallback(listTemplates, listTemplatesPublic)
+      : listTemplatesPublic(),
+    signedIn
+      ? withPublicFallback(listBlocks, listBlocksPublic)
+      : listBlocksPublic(),
+    // `GET /pages` KHÔNG có bản công khai và cũng không nên có — nó phân biệt
+    // admin/brand. Khách không có lượt này; template nào thiếu slug sẽ được
+    // `fillMissingPreviewSlugs` dò qua `/public/pages/{slug}`.
+    signedIn
+      ? collectPublishedLandings()
+      : Promise.resolve(
+          [] as Awaited<ReturnType<typeof collectPublishedLandings>>
+        ),
   ]);
 
   const errors: string[] = [];

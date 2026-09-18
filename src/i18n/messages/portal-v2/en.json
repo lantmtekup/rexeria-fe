@@ -25,7 +25,11 @@
       "collapseGroup": "{group} - collapse",
       "scopeLabel": "Brand",
       "scopePlaceholder": "Choose a brand…",
-      "scopeNeedsPick": "Pick a brand before editing — nothing is loaded yet."
+      "scopeNeedsPick": "Pick a brand before editing — nothing is loaded yet.",
+      "signIn": "Sign in",
+      "signUp": "Start free",
+      "guestBadge": "Browsing as a guest",
+      "backToSite": "Back to site"
     },
     "nav": {
       "command": "Command Center",
@@ -199,7 +203,13 @@
       "buyBullet2": "Lineage kept — you always know the concept it came from.",
       "buyBullet3": "Yours to fork, edit, and deploy across every campaign.",
       "buyNote": "A purchase is a commit, not a draft — Undo won't reverse it. Adding the copy to a page afterwards still can be.",
-      "addNeedsWorkspace": "No workspace to add into — pick or create one first."
+      "addNeedsWorkspace": "No workspace to add into — pick or create one first.",
+      "guestBannerTitle": "You're browsing without an account",
+      "guestBannerBody": "Look around, filter and preview freely. Adding something to your own library needs an account — it is free.",
+      "guestBannerCta": "Create account",
+      "guestBannerSignIn": "I already have one",
+      "guestActionNeedsAccount": "Sign in to add this to your library",
+      "guestSellNeedsAccount": "Sign in to list an experience for sale"
     },
     "preview": {
       "preview": "Preview {name}",

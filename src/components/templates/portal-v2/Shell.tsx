@@ -12,9 +12,17 @@ import {
 
 type ShellProps = {
   children: ReactNode;
+  /**
+   * `false` = khách chưa đăng nhập (chỉ tới được `/portal-v2/exchange`).
+   *
+   * Khi đó KHÔNG dựng thanh điều hướng trái: mọi mục trong đó đều dẫn tới màn
+   * đòi đăng nhập, nên bày ra chỉ là một hàng bẫy. Khung còn lại một cột, và
+   * Topbar đổi sang mời đăng nhập thay vì avatar + chuông + nút Tạo.
+   */
+  signedIn?: boolean;
 };
 
-export const Shell = ({ children }: ShellProps) => {
+export const Shell = ({ children, signedIn = true }: ShellProps) => {
   // collapsed = icon-only rail; expanded = full sidebar with labels
   const [railCollapsed, setRailCollapsed] = useState(false);
 
@@ -36,16 +44,23 @@ export const Shell = ({ children }: ShellProps) => {
         'grid h-dvh grid-rows-[var(--pv2-top)_minmax(0,1fr)] overflow-hidden',
         'transition-[grid-template-columns] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
         'motion-reduce:transition-none',
-        railCollapsed
-          ? 'grid-cols-[var(--pv2-rail)_minmax(0,1fr)]'
-          : 'grid-cols-[var(--pv2-rail-full)_minmax(0,1fr)]',
+        !signedIn
+          ? 'grid-cols-[minmax(0,1fr)]'
+          : railCollapsed
+            ? 'grid-cols-[var(--pv2-rail)_minmax(0,1fr)]'
+            : 'grid-cols-[var(--pv2-rail-full)_minmax(0,1fr)]',
 
         'bg-white'
       )}
       data-rail-collapsed={railCollapsed ? 'true' : 'false'}
+      data-guest={signedIn ? undefined : 'true'}
     >
-      <Topbar railCollapsed={railCollapsed} onToggleRail={handleToggleRail} />
-      <Rail collapsed={railCollapsed} />
+      <Topbar
+        railCollapsed={railCollapsed}
+        onToggleRail={handleToggleRail}
+        signedIn={signedIn}
+      />
+      {signedIn ? <Rail collapsed={railCollapsed} /> : null}
       <main className='relative min-w-0 overflow-x-hidden overflow-y-auto bg-[var(--pv2-canvas)] outline-none'>
         {children}
       </main>

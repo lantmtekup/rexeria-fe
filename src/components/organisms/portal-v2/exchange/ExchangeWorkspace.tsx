@@ -2,6 +2,7 @@
 
 import { Loader2, Search, Sparkles, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -64,6 +65,16 @@ type ExchangeWorkspaceProps = {
    * trùng bao nhiêu lần cũng được mà không ai cảnh báo.
    */
   initialAdded?: Record<string, string>;
+  /**
+   * `false` = khách chưa đăng nhập. Màn này công khai (xem `publicPortalRoutes`
+   * trong middleware), nên mọi nút ĐỔI SỞ HỮU phải dẫn sang đăng nhập thay vì
+   * gọi API rồi nhận 401.
+   *
+   * Nút vẫn hiện nguyên như cũ, không bị ẩn hay làm mờ: thứ khách cần thấy là
+   * "món này thêm được", còn "cần tài khoản" là câu trả lời cho cú bấm, không
+   * phải một hàng rào dựng sẵn trước mặt.
+   */
+  signedIn?: boolean;
 };
 
 export const ExchangeWorkspace = ({
@@ -73,6 +84,7 @@ export const ExchangeWorkspace = ({
   initialPreviewId = null,
   initialKind = null,
   initialAdded,
+  signedIn = true,
 }: ExchangeWorkspaceProps) => {
   const t = useTranslations('portalV2.exchange');
   const router = useRouter();
@@ -143,6 +155,8 @@ export const ExchangeWorkspace = ({
   );
 
   useEffect(() => {
+    // Khách không có workspace để hỏi; lượt này sẽ 401 chắc chắn.
+    if (!signedIn) return;
     let cancelled = false;
 
     rexerApi.auth
@@ -157,7 +171,7 @@ export const ExchangeWorkspace = ({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [signedIn]);
 
   /**
    * Tập đã áp MỌI bộ lọc TRỪ loại — dùng chung cho lưới và cho số đếm trên tab.
@@ -353,9 +367,32 @@ export const ExchangeWorkspace = ({
     [previewNeighbors, toPreviewItem]
   );
 
+  /**
+   * Đưa khách sang đăng nhập, mang theo đúng chỗ họ đang đứng.
+   *
+   * `redirect` giữ cả query string, nên nếu họ đang mở preview một món
+   * (`?preview=...`) thì sau khi đăng nhập họ quay lại ĐÚNG món đó — chứ không
+   * bị thả về lưới rồi phải tự tìm lại. `RexerSignInForm` đọc tham số này.
+   */
+  const requireSignIn = useCallback(
+    (message: string) => {
+      toast.message(message);
+      const here =
+        typeof window === 'undefined'
+          ? `${PORTAL_V2_BASE}/exchange`
+          : `${window.location.pathname}${window.location.search}`;
+      router.push(`/sign-in?redirect=${encodeURIComponent(here)}`);
+    },
+    [router]
+  );
+
   const handleSell = useCallback(() => {
+    if (!signedIn) {
+      requireSignIn(t('guestSellNeedsAccount'));
+      return;
+    }
     toast.message(t('sellSoon'));
-  }, [t]);
+  }, [signedIn, requireSignIn, t]);
 
   const installListing = useCallback(
     async (listing: ExchangeListingView) => {
@@ -456,6 +493,14 @@ export const ExchangeWorkspace = ({
 
   const handleAction = useCallback(
     (listing: ExchangeListingView) => {
+      // Chặn TRƯỚC khi đọc trạng thái nút: với khách thì mọi nhánh bên dưới
+      // (thêm, mua, mở trong thư viện) đều cần một tài khoản, nên phân biệt
+      // chúng chỉ tổ hiện ba thông báo khác nhau cho cùng một câu trả lời.
+      if (!signedIn) {
+        requireSignIn(t('guestActionNeedsAccount'));
+        return;
+      }
+
       const state = resolveActionState(listing, session, EXCHANGE_CAN_BUY);
 
       if (state === 'locked') {
@@ -477,7 +522,7 @@ export const ExchangeWorkspace = ({
 
       void installListing(listing);
     },
-    [session, t, installListing, router]
+    [signedIn, requireSignIn, session, t, installListing, router]
   );
 
   /**
@@ -537,6 +582,54 @@ export const ExchangeWorkspace = ({
       </div>
 
       <div className='mx-auto w-full px-5 py-6 md:px-8'>
+        {/*
+          Dải mời đăng nhập, đặt TRÊN lưới chứ không phải dưới chân trang: nó
+          trả lời câu hỏi "tôi đang xem cái gì đây" ngay khi trang hiện, trước
+          khi khách bấm nhầm một nút rồi mới biết là cần tài khoản.
+        */}
+        {!signedIn ? (
+          <div
+            className={cn(
+              'mb-5 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-[var(--pv2-r-lg)]',
+              'border border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-5 py-4'
+            )}
+          >
+            <div className='min-w-[240px] flex-1'>
+              <p className='text-[14px] font-semibold text-[var(--pv2-ink)]'>
+                {t('guestBannerTitle')}
+              </p>
+              <p className='mt-1 text-[12.5px] leading-relaxed text-[var(--pv2-mut)]'>
+                {t('guestBannerBody')}
+              </p>
+            </div>
+            <div className='flex shrink-0 items-center gap-2.5'>
+              <Link
+                href='/sign-in'
+                className={cn(
+                  'inline-flex h-[34px] items-center rounded-full border border-[var(--pv2-hair)]',
+                  'bg-transparent px-3.5 text-[13px] font-semibold text-[var(--pv2-ink)] no-underline',
+                  'transition-all duration-200 hover:border-[var(--pv2-slate-300)] hover:bg-[var(--pv2-canvas)]',
+                  'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2'
+                )}
+              >
+                {t('guestBannerSignIn')}
+              </Link>
+              <Link
+                href='/sign-up'
+                className={cn(
+                  'inline-flex h-[34px] items-center rounded-full px-3.5 no-underline',
+                  'bg-[var(--pv2-electric)] text-[13px] font-semibold text-[var(--pv2-paper)]',
+                  'shadow-[0_4px_12px_rgba(56,98,255,0.25)] transition-all duration-200',
+                  'hover:-translate-y-[0.5px] hover:bg-[var(--pv2-electric-hover)]',
+                  'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2'
+                )}
+              >
+                {t('guestBannerCta')}
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
         {loadError ? (
           <div
             className={cn(

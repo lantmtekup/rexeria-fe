@@ -26,9 +26,15 @@ import { logoutThunk } from '@/store/slices/authSlice';
 type TopbarProps = {
   railCollapsed: boolean;
   onToggleRail: () => void;
+  /** `false` = khách chưa đăng nhập; xem `Shell` để biết vì sao. */
+  signedIn?: boolean;
 };
 
-export const Topbar = ({ railCollapsed, onToggleRail }: TopbarProps) => {
+export const Topbar = ({
+  railCollapsed,
+  onToggleRail,
+  signedIn = true,
+}: TopbarProps) => {
   const t = useTranslations('portalV2.shell');
   const locale = useLocale() as Locale;
   const dispatch = useAppDispatch();
@@ -56,6 +62,74 @@ export const Topbar = ({ railCollapsed, onToggleRail }: TopbarProps) => {
   const handleNotifications = () => {
     toast.message(t('notificationsEmpty'));
   };
+
+  /*
+   * Thanh trên cho KHÁCH — một nhánh riêng, không phải thanh cũ bị tắt bớt nút.
+   *
+   * Dựng chung rồi ẩn từng thứ sẽ để lại nút gạt sidebar (không còn sidebar để
+   * gạt), ô tìm kiếm chết, và một avatar rỗng — ba dấu vết của một màn hình
+   * dành cho người khác. Ở đây chỉ còn đúng ba thứ khách cần: đây là đâu, đổi
+   * ngôn ngữ, và đường vào.
+   */
+  if (!signedIn) {
+    return (
+      <header
+        className={cn(
+          'z-[var(--pv2-z-top)] col-span-full flex h-[var(--pv2-top)] items-center gap-3',
+          'border-b border-[var(--pv2-hair)] bg-[var(--pv2-paper)] px-5 shadow-[var(--pv2-sh-sm)]'
+        )}
+      >
+        <Link
+          href='/'
+          aria-label={t('backToSite')}
+          className='shrink-0 transition-transform duration-200 active:scale-[0.96]'
+        >
+          <Logo size={22} />
+        </Link>
+
+        <span
+          className={cn(
+            'hidden items-center gap-1.5 rounded-full border border-[var(--pv2-hair)]',
+            'bg-[var(--pv2-canvas)] px-2.5 py-1 text-[11.5px] font-semibold text-[var(--pv2-mut)] sm:inline-flex'
+          )}
+        >
+          <Store className='size-3.5' strokeWidth={1.75} aria-hidden />
+          {t('guestBadge')}
+        </span>
+
+        <div className='ml-auto flex shrink-0 items-center gap-2.5'>
+          <LocaleSwitch locale={locale} />
+
+          <Link
+            href='/sign-in'
+            className={cn(
+              'inline-flex h-[34px] items-center rounded-full border border-[var(--pv2-hair)]',
+              'bg-transparent px-3.5 text-[13px] font-semibold text-[var(--pv2-ink)] no-underline',
+              'transition-all duration-200 hover:border-[var(--pv2-slate-300)] hover:bg-[var(--pv2-canvas)]',
+              'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2',
+              'active:scale-[0.96]'
+            )}
+          >
+            {t('signIn')}
+          </Link>
+
+          <Link
+            href='/sign-up'
+            className={cn(
+              'inline-flex h-[34px] items-center rounded-full px-3.5 no-underline',
+              'bg-[var(--pv2-electric)] text-[13px] font-semibold text-[var(--pv2-paper)]',
+              'shadow-[0_4px_12px_rgba(56,98,255,0.25)] transition-all duration-200',
+              'hover:-translate-y-[0.5px] hover:bg-[var(--pv2-electric-hover)] hover:shadow-[0_6px_16px_rgba(56,98,255,0.35)]',
+              'focus-visible:ring-2 focus-visible:ring-[var(--pv2-electric)] focus-visible:ring-offset-2',
+              'active:translate-y-0 active:scale-[0.96] active:shadow-none'
+            )}
+          >
+            {t('signUp')}
+          </Link>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header
