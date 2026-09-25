@@ -3,6 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { useGLTF, useProgress, OrbitControls, Stage } from '@react-three/drei';
 import * as THREE from 'three';
 import { DRACO } from './floors.js';
+import { applyFabricOverrides } from './fabricOverride.js';
 
 const DEBUG =
   typeof window !== 'undefined' &&
@@ -22,7 +23,9 @@ const loadTexture = src => {
   return texCache.get(src);
 };
 
-function Model({ url, surfaces, variants, variant }) {
+// Đổi vải: `material` → thay map của material tên đó (model có UV vải thật);
+// `fabric` → model tách từ scene bake, nhân vải lên map bake (fabricOverride).
+function Model({ url, surfaces, material, fabric, variant }) {
   const { scene } = useGLTF(url, DRACO);
   // Clone so applied textures don't mutate the shared cached glTF.
   const root = useMemo(() => scene.clone(true), [scene]);
@@ -31,20 +34,22 @@ function Model({ url, surfaces, variants, variant }) {
   // the cached glTF keeps its original texture. `base` remembers that original
   // map so wrap/repeat/UV channel carry over to the swapped texture.
   const swappable = useMemo(() => {
-    if (!variants) return [];
+    if (!material) return [];
     const out = [];
     root.traverse(o => {
-      if (!o.isMesh || o.material?.name !== variants.material) return;
+      if (!o.isMesh || o.material?.name !== material) return;
       o.material = o.material.clone();
       out.push({ mat: o.material, base: o.material.map });
     });
     if (!out.length)
-      console.warn(
-        '[Model3DModal] variant material not found:',
-        variants.material
-      );
+      console.warn('[Model3DModal] variant material not found:', material);
     return out;
-  }, [root, variants]);
+  }, [root, material]);
+
+  useEffect(() => {
+    if (fabric && variant)
+      applyFabricOverrides(root, [{ ...fabric, src: variant.src }]);
+  }, [root, fabric, variant]);
 
   useEffect(() => {
     if (!variant) return;
@@ -117,16 +122,30 @@ function Model({ url, surfaces, variants, variant }) {
 // Tải trước model popup của một tầng (gọi khi vào tầng) → mở popup là có ngay.
 export function preloadPopupModels(zones) {
   (zones ?? []).forEach(z => {
-    if (z.type === 'model' && z.src) useGLTF.preload(z.src, DRACO);
+    if (z.type !== 'model') return;
+    const srcs = [z.src, ...(z.variants?.models ?? []).map(m => m.src)];
+    new Set(srcs.filter(Boolean)).forEach(src => useGLTF.preload(src, DRACO));
   });
 }
 
-export default function Model3DModal({ data, appliedId, onApply, onClose }) {
+export default function Model3DModal({ data, applied, onApply, onClose }) {
   const { active, progress } = useProgress();
   const options = data.variants?.options ?? [];
-  // Mở lại popup → chọn sẵn chất liệu đang áp dụng trong phòng (nếu có).
-  const [variantId, setVariantId] = useState(appliedId ?? options[0]?.id);
+  // Mẫu có thể chọn; không khai báo `models` → một mẫu duy nhất = model3d.
+  const models = data.variants?.models ?? [
+    { id: 'default', src: data.model3d, material: data.variants?.material },
+  ];
+  // Mở lại popup → chọn sẵn mẫu + chất liệu đang áp dụng trong phòng (nếu có).
+  const [modelId, setModelId] = useState(applied?.model ?? models[0].id);
+  const [variantId, setVariantId] = useState(applied?.fabric ?? options[0]?.id);
+  const model = models.find(m => m.id === modelId) ?? models[0];
   const variant = options.find(o => o.id === variantId);
+  const hasModels = !!data.variants?.models;
+  const pick = { ...(hasModels && { model: modelId }), fabric: variantId };
+  const isApplied =
+    !!applied &&
+    applied.fabric === pick.fabric &&
+    (applied.model ?? null) === (pick.model ?? null);
 
   useEffect(() => {
     const onKey = e => {
@@ -145,7 +164,7 @@ export default function Model3DModal({ data, appliedId, onApply, onClose }) {
     >
       <div
         onClick={e => e.stopPropagation()}
-        className='popup-card relative flex h-[70vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-[#f1ece2] shadow-2xl ring-1 ring-black/5'
+        className='popup-card relative flex h-[min(88vh,880px)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-[#f1ece2] shadow-2xl ring-1 ring-black/5'
       >
         {/* Header */}
         <div className='pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-4 p-5'>
@@ -172,7 +191,7 @@ export default function Model3DModal({ data, appliedId, onApply, onClose }) {
         </div>
 
         {/* 3D viewer */}
-        <div className='relative min-h-0 flex-1'>
+        <div className='relative min-h-0 flex-1 pt-20'>
           {data.model3d ? (
             <Canvas
               camera={{ fov: 40, position: [2.2, 1.6, 2.8] }}
@@ -180,16 +199,21 @@ export default function Model3DModal({ data, appliedId, onApply, onClose }) {
               gl={{ antialias: true }}
             >
               <Suspense fallback={null}>
+                {/* key: Stage căn giữa + fit camera một lần theo model đầu —
+                    đổi mẫu (gốc toạ độ khác nhau) phải dựng lại Stage. */}
                 <Stage
+                  key={model.src}
                   environment='apartment'
                   intensity={0.45}
-                  adjustCamera={1.1}
+                  adjustCamera={1.7}
                   shadows='contact'
                 >
                   <Model
-                    url={data.model3d}
+                    key={model.src}
+                    url={model.src}
                     surfaces={data.surfaces}
-                    variants={data.variants}
+                    material={model.material}
+                    fabric={model.fabric}
                     variant={variant}
                   />
                 </Stage>
@@ -227,37 +251,63 @@ export default function Model3DModal({ data, appliedId, onApply, onClose }) {
         {/* Texture picker — swatch per fabric option, + apply vào phòng */}
         {data.model3d && options.length > 1 && (
           <div className='flex flex-wrap items-center justify-between gap-4 border-t border-black/5 px-5 py-4'>
-            <div className='flex flex-col gap-2'>
-              <span className='text-[10px] font-medium tracking-[0.24em] text-neutral-500 uppercase'>
-                {data.variants.label ?? 'Chất liệu'} · {variant?.label}
-              </span>
-              <div className='flex gap-2.5'>
-                {options.map(o => (
-                  <button
-                    key={o.id}
-                    type='button'
-                    onClick={() => setVariantId(o.id)}
-                    aria-label={o.label}
-                    aria-pressed={o.id === variantId}
-                    title={o.label}
-                    className={`h-9 w-9 rounded-full bg-cover bg-center shadow-sm transition-all duration-200 hover:scale-110 ${
-                      o.id === variantId
-                        ? 'ring-2 ring-neutral-900 ring-offset-2 ring-offset-[#f1ece2]'
-                        : 'ring-1 ring-black/10'
-                    }`}
-                    style={{ backgroundImage: `url("${o.src}")` }}
-                  />
-                ))}
+            <div className='flex flex-col gap-3'>
+              {hasModels && (
+                <div className='flex flex-col gap-2'>
+                  <span className='text-[10px] font-medium tracking-[0.24em] text-neutral-500 uppercase'>
+                    {data.variants.modelLabel ?? 'Mẫu'} · {model.label}
+                  </span>
+                  <div className='flex gap-2'>
+                    {models.map(m => (
+                      <button
+                        key={m.id}
+                        type='button'
+                        onClick={() => setModelId(m.id)}
+                        aria-pressed={m.id === modelId}
+                        className={`rounded-full px-3.5 py-1.5 text-[11px] transition-colors duration-200 ${
+                          m.id === modelId
+                            ? 'bg-neutral-900 text-white'
+                            : 'bg-black/5 text-neutral-600 hover:bg-black/10'
+                        }`}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className='flex flex-col gap-2'>
+                <span className='text-[10px] font-medium tracking-[0.24em] text-neutral-500 uppercase'>
+                  {data.variants.label ?? 'Chất liệu'} · {variant?.label}
+                </span>
+                <div className='flex gap-2.5'>
+                  {options.map(o => (
+                    <button
+                      key={o.id}
+                      type='button'
+                      onClick={() => setVariantId(o.id)}
+                      aria-label={o.label}
+                      aria-pressed={o.id === variantId}
+                      title={o.label}
+                      className={`h-9 w-9 rounded-full bg-cover bg-center shadow-sm transition-all duration-200 hover:scale-110 ${
+                        o.id === variantId
+                          ? 'ring-2 ring-neutral-900 ring-offset-2 ring-offset-[#f1ece2]'
+                          : 'ring-1 ring-black/10'
+                      }`}
+                      style={{ backgroundImage: `url("${o.src}")` }}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
             {onApply && (
               <button
                 type='button'
-                onClick={() => onApply(variantId)}
-                disabled={variantId === appliedId}
+                onClick={() => onApply(pick)}
+                disabled={isApplied}
                 className='rounded-full bg-neutral-900 px-6 py-2.5 text-[11px] tracking-[0.18em] text-white uppercase transition-colors hover:bg-neutral-700 disabled:cursor-default disabled:bg-neutral-900/30'
               >
-                {variantId === appliedId ? 'Đang áp dụng' : 'Áp dụng'}
+                {isApplied ? 'Đang áp dụng' : 'Áp dụng'}
               </button>
             )}
           </div>

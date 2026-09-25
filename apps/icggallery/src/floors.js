@@ -69,6 +69,60 @@ const ARMCHAIR_VARIANTS = {
   ],
 };
 
+// Ghế bành tròn góc sảnh First Floor — nằm LẪN trong mesh gộp
+// ff_split-002_wall-002 (cùng tường gỗ), nên mọi thứ giới hạn bằng hộp toạ độ
+// LOCAL của mesh đó (node translate -14.229, 0.001, -0.125; world ghế x
+// -14.86..-13.72, y 0..1.12, z 1.70..2.75). ff_tub_chair.glb = chính các mảnh
+// ghế tách ra (Blender), giữ node transform → dùng chung hộp.
+const FF_CHAIR_NODE = 'ff_split-002_wall-002';
+// y từ 0.01: mảng sàn dưới ghế cũng nằm trong mesh này (y≈0) — giấu ghế
+// không được khoét luôn sàn.
+const FF_CHAIR_BOX = [
+  [-0.631, 0.01, 1.825],
+  [0.509, 1.12, 2.875],
+];
+// Phần bọc vải = bỏ chân đế gỗ (y < 0.2).
+const FF_CHAIR_FABRIC_BOX = [
+  [-0.631, 0.199, 1.825],
+  [0.509, 1.12, 2.875],
+];
+const FF_CHAIR_FABRIC = {
+  nodes: [FF_CHAIR_NODE, 'TubChair'],
+  box: FF_CHAIR_FABRIC_BOX,
+  repeat: 14,
+  // Màu bake trung bình (linear) của vải ghế gốc trên atlas pov_ff_uv-05.
+  base: [0.0906, 0.0609, 0.0392],
+};
+const FF_CHAIR_VARIANTS = {
+  id: 'ff-lounge-chair',
+  label: 'Chất liệu',
+  modelLabel: 'Mẫu ghế',
+  // Popup: chọn mẫu ghế + vải. "Áp dụng": ghế gốc → đổi vải tại chỗ (giữ
+  // bake); mẫu khác → giấu ghế gốc (hide) rồi đặt model vào `place`.
+  models: [
+    {
+      id: 'tub',
+      label: 'Ghế hiện tại',
+      src: '/webgl/models/furniture/ff_tub_chair.glb',
+      fabric: FF_CHAIR_FABRIC,
+    },
+    {
+      id: 'armchair',
+      label: 'Ghế bành bo tròn',
+      src: ARMCHAIR_MODEL,
+      material: 'Fabric',
+    },
+  ],
+  scene: {
+    node: FF_CHAIR_NODE,
+    hide: FF_CHAIR_BOX,
+    fabric: FF_CHAIR_FABRIC,
+    // Vị trí world đặt model thay thế: tâm đáy ghế gốc, ghế quay mặt về +z.
+    place: { position: [-14.29, 0, 2.26], rotationY: 0 },
+  },
+  options: ARMCHAIR_VARIANTS.options,
+};
+
 export const FLOORS = {
   'ground-floor': {
     label: 'Ground Floor',
@@ -129,78 +183,30 @@ export const FLOORS = {
     ],
   },
   'first-floor': {
-    label: 'First Floor',
+    label: 'Tầng 1',
     model: `${CDN}/models/ff_pov.glb`,
     iso: 'ff_iso',
     empty: 'ff_empty',
     clip: 'ff_empty_action',
+    // Cùng bộ sáng với Phòng khách (Lighting Editor ?light) — bake POV ff khá tối.
+    lighting: {
+      exposure: 1.39,
+      ambient: 2,
+      envPreset: 'apartment',
+      envIntensity: 1.47,
+    },
     // Clickable zones — drawn in Author Mode (?author). Example assets on CDN:
     // model FURNITURE_MODELS.sofa, image `${CDN}/media/demo-art.jpg`.
     zones: [
       {
-        id: 'zone-1',
-        title: 'Item',
-        eyebrow: '',
-        type: 'model', // click → popup viewer 3D (xoay/zoom), xem chi tiết
-        src: FURNITURE_MODELS.sofa, // 👈 thay bằng URL model thật
-        points: [
-          [-13.429, 0.468, 2.837],
-          [-14.198, 0.55, 3.069],
-          [-13.429, 0.356, 2.339],
-          [-14.624, 0.55, 3.25],
-          [-14.763, 0.55, 3.544],
-          [-14.768, 0.55, 3.762],
-          [-14.724, 0.55, 3.931],
-          [-14.657, 0.55, 4.015],
-          [-14.604, 0.55, 4.092],
-          [-14.446, 0.527, 4.197],
-          [-14.281, 0.534, 4.237],
-          [-14.022, 0.55, 4.178],
-          [-13.803, 0.55, 4.0],
-          [-13.429, 0.525, 3.645],
-          [-13.429, 0.532, 3.469],
-          [-13.429, 0.521, 3.204],
-          [-13.429, 0.531, 2.964],
-          [-13.429, 0.471, 2.828],
-        ],
-      },
-      {
-        id: 'zone-2',
-        title: 'Tranh',
-        eyebrow: 'Tác phẩm',
-        type: 'video-inline', // video loop phát thẳng trong scene 3D
-        src: `${MEDIA}/sample-10s.mp4`, // ảnh tĩnh: type:'image-inline' + `${MEDIA}/painting-2.jpg`
-        points: [
-          [9.244, 3.033, -2.172],
-          [9.244, 3.017, -3.313],
-          [9.243, 1.398, -3.309],
-          [9.244, 1.376, -2.165],
-          [9.244, 3.024, -2.167],
-        ],
-      },
-      {
-        id: 'zone-3',
-        title: 'Hotspot 1',
-        eyebrow: 'Điểm tham quan',
-        type: 'hotspot', // chấm marker → click hiện info popup
-        body: ['Cho mình nội dung + ảnh cho hotspot này.'],
-        points: [
-          [-3.546, 2.625, -1.499],
-          [-3.546, 2.674, -1.344],
-          [-3.917, 2.444, -1.476],
-        ],
-      },
-      {
-        id: 'zone-4',
-        title: 'Hotspot 2',
-        eyebrow: 'Điểm tham quan',
-        type: 'hotspot',
-        body: ['Cho mình nội dung + ảnh cho hotspot này.'],
-        points: [
-          [-7.238, 0.89, 5.165],
-          [-7.187, 0.847, 5.209],
-          [-7.262, 0.784, 5.253],
-        ],
+        id: 'ff-lounge-chair',
+        title: 'Ghế bành bọc vải',
+        eyebrow: 'Nội thất · Ghế bành',
+        type: 'model',
+        src: FF_CHAIR_VARIANTS.models[0].src,
+        variants: FF_CHAIR_VARIANTS,
+        mesh: FF_CHAIR_NODE,
+        box: FF_CHAIR_BOX,
       },
     ],
     hotspots: [
@@ -311,7 +317,7 @@ export const FLOORS = {
 // Tầng đang mở cho người xem — các tầng khác vẫn giữ config nhưng ẩn khỏi UI
 // (nav, mũi tên landing), không preload, URL tầng ẩn → về tầng mặc định.
 // Mở lại: thêm slug vào đây (vd. 'ground-floor', 'first-floor').
-const VISIBLE_FLOORS = ['home-theatre'];
+const VISIBLE_FLOORS = ['first-floor'];
 
 export const FLOOR_KEYS = Object.keys(FLOORS).filter(k =>
   VISIBLE_FLOORS.includes(k)

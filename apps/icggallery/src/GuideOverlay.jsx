@@ -22,8 +22,10 @@ const STEPS = [
     ),
   },
   {
-    title: 'Đổi chất liệu nội thất',
-    desc: 'Rê chuột vào ghế bành, bấm để xem mẫu 3D và áp dụng chất liệu mới.',
+    title: 'Đổi mẫu ghế & chất liệu',
+    // Chỉ hiện khi tầng có đồ đổi được vải / có hotspot (xem `zones`).
+    show: zones => zones.some(z => z.variants),
+    desc: 'Rê chuột vào ghế bành, bấm để chọn mẫu ghế, chất liệu rồi áp dụng vào phòng.',
     icon: (
       <svg
         viewBox='0 0 24 24'
@@ -40,6 +42,7 @@ const STEPS = [
   },
   {
     title: 'Chạm vào điểm thông tin',
+    show: zones => zones.some(z => z.type === 'hotspot'),
     desc: 'Bấm vào biểu tượng con mắt để xem chi tiết từng hạng mục.',
     icon: (
       <svg
@@ -57,7 +60,8 @@ const STEPS = [
   },
 ];
 
-export default function GuideOverlay({ onClose }) {
+export default function GuideOverlay({ onClose, zones = [] }) {
+  const steps = STEPS.filter(s => !s.show || s.show(zones));
   useEffect(() => {
     const onKey = e => {
       if (e.key === 'Escape') onClose();
@@ -102,7 +106,7 @@ export default function GuideOverlay({ onClose }) {
         </h2>
 
         <ul className='mt-7 space-y-5 text-left'>
-          {STEPS.map(s => (
+          {steps.map(s => (
             <li key={s.title} className='flex items-start gap-4'>
               <span className='mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-full bg-black/[0.06] text-neutral-800 ring-1 ring-black/10'>
                 <span className='block h-5 w-5'>{s.icon}</span>

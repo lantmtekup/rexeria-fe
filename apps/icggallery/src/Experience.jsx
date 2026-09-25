@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, Environment, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
@@ -7,6 +7,8 @@ import { projectZones, InlineImages, InlineModels } from './Zones.jsx';
 import Hotspot from './Hotspot.jsx';
 import { buildDraftRig, PathMarkers } from './path-editor.jsx';
 import { applyFabricOverrides } from './fabricOverride.js';
+import PlacedModel from './PlacedModel.jsx';
+import MeshZone from './MeshZone.jsx';
 
 // POV scene mesh for the active floor (Draco-compressed glTF from the CDN).
 // In Author Mode, clicking the model captures the hit world point (e.point) so
@@ -87,9 +89,17 @@ export default function Experience({
   pathDraft,
   light,
   fabricOverrides,
+  placedModels,
+  meshZones,
 }) {
   const cfg = FLOORS[floor];
   const camera = useThree(s => s.camera);
+  // Dev-only: lộ scene/camera ra window để raycast dò mesh từ DevTools.
+  const threeScene = useThree(s => s.scene);
+  useEffect(() => {
+    if (import.meta.env.DEV)
+      window.__three = { scene: threeScene, camera, THREE };
+  }, [threeScene, camera]);
   const size = useThree(s => s.size);
   const pathGltf = useGLTF(CAMERA_PATHS, DRACO);
   const sliderGltf = useGLTF(SLIDER, DRACO);
@@ -100,8 +110,11 @@ export default function Experience({
   // đúng hình vật thể ở mọi góc camera. Cache theo tên node.
   const meshPoints = useMemo(() => {
     const cache = {};
-    return name => {
-      if (cache[name]) return cache[name];
+    // box (tuỳ chọn): AABB toạ độ LOCAL của mesh — cho mesh gộp nhiều đồ vật
+    // (vd. ghế nằm chung mesh với tường), chỉ lấy đỉnh của vật trong hộp.
+    return (name, box) => {
+      const key = name + (box ? JSON.stringify(box) : '');
+      if (cache[key]) return cache[key];
       const obj = povGltf.scene.getObjectByName(name);
       const pts = [];
       if (obj) {
@@ -109,16 +122,29 @@ export default function Experience({
         obj.traverse(o => {
           const pos = o.isMesh && o.geometry.attributes.position;
           if (!pos) return;
-          const step = Math.max(1, Math.floor(pos.count / 150));
-          for (let i = 0; i < pos.count; i += step) {
-            const v = new THREE.Vector3()
-              .fromBufferAttribute(pos, i)
-              .applyMatrix4(o.matrixWorld);
+          const v = new THREE.Vector3();
+          const idx = [];
+          for (let i = 0; i < pos.count; i++) {
+            v.fromBufferAttribute(pos, i);
+            if (
+              !box ||
+              (v.x >= box[0][0] &&
+                v.x <= box[1][0] &&
+                v.y >= box[0][1] &&
+                v.y <= box[1][1] &&
+                v.z >= box[0][2] &&
+                v.z <= box[1][2])
+            )
+              idx.push(i);
+          }
+          const step = Math.max(1, Math.floor(idx.length / 150));
+          for (let k = 0; k < idx.length; k += step) {
+            v.fromBufferAttribute(pos, idx[k]).applyMatrix4(o.matrixWorld);
             pts.push([v.x, v.y, v.z]);
           }
         });
       } else console.warn('[zones] mesh not found:', name);
-      return (cache[name] = pts);
+      return (cache[key] = pts);
     };
   }, [povGltf]);
 
@@ -262,7 +288,7 @@ export default function Experience({
   // scroll path) until focus clears. Precompute the focus point + radius.
   const focusRef = useRef(null);
   const focusData = useMemo(() => {
-    const src = focus?.mesh ? meshPoints(focus.mesh) : focus?.points;
+    const src = focus?.mesh ? meshPoints(focus.mesh, focus.box) : focus?.points;
     if (!src?.length) return null;
     const pts = src.map(p => new THREE.Vector3(p[0], p[1], p[2]));
     const c = new THREE.Vector3();
@@ -395,7 +421,7 @@ export default function Experience({
         size.width,
         size.height,
         (zonesRef?.current || []).map(z =>
-          z.mesh ? { ...z, points: meshPoints(z.mesh) } : z
+          z.mesh ? { ...z, points: meshPoints(z.mesh, z.box) } : z
         ),
         draftRef?.current || []
       );
@@ -477,6 +503,36 @@ export default function Experience({
         />
       )}
       {entered && !dollhouse && pathDraft && <PathMarkers draft={pathDraft} />}
+      {entered &&
+        !dollhouse &&
+        (placedModels || []).map(m => (
+          <Suspense key={m.key} fallback={null}>
+            <PlacedModel
+              {...m}
+              zone={(meshZones || []).find(
+                z => (z.variants?.id ?? z.id) === m.key
+              )}
+              onOpen={onHotspot}
+            />
+          </Suspense>
+        ))}
+      {entered &&
+        !dollhouse &&
+        (meshZones || [])
+          .filter(
+            z =>
+              !(placedModels || []).some(
+                m => m.key === (z.variants?.id ?? z.id)
+              )
+          )
+          .map(z => (
+            <MeshZone
+              key={z.id}
+              scene={povGltf.scene}
+              zone={z}
+              onOpen={onHotspot}
+            />
+          ))}
       {entered && !dollhouse && <InlineImages zones={inlineZones} />}
       {entered && !dollhouse && <InlineModels zones={inlineModelZones} />}
       {entered &&

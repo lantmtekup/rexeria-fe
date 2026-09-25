@@ -37,7 +37,7 @@ export default function App() {
   const [entered, setEntered] = useState(false);
   const [hotspot, setHotspot] = useState(null);
   const [model3d, setModel3d] = useState(null); // zone clicked → 3D viewer
-  // Chất liệu đã "Áp dụng" vào phòng: { [variantKey]: optionId }. Key =
+  // Lựa chọn đã "Áp dụng" vào phòng: { [variantKey]: { model?, fabric } }. Key =
   // variants.id (nhiều zone dùng chung, vd. cặp ghế bành) hoặc id của zone.
   const [applied, setApplied] = useState({});
   const variantKey = z => z.variants?.id ?? z.id;
@@ -71,24 +71,50 @@ export default function App() {
     () => zones.filter(z => z.type === 'hotspot'),
     [zones]
   );
+  // Zone khai báo `mesh` → hover/click + viền bám đúng hình trong 3D
+  // (MeshZone.jsx), không qua polygon SVG.
   const overlayZones = useMemo(
-    () => zones.filter(z => !isInline(z) && z.type !== 'hotspot'),
+    () => zones.filter(z => !isInline(z) && z.type !== 'hotspot' && !z.mesh),
     [zones]
   );
+  const meshZones = useMemo(() => zones.filter(z => z.mesh), [zones]);
   const inlineModelZones = useMemo(
     () => zones.filter(z => z.type === 'model-inline' && activeInline[z.id]),
     [zones, activeInline]
   );
-  // Zone có variants.scene → mesh tương ứng trong phòng đổi theo lựa chọn đã áp dụng.
-  const fabricOverrides = useMemo(() => {
-    const byKey = new Map();
+  // Zone có variants.scene → mesh tương ứng trong phòng đổi theo lựa chọn đã
+  // áp dụng. Có `models` (đổi mẫu ghế): mẫu gốc (có `fabric`) → đổi vải tại
+  // chỗ; mẫu khác → giấu đồ gốc (hide) + đặt model vào scene.place.
+  const [fabricOverrides, placedModels] = useMemo(() => {
+    const overrides = new Map();
+    const placed = new Map();
     zones.forEach(z => {
       const key = variantKey(z);
-      const sceneCfg = z.variants?.scene;
-      const opt = z.variants?.options.find(o => o.id === applied[key]);
-      if (sceneCfg && opt) byKey.set(key, { ...sceneCfg, src: opt.src });
+      const v = z.variants;
+      const pick = applied[key];
+      if (!v?.scene || !pick) return;
+      const fabricSrc = v.options.find(o => o.id === pick.fabric)?.src;
+      const model = v.models?.find(m => m.id === pick.model);
+      if (!model) {
+        if (fabricSrc) overrides.set(key, { ...v.scene, src: fabricSrc });
+      } else if (model.fabric) {
+        overrides.set(key, {
+          ...model.fabric,
+          nodes: [v.scene.node],
+          src: fabricSrc,
+        });
+      } else {
+        overrides.set(key, { nodes: [v.scene.node], hide: v.scene.hide });
+        placed.set(key, {
+          key,
+          src: model.src,
+          material: model.material,
+          fabricSrc,
+          ...v.scene.place,
+        });
+      }
     });
-    return [...byKey.values()];
+    return [[...overrides.values()], [...placed.values()]];
   }, [zones, applied]);
   const zonesRef = useRef(overlayZones);
   const draftRef = useRef(draft);
@@ -267,6 +293,8 @@ export default function App() {
               pathDraft={pathDraft}
               light={light}
               fabricOverrides={fabricOverrides}
+              placedModels={placedModels}
+              meshZones={meshZones}
             />
           </Suspense>
         </Canvas>
@@ -354,7 +382,7 @@ export default function App() {
         />
       )}
 
-      {guide && <GuideOverlay onClose={() => setGuide(false)} />}
+      {guide && <GuideOverlay zones={zones} onClose={() => setGuide(false)} />}
       {hotspot && (
         <InfoModal
           data={hotspot}
@@ -367,11 +395,11 @@ export default function App() {
       {model3d && (
         <Model3DModal
           data={model3d}
-          appliedId={applied[model3d.key]}
+          applied={applied[model3d.key]}
           onApply={
             model3d.variants?.scene
-              ? id => {
-                  setApplied(a => ({ ...a, [model3d.key]: id }));
+              ? pick => {
+                  setApplied(a => ({ ...a, [model3d.key]: pick }));
                   setModel3d(null);
                   setFocus(null);
                 }
