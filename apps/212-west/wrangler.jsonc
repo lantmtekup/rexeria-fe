@@ -1,0 +1,11 @@
+// CF Worker cho demo 212-west (apps/212-west). Build: npm run cf:build — Deploy: npm run cf:deploy
+// Chạy trên *.workers.dev, chưa gắn domain.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "212-west",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-05-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "workers_dev": true,
+}

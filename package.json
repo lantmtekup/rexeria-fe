@@ -24,7 +24,9 @@
     "visual:capture": "node scripts/visual-tests/capture.mjs",
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "deploy:apps": "node scripts/deploy-apps.mjs",
+    "deploy:apps:list": "node scripts/deploy-apps.mjs --list"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.95.2",

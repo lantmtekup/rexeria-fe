@@ -2,7 +2,7 @@
 // Chạy trên *.workers.dev, chưa gắn domain.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "rexerai-mintcoin-v2",
+  "name": "mintcoin-v2",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-05-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
@@ -10,4 +10,5 @@
   "routes": [
     { "pattern": "mintcoin-v2.rexerstudio.com", "custom_domain": true },
   ],
+  "workers_dev": true,
 }

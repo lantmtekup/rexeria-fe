@@ -334,10 +334,25 @@ Demo/clone sites import từ 360-admin-cms (06/2026), mỗi app tự chứa (own
 
 | App | Stack | Dev | Deploy | URL |
 |---|---|---|---|---|
-| `apps/mintcoin` | Next 15 + GSAP/Lenis | `npm run dev` | `npm run cf:deploy` | rexerai-mintcoin.lantm.workers.dev |
-| `apps/mintcoin-v2` | Next 15 + GSAP/Lenis | `npm run dev` | `npm run cf:deploy` | rexerai-mintcoin-v2.lantm.workers.dev |
-| `apps/delvaux` | Next 15 + GSAP/Lenis | `npm run dev` | `npm run cf:deploy` | rexerai-delvaux.lantm.workers.dev |
-| `apps/icggallery` | Vite + React Three Fiber | `npm run dev` (port 7777) | `npm run build && npx wrangler deploy` | rexerai-icggallery.lantm.workers.dev |
+| `apps/mintcoin` | Next 15 + GSAP/Lenis | `npm run dev` | `npm run cf:deploy` | mintcoin.lantm.workers.dev |
+| `apps/mintcoin-v2` | Next 15 + GSAP/Lenis | `npm run dev` | `npm run cf:deploy` | mintcoin-v2.lantm.workers.dev |
+| `apps/delvaux` | Next 15 + GSAP/Lenis | `npm run dev` | `npm run cf:deploy` | delvaux.lantm.workers.dev |
+| `apps/icggallery` | Vite + React Three Fiber | `npm run dev` (port 7777) | `npm run build && npx wrangler deploy` | icggallery.lantm.workers.dev |
+
+### Deploy lên Cloudflare
+
+Mọi app trong `apps/` đều có `wrangler.jsonc` + script `cf:deploy` riêng; deploy từ root bằng một lệnh
+(Node >= 22.12 — `nvm use 22`; cần `npx wrangler login` một lần hoặc `CLOUDFLARE_API_TOKEN`):
+
+```bash
+npm run deploy:apps:list          # liệt kê app, loại build, worker, domain
+npm run deploy:apps               # deploy tất cả (tuần tự, app lỗi không chặn app khác)
+npm run deploy:apps -- pnj belgo  # chỉ deploy các app được nêu
+npm run deploy:apps -- --dry-run  # in các bước, không build/deploy
+```
+
+App thiếu `node_modules` được `yarn install` tự động. Không có `routes` trong `wrangler.jsonc` thì app
+chạy ở `https://<app>.lantm.workers.dev`. Script dừng ngay nếu hai app trùng `name` worker.
 
 - mintcoin cần secrets `REXER_ADMIN_EMAIL/PASSWORD` (`wrangler secret put`) + `.env.local` khi dev (hỏi @lantm).
 - icggallery: model 3D nặng load từ CloudFront CDN, không nằm trong repo/bundle.

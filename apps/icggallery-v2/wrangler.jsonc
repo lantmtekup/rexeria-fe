@@ -3,10 +3,11 @@
 // từng tầng vẫn có thể trỏ CDN riêng khi có, xem src/floors.js.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "rexerai-icggallery-v2",
+  "name": "icggallery-v2",
   "compatibility_date": "2026-05-01",
   "assets": {
     "directory": "dist",
     "not_found_handling": "single-page-application",
   },
+  "workers_dev": true,
 }
