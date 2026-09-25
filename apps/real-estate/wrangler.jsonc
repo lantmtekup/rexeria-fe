@@ -2,13 +2,17 @@
 // Vite SPA. Build: npm run build — Deploy: npm run cf:deploy
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "rexerai-real-estate",
+  "name": "real-estate",
   "compatibility_date": "2026-05-01",
   "assets": {
     "directory": "dist",
     "not_found_handling": "single-page-application",
   },
+  // Route cụ thể phải có: worker rexerai (root) giữ route `*.rexerstudio.com/*`, và route
+  // chạy trước custom domain — thiếu dòng này subdomain rơi vào /p/real-estate của app chính.
   "routes": [
     { "pattern": "real-estate.rexerstudio.com", "custom_domain": true },
+    { "pattern": "real-estate.rexerstudio.com/*", "zone_name": "rexerstudio.com" },
   ],
+  "workers_dev": true,
 }

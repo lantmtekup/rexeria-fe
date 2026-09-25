@@ -3,7 +3,11 @@
 // Chạy trên *.workers.dev, chưa gắn domain.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "rexerai-magnolia",
+  "name": "magnolia",
   "compatibility_date": "2026-05-01",
-  "assets": { "directory": "./out", "not_found_handling": "single-page-application" },
+  "assets": {
+    "directory": "./out",
+    "not_found_handling": "single-page-application",
+  },
+  "workers_dev": true,
 }

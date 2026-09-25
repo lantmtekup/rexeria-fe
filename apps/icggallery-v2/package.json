@@ -7,7 +7,8 @@
     "dev": "vite --port 7778",
     "build": "vite build",
     "preview": "vite preview",
-    "compress:models": "node scripts/compress-models.mjs"
+    "compress:models": "node scripts/compress-models.mjs",
+    "cf:deploy": "vite build && wrangler deploy"
   },
   "dependencies": {
     "@react-three/drei": "^10",

@@ -2,10 +2,11 @@
 // Build: npm run cf:build — Deploy: npm run cf:deploy
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "rexerai-mint2026",
+  "name": "mint2026",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-05-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
   "routes": [{ "pattern": "mint2026.rexerstudio.com", "custom_domain": true }],
+  "workers_dev": true,
 }
