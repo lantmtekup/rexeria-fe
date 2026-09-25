@@ -28,6 +28,47 @@ export const FURNITURE_MODELS = {
 //   side — metres right(+)/left(-),  up — metres up(+)/down(-)
 // The point is computed from the camera path, so it naturally appears when you
 // scroll to it and hides once you pass by.
+// Ghế bành phòng khách Home Theatre — popup 3D đổi chất liệu. Model từ
+// Downloads/260716/Armchair.fbx (Blender → GLB Draco, material vải đổi tên
+// 'Fabric'); texture vải ở public/webgl/textures/armchair.
+const ARMCHAIR_MODEL = '/webgl/models/furniture/armchair.glb';
+const ARMCHAIR_VARIANTS = {
+  // Cả cặp ghế dùng chung một lựa chọn (App.jsx key theo id này).
+  id: 'armchair',
+  label: 'Chất liệu',
+  material: 'Fabric',
+  // "Áp dụng" → đổi vải cặp ghế bành trong ht_living_room.glb (node
+  // Box015/Box016). repeat = mật độ vân vải trên UV bake atlas; base =
+  // màu trung bình linear của vải gốc (beige.jpg), xem fabricOverride.js.
+  scene: {
+    nodes: ['Box015', 'Box016'],
+    repeat: 12,
+    base: [0.479, 0.4304, 0.3822],
+  },
+  options: [
+    {
+      id: 'beige',
+      label: 'Be',
+      src: '/webgl/textures/armchair/beige.jpg',
+    },
+    {
+      id: 'blue',
+      label: 'Xanh dương',
+      src: '/webgl/textures/armchair/blue.jpg',
+    },
+    {
+      id: 'green',
+      label: 'Xanh rêu',
+      src: '/webgl/textures/armchair/green.jpg',
+    },
+    {
+      id: 'red',
+      label: 'Đỏ gạch',
+      src: '/webgl/textures/armchair/red.jpg',
+    },
+  ],
+};
+
 export const FLOORS = {
   'ground-floor': {
     label: 'Ground Floor',
@@ -184,7 +225,7 @@ export const FLOORS = {
     ],
   },
   'home-theatre': {
-    label: 'Home Theatre',
+    label: 'Phòng khách',
     // TẠM: thay bằng model "Living Room" (nguồn: Downloads/260712/Lingving
     // Room.glb, nén Draco + WebP 226MB → 4.7MB, dịch chuyển gốc toạ độ để
     // trùng vùng camera path cũ x~57-60/z~-53..-57/y~7.2). Model gốc không
@@ -196,40 +237,36 @@ export const FLOORS = {
     iso: null,
     empty: 'ht_empty',
     clip: 'ht_empty_action',
+    // Bake từ Lighting Editor (?light) — draft localStorage đã chỉnh trên
+    // rexerai-icggallery.lantm.workers.dev.
+    lighting: {
+      exposure: 1.39,
+      ambient: 2,
+      envPreset: 'apartment',
+      envIntensity: 1.47,
+    },
     // Toạ độ lấy bằng Author Mode (?author) — click trực tiếp lên model thật
     // qua Playwright, không phải ước lượng tay.
     zones: [
+      // Vùng hover/click bám theo mesh thật: `mesh` → Experience lấy mẫu đỉnh
+      // world-space của node đó làm points (bao lồi = viền ghế trên màn hình).
       {
-        id: 'ht-coffee-table',
-        title: 'Bàn trà gỗ tròn',
-        eyebrow: 'Nội thất · Bàn trà',
-        type: 'hotspot',
-        body: [
-          'Mặt bàn gỗ óc chó nguyên khối kết hợp đá cẩm thạch trắng, tạo điểm nhấn ấm áp giữa không gian phòng khách.',
-          'Đường cong mềm mại của mặt bàn hài hoà với hình khối tròn của bộ ghế bành xung quanh.',
-        ],
-        captions: ['Gỗ óc chó nguyên khối', 'Mặt phụ đá cẩm thạch'],
-        points: [
-          [57.469, 5.5, -49.985],
-          [58.197, 5.5, -50.474],
-          [58.806, 5.5, -50.846],
-        ],
+        id: 'ht-armchair-right',
+        title: 'Ghế bành bọc vải',
+        eyebrow: 'Nội thất · Ghế bành',
+        type: 'model',
+        src: ARMCHAIR_MODEL,
+        variants: ARMCHAIR_VARIANTS,
+        mesh: 'Box015',
       },
       {
-        id: 'ht-accent-chair',
-        title: 'Ghế bành bọc da',
+        id: 'ht-armchair-left',
+        title: 'Ghế bành bọc vải',
         eyebrow: 'Nội thất · Ghế bành',
-        type: 'hotspot',
-        body: [
-          'Cặp ghế bành dáng tròn bọc da cao cấp, phần lưng ôm sát tạo cảm giác êm ái khi ngồi thư giãn.',
-          'Tông màu kem trung tính dễ phối cùng sofa và thảm dệt, giữ tổng thể không gian nhẹ nhàng, tinh tế.',
-        ],
-        captions: ['Khung gỗ bọc đệm da', 'Thiết kế bo tròn hiện đại'],
-        points: [
-          [63.67, 6.026, -54.196],
-          [63.733, 6.018, -54.268],
-          [63.757, 6.005, -54.286],
-        ],
+        type: 'model',
+        src: ARMCHAIR_MODEL,
+        variants: ARMCHAIR_VARIANTS,
+        mesh: 'Box016',
       },
       {
         id: 'ht-staircase',
@@ -248,22 +285,6 @@ export const FLOORS = {
           [63.607, 6.538, -57.43],
           [63.629, 6.538, -57.43],
           [63.612, 6.518, -57.43],
-        ],
-      },
-      {
-        id: 'ht-floor-lamp',
-        title: 'Đèn sàn dáng nấm',
-        eyebrow: 'Nội thất · Đèn trang trí',
-        type: 'hotspot',
-        body: [
-          'Đèn sàn chao nấm màu cam trầm, điểm nhấn màu sắc hiếm hoi giữa tông gỗ - kem chủ đạo của căn phòng.',
-          'Ánh sáng vàng ấm toả đều, phù hợp cho những buổi tối thư giãn cạnh cửa kính nhìn ra ngoài.',
-        ],
-        captions: ['Chao đèn nấm màu cam đất', 'Ánh sáng vàng ấm dịu'],
-        points: [
-          [64.887, 6.182, -53.286],
-          [64.893, 6.183, -53.281],
-          [64.887, 6.173, -53.286],
         ],
       },
       {
@@ -287,11 +308,18 @@ export const FLOORS = {
   },
 };
 
-export const FLOOR_KEYS = Object.keys(FLOORS);
-export const DEFAULT_FLOOR = 'ground-floor';
+// Tầng đang mở cho người xem — các tầng khác vẫn giữ config nhưng ẩn khỏi UI
+// (nav, mũi tên landing), không preload, URL tầng ẩn → về tầng mặc định.
+// Mở lại: thêm slug vào đây (vd. 'ground-floor', 'first-floor').
+const VISIBLE_FLOORS = ['home-theatre'];
+
+export const FLOOR_KEYS = Object.keys(FLOORS).filter(k =>
+  VISIBLE_FLOORS.includes(k)
+);
+export const DEFAULT_FLOOR = FLOOR_KEYS[0];
 
 // Resolve the floor slug from a /…/floors/<slug> path.
 export function floorFromPath(pathname) {
   const m = (pathname || '').match(/floors\/([a-z-]+)/);
-  return m && FLOORS[m[1]] ? m[1] : DEFAULT_FLOOR;
+  return m && FLOOR_KEYS.includes(m[1]) ? m[1] : DEFAULT_FLOOR;
 }

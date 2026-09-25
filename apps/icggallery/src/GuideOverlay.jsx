@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 // Cream/serif styling to match the loading intro.
 const STEPS = [
   {
-    title: 'Scroll to move',
-    desc: 'Scroll up or down to travel through the gallery space.',
+    title: 'Cuộn để di chuyển',
+    desc: 'Cuộn lên hoặc xuống để đi qua không gian căn phòng.',
     icon: (
       <svg
         viewBox='0 0 24 24'
@@ -22,8 +22,8 @@ const STEPS = [
     ),
   },
   {
-    title: 'Switch floors',
-    desc: 'Use the buttons below to jump between floors.',
+    title: 'Đổi chất liệu nội thất',
+    desc: 'Rê chuột vào ghế bành, bấm để xem mẫu 3D và áp dụng chất liệu mới.',
     icon: (
       <svg
         viewBox='0 0 24 24'
@@ -39,8 +39,8 @@ const STEPS = [
     ),
   },
   {
-    title: 'Tap the hotspots',
-    desc: 'Open the dots in the scene for details about each surface.',
+    title: 'Chạm vào điểm thông tin',
+    desc: 'Bấm vào biểu tượng con mắt để xem chi tiết từng hạng mục.',
     icon: (
       <svg
         viewBox='0 0 24 24'
@@ -70,7 +70,7 @@ export default function GuideOverlay({ onClose }) {
     <div
       role='dialog'
       aria-modal='true'
-      aria-label='How to explore'
+      aria-label='Hướng dẫn khám phá'
       onClick={onClose}
       className='fixed inset-0 z-[55] flex items-center justify-center bg-black/45 p-6 backdrop-blur-sm'
     >
@@ -85,20 +85,20 @@ export default function GuideOverlay({ onClose }) {
         <button
           type='button'
           onClick={onClose}
-          aria-label='Close guide'
+          aria-label='Đóng hướng dẫn'
           className='absolute top-3 right-3 grid h-9 w-9 place-items-center rounded-full text-neutral-700 transition-colors duration-200 hover:bg-black/10'
         >
           ✕
         </button>
 
         <p className='text-[11px] tracking-[0.32em] uppercase opacity-50'>
-          Iris Ceramica Group
+          Magnolia
         </p>
         <h2
           className='mt-2 font-serif font-light'
           style={{ fontSize: 'clamp(22px,3.2vw,30px)' }}
         >
-          How to explore
+          Hướng dẫn khám phá
         </h2>
 
         <ul className='mt-7 space-y-5 text-left'>
@@ -124,7 +124,7 @@ export default function GuideOverlay({ onClose }) {
           onClick={onClose}
           className='mt-8 w-full rounded-full bg-neutral-900 px-8 py-3.5 text-[11px] font-medium tracking-[0.22em] text-neutral-50 uppercase transition-colors duration-300 hover:bg-neutral-700'
         >
-          Tap to explore
+          Bắt đầu khám phá
         </button>
       </div>
     </div>

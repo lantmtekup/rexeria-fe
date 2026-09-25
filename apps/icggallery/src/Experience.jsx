@@ -2,16 +2,17 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, Environment, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
-import { DRACO, CAMERA_PATHS, SLIDER, FLOORS } from './floors.js';
+import { DRACO, CAMERA_PATHS, SLIDER, FLOORS, FLOOR_KEYS } from './floors.js';
 import { projectZones, InlineImages, InlineModels } from './Zones.jsx';
 import Hotspot from './Hotspot.jsx';
 import { buildDraftRig, PathMarkers } from './path-editor.jsx';
+import { applyFabricOverrides } from './fabricOverride.js';
 
 // POV scene mesh for the active floor (Draco-compressed glTF from the CDN).
 // In Author Mode, clicking the model captures the hit world point (e.point) so
 // the user can draw clickable-zone polygons. Clicks on existing zones are handled
 // by the SVG overlay, not here.
-function Floor({ model, clay, author, onAddPoint }) {
+function Floor({ model, clay, author, onAddPoint, fabricOverrides }) {
   const { scene } = useGLTF(model, DRACO);
   // clay: tạm cho ht_pov.glb — file export từ Corona material chỉ còn palette
   // màu phẳng (phòng map vào ô đen) nên phủ clay để duyệt camera path trong
@@ -35,6 +36,10 @@ function Floor({ model, clay, author, onAddPoint }) {
       }
     });
   }, [scene, clay]);
+  // Chất liệu vải user đã "Áp dụng" từ popup 3D (xem fabricOverride.js).
+  useEffect(() => {
+    if (!clay) applyFabricOverrides(scene, fabricOverrides);
+  }, [scene, clay, fabricOverrides]);
   return (
     <primitive
       object={scene}
@@ -81,6 +86,7 @@ export default function Experience({
   dollhouse,
   pathDraft,
   light,
+  fabricOverrides,
 }) {
   const cfg = FLOORS[floor];
   const camera = useThree(s => s.camera);
@@ -88,6 +94,33 @@ export default function Experience({
   const pathGltf = useGLTF(CAMERA_PATHS, DRACO);
   const sliderGltf = useGLTF(SLIDER, DRACO);
   const povGltf = useGLTF(cfg.model, DRACO); // cached — Floor renders the same asset
+
+  // Zone khai báo `mesh` (thay vì points vẽ tay) → lấy mẫu ~150 đỉnh world-space
+  // của node đó trong POV scene. projectZones lấy bao lồi → viền hover bám
+  // đúng hình vật thể ở mọi góc camera. Cache theo tên node.
+  const meshPoints = useMemo(() => {
+    const cache = {};
+    return name => {
+      if (cache[name]) return cache[name];
+      const obj = povGltf.scene.getObjectByName(name);
+      const pts = [];
+      if (obj) {
+        obj.updateWorldMatrix(true, true);
+        obj.traverse(o => {
+          const pos = o.isMesh && o.geometry.attributes.position;
+          if (!pos) return;
+          const step = Math.max(1, Math.floor(pos.count / 150));
+          for (let i = 0; i < pos.count; i += step) {
+            const v = new THREE.Vector3()
+              .fromBufferAttribute(pos, i)
+              .applyMatrix4(o.matrixWorld);
+            pts.push([v.x, v.y, v.z]);
+          }
+        });
+      } else console.warn('[zones] mesh not found:', name);
+      return (cache[name] = pts);
+    };
+  }, [povGltf]);
 
   // Clay material for the dollhouse — slider.glb ships flat-white unlit
   // placeholders, so we re-skin them with a soft matte clay (depth comes from
@@ -229,15 +262,16 @@ export default function Experience({
   // scroll path) until focus clears. Precompute the focus point + radius.
   const focusRef = useRef(null);
   const focusData = useMemo(() => {
-    if (!focus?.points?.length) return null;
-    const pts = focus.points.map(p => new THREE.Vector3(p[0], p[1], p[2]));
+    const src = focus?.mesh ? meshPoints(focus.mesh) : focus?.points;
+    if (!src?.length) return null;
+    const pts = src.map(p => new THREE.Vector3(p[0], p[1], p[2]));
     const c = new THREE.Vector3();
     pts.forEach(p => c.add(p));
     c.divideScalar(pts.length);
     let r = 0;
     for (const p of pts) r = Math.max(r, p.distanceTo(c));
     return { c, r };
-  }, [focus]);
+  }, [focus, meshPoints]);
   useEffect(() => {
     focusRef.current = focusData;
   }, [focusData]);
@@ -360,7 +394,9 @@ export default function Experience({
         camera,
         size.width,
         size.height,
-        zonesRef?.current || [],
+        (zonesRef?.current || []).map(z =>
+          z.mesh ? { ...z, points: meshPoints(z.mesh) } : z
+        ),
         draftRef?.current || []
       );
     }
@@ -437,6 +473,7 @@ export default function Experience({
           clay={cfg.clayPov}
           author={author}
           onAddPoint={onAddPoint}
+          fabricOverrides={fabricOverrides}
         />
       )}
       {entered && !dollhouse && pathDraft && <PathMarkers draft={pathDraft} />}
@@ -453,4 +490,5 @@ export default function Experience({
 
 useGLTF.preload(CAMERA_PATHS, DRACO);
 useGLTF.preload(SLIDER, DRACO);
-Object.values(FLOORS).forEach(f => useGLTF.preload(f.model, DRACO));
+// Chỉ preload tầng đang mở (tầng ẩn tải model POV nặng từ CDN vô ích).
+FLOOR_KEYS.forEach(k => useGLTF.preload(FLOORS[k].model, DRACO));

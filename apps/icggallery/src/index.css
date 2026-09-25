@@ -10,7 +10,7 @@ body,
   background: #f6f1ec;
 }
 body {
-  font-family: 'Jost', 'Futura', 'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Be Vietnam Pro', 'Helvetica Neue', Arial, sans-serif;
 }
 
 @keyframes ctaUp {
@@ -53,7 +53,7 @@ body {
     box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.45);
   }
   70% {
-    box-shadow: 0 0 0 12px rgba(255, 255, 255, 0);
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0);
   }
 }
 @keyframes eyeBlink2 {
@@ -103,7 +103,7 @@ body {
     opacity: 0.7;
   }
   100% {
-    transform: scale(1.8);
+    transform: scale(1.5);
     opacity: 0;
   }
 }

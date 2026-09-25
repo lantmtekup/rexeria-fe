@@ -59,15 +59,15 @@ export default function Hotspot({ data, onOpen }) {
           type='button'
           onClick={() => onOpen(data)}
           aria-label={data.title}
-          className='hotspot-btn relative grid h-14 w-14 place-items-center rounded-full bg-white shadow-lg ring-1 ring-black/5 transition-transform duration-300 hover:scale-110'
+          className='hotspot-btn relative grid h-8 w-8 place-items-center rounded-full bg-white shadow-md ring-1 ring-black/5 transition-transform duration-300 hover:scale-110'
         >
           {/* pulsing ring */}
-          <span className='hotspot-pulse pointer-events-none absolute inset-0 rounded-full ring-2 ring-white/70' />
+          <span className='hotspot-pulse pointer-events-none absolute inset-0 rounded-full ring-1 ring-white/70' />
           <img
             src='/eye.svg'
             alt=''
             aria-hidden='true'
-            className='hotspot-eye h-auto w-6'
+            className='hotspot-eye h-auto w-3.5'
           />
         </button>
         {/* connector line + label (slide/fade in on hover) */}

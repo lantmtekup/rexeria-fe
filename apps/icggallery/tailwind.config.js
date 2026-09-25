@@ -4,8 +4,11 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Jost', 'Futura', 'system-ui', 'sans-serif'],
-        serif: ['Lora', 'Georgia', 'serif'],
+        sans: ['Be Vietnam Pro', 'system-ui', 'sans-serif'],
+        // Tiêu đề (font-serif) cũng dùng Be Vietnam Pro — đồng bộ một font.
+        serif: ['Be Vietnam Pro', 'system-ui', 'sans-serif'],
+        // Chỉ cho wordmark logo The Magnolia (MagnoliaLogo.jsx).
+        logo: ['Playfair Display', 'Georgia', 'serif'],
       },
     },
   },

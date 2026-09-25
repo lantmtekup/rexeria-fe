@@ -5,7 +5,8 @@ import Lenis from 'lenis';
 import Experience from './Experience.jsx';
 import LoadingScreen from './LoadingScreen.jsx';
 import GuideOverlay from './GuideOverlay.jsx';
-import Model3DModal from './Model3DModal.jsx';
+import Model3DModal, { preloadPopupModels } from './Model3DModal.jsx';
+import MagnoliaLogo from './MagnoliaLogo.jsx';
 import AuthorPanel from './AuthorPanel.jsx';
 import { ZoneOverlay } from './Zones.jsx';
 import { usePathDraft, PathEditorPanel } from './path-editor.jsx';
@@ -36,6 +37,10 @@ export default function App() {
   const [entered, setEntered] = useState(false);
   const [hotspot, setHotspot] = useState(null);
   const [model3d, setModel3d] = useState(null); // zone clicked → 3D viewer
+  // Chất liệu đã "Áp dụng" vào phòng: { [variantKey]: optionId }. Key =
+  // variants.id (nhiều zone dùng chung, vd. cặp ghế bành) hoặc id của zone.
+  const [applied, setApplied] = useState({});
+  const variantKey = z => z.variants?.id ?? z.id;
   const [guide, setGuide] = useState(false);
   const [switching, setSwitching] = useState(false);
   const cfg = FLOORS[floor];
@@ -74,6 +79,17 @@ export default function App() {
     () => zones.filter(z => z.type === 'model-inline' && activeInline[z.id]),
     [zones, activeInline]
   );
+  // Zone có variants.scene → mesh tương ứng trong phòng đổi theo lựa chọn đã áp dụng.
+  const fabricOverrides = useMemo(() => {
+    const byKey = new Map();
+    zones.forEach(z => {
+      const key = variantKey(z);
+      const sceneCfg = z.variants?.scene;
+      const opt = z.variants?.options.find(o => o.id === applied[key]);
+      if (sceneCfg && opt) byKey.set(key, { ...sceneCfg, src: opt.src });
+    });
+    return [...byKey.values()];
+  }, [zones, applied]);
   const zonesRef = useRef(overlayZones);
   const draftRef = useRef(draft);
   const zonesOutRef = useRef(null);
@@ -86,6 +102,7 @@ export default function App() {
   useEffect(() => {
     setZones(FLOORS[floor].zones ?? []);
     setDraft([]);
+    preloadPopupModels(FLOORS[floor].zones);
   }, [floor]);
 
   const addPoint = p => setDraft(d => [...d, p]);
@@ -123,15 +140,23 @@ export default function App() {
     } else if (z.type === 'image') {
       setHotspot({ title: z.title, eyebrow: z.eyebrow, image: z.src });
     } else {
-      setModel3d({ title: z.title, eyebrow: z.eyebrow, model3d: z.src });
+      // Popup viewer 3D (xoay/zoom); có variants → đổi chất liệu + Áp dụng.
+      setModel3d({
+        key: variantKey(z),
+        title: z.title,
+        eyebrow: z.eyebrow,
+        model3d: z.src,
+        variants: z.variants,
+      });
     }
   };
 
   // Double-click → enter draw mode; ESC → exit (ESC closes any open popup first).
-  // Tắt khi đang ở path editor — chỉnh camera không dính draw mode.
+  // Chỉ bật khi mở với ?author (người xem không vô tình vào draw mode); tắt khi
+  // đang ở path editor — chỉnh camera không dính draw mode.
   useEffect(() => {
     if (!entered || IS_PATH_EDITOR) return;
-    const onDbl = () => setAuthoring(true);
+    const onDbl = () => IS_AUTHOR && setAuthoring(true);
     const onKey = e => {
       if (e.key !== 'Escape') return;
       if (model3d || hotspot || guide) return; // let the popup handle ESC
@@ -241,6 +266,7 @@ export default function App() {
               dollhouse={dollhouse}
               pathDraft={pathDraft}
               light={light}
+              fabricOverrides={fabricOverrides}
             />
           </Suspense>
         </Canvas>
@@ -253,39 +279,30 @@ export default function App() {
       {entered && (
         <>
           <header className='pointer-events-none fixed inset-x-0 top-0 z-20 flex items-center justify-between px-6 py-5 text-white'>
-            <span className='text-sm tracking-[0.3em] uppercase'>
-              ICG Galleries
-            </span>
+            <MagnoliaLogo className='drop-shadow-[0_1px_6px_rgba(0,0,0,0.35)]' />
             <span className='text-[11px] tracking-[0.2em] uppercase opacity-70'>
               {cfg.label}
             </span>
           </header>
 
-          <nav className='fixed inset-x-0 bottom-16 z-20 flex justify-center gap-2'>
-            {FLOOR_KEYS.map(key => (
-              <button
-                key={key}
-                type='button'
-                onClick={() => changeFloor(key)}
-                className={`rounded-full px-5 py-2 text-[11px] tracking-[0.18em] uppercase backdrop-blur transition-colors duration-300 ${
-                  key === floor
-                    ? 'bg-white text-neutral-900'
-                    : 'bg-white/15 text-white ring-1 ring-white/30 hover:bg-white/25'
-                }`}
-              >
-                {FLOORS[key].label}
-              </button>
-            ))}
-          </nav>
-
-          {/* Dollhouse ↔ POV toggle */}
-          <button
-            type='button'
-            onClick={() => setDollhouse(d => !d)}
-            className='fixed bottom-28 left-1/2 z-20 -translate-x-1/2 rounded-full bg-white/15 px-4 py-2 text-[11px] tracking-[0.18em] text-white uppercase ring-1 ring-white/30 backdrop-blur transition-colors hover:bg-white/25'
-          >
-            {dollhouse ? '↩ Quay lại' : '⌂ Toàn cảnh'}
-          </button>
+          {FLOOR_KEYS.length > 1 && (
+            <nav className='fixed inset-x-0 bottom-16 z-20 flex justify-center gap-2'>
+              {FLOOR_KEYS.map(key => (
+                <button
+                  key={key}
+                  type='button'
+                  onClick={() => changeFloor(key)}
+                  className={`rounded-full px-5 py-2 text-[11px] tracking-[0.18em] uppercase backdrop-blur transition-colors duration-300 ${
+                    key === floor
+                      ? 'bg-white text-neutral-900'
+                      : 'bg-white/15 text-white ring-1 ring-white/30 hover:bg-white/25'
+                  }`}
+                >
+                  {FLOORS[key].label}
+                </button>
+              ))}
+            </nav>
+          )}
         </>
       )}
 
@@ -337,13 +354,6 @@ export default function App() {
         />
       )}
 
-      {/* Hint: how to enter draw mode */}
-      {entered && !authoring && !guide && !IS_PATH_EDITOR && (
-        <div className='pointer-events-none fixed bottom-4 left-4 z-20 rounded-full bg-black/40 px-3 py-1.5 text-[11px] text-white/80 backdrop-blur'>
-          Double-click để vẽ vùng
-        </div>
-      )}
-
       {guide && <GuideOverlay onClose={() => setGuide(false)} />}
       {hotspot && (
         <InfoModal
@@ -357,6 +367,16 @@ export default function App() {
       {model3d && (
         <Model3DModal
           data={model3d}
+          appliedId={applied[model3d.key]}
+          onApply={
+            model3d.variants?.scene
+              ? id => {
+                  setApplied(a => ({ ...a, [model3d.key]: id }));
+                  setModel3d(null);
+                  setFocus(null);
+                }
+              : undefined
+          }
           onClose={() => {
             setModel3d(null);
             setFocus(null);
@@ -399,7 +419,7 @@ function InfoModal({ data, onClose }) {
             )}
             <button
               onClick={onClose}
-              aria-label='Close'
+              aria-label='Đóng'
               className='-mt-1 -mr-1 grid h-8 w-8 shrink-0 place-items-center rounded-full text-neutral-400 transition-colors duration-200 hover:bg-black/5 hover:text-neutral-900'
             >
               ✕

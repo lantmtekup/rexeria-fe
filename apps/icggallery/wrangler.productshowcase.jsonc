@@ -1,0 +1,17 @@
+// Bản "The Magnolia — Phòng khách" (chỉ tầng home-theatre, xem VISIBLE_FLOORS
+// trong src/floors.js) → http://productshowcase.vistaxr4d.com
+// Build + deploy: npm run build && npx wrangler deploy -c wrangler.productshowcase.jsonc
+// Worker riêng, không đụng rexerai-icggallery (wrangler.jsonc) hay icggallery
+// (icggallery.tekupsoftware.com).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "magnolia-productshowcase",
+  "compatibility_date": "2026-05-01",
+  "assets": {
+    "directory": "dist",
+    "not_found_handling": "single-page-application",
+  },
+  "routes": [
+    { "pattern": "productshowcase.vistaxr4d.com", "custom_domain": true },
+  ],
+}

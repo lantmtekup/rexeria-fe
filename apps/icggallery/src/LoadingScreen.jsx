@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useProgress } from '@react-three/drei';
 import { FLOORS, FLOOR_KEYS } from './floors.js';
+import MagnoliaLogo from './MagnoliaLogo.jsx';
 
 // Landing chrome — clone of icggallery.irisceramicagroup.com/en: the floor model
 // sits behind in an isometric dollhouse view; this overlay draws the UI only.
@@ -41,31 +42,28 @@ export default function LoadingScreen({ onEnter, floor, onChangeFloor }) {
     >
       {/* Header */}
       <header className='pointer-events-auto absolute inset-x-0 top-0 flex items-center justify-between px-10 py-7'>
-        <a
-          href='#'
-          className='flex items-center gap-2 text-[18px] tracking-[0.06em] text-[#1b1b1b]'
-        >
-          <span className='font-medium'>ICG</span>
-          <span aria-hidden className='text-[13px] opacity-70'>
-            ✛
-          </span>
-          <span className='font-light tracking-[0.18em]'>GALLERY</span>
+        <a href='#' aria-label='The Magnolia' className='text-[#1b1b1b]'>
+          <MagnoliaLogo />
         </a>
       </header>
 
-      {/* Floor carousel arrows + rotated labels */}
-      <SideControl
-        side='left'
-        label={leftLabel}
-        disabled={!prevKey}
-        onClick={() => prevKey && onChangeFloor(prevKey)}
-      />
-      <SideControl
-        side='right'
-        label={rightLabel}
-        disabled={!nextKey}
-        onClick={() => nextKey && onChangeFloor(nextKey)}
-      />
+      {/* Floor carousel arrows + rotated labels (ẩn khi chỉ mở 1 tầng) */}
+      {FLOOR_KEYS.length > 1 && (
+        <>
+          <SideControl
+            side='left'
+            label={leftLabel}
+            disabled={!prevKey}
+            onClick={() => prevKey && onChangeFloor(prevKey)}
+          />
+          <SideControl
+            side='right'
+            label={rightLabel}
+            disabled={!nextKey}
+            onClick={() => nextKey && onChangeFloor(nextKey)}
+          />
+        </>
+      )}
 
       {/* Center bottom: title + Step Inside */}
       <div className='absolute inset-x-0 bottom-[12vh] flex flex-col items-center'>
@@ -82,38 +80,17 @@ export default function LoadingScreen({ onEnter, floor, onChangeFloor }) {
               onClick={enter}
               className='enter-cta pointer-events-auto rounded-full bg-[#1b1b1b] px-10 py-3.5 text-[13px] tracking-[0.14em] text-[#d9d9d9] transition-colors duration-300 hover:bg-[#000]'
             >
-              Step Inside
+              Bước vào
             </button>
           ) : (
             <span className='text-[12px] tracking-[0.25em] text-[#2d2d2d]/60 uppercase'>
-              Loading… {Math.round(progress)}%
+              Đang tải… {Math.round(progress)}%
             </span>
           )}
         </div>
       </div>
 
       {/* Footer */}
-      <footer className='pointer-events-auto absolute inset-x-0 bottom-0 flex items-center justify-between px-10 py-7 text-[14px] text-[#2d2d2d]'>
-        <span className='flex items-center gap-2.5'>
-          <svg
-            width='18'
-            height='18'
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='1.3'
-          >
-            <rect x='3' y='5' width='18' height='14' rx='2' />
-            <path d='M3 7l9 6 9-6' />
-          </svg>
-          Pop-Up Window
-        </span>
-        <span className='flex items-center gap-3 tracking-[0.1em]'>
-          <span className='text-[#1b1b1b]'>En</span>
-          <span className='opacity-40'>It</span>
-          <span className='ml-3 tabular-nums opacity-40'>001</span>
-        </span>
-      </footer>
     </div>
   );
 }
