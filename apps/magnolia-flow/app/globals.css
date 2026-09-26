@@ -1,0 +1,6 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-abril: var(--font-abril-fatface), Georgia, serif;
+  --font-aboreto: var(--font-aboreto), sans-serif;
+}

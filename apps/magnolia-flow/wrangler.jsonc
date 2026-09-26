@@ -1,0 +1,12 @@
+// CF Worker cho bản nhân bản cite-flow với nội dung The Magnolia (apps/magnolia-flow).
+// Build: npm run cf:build — Deploy: npm run cf:deploy. Domain: curatedcontent.vistaxr4d.com (+ *.workers.dev).
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "magnolia-flow",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-05-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "workers_dev": true,
+  "routes": [{ "pattern": "curatedcontent.vistaxr4d.com", "custom_domain": true }],
+}

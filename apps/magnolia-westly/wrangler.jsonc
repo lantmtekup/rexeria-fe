@@ -1,0 +1,10 @@
+// CF Worker cho bản nhân bản the-westly với nội dung The Magnolia (apps/magnolia-westly).
+// Build: npm run cf:build — Deploy: npm run cf:deploy. Chạy trên *.workers.dev, chưa gắn domain.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "magnolia-westly",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-05-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+}
